@@ -95,7 +95,7 @@ int display(node *n) {
   if (n_id < 0) return -n_id;
   static char const *const node_ids[] = { "HYPOTHESIS", "CONCLUSION", "THEOREM", "MODUS", "UNION", "OTHER" };
   auto_flush plouf;
-  plouf << "Lemma l" << n_id << ": ";
+  plouf << "Lemma l" << n_id << " : ";
   for(property_vect::const_iterator i = n->hyp.begin(), end = n->hyp.end(); i != end; ++i)
     plouf << 'p' << display(*i) << " -> ";
   plouf << 'p' << display(n->res) << ".\n";
@@ -144,7 +144,6 @@ int display(node *n) {
     plouf << "\nQed.\n";
   } else {
     plouf << node_ids[n->type];
-    assert(n->type != OTHER);
     for(node_vect::const_iterator i = n->pred.begin(), end = n->pred.end(); i != end; ++i)
       plouf << " l" << display(*i);
     plouf << '\n';
