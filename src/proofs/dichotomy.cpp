@@ -23,16 +23,26 @@ class dichotomy_node: public dependent_node {
   void dichotomize();
   void add_graph(graph_t *);
   void try_graph(graph_t *);
+  virtual void clean_dependencies();
 };
 
-dichotomy_node::~dichotomy_node() {
+void dichotomy_node::clean_dependencies() {
+  dependent_node::clean_dependencies();
   for(graph_vect::iterator i = graphs.begin(), end = graphs.end(); i != end; ++i)
     delete *i;
+  graphs.clear();
+}
+
+dichotomy_node::~dichotomy_node() {
+  clean_dependencies();
 }
 
 void dichotomy_node::add_graph(graph_t *g) {
   graphs.push_back(g);
-  insert_pred(g->find_already_known(get_result().real));
+  node *n = g->find_already_known(get_result().real);
+  insert_pred(n);
+  g->purge();
+  g->migrate();
 }
 
 void dichotomy_node::try_graph(graph_t *g2) {
@@ -51,12 +61,12 @@ void dichotomy_node::try_graph(graph_t *g2) {
   if (node *n = find_proof(res.real)) {
     if (n->get_result().bnd <= res.bnd) {
       last_graph = top_graph;
+      stacker.keep();
       delete g1;
       delete g2;
       return;
     }
   }
-  stacker.clear();
   add_graph(g1);
   last_graph = g2;
 }
@@ -80,7 +90,7 @@ void dichotomy_node::dichotomize() {
       bnd = n->get_result().bnd;
       if (bnd <= res.bnd) g = top_graph;
     }
-    if (!g) stacker.clear();
+    if (g) stacker.keep();
   }
   if (g) {
     try_graph(g);
@@ -147,15 +157,19 @@ node *dichotomy_scheme::generate_proof(interval const &bnd) const {
     property_vect const &hyp = top_graph->get_hypotheses();
     for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
       if (i->real != var) hyp2.push_back(*i);
-    graph_layer layer;
+    graph_stacker layer;
     proof_helper_stacker stacker(helper);
+    property_vect goals;
+    goals.push_back(property(real, bnd));
+    top_graph->prover.goals = goals;
     dichotomy_node *n = new dichotomy_node(hyp2, property(real, bnd));
     n->dichotomize();
     n->add_graph(n->last_graph);
     if (varn->type != HYPOTHESIS)
       dich = new modus_node(1, &varn, n);
     else dich = n;
-    layer.flatten();
+    top_graph->purge(dich);
+    top_graph->flatten();
   } catch (dichotomy_failure e) { // BLI
     property const &h = e.hyp;
     std::cerr << "failure: when " << dump_real(h.real) << " is " << h.bnd << ", ";

@@ -218,14 +218,16 @@ void proof_handler::operator()() {
     ++iter;
     proof_scheme const *s = *missing_schemes.begin();
     missing_schemes.erase(s);
-    graph_layer layer;
     bound_map::const_iterator i = bounds.find(s->real);
-    node *n;
-    if (i != bounds_end) n = s->generate_proof(*i->second);
-    else n = s->generate_proof();
-    if (n && top_graph->try_real(n)) {
-      layer.flatten();
-      helper->insert_dependent(missing_schemes, s->real);
+    {
+      graph_stacker layer;
+      node *n;
+      if (i != bounds_end) n = s->generate_proof(*i->second);
+      else n = s->generate_proof();
+      if (n && top_graph->try_real(n)) {
+        top_graph->flatten();
+        helper->insert_dependent(missing_schemes, s->real);
+      }
     }
     real_set v;
     v.swap(helper->axiom_reals);
