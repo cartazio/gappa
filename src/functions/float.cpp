@@ -2,6 +2,7 @@
 #include "../program.hpp"
 #include "../function.hpp"
 #include "../interval.hpp"
+#include "../interval_ext.hpp"
 #include "../property.hpp"
 #include "../proof_graph.hpp"
 #include <boost/preprocessor/cat.hpp>
@@ -17,11 +18,10 @@ static type_id ret80[2] = { FLOAT80, UNDEFINED };
 static type_id ret128[2] = { FLOAT128, UNDEFINED };
 
 struct node_theorem: node {
-  std::string name;
-  node_theorem(property_vect const &h, property const &p, std::string const &n): node(THEOREM) {
+  char const *name;
+  node_theorem(property_vect const &h, property const &p, char const *n): node(THEOREM), name(n) {
     res = p;
     hyp = h;
-    name = n;
   }
 };
 
@@ -46,6 +46,11 @@ static void extract_intervals(property_vect const &hyp, interval const **ints) {
   bop_definition(type, TYPE, 64);	\
   bop_definition(type, TYPE, 80);	\
   bop_definition(type, TYPE, 128);
+
+#define do_match(TYPE, name, type)	\
+  { { -1, HYP_##TYPE }, const_##name, &compute_##name, { generate_##type: &generate_##name } }
+
+interval const not_defined = interval(interval_variant(interval_not_defined()));
 
 /********** add **********/
 
@@ -75,10 +80,45 @@ static node *generate_add_float_abs(property_vect const &hyp, property_error &re
   return new node_theorem(hyp, res, "add");
 }
 
+static hypothesis_constraint const_add_float_abs_sterbenz[6] =
+  { { -1, HYP_BND }, { 1, HYP_BND }, { 2, HYP_BND }, { 1, HYP_ABS }, { 2, HYP_ABS }, { 0 } };
+
+static interval compute_add_float_abs_sterbenz(interval const **ints) {
+  int e = mag_exponent(*ints[0]);
+  if (e > mig_exponent(*ints[1]) || e > mig_exponent(*ints[2])) return not_defined;
+  return *ints[3] + *ints[4];
+}
+
+static node *generate_add_float_abs_sterbenz(property_vect const &hyp, property_error &res) {
+  interval const *ints[5];
+  extract_intervals(hyp, ints);
+  res.err = compute_add_float_abs_sterbenz(ints);
+  if (is_not_defined(res.err)) return NULL;
+  return new node_theorem(hyp, res, "add_sterbenz");
+}
+
+static hypothesis_constraint const_add_float_abs_singleton[5] =
+  { { 1, HYP_BND }, { 2, HYP_BND }, { 1, HYP_ABS }, { 2, HYP_ABS }, { 0 } };
+
+static interval compute_add_float_abs_singleton(interval const **ints) {
+  if (!is_singleton(*ints[0]) || !is_singleton(*ints[1])) return not_defined;
+  return to_real(*ints[0]) + to_real(*ints[1]) - to_real(*ints[0] + *ints[1]) + *ints[2] + *ints[3];
+}
+
+static node *generate_add_float_abs_singleton(property_vect const &hyp, property_error &res) {
+  interval const *ints[4];
+  extract_intervals(hyp, ints);
+  res.err = compute_add_float_abs_singleton(ints);
+  if (is_not_defined(res.err)) return NULL;
+  return new node_theorem(hyp, res, "add_singleton");
+}
+
 void initialize_add() {
-  static function_match match[3] = {
-    { { -1, HYP_BND }, const_add_float_bnd, &compute_add_float_bnd, { generate_bound: &generate_add_float_bnd } },
-    { { -1, HYP_ABS }, const_add_float_abs, &compute_add_float_abs, { generate_error: &generate_add_float_abs } },
+  static function_match match[5] = {
+    do_match(BND, add_float_bnd, bound),
+    do_match(ABS, add_float_abs, error),
+    do_match(ABS, add_float_abs_sterbenz, error),
+    do_match(ABS, add_float_abs_singleton, error),
     { { 0 } } };
   bop_definitions(add, ADD);
 }
