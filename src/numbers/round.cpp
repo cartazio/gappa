@@ -4,16 +4,14 @@
 #include <algorithm>
 #include <cassert>
 
-bool split_exact(mpfr_t const &f, mpz_t &frac, int &exp, bool &sign) { // return true if zero
-  int sgn = mpfr_sgn(f);
-  if (sgn == 0) return true;
+void split_exact(mpfr_t const &f, mpz_t &frac, int &exp, int &sign) {
+  sign = mpfr_sgn(f);
+  if (sign == 0) return;
   exp = mpfr_get_z_exp(frac, f);
-  sign = (sgn < 0);
   mpz_abs(frac, frac); // avoid an MPFR bug
   int d = mpz_scan1(frac, 0);
   if (d > 0) mpz_fdiv_q_2exp(frac, frac, d);
   exp += d;
-  return false;
 }
 
 void rnd::shr(int d) {
@@ -46,9 +44,10 @@ void float_format::succ(mpz_t &m, int &e) const {
   }
 }
 
-void float_format::trunc(mpfr_t const &f, rnd &r, bool &sign) const {
-  split_exact(f, r.m, r.e, sign);
+void float_format::trunc(mpfr_t const &f, rnd &r, int &sign) const {
   r.s = r.g = false;
+  split_exact(f, r.m, r.e, sign);
+  if (sign == 0) return;
   int size = mpz_sizeinbase(r.m, 2);
   int dec = std::max(min_exp - r.e, size - (int)prec);
   if (dec <= 0) return;
@@ -57,28 +56,29 @@ void float_format::trunc(mpfr_t const &f, rnd &r, bool &sign) const {
 
 void float_format::round(mpfr_t &f, rnd_fun g1, rnd_fun g2) const {
   rnd r;
-  bool s;
+  int s;
   trunc(f, r, s);
-  if ((this->*(s ? g2 : g1))(r)) succ(r.m, r.e);
+  if (s == 0) return;
+  if ((this->*(s > 0 ? g1 : g2))(r)) succ(r.m, r.e);
   mpfr_set_prec(f, prec);
   int v = mpfr_set_z(f, r.m, GMP_RNDN);
   assert(v == 0);
   mpfr_mul_2si(f, f, r.e, GMP_RNDN);
-  if (s) mpfr_neg(f, f, GMP_RNDN);
+  if (s < 0) mpfr_neg(f, f, GMP_RNDN);
 }
 
-number round_number(number const &f, number_type const &t, rounding_fun r) {
-  if (!t.format) return f;
+number round_number(number const &f, float_format const *t, rounding_fun r) {
+  if (!t) return f;
   number res = f;
   number_base *d = res.unique();
-  (t.format->*r)(d->val);
+  (t->*r)(d->val);
   return res;
 }
 
 number number_type::rounded_up(number const &f) const {
-  return round_number(f, *this, &float_format::roundU);
+  return round_number(f, format, &float_format::roundU);
 }
 
 number number_type::rounded_dn(number const &f) const {
-  return round_number(f, *this, &float_format::roundD);
+  return round_number(f, format, &float_format::roundD);
 }

@@ -46,9 +46,10 @@ static std::string signed_lexical(mpz_t const &frac, bool sgn) {
 static std::string get_real_split(mpfr_t const &f, int &exp, bool &zero) {
   mpz_t frac;
   mpz_init(frac);
-  bool sgn;
-  zero = split_exact(f, frac, exp, sgn);
-  std::string res = zero ? "0" : signed_lexical(frac, sgn);
+  int sgn;
+  split_exact(f, frac, exp, sgn);
+  zero = sgn == 0;
+  std::string res = zero ? "0" : signed_lexical(frac, sgn < 0);
   mpz_clear(frac);
   return res;
 }

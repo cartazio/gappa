@@ -167,17 +167,14 @@ interval operator/(interval const &u, interval const &v) {
 interval from_exponent(int exp, int rnd) {
   number_base *l = new number_base, *u = new number_base;
   if (rnd == 0) {
-    mpfr_set_ui(u->val, 1, GMP_RNDN);
-    mpfr_mul_2si(u->val, u->val, exp - 1, GMP_RNDN);
+    mpfr_set_ui_2exp(u->val, 1, exp, GMP_RNDN);
     mpfr_neg(l->val, u->val, GMP_RNDN);
   } else if (rnd < 0) {
-    mpfr_set_si(l->val, -1, GMP_RNDN);
+    mpfr_set_si_2exp(l->val, -1, exp, GMP_RNDN);
     mpfr_set_ui(u->val, 0, GMP_RNDN);
-    mpfr_mul_2si(l->val, l->val, exp, GMP_RNDN);
   } else {
     mpfr_set_ui(l->val, 0, GMP_RNDN);
-    mpfr_set_ui(u->val, 1, GMP_RNDN);
-    mpfr_mul_2si(u->val, u->val, exp, GMP_RNDN);
+    mpfr_set_ui_2exp(u->val, 1, exp, GMP_RNDN);
   }
   return interval(number(l), number(u));
 }
