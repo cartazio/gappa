@@ -32,4 +32,6 @@ struct ast_prop_impl {
   ast_prop left, right;
 };
 
+void clear_schemes();
+
 #endif // AST_HPP

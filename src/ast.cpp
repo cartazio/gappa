@@ -1,4 +1,5 @@
 #include "ast.hpp"
+#include "basic_proof.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -44,7 +45,7 @@ class cache {
 
 template< class T >
 T *cache< T >::find(T const &v) {
-  typename store_t::const_iterator i = store.find(const_cast< T * >(&v));
+  iterator i = store.find(const_cast< T * >(&v));
   T *ptr;
   if (i == store.end()) {
     ptr = new T(v);
@@ -57,6 +58,18 @@ static cache< ast_number > ast_number_cache;
 ast_number *normalize(ast_number const &v) { return ast_number_cache.find(v); }
 static cache< ast_real > ast_real_cache;
 ast_real *normalize(ast_real const &v) { return ast_real_cache.find(v); }
+
+void clear_schemes() {
+  for(cache< ast_real >::iterator i = ast_real_cache.begin(), end = ast_real_cache.end(); i != end; ++i) {
+    proof_scheme const *s = (*i)->scheme;
+    while (s) {
+      proof_scheme const *p = s;
+      s = s->next;
+      delete p;
+    }
+    (*i)->scheme = NULL;
+  }
+}
 
 struct match_visitor: boost::static_visitor< bool > {
   bool visit(ast_real const *src, ast_real const *dst) const;

@@ -500,8 +500,7 @@ struct yes_scheme: proof_scheme {
 
 bool generate_scheme_tree(property_vect const &hyp, ast_real const *r) {
   if (r->scheme) return !dynamic_cast< no_scheme const * >(r->scheme);
-  { static yes_scheme dummy;
-    r->scheme = &dummy; }
+  r->scheme = new yes_scheme;
   std::vector< proof_scheme * > schemes;
   for(scheme_register::factory_iterator i = scheme_register::factories.begin(), i_end = scheme_register::factories.end();
       i != i_end; ++i) {
@@ -527,8 +526,7 @@ bool generate_scheme_tree(property_vect const &hyp, ast_real const *r) {
     }
     if (in_hyp) return true;
     if (graph->has_compatible_hypothesis(r)) return true;
-    static no_scheme dummy;
-    r->scheme = &dummy;
+    r->scheme = new no_scheme;
     return false;
   }
   r->scheme = NULL;

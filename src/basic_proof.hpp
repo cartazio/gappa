@@ -12,6 +12,7 @@ struct proof_scheme
   virtual node *generate_proof(property_vect const &, property &) const = 0;
   virtual ast_real_vect needed_reals(ast_real const *) const = 0;
   virtual ~proof_scheme() {}
+  proof_scheme(): next(NULL) {}
   proof_scheme const *next;
 };
 
