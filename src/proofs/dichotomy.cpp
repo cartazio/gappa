@@ -105,7 +105,6 @@ void dichotomy_node::dichotomize() {
 struct dichotomy_scheme: proof_scheme {
   ast_real const *var;
   mutable node *dich;
-  mutable bool already_here;
   proof_helper *helper;
   dichotomy_scheme(ast_real const *v, ast_real const *r);
   ~dichotomy_scheme() { delete_proof_helper(helper); }
@@ -117,7 +116,7 @@ struct dichotomy_scheme: proof_scheme {
 static bool no_dichotomy = false;
 
 dichotomy_scheme::dichotomy_scheme(ast_real const *v, ast_real const *r)
-  : proof_scheme(r), var(v), dich(NULL), already_here(false) {
+  : proof_scheme(r), var(v), dich(NULL) {
   ast_real_vect reals(1, r);
   no_dichotomy = true;
   helper = generate_proof_helper(reals);
@@ -127,7 +126,7 @@ dichotomy_scheme::dichotomy_scheme(ast_real const *v, ast_real const *r)
 
 ast_real_vect dichotomy_scheme::needed_reals() const {
   ast_real_vect res;
-  res.push_back(real);
+  //res.push_back(real);
   res.push_back(var);
   return res;
 }
@@ -139,10 +138,9 @@ struct proof_helper_stacker {
 };
 
 node *dichotomy_scheme::generate_proof(interval const &bnd) const {
-  if (dich || already_here) return dich;
+  if (dich) return dich;
   node *varn = find_proof(var);
   if (!varn) return NULL;
-  already_here = true;
   try {
     property_vect hyp2;
     hyp2.push_back(varn->get_result());
@@ -169,7 +167,6 @@ node *dichotomy_scheme::generate_proof(interval const &bnd) const {
       std::cerr << " is nowhere (?!)\n";
     dich = NULL;
   }
-  already_here = false;
   return dich;
 }
 
