@@ -41,6 +41,7 @@ static pattern a(0), b(1), c(2), d(3);
 #define REWRITE(name,lhs,rhs) static pattern_register REWRITE_NAME(lhs, rhs, #name, rhs)
 #define REWRIT3(name,lhs,rhs,rew) static pattern_register REWRITE_NAME(lhs, rhs, #name, rew)
 
+/*
 REWRIT3(neg_sub, //absolute_error_sym,
 	a - rnd(a, 0),
 	-(rnd(a, 0) - a),
@@ -50,6 +51,31 @@ REWRIT3(absolute_transitivity, //absolute_error_trans,
 	rnd(a, 0) - b,
 	(rnd(a, 0) - a) + (a - b),
 	(a - c) + (c - b));
+*/
+
+REWRITE(add_decomposition_rounded_left,
+	rnd(a, 0) + b,
+	(rnd(a, 0) - a) + (a + b));
+
+REWRITE(add_decomposition_rounded_right,
+	a + rnd(b, 0),
+	(a + b) + (rnd(b, 0) - b));
+
+REWRITE(sub_decomposition_rounded_left,
+	rnd(a, 0) - b,
+	(rnd(a, 0) - a) + (a - b));
+
+REWRITE(sub_decomposition_rounded_right,
+	a - rnd(b, 0),
+	(a - b) - (rnd(b, 0) - b));
+
+REWRITE(mul_decomposition_rounded_left,
+	rnd(a, 0) * b,
+	(rnd(a, 0) - a) * b + a * b);
+
+REWRITE(mul_decomposition_rounded_right,
+	a * rnd(b, 0),
+	a * (rnd(b, 0) - b) + a * b);
 
 REWRITE(add_decomposition,
 	(a + b) - (c + d),
@@ -59,17 +85,29 @@ REWRITE(sub_decomposition,
 	(a - b) - (c - d),
 	(a - c) - (b - d));
 
-REWRITE(mul_decomposition_simple,
+REWRITE(mul_decomposition_factor_left,
+	a * b - a * c,
+	a * (b - c));
+
+REWRITE(mul_decomposition_factor_right,
+	a * c - b * c,
+	(a - b) * c);
+
+REWRITE(mul_decomposition_half_left,
 	a * b - c * d,
-	a * (b - d) + d * (a - c));
+	a * (b - d) + (a - c) * d);
+
+REWRITE(mul_decomposition_half_right,
+	a * b - c * d,
+	(a - c) * b + c * (b - d));
 
 REWRITE(mul_decomposition_full_left,
 	a * b - c * d,
-	a * (b - d) + b * (a - c) - (a - c) * (b - d));
+	a * (b - d) + (a - c) * b + -((a - c) * (b - d)));
 
 REWRITE(mul_decomposition_full_right,
 	a * b - c * d,
-	c * (b - d) + d * (a - c) + (a - c) * (b - d));
+	c * (b - d) + (a - c) * d + (a - c) * (b - d));
 
 REWRIT3(relative_transitivity, //relative_error_trans,
 	(rnd(a, 0) - b) / b,
