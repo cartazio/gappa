@@ -64,7 +64,8 @@ zero		[-+]?((((0+(\.0*)?)|(\.0+))([eE][-+]?{integer})?)|(0+([bB][-+]?{integer})?
 
 %%
 
-[ \t\n]		// Ignore les caracteres inutiles
+[ \t\n]
+#[^\n]*
 "/\\"		return AND;
 "->"		return IMPL;
 "in"		return IN;
