@@ -1,27 +1,34 @@
 #include "parser/pattern.hpp"
 #include "proofs/basic_proof.hpp"
 #include "proofs/schemes.hpp"
+#include <boost/preprocessor/cat.hpp>
 
 struct pattern_factory: scheme_factory {
-  pattern p1, p2;
+  pattern lhs, rhs, rew;
   std::string name;
-  pattern_factory(pattern const &q1, pattern const &q2, std::string const &n): p1(q1), p2(q2), name(n) {}
+  pattern_factory(pattern const &q1, pattern const &q2, pattern const &q3, std::string const &n)
+  	: lhs(q1), rhs(q2), rew(q3), name(n) {}
   virtual proof_scheme *operator()(ast_real const *) const;
 };
 
-proof_scheme *pattern_factory::operator()(ast_real const *r) const {
+proof_scheme *pattern_factory::operator()(ast_real const *src) const {
   ast_real_vect holders;
   rounding_vect roundings;
-  if (!match(r, p1, holders, roundings)) return NULL;
-  return new rewrite_scheme(r, rewrite(p2, holders, roundings), name);
+  if (!match(src, lhs, holders, roundings)) return NULL;
+  ast_real const *dst = rewrite(rhs, holders, roundings);
+  holders.clear();
+  roundings.clear();
+  bool b = match(dst, rew, holders, roundings);
+  assert(b);
+  return new rewrite_scheme(src, dst, name, holders);
 }
 
 struct pattern_register {
-  pattern_register(pattern const &p1, pattern const &p2, std::string const &n);
+  pattern_register(pattern const &, pattern const &, std::string const &n, pattern const &);
 };
 
-pattern_register::pattern_register(pattern const &p1, pattern const &p2, std::string const &n) {
-  scheme_register dummy(new pattern_factory(p1, p2, n));
+pattern_register::pattern_register(pattern const &p1, pattern const &p2, std::string const &n, pattern const &p3) {
+  scheme_register dummy(new pattern_factory(p1, p2, p3, n));
 }
 
 static pattern rnd(pattern const &a, int b) {
@@ -30,15 +37,19 @@ static pattern rnd(pattern const &a, int b) {
 
 static pattern a(0), b(1), c(2), d(3);
 
-#define REWRITE(name,lhs,rhs) static pattern_register name(lhs, rhs, #name)
+#define REWRITE_NAME BOOST_PP_CAT(rewrite_, __LINE__)
+#define REWRITE(name,lhs,rhs) static pattern_register REWRITE_NAME(lhs, rhs, #name, rhs)
+#define REWRIT3(name,lhs,rhs,rew) static pattern_register REWRITE_NAME(lhs, rhs, #name, rew)
 
-REWRITE(absolute_error_sym,
+REWRIT3(neg_sub, //absolute_error_sym,
 	a - rnd(a, 0),
-	-(rnd(a, 0) - a));
+	-(rnd(a, 0) - a),
+	-(b - a));
 
-REWRITE(absolute_error_trans,
+REWRIT3(absolute_transitivity, //absolute_error_trans,
 	rnd(a, 0) - b,
-	(rnd(a, 0) - a) + (a - b));
+	(rnd(a, 0) - a) + (a - b),
+	(a - c) + (c - b));
 
 REWRITE(add_decomposition,
 	(a + b) - (c + d),

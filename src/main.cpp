@@ -140,7 +140,15 @@ std::string display(node *n) {
   case THEOREM: {
     theorem_node *t = static_cast< theorem_node * >(n);
     if (!nb_hyps) plouf << '\n';
-    plouf << " unfold " << p_res << ".\n apply " << t->name;
+    plouf << " unfold " << p_res << ".\n apply ";
+    ast_real_vect subs = t->sub_expressions();
+    if (subs.empty()) plouf << t->name;
+    else {
+      plouf << '(' << t->name;
+      for(ast_real_vect::const_iterator i = subs.begin(), i_end = subs.end(); i != i_end; ++i)
+        plouf << ' ' << display(*i);
+      plouf << ')';
+    }
     if (nb_hyps) {
       plouf << " with";
       for(int i = 0; i < nb_hyps; ++i) plouf << " (" << i + 1 << " := h" << i << ')';

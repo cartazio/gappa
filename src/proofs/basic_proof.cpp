@@ -353,11 +353,18 @@ proof_scheme *number_scheme::factory(ast_real const *real) {
 static scheme_register number_scheme_register(&number_scheme::factory);
 
 // REWRITE
+struct rewrite_node: public theorem_node {
+  ast_real_vect subs;
+  rewrite_node(int nb, property const h[], property const &p, std::string const &n, ast_real_vect const &s)
+    : theorem_node(nb, h, p, n), subs(s) {}
+  virtual ast_real_vect sub_expressions() const { return subs; }
+};
+
 node *rewrite_scheme::generate_proof() const {
   node *n = find_proof(rewritten);
   if (!n) return NULL;
   property const &res = n->get_result();
-  return new modus_node(1, &n, new theorem_node(1, &res, property(real, res.bnd), name));
+  return new modus_node(1, &n, new rewrite_node(1, &res, property(real, res.bnd), name, subs));
 }
 
 struct rewrite_factory: scheme_factory {
@@ -369,7 +376,7 @@ struct rewrite_factory: scheme_factory {
 
 proof_scheme *rewrite_factory::operator()(ast_real const *r) const {
   if (r != src) return NULL;
-  return new rewrite_scheme(src, dst, "user_defined");
+  return new rewrite_scheme(src, dst, "user_defined", ast_real_vect());
 }
 
 void register_user_rewrite(ast_real const *r1, ast_real const *r2) {
