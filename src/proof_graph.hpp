@@ -9,7 +9,6 @@ enum node_id { HYPOTHESIS, CONCLUSION, THEOREM, MODUS, UNION, OTHER };
 
 struct node;
 struct graph_t;
-struct graph_layer;
 
 typedef std::vector< node * > node_vect;
 typedef std::set< node * > node_set;
@@ -37,15 +36,22 @@ struct graph_t
   void erase(node *);
   graph_t(): father(NULL) {}
   graph_t *father;
- private:
   node_set nodes;
-  friend struct graph_layer;
 };
 
-struct graph_layer {
+struct graph_storage
+{
+  graph_storage(): stored_graph(NULL) {}
+  ~graph_storage();
+  graph_t *stored_graph;
+};
+
+struct graph_layer
+{
   graph_layer();
   ~graph_layer();
   void flatten() const;
+  void store(graph_storage &) const;
 };
 
 extern node_set conclusions;

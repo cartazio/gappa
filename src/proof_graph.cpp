@@ -63,13 +63,7 @@ bool graph_t::has_compatible_hypothesis(ast_real const *r) const {
   return false;
 }
 
-graph_layer::graph_layer() {
-  graph_t *old_graph = graph;
-  graph = new graph_t;
-  graph->father = old_graph;
-}
-
-graph_layer::~graph_layer() {
+static void delete_top_graph() {
   // the two loops can't be merged since a successor could then be removed on an already deleted node
   for(node_set::const_iterator i = graph->nodes.begin(), end = graph->nodes.end(); i != end; ++i)
     for(node_vect::iterator j = (*i)->pred.begin(), end = (*i)->pred.end(); j != end; ++j)
@@ -81,10 +75,39 @@ graph_layer::~graph_layer() {
   graph = old_graph;
 }
 
-void graph_layer::flatten() const {
+static void flatten_top_graph() {
+  assert(graph);
   graph_t *old_graph = graph->father;
-  assert(graph != NULL);
+  assert(old_graph);
   for(node_set::const_iterator i = graph->nodes.begin(), end = graph->nodes.end(); i != end; ++i)
     old_graph->nodes.insert(*i);
   graph->nodes.clear();
+}
+
+graph_layer::graph_layer() {
+  graph_t *old_graph = graph;
+  graph = new graph_t;
+  graph->father = old_graph;
+}
+
+graph_layer::~graph_layer() {
+  delete_top_graph();
+}
+
+void graph_layer::flatten() const {
+  flatten_top_graph();
+}
+
+void graph_layer::store(graph_storage &s) const {
+  s.stored_graph = graph;
+  graph_t *old_graph = graph->father;
+  graph = new graph_t;
+  graph->father = old_graph;
+}
+
+graph_storage::~graph_storage() {
+  if (!stored_graph) return;
+  graph = stored_graph;
+  flatten_top_graph();
+  delete_top_graph();
 }
