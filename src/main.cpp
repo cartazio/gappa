@@ -20,14 +20,21 @@ struct auto_flush: std::stringstream {
   ~auto_flush() { std::cout << this->str(); }
 };
 
+template< class T >
+int map_finder(std::map< T, int > &m, T const &k) {
+  typename std::map< T, int >::const_iterator it = m.find(k);
+  if (it != m.end()) return -it->second;
+  int id = m.size() + 1;
+  m.insert(std::make_pair(k, id));
+  return id;
+}
+
 typedef std::map< ast_real const *, int > real_map;
 static real_map displayed_reals;
 
 int display(ast_real const *r) {
-  real_map::const_iterator it = displayed_reals.find(r);
-  if (it != displayed_reals.end()) return it->second;
-  int r_id = displayed_reals.size();
-  displayed_reals.insert(std::make_pair(r, r_id));
+  int r_id = map_finder(displayed_reals, r);
+  if (r_id < 0) return -r_id;
   auto_flush plouf;
   plouf << "Definition r" << r_id << " := ";
   if (variable *const *v = boost::get< variable *const >(r))
@@ -58,10 +65,8 @@ int display(property const &p) {
   else assert(false);
   s << " in " << p.bnd;
   std::string s_ = s.str();
-  property_map::const_iterator it = displayed_properties.find(s_);
-  if (it != displayed_properties.end()) return it->second;
-  int p_id = displayed_properties.size();
-  displayed_properties.insert(std::make_pair(s_, p_id));
+  int p_id = map_finder(displayed_properties, s_);
+  if (p_id < 0) return -p_id;
   std::cout << "Definition p" << p_id << " := " << s_ << '\n';
   return p_id;
 }
@@ -70,10 +75,8 @@ typedef std::map< node *, int > node_map;
 static node_map displayed_nodes;
 
 int display(node *n) {
-  node_map::const_iterator it = displayed_nodes.find(n);
-  if (it != displayed_nodes.end()) return it->second;
-  int n_id = displayed_nodes.size();
-  displayed_nodes.insert(std::make_pair(n, n_id));
+  int n_id = map_finder(displayed_nodes, n);
+  if (n_id < 0) return -n_id;
   static char const *const node_ids[] = { "HYPOTHESIS", "CONCLUSION", "THEOREM", "MODUS", "UNION", "OTHER" };
   auto_flush plouf;
   plouf << "Lemma l" << n_id << ": ";
