@@ -61,14 +61,12 @@ node *generate_triviality(property_vect const &hyp, property &res) {
   return triviality;
 }
 
-static interval const not_defined;
-
 interval const &compute_triviality(property_vect const &hyp, variable *v) {
   property bnd(PROP_BND);
   bnd.var = v;
   if (node *n = graph->find_compatible_node(hyp, bnd)) return n->res.bnd;
   int i = hyp.find_compatible_property(bnd);
-  if (i < 0) return not_defined;
+  if (i < 0) { static interval const not_defined; return not_defined; }
   return hyp[i].bnd;
 }
 
@@ -79,7 +77,7 @@ interval compute_bound(property_vect const &hyp, variable *v) {
   { interval const &res = compute_triviality(hyp, v);
     if (is_defined(res)) return res; }
   int idx = v->get_definition();
-  if (idx == -1) return not_defined;
+  if (idx == -1) return interval();
   instruction &inst = program[idx];
   if (!inst.fun) return compute_bound(hyp, inst.in[0]);
   int l = inst.in.size();
@@ -87,7 +85,7 @@ interval compute_bound(property_vect const &hyp, variable *v) {
   boost::scoped_array< interval const * > ints(new interval const *[l]);
   for(int i = 0; i < l; ++i) {
     ints_[i] = compute_bound(hyp, inst.in[i]);
-    if (!(is_defined(ints_[i]))) return not_defined;
+    if (!(is_defined(ints_[i]))) return interval();
     ints[i] = &ints_[i];
   }
   return (*inst.fun->bnd_comp->compute)(ints.get());
@@ -133,7 +131,7 @@ node *generate_error_forced(property_vect const &hyp, property &res) {
     std::cout << type[res.error] << '(' << res.var->name->name << ", ...) in " << res.err << std::endl; }*/
   if (variable *const *v = boost::get< variable *const >(res.real))
     if (res.var == *v) {
-      res.bnd = interval(&interval_real_desc);
+      res.bnd = interval(interval_real);
       return new node_reflexive(res);
     }
   int idx = res.var->get_definition();

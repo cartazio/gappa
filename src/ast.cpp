@@ -29,7 +29,6 @@ ast_ident *ast_ident::find(std::string const &s) {
 void make_variables_real() {
   for(store_t::const_iterator i = store.begin(), end = store.end(); i != end; ++i) {
     variable *v = (*i)->var;
-    if (!v) continue;
-    if (v->type == UNDEFINED) v->type = &interval_real_desc;
+    if (v && !v->type) v->type = interval_real;
   }
 }

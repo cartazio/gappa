@@ -3,6 +3,7 @@
 
 #include "interval.hpp"
 #include <algorithm>
+#include <ostream>
 
 struct interval_description {
   void *(*create)();
@@ -16,12 +17,14 @@ struct interval_description {
   bool (*singleton)(void *);
   bool (*in_zero)(void *);
   void *(*to_real)(void *);
+  void *(*hull)(void *, void *);
+  std::pair< void *, void * >(*split)(void *);
+  void (*output)(std::ostream &, void *);
 };
 
-extern interval_description interval_not_defined;
-extern interval_description interval_real_desc;
+extern interval_description *interval_real;
 
-bool is_defined(interval const &);
+inline bool is_defined(interval const &v) { return v.desc; }
 bool is_singleton(interval const &);
 bool is_zero(interval const &);
 bool contains_zero(interval const &);
@@ -37,9 +40,6 @@ interval operator*(interval const &, interval const &);
 interval operator/(interval const &, interval const &);
 bool operator<=(interval const &, interval const &);
 
-template< class CharType, class CharTraits >
-std::basic_ostream< CharType, CharTraits > &operator<<
-  (std::basic_ostream< CharType, CharTraits > &s,
-   interval const &) { return s; }
+std::ostream &operator<<(std::ostream &, interval const &);
 
 #endif // NUMBERS_INTERVAL_EXT_HPP

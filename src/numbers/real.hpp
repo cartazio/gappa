@@ -47,9 +47,9 @@ number_real const &max(number_real const &x, number_real const &y);
 
 namespace boost { namespace numeric { namespace interval_lib { namespace user {
 
-bool is_zero(::number_real const &v) { return mpfr_sgn(v.data->val) == 0; }
-bool is_neg(::number_real const &v)  { return mpfr_sgn(v.data->val) < 0; }
-bool is_pos(::number_real const &v)  { return mpfr_sgn(v.data->val) > 0; }
+inline bool is_zero(::number_real const &v) { return mpfr_sgn(v.data->val) == 0; }
+inline bool is_neg(::number_real const &v)  { return mpfr_sgn(v.data->val) < 0; }
+inline bool is_pos(::number_real const &v)  { return mpfr_sgn(v.data->val) > 0; }
 
 } } } }
 
@@ -98,6 +98,6 @@ public:
 # undef RES
 };
 
-typedef boost::numeric::interval< number_real, real_policies > interval_real;
+typedef boost::numeric::interval< number_real, real_policies > _interval_real;
 
 #endif // NUMBER_REAL_HPP

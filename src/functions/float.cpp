@@ -2,6 +2,7 @@
 #include "program.hpp"
 #include "function.hpp"
 #include "numbers/real.hpp"
+#include "numbers/float.hpp"
 #include "numbers/interval_ext.hpp"
 #include "property.hpp"
 #include "proof_graph.hpp"
@@ -13,23 +14,14 @@ int mig_exponent(interval const &);
 int mag_exponent(interval const &);
 interval from_exponent(int, int);
 
-extern interval_description interval_float32_desc;
-extern interval_description interval_float64_desc;
-extern interval_description interval_floatx80_desc;
-extern interval_description interval_float128_desc;
-#define FLOAT32 &interval_float32_desc
-#define FLOAT64 &interval_float64_desc
-#define FLOAT80 &interval_floatx80_desc
-#define FLOAT128 &interval_float128_desc
-
-static type_id args32[3] = { FLOAT32, FLOAT32, UNDEFINED };
-static type_id args64[3] = { FLOAT64, FLOAT64, UNDEFINED };
-static type_id args80[3] = { FLOAT80, FLOAT80, UNDEFINED };
-static type_id args128[3] = { FLOAT128, FLOAT128, UNDEFINED };
-static type_id ret32[2] = { FLOAT32, UNDEFINED };
-static type_id ret64[2] = { FLOAT64, UNDEFINED };
-static type_id ret80[2] = { FLOAT80, UNDEFINED };
-static type_id ret128[2] = { FLOAT128, UNDEFINED };
+static type_id args32_b[3] = { interval_float32, interval_float32, 0 };
+static type_id args64_b[3] = { interval_float64, interval_float64, 0 };
+static type_id args80_b[3] = { interval_floatx80, interval_floatx80, 0 };
+static type_id args128_b[3] = { interval_float128, interval_float128, 0 };
+static type_id ret32[2] = { interval_float32, 0 };
+static type_id ret64[2] = { interval_float64, 0 };
+static type_id ret80[2] = { interval_floatx80, 0 };
+static type_id ret128[2] = { interval_float128, 0 };
 
 struct node_theorem: node {
   char const *name;
@@ -49,7 +41,7 @@ static void extract_intervals(property_vect const &hyp, interval const **ints) {
 
 #define bop_definition(type, TYPE, PREC)	\
   fun = new function(BOP_##TYPE);		\
-  fun->args_type = args##PREC;			\
+  fun->args_type = args##PREC##_b;		\
   fun->return_type = ret##PREC;			\
   fun->bnd_comp = &bnd_comp;			\
   fun->err_comp = err_comp;			\
@@ -66,8 +58,7 @@ static void extract_intervals(property_vect const &hyp, interval const **ints) {
 #define do_constraint(TYPE, name)	\
   { { -1, HYP_##TYPE }, const_##name, &compute_##name, &generate_##name }
 
-static interval const not_defined;
-static interval const one = interval(&interval_real_desc, new interval_real(number_real(1)));
+static interval const one = interval(interval_real, new _interval_real(number_real(1)));
 
 /********** add **********/
 
@@ -98,7 +89,7 @@ static hypothesis_constraint const const_add_float_abs_sterbenz[6] =
 
 static interval compute_add_float_abs_sterbenz(interval const **ints) {
   int e = mag_exponent(*ints[4]);
-  if (e > mig_exponent(*ints[0]) || e > mig_exponent(*ints[1])) return not_defined;
+  if (e > mig_exponent(*ints[0]) || e > mig_exponent(*ints[1])) return interval();
   return *ints[2] + *ints[3];
 }
 
@@ -162,7 +153,7 @@ static hypothesis_constraint const const_sub_float_abs_sterbenz[6] =
 
 static interval compute_sub_float_abs_sterbenz(interval const **ints) {
   int e = mag_exponent(*ints[4]);
-  if (e > mig_exponent(*ints[0]) || e > mig_exponent(*ints[1])) return not_defined;
+  if (e > mig_exponent(*ints[0]) || e > mig_exponent(*ints[1])) return interval();
   return *ints[2] - *ints[3];
 }
 

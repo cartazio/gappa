@@ -1,13 +1,13 @@
 CXX=g++-3.4
-CXXFLAGS=-Wall -ansi -g -O2
-OBJS=float.o interval.o real.o softfloat.o
+CXXFLAGS=-Wall -ansi -I.. -g -O2
+OBJS=float.o io.o interval.o real.o softfloat.o
 
 all: $(OBJS)
 
 include .depend
 
 .depend: *.hpp *.cpp
-	g++ -MM *.cpp > .depend
+	g++ -MM -I.. *.cpp > .depend
 
 SOFTFLOAT_ARCH=386-Win32-GCC
 SOFTFLOAT_PATH=../../../lib/SoftFloat-2b/softfloat/bits64/$(SOFTFLOAT_ARCH)

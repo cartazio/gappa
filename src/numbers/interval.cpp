@@ -1,37 +1,20 @@
 #include "interval.hpp"
 #include "interval_ext.hpp"
+#include <cassert>
 
-static void destroyer(void *) {}
-static void *cloner(void *) { return 0; }
-static void *thrower_p() { throw; }
-static void *thrower_p(void *) { throw; }
-static void *thrower_p(void *, void *) { throw; }
-static bool thrower_b(void *) { throw; }
-static bool thrower_b(void *, void *) { throw; }
-
-interval_description interval_not_defined =
-  { create: &thrower_p, destroy: &destroyer, clone: &cloner,
-    add: &thrower_p, sub: &thrower_p, mul: &thrower_p, div: &thrower_p,
-    subset: &thrower_b, singleton: &thrower_b, in_zero: &thrower_b,
-    to_real: &thrower_p };
-
-interval::interval(): desc(&interval_not_defined), ptr(0) {}
-interval::interval(interval_description const *d): desc(d), ptr((*d->create)()) {}
+interval::interval(): desc(0), ptr(0) {}
+interval::interval(interval_description const *d): desc(d), ptr(d ? (*d->create)() : 0) {}
 interval::interval(interval_description const *d, void *p): desc(d), ptr(p) {}
-interval::interval(interval const &v): desc(v.desc), ptr((*v.desc->clone)(v.ptr)) {}
-interval::~interval() { (*desc->destroy)(ptr); }
+interval::interval(interval const &v): desc(v.desc), ptr(v.desc ? (*v.desc->clone)(v.ptr) : 0) {}
+interval::~interval() { if (desc) (*desc->destroy)(ptr); }
 
 interval &interval::operator=(interval const &v) {
   if (this != &v) {
-    (*desc->destroy)(ptr);
+    if (desc) (*desc->destroy)(ptr);
     desc = v.desc;
-    ptr = (*v.desc->clone)(v.ptr);
+    ptr = v.desc ? (*v.desc->clone)(v.ptr) : 0;
   }
   return *this;
-}
-
-bool is_defined(interval const &v) {
-  return v.desc != &interval_not_defined;
 }
 
 bool is_singleton(interval const &v) {
@@ -47,31 +30,46 @@ bool is_zero(interval const &v) {
 }
 
 interval to_real(interval const &v) {
-  return interval(&interval_real_desc, (*v.desc->to_real)(v.ptr));
+  return interval(interval_real, (*v.desc->to_real)(v.ptr));
+}
+
+interval hull(interval const &u, interval const &v) {
+  assert(u.desc == v.desc);
+  return interval(u.desc, (*u.desc->hull)(u.ptr, v.ptr));
+}
+
+std::pair< interval, interval > split(interval const &v) {
+  std::pair< void *, void * > p = (*v.desc->split)(v.ptr);
+  return std::make_pair(interval(v.desc, p.first), interval(v.desc, p.second));
+}
+
+std::ostream &operator<<(std::ostream &s, interval const &v) {
+  (*v.desc->output)(s, v.ptr);
+  return s;
 }
 
 interval operator+(interval const &u, interval const &v) {
-  if (u.desc != v.desc) throw;
+  assert(u.desc == v.desc);
   return interval(u.desc, (*u.desc->add)(u.ptr, v.ptr));
 }
 
 interval operator-(interval const &u, interval const &v) {
-  if (u.desc != v.desc) throw;
+  assert(u.desc == v.desc);
   return interval(u.desc, (*u.desc->sub)(u.ptr, v.ptr));
 }
 
 interval operator*(interval const &u, interval const &v) {
-  if (u.desc != v.desc) throw;
+  assert(u.desc == v.desc);
   return interval(u.desc, (*u.desc->mul)(u.ptr, v.ptr));
 }
 
 interval operator/(interval const &u, interval const &v) {
-  if (u.desc != v.desc) throw;
+  assert(u.desc == v.desc);
   return interval(u.desc, (*u.desc->div)(u.ptr, v.ptr));
 }
 
 bool operator<=(interval const &u, interval const &v) {
-  if (v.desc == &interval_not_defined) return true;
+  if (!is_defined(v.desc)) return true;
   if (u.desc != v.desc) return false;
   return (*u.desc->subset)(u.ptr, v.ptr);
 }
