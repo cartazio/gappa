@@ -1,4 +1,5 @@
 #include <iostream>
+#include <map>
 #include <boost/scoped_array.hpp>
 #include "basic_proof.hpp"
 #include "proof_graph.hpp"
@@ -30,19 +31,38 @@ struct node_reflexive: node {
   }
 };
 
+namespace {
+
+struct property_key {
+  property_type type;
+  variable *var;
+  ast_real const *real; // only used for ABS and REL
+  property_key(property const &p): type(p.type), var(p.var), real(p.type != PROP_BND ? p.real : NULL) {}
+  bool operator<(property_key const &p) const {
+    return type < p.type || (type == p.type && (var < p.var || (var == p.var && real < p.real)));
+  }
+};
+
+} // anonymous namespace
+
 struct node_modus: node {
   std::string name;
   node_modus(property const &p, node *n, node_vect const &nodes): node(MODUS) {
     res = p;
     insert_pred(n);
-    for(node_vect::const_iterator i = nodes.begin(), end = nodes.end(); i != end; ++i)
-      if (*i != triviality) insert_pred(*i);
-    /* TODO: hypotheses */
+    for(node_vect::const_iterator i = nodes.begin(), i_end = nodes.end(); i != i_end; ++i) {
+      node *n = *i;
+      if (n == triviality) continue;
+      insert_pred(n);
+      int sz = hyp.size();
+      for(property_vect::const_iterator j = n->hyp.begin(), j_end = n->hyp.end(); j != j_end; ++j) {
+      }
+    }
   }
 };
 
-struct node_plouf: node {
-  node_plouf(property_vect const &h, property const &p): node(OTHER) {
+struct node_relabs: node {
+  node_relabs(property_vect const &h, property const &p): node(OTHER) {
     res = p;
     hyp = h;
   }
@@ -212,14 +232,14 @@ node *generate_error(property_vect const &hyp, property &res) {
   if (res2.type == PROP_ABS) {
     res.bnd = res.bnd * to_real(bnd.bnd);
     if (!(res.bnd <= res2.bnd)) return NULL;
-    return new node_plouf(hyp, res);
+    return new node_relabs(hyp, res);
   } else {
     if (!is_zero(res.bnd)) {
       if (contains_zero(bnd.bnd)) return NULL;
       res.bnd = res.bnd / to_real(bnd.bnd);
     }
     if (!(res.bnd <= res2.bnd)) return NULL;
-    return new node_plouf(hyp, res);
+    return new node_relabs(hyp, res);
   }
 }
 
