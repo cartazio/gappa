@@ -26,6 +26,8 @@ std::ostream &operator<<(std::ostream &stream, boost::numeric::interval<T, Polic
   }
 }
 
+void load_float(void const *_mem, mpfr_t &f, interval_float_description const *desc);
+
 namespace {
 
 union float32_inside {
@@ -99,40 +101,43 @@ static void split(number_float32 &u, number_float32 &v) {
   if (m & (1 << 31)) { u.value = n; v.value = m; } else { u.value = m; v.value = n; }
 }
 
-static void split(number_float64 &, number_float64 &) { throw; }
-static void split(number_floatx80 &, number_floatx80 &) { throw; }
-static void split(number_float128 &, number_float128 &) { throw; }
-
-union float32_and_float {
-  float32 soft;
-  float hard;
-};
-
-union float64_and_double {
-  float64 soft;
-  double hard;
-};
-
-static number_real to_real(number_float32 const &v) {
-  impl_data *res = new impl_data;
-  float32_and_float f;
-  f.soft = v.value;
-  int r = mpfr_set_d(res->val, f.hard, GMP_RNDN);
-  assert(r == 0);
-  return res;
+static void split(number_float64 &u, number_float64 &v) {
+  static float64 half = 1022ULL << 52;
+  float64 m = float64_mul(float64_add(u.value, v.value), half);
+  if (m == u.value || m == v.value) return;
+  float64 n = m + 1; // n is near m since m != 0xFF..F (NaN), below if m is negative
+  if (m & (1ULL << 63)) { u.value = n; v.value = m; } else { u.value = m; v.value = n; }
 }
 
-static number_real to_real(number_float64 const &v) {
-  impl_data *res = new impl_data;
-  float64_and_double f;
-  f.soft = v.value;
-  int r = mpfr_set_d(res->val, f.hard, GMP_RNDN);
-  assert(r == 0);
-  return res;
+static void split(number_floatx80 &u, number_floatx80 &v) {
+  static floatx80 half = { 1ULL << 63, 16382 };
+  floatx80 m = floatx80_mul(floatx80_add(u.value, v.value), half);
+  if (m.low == u.value.low && m.high == u.value.high || m.low == v.value.low && m.high == v.value.high) return;
+  floatx80 n = { m.low + 1, m.high };
+  if (n.low == 0) { n.low = 1ULL << 63; n.high += 1; }
+  if (m.high & (1 << 15)) { u.value = n; v.value = m; } else { u.value = m; v.value = n; }
 }
 
-static number_real to_real(number_floatx80 const &) { throw; }
-static number_real to_real(number_float128 const &) { throw; }
+static void split(number_float128 &u, number_float128 &v) {
+  static float128 half = { 0, 16382ULL << 48 };
+  float128 m = float128_mul(float128_add(u.value, v.value), half);
+  if (m.low == u.value.low && m.high == u.value.high || m.low == v.value.low && m.high == v.value.high) return;
+  float128 n = { m.low + 1, m.high };
+  if (n.low == 0) n.high += 1;
+  if (m.high & (1ULL << 63)) { u.value = n; v.value = m; } else { u.value = m; v.value = n; }
+}
+
+#define TO_REAL(sz)	\
+  number_real to_real(number_float##sz const &value) {	\
+    impl_data *d = new impl_data;	\
+    load_float(&value.value, d->val, reinterpret_cast< interval_float_description const * >(interval_float##sz));	\
+    return d;	\
+  }
+
+TO_REAL(32)
+TO_REAL(64)
+TO_REAL(x80)
+TO_REAL(128)
 
 } // anonymous namespace
 
