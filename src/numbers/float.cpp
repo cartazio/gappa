@@ -28,6 +28,7 @@ struct float_rounding_class: rounding_class {
   float_rounding_class(float_format const *f, rounding_type t, char const *i);
   virtual interval bound(interval const &, std::string &) const;
   virtual interval error(interval const &, std::string &) const;
+  virtual std::string name() const { return std::string("float") + ident; }
 };
 
 float_rounding_class::float_rounding_class(float_format const *f, rounding_type t, char const *i)

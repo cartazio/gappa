@@ -42,6 +42,7 @@ number round_number(number const &, float_format const *, rounding_fun);
 struct rounding_class {
   virtual interval bound(interval const &, std::string &) const = 0;
   virtual interval error(interval const &, std::string &) const = 0;
+  virtual std::string name() const = 0;
 };
 
 #endif // NUMBERS_ROUND_HPP

@@ -67,17 +67,18 @@ int display(ast_real const *r) {
   plouf << "Definition r" << r_id << " := ";
   if (ast_ident const *v = r->get_variable())
     plouf << '_' << v->name;
-  else if (ast_number const *const *n = boost::get< ast_number const *const >(r))
+  else if (ast_number const *const *n = boost::get< ast_number const *const >(r)) {
     if ((*n)->base == 0) plouf << '0';
-    else plouf << (*n)->mantissa << ((*n)->base == 2 ? 'b' : 'e') << (*n)->exponent;
-  else if (real_op const *o = boost::get< real_op const >(r)) {
+    else plouf << "Float" << ((*n)->base == 2 ? " (" : "10 (") << (*n)->mantissa
+               << ") (" << (*n)->exponent << ')';
+  } else if (real_op const *o = boost::get< real_op const >(r)) {
     static char const op[] = "-+-*/";
     if (o->ops.size() == 1)
       plouf << '(' << op[o->type] << " r" << display(o->ops[0]) << ")%R";
     else
       plouf << "(r" << display(o->ops[0]) << ' ' << op[o->type] << " r" << display(o->ops[1]) << ")%R";
   } else if (rounded_real const *rr = boost::get< rounded_real const >(r))
-    plouf << "roundingTODO r" << display(rr->rounded);
+    plouf << "rounding_" << rr->rounding->name() << " r" << display(rr->rounded);
   else assert(false);
   plouf << ".\n";
   return r_id;
@@ -88,21 +89,11 @@ static property_map displayed_properties;
 
 int display(property const &p) {
   std::stringstream s;
-  std::string name;
-  if (ast_ident const *v = p.real->get_variable()) {
-    name = '_' + v->name;
-    s << "I754s_in";
-  } else {
-    s << "IR_in";
-    std::stringstream ss;
-    ss << 'r' << display(p.real);
-    name = ss.str();
-  }
-  s << " i" << display(p.bnd) << ' ' << name;
+  s << display(p.bnd) << " r" << display(p.real);
   std::string s_ = s.str();
   int p_id = map_finder(displayed_properties, s_);
   if (p_id < 0) return -p_id;
-  std::cout << "Definition p" << p_id << " := " << s_ << ".\n";
+  std::cout << "Definition p" << p_id << " := IR_in i" << s_ << ".\n";
   return p_id;
 }
 
