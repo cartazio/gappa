@@ -95,12 +95,22 @@ int display(node *n) {
   } else if (n->type == MODUS) {
     for(node_vect::const_iterator i = ++n->pred.begin(), i_end = n->pred.end(); i != i_end; ++i) {
       plouf << " assert (h" << nb_hyps++ << " : p" << display((*i)->res) << "). apply l" << display(*i) << '.';
-      for(property_vect::const_iterator j = (*i)->hyp.begin(), j_end = (*i)->hyp.end(); j != j_end; ++j) plouf << " exact h?.";
+      for(property_vect::const_iterator j = (*i)->hyp.begin(), j_end = (*i)->hyp.end(); j != j_end; ++j) {
+        if (j->type != PROP_BND && j->var->real == j->real)
+          plouf << " apply refl.";
+        else
+          plouf << " exact h?.";
+      }
       plouf << '\n';
     }
     node *m = n->pred[0];
     plouf << " apply l" << display(m) << '.';
-    for(int i = 0, l = m->hyp.size(); i < l; ++i) plouf << " exact h?.";
+    for(property_vect::const_iterator j = m->hyp.begin(), j_end = m->hyp.end(); j != j_end; ++j) {
+      if (j->type != PROP_BND && j->var->real == j->real)
+        plouf << " apply refl.";
+      else
+        plouf << " exact h?.";
+    }
     plouf << "\nQed.\n";
   } else {
     plouf << node_ids[n->type];
