@@ -7,6 +7,7 @@ bin_PROGRAMS = gappa
 # parser/ast.cpp initialization requires proofs/field.cpp initialization
 
 gappa_SOURCES = \
+	numbers/double.cpp \
 	numbers/float.cpp \
 	numbers/homogen.cpp \
 	numbers/interval.cpp \

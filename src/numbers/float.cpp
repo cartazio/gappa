@@ -6,14 +6,14 @@
 
 enum rounding_type { ROUND_UP, ROUND_DN, ROUND_ZR, ROUND_CE };
 
-rounding_fun roundings[4] = {
+static rounding_fun roundings[4] = {
   &float_format::roundU,
   &float_format::roundD,
   &float_format::roundZ,
   &float_format::roundCE
 };
 
-float_format formats[4] = {
+static float_format formats[4] = {
   { min_exp: -149,   prec: 24  },
   { min_exp: -1074,  prec: 53  },
   { min_exp: -16445, prec: 64  },
@@ -40,7 +40,7 @@ float_rounding_class::float_rounding_class(float_format const *f, rounding_type 
 }
 
 
-float_rounding_class classes[4][4] = {
+static float_rounding_class classes[4][4] = {
   { float_rounding_class(&formats[0], ROUND_UP,  "32up"),
     float_rounding_class(&formats[0], ROUND_DN,  "32dn"),
     float_rounding_class(&formats[0], ROUND_ZR,  "32zr"),

@@ -36,4 +36,4 @@ interval homogen_rounding_class::error_from_rounded(interval const &i, std::stri
   return i * he;
 }
 
-homogen_rounding_class dummy;
+static homogen_rounding_class dummy;
