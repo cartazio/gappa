@@ -15,5 +15,6 @@ number const &lower(interval const &);
 number const &upper(interval const &);
 std::ostream &operator<<(std::ostream &, number const &);
 std::ostream &operator<<(std::ostream &, interval const &);
+int sign(interval const &);
 
 #endif // NUMBERS_INTERVAL_UTILITY_HPP

@@ -201,6 +201,12 @@ number const &upper(interval const &u) {
   return plup.upper();
 }
 
+int sign(interval const &u) {
+  assert(u.base);
+  using namespace boost::numeric::interval_lib::user;
+  return is_neg(plup.upper()) ? -1 : is_pos(plup.lower()) ? 1 : 0;
+}
+
 interval add_rev(interval const &u, interval const &r) {
   assert(u.base);
   if (!(r.base)) return interval();

@@ -253,12 +253,15 @@ node *computation_scheme::generate_proof(ast_real const *real) const {
     bool same_ops = r->ops[0] == r->ops[1];
     if (same_ops && r->type == BOP_SUB)
       return new theorem_node(0, NULL, property(real, zero()), "sub_refl");
+    std::string s;
     node *n1 = find_proof(r->ops[0]);
     if (!n1) return NULL;
     property const &res1 = n1->get_result();
     interval const &i1 = res1.bnd;
     if (same_ops && r->type == BOP_MUL) {
       nodes.push_back(n1);
+      s = "square";
+      s += 'o' + sign(i1);
       n = new theorem_node(1, &res1, property(real, square(i1)), "square");
       break;
     }
@@ -266,17 +269,23 @@ node *computation_scheme::generate_proof(ast_real const *real) const {
     if (!n2) return NULL;
     property const &res2 = n2->get_result();
     interval const &i2 = res2.bnd;
-    char const *s = NULL;
     property res(real);
     interval &i = res.bnd;
     switch (r->type) {
     case BOP_ADD: i = i1 + i2; s = "add"; break;
     case BOP_SUB: i = i1 - i2; s = "sub"; break;
-    case BOP_MUL: i = i1 * i2; s = "mul"; break;
+    case BOP_MUL:
+      i = i1 * i2;
+      s = "mul_";
+      s += 'o' + sign(i1);
+      s += 'o' + sign(i2);
+      break;
     case BOP_DIV:
       if (contains_zero(i2)) return NULL;
       i = i1 / i2;
       s = "div";
+      s += 'o' + sign(i1);
+      s += 'o' + sign(i2);
       break;
     default:
       assert(false);
