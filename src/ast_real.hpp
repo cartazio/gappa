@@ -69,12 +69,4 @@ struct ast_real: ast_real_aux
 
 ast_real *normalize(ast_real const &);
 
-template< class CharType, class CharTraits >
-std::basic_ostream< CharType, CharTraits > &operator<<
-  (std::basic_ostream< CharType, CharTraits > &stream, real_op const &value)
-{
-  stream << "(" << value.type << /*' ' << value.left << ')'*/" ...)"; // TODO
-  return stream;
-}
-
 #endif // AST_REAL_HPP
