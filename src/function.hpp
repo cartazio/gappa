@@ -15,14 +15,14 @@ struct hypothesis_constraint {
 
 struct bound_computation {
   interval (*compute)(interval const **);
-  node *(*generate)(property_bound const *, property_bound const &);
+  node *(*generate)(property const *, property const &);
 };
 
 struct error_computation {
   hypothesis_constraint res;
   hypothesis_constraint const *constraints;
   interval (*compute)(interval const **);
-  node *(*generate)(property_vect const &, property_error &);
+  node *(*generate)(property_vect const &, property &);
 };
 
 #endif // FUNCTION_HPP

@@ -2,26 +2,10 @@
 #include "number.hpp"
 #include "interval.hpp"
 
-bool property_bound::operator>(property_bound const &p) const {
-  return var == p.var && bnd <= p.bnd;
-}
-
-bool property_error::operator>(property_error const &p) const {
-  return var == p.var && *real == *p.real && error == p.error && err <= p.err;
-}
-
-namespace {
-struct do_imply: boost::static_visitor< bool > {
-  template< class T >
-  bool operator()(T const &v1, T const &v2) const { return v1 > v2; }
-  template< class T, class U >
-  typename boost::disable_if< boost::is_same< T, U >, bool >::type
-  /*bool*/ operator()(T const &, U const &) const { return false; }
-};
-}
-
-bool operator>(property const &v1, property const &v2) {
-  return boost::apply_visitor(do_imply(), v1, v2);
+bool operator>(property const &u, property const &v) {
+  if (u.type != v.type || u.var != v.var) return false;
+  if (u.type != PROP_BND && !(*u.real == *v.real)) return false;
+  return u.bnd <= v.bnd;
 }
 
 bool property_vect::operator>(property_vect const &s) const {

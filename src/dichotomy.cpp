@@ -30,27 +30,27 @@ std::vector< variable * > multiple_definition(variable *v) {
 
 struct dichotomy_failure {
   property_vect hyp;
-  property_bound res;
+  property res;
   interval bnd;
-  dichotomy_failure(property_vect const &h, property_bound const &r, interval const &b): hyp(h), res(r), bnd(b) {}
+  dichotomy_failure(property_vect const &h, property const &r, interval const &b): hyp(h), res(r), bnd(b) {}
 };
 
-void dichotomize(property_vect &hyp, property_bound &res, int idx) {
-  property_bound *p = boost::get< property_bound >(&hyp[idx]);
-  assert(p);
+void dichotomize(property_vect &hyp, property &res, int idx) {
+  property &h = hyp[idx];
+  assert(res.type == PROP_BND && h.type == PROP_BND);
   interval bnd = basic_proof::compute_bound(hyp, res.var);
   if (is_defined(bnd) && bnd <= res.bnd) {
     //std::cout << "  " << p->bnd << " -> " << bnd << std::endl;
     res.bnd = bnd;
     return;
   }
-  if (is_singleton(p->bnd)) throw dichotomy_failure(hyp, res, bnd);
-  std::pair< interval, interval > ii = split(p->bnd);
-  p->bnd = ii.first;
-  property_bound res1 = res;
+  if (is_singleton(h.bnd)) throw dichotomy_failure(hyp, res, bnd);
+  std::pair< interval, interval > ii = split(h.bnd);
+  h.bnd = ii.first;
+  property res1 = res;
   dichotomize(hyp, res1, idx);
-  p->bnd = ii.second;
-  property_bound res2 = res;
+  h.bnd = ii.second;
+  property res2 = res;
   dichotomize(hyp, res2, idx);
   res.bnd = hull(res1.bnd, res2.bnd);
 }
@@ -59,24 +59,22 @@ void dichotomize(property_vect &hyp, property_bound &res, int idx) {
 
 node *generate_proof(property_vect const &hyp, property const &res) {
   if (node *n = generate_basic_proof(hyp, res)) return n;
-  property_bound const *p = boost::get< property_bound const >(&res);
-  if (!p || !is_defined(p->bnd)) return NULL;
-  std::vector< variable * > vars = multiple_definition(p->var);
+  if (res.type != PROP_BND || !is_defined(res.bnd)) return NULL;
+  std::vector< variable * > vars = multiple_definition(res.var);
   int i;
-  property_bound bnd;
+  property bnd(PROP_BND);
   bnd.var = vars[0];
   i = hyp.find_compatible_property(bnd);
   assert(i >= 0);
-  bnd.var = p->var;
-  bnd.bnd = p->bnd;
+  bnd.var = res.var;
+  bnd.bnd = res.bnd;
   property_vect hyp2 = hyp;
   try {
     dichotomize(hyp2, bnd, i);
   } catch (dichotomy_failure e) {
-    property_bound *h = boost::get< property_bound >(&e.hyp[i]);
     std::cerr
       << "dichotomy failure: when "
-      << h->var->name->name << " is " << h->bnd << ", "
+      << e.hyp[i].var->name->name << " is " << e.hyp[i].bnd << ", "
       << e.res.var->name->name << " is in " << e.bnd
       << " potentially outside of " << e.res.bnd << std::endl;
     return NULL;

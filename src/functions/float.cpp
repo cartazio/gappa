@@ -23,18 +23,14 @@ struct node_theorem: node {
     res = p;
     hyp = h;
   }
-  node_theorem(int nb, property_bound const *h, property const &p, char const *n): node(THEOREM), name(n) {
+  node_theorem(int nb, property const *h, property const &p, char const *n): node(THEOREM), name(n) {
     res = p;
     for(int i = 0; i < nb; ++i) hyp.push_back(h[i]);
   }
 };
 
 static void extract_intervals(property_vect const &hyp, interval const **ints) {
-  for(int i = 0, l = hyp.size(); i < l; ++i) {
-    if (property_bound const *p = boost::get< property_bound const >(&hyp[i])) ints[i] = &p->bnd; else
-    if (property_error const *p = boost::get< property_error const >(&hyp[i])) ints[i] = &p->err; else
-    assert(false);
-  }
+  for(int i = 0, l = hyp.size(); i < l; ++i) ints[i] = &hyp[i].bnd;
 }
 
 #define bop_definition(type, TYPE, PREC)	\
@@ -65,7 +61,7 @@ static interval bound_compute_add_float(interval const **ints) {
   return *ints[0] + *ints[1];
 }
 
-static node *bound_generate_add_float(property_bound const *hyp, property_bound const &res) {
+static node *bound_generate_add_float(property const *hyp, property const &res) {
   return new node_theorem(2, hyp, res, "add");
 }
 
@@ -76,10 +72,10 @@ static interval compute_add_float_abs(interval const **ints) {
   return *ints[0] + *ints[1] + from_exponent(ulp_exponent(*ints[2]), GMP_RNDN);
 }
 
-static node *generate_add_float_abs(property_vect const &hyp, property_error &res) {
+static node *generate_add_float_abs(property_vect const &hyp, property &res) {
   interval const *ints[3];
   extract_intervals(hyp, ints);
-  res.err = compute_add_float_abs(ints);
+  res.bnd = compute_add_float_abs(ints);
   return new node_theorem(hyp, res, "add");
 }
 
@@ -92,11 +88,11 @@ static interval compute_add_float_abs_sterbenz(interval const **ints) {
   return *ints[2] + *ints[3];
 }
 
-static node *generate_add_float_abs_sterbenz(property_vect const &hyp, property_error &res) {
+static node *generate_add_float_abs_sterbenz(property_vect const &hyp, property &res) {
   interval const *ints[5];
   extract_intervals(hyp, ints);
-  res.err = compute_add_float_abs_sterbenz(ints);
-  if (!is_defined(res.err)) return NULL;
+  res.bnd = compute_add_float_abs_sterbenz(ints);
+  if (!is_defined(res.bnd)) return NULL;
   return new node_theorem(hyp, res, "add_sterbenz");
 }
 
@@ -107,10 +103,10 @@ static interval compute_add_float_abs_singleton(interval const **ints) {
   return to_real(*ints[0]) + to_real(*ints[1]) - to_real(*ints[0] + *ints[1]) + *ints[2] + *ints[3];
 }
 
-static node *generate_add_float_abs_singleton(property_vect const &hyp, property_error &res) {
+static node *generate_add_float_abs_singleton(property_vect const &hyp, property &res) {
   interval const *ints[4];
   extract_intervals(hyp, ints);
-  res.err = compute_add_float_abs_singleton(ints);
+  res.bnd = compute_add_float_abs_singleton(ints);
   return new node_theorem(hyp, res, "add_singleton");
 }
 
@@ -129,7 +125,7 @@ static interval bound_compute_sub_float(interval const **ints) {
   return *ints[0] - *ints[1];
 }
 
-static node *bound_generate_sub_float(property_bound const *hyp, property_bound const &res) {
+static node *bound_generate_sub_float(property const *hyp, property const &res) {
   return new node_theorem(2, hyp, res, "sub");
 }
 
@@ -140,10 +136,10 @@ static interval compute_sub_float_abs(interval const **ints) {
   return *ints[0] - *ints[1] + from_exponent(ulp_exponent(*ints[2]), GMP_RNDN);
 }
 
-static node *generate_sub_float_abs(property_vect const &hyp, property_error &res) {
+static node *generate_sub_float_abs(property_vect const &hyp, property &res) {
   interval const *ints[3];
   extract_intervals(hyp, ints);
-  res.err = compute_sub_float_abs(ints);
+  res.bnd = compute_sub_float_abs(ints);
   return new node_theorem(hyp, res, "sub");
 }
 
@@ -156,11 +152,11 @@ static interval compute_sub_float_abs_sterbenz(interval const **ints) {
   return *ints[2] - *ints[3];
 }
 
-static node *generate_sub_float_abs_sterbenz(property_vect const &hyp, property_error &res) {
+static node *generate_sub_float_abs_sterbenz(property_vect const &hyp, property &res) {
   interval const *ints[5];
   extract_intervals(hyp, ints);
-  res.err = compute_sub_float_abs_sterbenz(ints);
-  if (!is_defined(res.err)) return NULL;
+  res.bnd = compute_sub_float_abs_sterbenz(ints);
+  if (!is_defined(res.bnd)) return NULL;
   return new node_theorem(hyp, res, "sub_sterbenz");
 }
 
@@ -171,10 +167,10 @@ static interval compute_sub_float_abs_singleton(interval const **ints) {
   return to_real(*ints[0]) - to_real(*ints[1]) - to_real(*ints[0] - *ints[1]) + *ints[2] - *ints[3];
 }
 
-static node *generate_sub_float_abs_singleton(property_vect const &hyp, property_error &res) {
+static node *generate_sub_float_abs_singleton(property_vect const &hyp, property &res) {
   interval const *ints[4];
   extract_intervals(hyp, ints);
-  res.err = compute_sub_float_abs_singleton(ints);
+  res.bnd = compute_sub_float_abs_singleton(ints);
   return new node_theorem(hyp, res, "sub_singleton");
 }
 
@@ -193,7 +189,7 @@ static interval bound_compute_mul_float(interval const **ints) {
   return *ints[0] * *ints[1];
 }
 
-static node *bound_generate_mul_float(property_bound const *hyp, property_bound const &res) {
+static node *bound_generate_mul_float(property const *hyp, property const &res) {
   return new node_theorem(2, hyp, res, "mul");
 }
 
@@ -205,10 +201,10 @@ static interval compute_mul_float_abs(interval const **ints) {
        + *ints[2] * *ints[3] + from_exponent(ulp_exponent(*ints[4]), GMP_RNDN);
 }
 
-static node *generate_mul_float_abs(property_vect const &hyp, property_error &res) {
+static node *generate_mul_float_abs(property_vect const &hyp, property &res) {
   interval const *ints[5];
   extract_intervals(hyp, ints);
-  res.err = compute_mul_float_abs(ints);
+  res.bnd = compute_mul_float_abs(ints);
   return new node_theorem(hyp, res, "mul");
 }
 
@@ -220,10 +216,10 @@ static interval compute_mul_float_abs_singleton(interval const **ints) {
   return i0 * i1 - to_real(*ints[0] * *ints[1]) + *ints[2] * i1 + *ints[3] * i0 + *ints[2] * *ints[3];
 }
 
-static node *generate_mul_float_abs_singleton(property_vect const &hyp, property_error &res) {
+static node *generate_mul_float_abs_singleton(property_vect const &hyp, property &res) {
   interval const *ints[4];
   extract_intervals(hyp, ints);
-  res.err = compute_mul_float_abs_singleton(ints);
+  res.bnd = compute_mul_float_abs_singleton(ints);
   return new node_theorem(hyp, res, "mul_singleton");
 }
 
@@ -234,10 +230,10 @@ static interval compute_mul_float_rel(interval const **ints) {
   return (one + *ints[0]) * (one + *ints[1]) * (one + from_exponent(-23, GMP_RNDN)) - one; // TODO
 }
 
-static node *generate_mul_float_rel(property_vect const &hyp, property_error &res) {
+static node *generate_mul_float_rel(property_vect const &hyp, property &res) {
   interval const *ints[2];
   extract_intervals(hyp, ints);
-  res.err = compute_mul_float_rel(ints);
+  res.bnd = compute_mul_float_rel(ints);
   return new node_theorem(hyp, res, "mul");
 }
 

@@ -40,8 +40,8 @@ ast_prop_and merge_prop_and(ast_prop const &_p) {
   }
 }
 
-property_bound generate_property(ast_atom_bound const &p) {
-  property_bound r;
+property generate_property(ast_atom_bound const &p) {
+  property r(PROP_BND);
   r.var = p.ident;
   type_id type = r.var->type;
   assert(type != UNDEFINED);
@@ -52,22 +52,21 @@ property_bound generate_property(ast_atom_bound const &p) {
   return r;
 }
 
-property_error generate_property(ast_atom_error const &p, bool goal) {
-  property_error r;
-  r.error = p.error;
+property generate_property(ast_atom_error const &p, bool goal) {
+  property r(p.error == 0 ? PROP_ABS : PROP_REL);
   r.var = p.ident;
   r.real = p.real;
   if (p.interval) {
-    r.err = interval(*p.interval, goal);
+    r.bnd = interval(*p.interval, goal);
     delete p.interval;
   }
   return r;
 }
 
-typedef std::pair< property_bound, property_error > property_pair;
+typedef std::pair< property, property > property_pair;
 
-property_bound generate_property(ast_atom_approx const &p, property_error **_q) {
-  property_bound r;
+property generate_property(ast_atom_approx const &p, property **_q) {
+  property r(PROP_BND);
   r.var = p.ident;
   type_id type = r.var->type;
   assert(type != UNDEFINED);
@@ -87,7 +86,7 @@ void generate_subgraph(ast_prop_impl const &p, node_id type) {
     else if (ast_atom_error *r = boost::get< ast_atom_error >(&q))
       hyp.push_back(generate_property(*r, false));
     else if (ast_atom_approx *r = boost::get< ast_atom_approx >(&q)) {
-      property_error *s;
+      property *s;
       hyp.push_back(generate_property(*r, &s));
       if (s) { hyp.push_back(*s); delete s; }
     } else {

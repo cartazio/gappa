@@ -7,28 +7,18 @@
 
 struct variable;
 
-struct property_bound;
-struct property_error;
+enum property_type { PROP_BND, PROP_ABS, PROP_REL };
 
-typedef boost::variant
-  < property_bound,
-    property_error > property;
-
-bool operator>(property const &, property const &);
-
-struct property_bound {
+struct property {
+  property_type type;
   variable *var;
   interval bnd;
-  bool operator>(property_bound const &p) const;
+  ast_real const *real; // only used for ABS and REL
+  property(): type(property_type(-1)) {}
+  property(property_type t): type(t) {}
 };
 
-struct property_error {
-  variable *var;
-  ast_real const *real;
-  interval err;
-  int error;
-  bool operator>(property_error const &p) const;
-};
+bool operator>(property const &, property const &);
 
 struct property_vect: std::vector< property > {
   bool operator>(property_vect const &p) const;

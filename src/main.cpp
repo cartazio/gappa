@@ -21,15 +21,15 @@ int main() {
   std::cout << conclusions.size() << " conclusions" << std::endl;
   for(node_set::const_iterator i = conclusions.begin(), end = conclusions.end(); i != end; ++i) {
     graph_layer layer;
-    // node *n = generate_basic_proof((*i)->hyp, (*i)->res);
     node *n = generate_proof((*i)->hyp, (*i)->res);
     if (!n) continue;
-    if (property_bound *r = boost::get< property_bound >(&n->res))
-      std::cout << r->var->name->name << " in " << r->bnd << std::endl;
-    else if (property_error *r = boost::get< property_error >(&n->res)) {
-      static char const *type[] = { "ABS", "REL" };
-      std::cout << type[r->error] << '(' << r->var->name->name << ", ...) in " << r->err << std::endl;
+    property &p = n->res;
+    if (p.type == PROP_BND)
+      std::cout << p.var->name->name << " in ";
+    else if (p.type == PROP_ABS || p.type == PROP_REL) {
+      std::cout << (p.type == PROP_ABS ? "ABS(" : "REL(") << p.var->name->name << ", ...) in ";
     } else assert(false);
+    std::cout << p.bnd << std::endl;
     layer.flatten();
   }
 }
