@@ -24,47 +24,34 @@ pattern_register::pattern_register(pattern const &p1, pattern const &p2, std::st
   scheme_register dummy(new pattern_factory(p1, p2, n));
 }
 
-pattern rounding_p(int a, int b) {
-  return pattern(rounding_placeholder(pattern(a), b));
+static pattern rnd(pattern const &a, int b) {
+  return pattern(rounding_placeholder(a, b));
 }
 
-pattern_register absolute_error_trans(
-  pattern(0) - rounding_p(1, 0),
-  (pattern(0) - pattern(1)) + (pattern(1) - rounding_p(1, 0)),
-  "absolute_error_trans");
+static pattern a(0), b(1), c(2), d(3);
 
-/*
-pattern_register add_decomposition(
-  (pattern(0) + pattern(1)) - (rounding_p(2, 0) + rounding_p(3, 1)),
-  (pattern(0) - rounding_p(2, 0)) + (pattern(1) - rounding_p(3, 1)),
-  "add_decomposition");
+#define REWRITE(name,lhs,rhs) pattern_register name(lhs, rhs, #name)
 
-pattern_register sub_decomposition(
-  (pattern(0) - pattern(1)) - (rounding_p(2, 0) - rounding_p(3, 1)),
-  (pattern(0) - rounding_p(2, 0)) - (pattern(1) - rounding_p(3, 1)),
-  "sub_decomposition");
-*/
+REWRITE(absolute_error_trans,
+	a - rnd(b, 0),
+	(a - b) + (b - rnd(b, 0)));
 
-pattern_register add_decomposition(
-  (pattern(0) + pattern(1)) - (pattern(2) + pattern(3)),
-  (pattern(0) - pattern(2)) + (pattern(1) - pattern(3)),
-  "add_decomposition");
+REWRITE(add_decomposition,
+	(a + b) - (c + d),
+	(a - c) + (b + d));
 
-pattern_register sub_decomposition(
-  (pattern(0) - pattern(1)) - (pattern(2) - pattern(3)),
-  (pattern(0) - pattern(2)) - (pattern(1) - pattern(3)),
-  "sub_decomposition");
+REWRITE(sub_decomposition,
+	(a - b) - (c - d),
+	(a - c) - (b - d));
 
-/*
-pattern_register mul_decomposition(
-  pattern(0) * pattern(1) - rounding_p(2, 0) * rounding_p(3, 1),
-  pattern(0) * (pattern(1) - rounding_p(3, 1)) + rounding_p(3, 1) * (pattern(0) - rounding_p(2, 0)),
-  "mul_decomposition");
-*/
+REWRITE(mul_decomposition_simple,
+	a * b - c * d,
+	a * (b - d) + d * (a - c));
 
-pattern_register mul_decomposition(
-  pattern(0) * pattern(1) - rounding_p(2, 0) * rounding_p(3, 1),
-  rounding_p(2, 0) * (pattern(1) - rounding_p(3, 1)) +
-  rounding_p(3, 1) * (pattern(0) - rounding_p(2, 0)) +
-  (pattern(0) - rounding_p(2, 0)) * (pattern(1) - rounding_p(3, 1)),
-  "mul_decomposition");
+REWRITE(mul_decomposition_full_left,
+	a * b - c * d,
+	a * (b - d) + b * (a - c) - (a - c) * (b - d));
+
+REWRITE(mul_decomposition_full_right,
+	a * b - c * d,
+	c * (b - d) + d * (a - c) + (a - c) * (b - d));
