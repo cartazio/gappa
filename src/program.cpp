@@ -1,6 +1,8 @@
 #include <algorithm>
 #include "program.hpp"
 
+program_t program;
+
 variable::variable(ast_ident *n, type_id t): name(n), type(t), def(-2) {
   real = new ast_real(this);
 }

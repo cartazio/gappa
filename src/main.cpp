@@ -4,30 +4,13 @@
 #include "proof_graph.hpp"
 #include "basic_proof.hpp"
 #include "interval.hpp"
+#include "function.hpp"
+#include "functions/float.hpp"
 
-program_t program;
-
-void initialize_functions() {
-  ast_ident *id;
-  type_id *args = new type_id[3];
-  args[0] = FLOAT32;
-  args[1] = FLOAT32;
-  args[2] = UNDEFINED;
-  type_id *ret = new type_id[2];
-  ret[0] = FLOAT32;
-  ret[1] = UNDEFINED;
-  id = ast_ident::find("add32");
-  id->fun = new function(id, BOP_ADD);
-  id->fun->return_type = ret;
-  id->fun->args_type = args;
-  id = ast_ident::find("sub32");
-  id->fun = new function(id, BOP_SUB);
-  id->fun->return_type = ret;
-  id->fun->args_type = args;
-  id = ast_ident::find("mul32");
-  id->fun = new function(id, BOP_MUL);
-  id->fun->return_type = ret;
-  id->fun->args_type = args;
+static void initialize_functions() {
+  initialize_add32();
+  //initialize_sub32();
+  initialize_mul32();
 }
 
 extern int yyparse(void);

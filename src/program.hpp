@@ -8,6 +8,7 @@
 
 struct ast_ident;
 struct instruction;
+struct node;
 
 struct variable {
   ast_ident *name;
@@ -38,11 +39,14 @@ std::basic_ostream< CharType, CharTraits > &operator<<
   return stream;
 }
 
+struct function_match;
+
 struct function {
   ast_ident *name;
   int real_op;
   type_id *return_type;
   type_id *args_type;
+  function_match *matches;
   function(ast_ident *n, int r): name(n), real_op(r) {}
 };
 
