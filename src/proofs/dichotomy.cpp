@@ -1,4 +1,5 @@
 #include "numbers/interval_utility.hpp"
+#include "numbers/round.hpp"
 #include "parser/ast.hpp"
 #include "proofs/dichotomy.hpp"
 #include "proofs/proof_graph.hpp"
@@ -11,8 +12,9 @@ typedef std::vector< graph_t * > graph_vect;
 class dichotomy_node: public dependent_node {
   graph_vect graphs;
   property_vect &tmp_hyp;
+  int depth;
  public:
-  dichotomy_node(property_vect &v, property const &p): dependent_node(UNION, p), tmp_hyp(v) {
+  dichotomy_node(property_vect &v, property const &p): dependent_node(UNION, p), tmp_hyp(v), depth(0) {
     hyp = v;
   }
   ~dichotomy_node();
@@ -54,12 +56,19 @@ void dichotomy_node::dichotomize() {
     stacker.clear();
   }
   property const &h = tmp_hyp[0];
-  if (is_singleton(h.bnd)) throw dichotomy_failure(h, res, bnd);
-  std::pair< interval, interval > ii = split(h.bnd); // TODO
+  rounded_real const *rr = boost::get< rounded_real const >(res.real);
+  if (rr) {
+    std::string dummy;
+    interval i = rr->rounding->enforce(h.bnd, dummy);
+    if (!is_defined(i) || is_singleton(i)) throw dichotomy_failure(h, res, bnd);
+  }
+  std::pair< interval, interval > ii = split(h.bnd);
+  if (++depth > 100) throw dichotomy_failure(h, res, bnd);
   tmp_hyp.replace_front(property(h.real, ii.first));
   dichotomize();
   tmp_hyp.replace_front(property(h.real, ii.second));
   dichotomize();
+  --depth;
 }
 
 struct dichotomy_scheme: proof_scheme {

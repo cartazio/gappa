@@ -27,7 +27,8 @@ struct float_rounding_class: rounding_class {
   rounding_type type;
   char const *ident;
   float_rounding_class(float_format const *f, rounding_type t, char const *i);
-  virtual interval bound(interval const &, std::string &) const;
+  virtual interval round                      (interval const &, std::string &) const;
+  virtual interval enforce                    (interval const &, std::string &) const;
   virtual interval absolute_error_from_real   (interval const &, std::string &) const;
   virtual interval relative_error_from_real   (interval const &, std::string &) const;
   virtual interval absolute_error_from_rounded(interval const &, std::string &) const;
@@ -63,11 +64,19 @@ static float_rounding_class classes[4][4] = {
     float_rounding_class(&formats[3], ROUND_CE, "128ce") }
 };
 
-interval float_rounding_class::bound(interval const &i, std::string &name) const {
+interval float_rounding_class::enforce(interval const &i, std::string &name) const {
+  number a = round_number(lower(i), format, &float_format::roundU);
+  number b = round_number(upper(i), format, &float_format::roundD);
+  name = std::string("float") + ident + "_enforce";
+  if (!(a <= b)) return interval();
+  return interval(a, b);
+}
+
+interval float_rounding_class::round(interval const &i, std::string &name) const {
   rounding_fun f = roundings[type];
   number a = round_number(lower(i), format, f);
   number b = round_number(upper(i), format, f);
-  name = std::string("float") + ident + "_bound";
+  name = std::string("float") + ident + "_round";
   return interval(a, b);
 }
 

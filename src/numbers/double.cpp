@@ -7,8 +7,8 @@
 struct double_rounding_class: rounding_class {
   interval he, hb;
   double_rounding_class();
-  virtual interval bound(interval const &, std::string &) const;
-  virtual interval error_from_real(interval const &, std::string &) const;
+  virtual interval round             (interval const &, std::string &) const;
+  virtual interval error_from_real   (interval const &, std::string &) const;
   virtual interval error_from_rounded(interval const &, std::string &) const;
   virtual std::string name() const { return "ddouble"; }
 };
@@ -21,7 +21,7 @@ double_rounding_class::double_rounding_class() {
   n->rnd = this;
 }
 
-interval double_rounding_class::bound(interval const &i, std::string &name) const {
+interval double_rounding_class::round(interval const &i, std::string &name) const {
   name = "ddouble_bound";
   return i * hb;
 }

@@ -40,7 +40,8 @@ typedef void (float_format::*rounding_fun)(mpfr_t &) const;
 number round_number(number const &, float_format const *, rounding_fun);
 
 struct rounding_class {
-  virtual interval bound(interval const &, std::string &) const;
+  virtual interval round(interval const &, std::string &) const;
+  virtual interval enforce(interval const &, std::string &) const;
   virtual interval absolute_error_from_real(interval const &, std::string &) const;
   virtual interval absolute_error_from_rounded(interval const &, std::string &) const;
   virtual interval relative_error_from_real(interval const &, std::string &) const;

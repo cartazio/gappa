@@ -44,6 +44,7 @@ node *absolute_error_from_real_scheme::generate_proof(ast_real const *real) cons
   property const &res1 = n->get_result();
   std::string name;
   property res(real, rr->rounding->absolute_error_from_real(res1.bnd, name));
+  if (!is_defined(res.bnd)) return NULL;
   return new modus_node(1, &n, new theorem_node(1, &res1, res, name));
 }
 
@@ -77,6 +78,7 @@ node *absolute_error_from_rounded_scheme::generate_proof(ast_real const *real) c
   property const &res1 = n->get_result();
   std::string name;
   property res(real, rr->rounding->absolute_error_from_rounded(res1.bnd, name));
+  if (!is_defined(res.bnd)) return NULL;
   return new modus_node(1, &n, new theorem_node(1, &res1, res, name));
 }
 
@@ -110,6 +112,7 @@ node *relative_error_from_real_scheme::generate_proof(ast_real const *real) cons
   property const &res1 = n->get_result();
   std::string name;
   property res(real, rr->rounding->relative_error_from_real(res1.bnd, name));
+  if (!is_defined(res.bnd)) return NULL;
   return new modus_node(1, &n, new theorem_node(1, &res1, res, name));
 }
 
@@ -143,6 +146,7 @@ node *relative_error_from_rounded_scheme::generate_proof(ast_real const *real) c
   property const &res1 = n->get_result();
   std::string name;
   property res(real, rr->rounding->relative_error_from_rounded(res1.bnd, name));
+  if (!is_defined(res.bnd)) return NULL;
   return new modus_node(1, &n, new theorem_node(1, &res1, res, name));
 }
 
@@ -174,7 +178,8 @@ node *rounding_bound_scheme::generate_proof(ast_real const *real) const {
   if (!n) return NULL;
   property const &res1 = n->get_result();
   std::string name;
-  property res(real, r->rounding->bound(res1.bnd, name));
+  property res(real, r->rounding->round(res1.bnd, name));
+  if (!is_defined(res.bnd)) return NULL;
   return new modus_node(1, &n, new theorem_node(1, &res1, res, name));
 }
 
