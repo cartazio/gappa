@@ -156,15 +156,17 @@ int display(node *n) {
   plouf << "Lemma l" << n_id << " : ";
   for(property_vect::const_iterator i = n->hyp.begin(), end = n->hyp.end(); i != end; ++i)
     plouf << 'p' << display(*i) << " -> ";
-  plouf << 'p' << display(n->res) << ".\n";
+  int p_res = display(n->res);
+  plouf << 'p' << p_res << ".\n";
   plouf << " intros";
   for(int i = 0, l = n->hyp.size(); i < l; ++i) plouf << " h" << i;
-  plouf << ".\n";
+  plouf << '.';
   if (n->type == THEOREM) {
-    plouf << " apply " << static_cast< node_theorem * >(n)->name << '.';
-    for(int i = 0, l = n->hyp.size(); i < l; ++i) plouf << " exact h" << i << '.';
-    plouf << "\n compute. trivial.\nQed.\n";
+    plouf << " unfold p" << p_res << ".\n apply " << static_cast< node_theorem * >(n)->name << " with";
+    for(int i = 0, l = n->hyp.size(); i < l; ++i) plouf << " (" << i + 1 << " := h" << i << ')';
+    plouf << " (" << n->hyp.size() << " := a" << "TODO" << ").\n compute. trivial.\nQed.\n";
   } else if (n->type == MODUS) {
+    plouf << '\n';
     property_key::map pmap;
     int nb_hyps = 0;
     for(property_vect::const_iterator j = n->hyp.begin(), j_end = n->hyp.end(); j != j_end; ++j, ++nb_hyps) {
