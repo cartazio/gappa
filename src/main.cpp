@@ -213,11 +213,11 @@ std::string display(node *n) {
              " reflexivity.\nQed.\n";
     break; }
   case UNION: {
-    plouf << "\n union";
+    plouf << "\n (*union";
     node_vect const &pred = n->get_subproofs();
     for(node_vect::const_iterator i = pred.begin(), end = pred.end(); i != end; ++i)
       plouf << ' ' << display(*i);
-    plouf << ".\nQed.\n";
+    plouf << ".*)\nAdmitted.\n";
     break; }
   default:
     assert(false);
