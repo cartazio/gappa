@@ -4,14 +4,16 @@
 static void destroyer(void *) {}
 static void *cloner(void *) { return 0; }
 static void *thrower_p() { throw; }
-//static void *thrower_p(void *) { throw; }
+static void *thrower_p(void *) { throw; }
 static void *thrower_p(void *, void *) { throw; }
+static bool thrower_b(void *) { throw; }
 static bool thrower_b(void *, void *) { throw; }
 
 interval_description interval_not_defined =
   { create: &thrower_p, destroy: &destroyer, clone: &cloner,
     add: &thrower_p, sub: &thrower_p, mul: &thrower_p, div: &thrower_p,
-    subset: &thrower_b };
+    subset: &thrower_b, singleton: &thrower_b, in_zero: &thrower_b,
+    to_real: &thrower_p };
 
 interval::interval(): desc(&interval_not_defined), ptr(0) {}
 interval::interval(interval_description const *d): desc(d), ptr((*d->create)()) {}
@@ -36,7 +38,9 @@ bool is_singleton(interval const &v) {
   return (*v.desc->singleton)(v.ptr);
 }
 
-//bool contains_zero(interval const &v);
+bool contains_zero(interval const &v) {
+  return (*v.desc->in_zero)(v.ptr);
+}
 
 bool is_zero(interval const &v) {
   return is_singleton(v) && contains_zero(v);

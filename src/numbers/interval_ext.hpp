@@ -14,15 +14,12 @@ struct interval_description {
   void *(*div)(void *, void *);
   bool (*subset)(void *, void *);
   bool (*singleton)(void *);
+  bool (*in_zero)(void *);
   void *(*to_real)(void *);
 };
 
 extern interval_description interval_not_defined;
 extern interval_description interval_real_desc;
-
-int ulp_exponent(interval const &);
-int mig_exponent(interval const &);
-int mag_exponent(interval const &);
 
 bool is_defined(interval const &);
 bool is_singleton(interval const &);
@@ -30,7 +27,6 @@ bool is_zero(interval const &);
 bool contains_zero(interval const &);
 
 interval to_real(interval const &);
-interval from_exponent(int, int);
 interval hull(interval const &, interval const &);
 
 std::pair< interval, interval > split(interval const &);

@@ -134,4 +134,5 @@ void link_variables() {
       restart = true;
     }
   } while (restart);
+  make_variables_real();
 }

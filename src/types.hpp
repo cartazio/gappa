@@ -1,6 +1,8 @@
 #ifndef TYPES_HPP
 #define TYPES_HPP
 
-enum type_id { UNDEFINED, FLOAT32, FLOAT64, FLOAT80, FLOAT128 };
+struct interval_description;
+typedef interval_description *type_id;
+type_id const UNDEFINED = 0;
 
 #endif // TYPES_HPP

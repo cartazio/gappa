@@ -14,7 +14,7 @@ struct variable {
   ast_ident *name;
   ast_real *real;
   type_id type;
-  variable(ast_ident *n, type_id t = UNDEFINED);
+  variable(ast_ident *n, type_id t = NULL);
   int get_definition();
  private:
   int def;

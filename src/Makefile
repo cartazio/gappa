@@ -2,20 +2,18 @@ CXX=g++-3.4
 CXXFLAGS=-Wall -ansi -g -O2
 OBJS=ast.o basic_proof.o dichotomy.o lexer.yy.o main.o parser.o parser.tab.o program.o proof_graph.o property.o
 OBJS_functions=functions/float.o
-OBJS_numbers=numbers/float.o numbers/interval.o numbers/real.o
+OBJS_numbers=numbers/float.o numbers/interval.o numbers/real.o numbers/softfloat.o
 
-main: $(OBJS) $(OBJS_functions) $(OBJS_numbers)
-	$(CXX) -o $@ $^ -lfl -lmpfr -lgmp
+main: build
+	$(CXX) -o $@ $(OBJS) $(OBJS_functions) $(OBJS_numbers) -lfl -lmpfr -lgmp
 
-$(OBJS_functions)::
+build:	$(OBJS)
 	make -C functions
-
-$(OBJS_numbers)::
 	make -C numbers
 
-plouf2.exe: $(OBJS)
-	$(CXX) -static -o $@ $^ -lfl -lmpfr -lgmp
-	strip $@
+#plouf2.exe: $(OBJS)
+#	$(CXX) -static -o $@ $^ -lfl -lmpfr -lgmp
+#	strip $@
 
 include .depend
 

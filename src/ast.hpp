@@ -54,4 +54,6 @@ struct ast_prop_impl {
   ast_prop left, right;
 };
 
+void make_variables_real();
+
 #endif // AST_HPP

@@ -8,6 +8,20 @@
 #include <boost/preprocessor/cat.hpp>
 #include <boost/preprocessor/stringize.hpp>
 
+int ulp_exponent(interval const &);
+int mig_exponent(interval const &);
+int mag_exponent(interval const &);
+interval from_exponent(int, int);
+
+extern interval_description interval_float32_desc;
+extern interval_description interval_float64_desc;
+extern interval_description interval_floatx80_desc;
+extern interval_description interval_float128_desc;
+#define FLOAT32 &interval_float32_desc
+#define FLOAT64 &interval_float64_desc
+#define FLOAT80 &interval_floatx80_desc
+#define FLOAT128 &interval_float128_desc
+
 static type_id args32[3] = { FLOAT32, FLOAT32, UNDEFINED };
 static type_id args64[3] = { FLOAT64, FLOAT64, UNDEFINED };
 static type_id args80[3] = { FLOAT80, FLOAT80, UNDEFINED };

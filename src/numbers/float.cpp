@@ -46,9 +46,14 @@ NUMBER_FLOAT(128)
   static void *sub_##size(void *u, void *v) { return new interval_float##size(cast(size,u) - cast(size,v)); }	\
   static void *mul_##size(void *u, void *v) { return new interval_float##size(cast(size,u) * cast(size,v)); }	\
   static void *div_##size(void *u, void *v) { return new interval_float##size(cast(size,u) / cast(size,v)); }	\
-  static bool subset_##size(void *u, void *v) { return subset(cast(u), cast(v)); }	\
-  static bool singleton_##size(void *v) { return singleton(cast(v)); }			\
-  interval_description interval_float##size_desc =	\
+  static bool subset_##size(void *u, void *v) { return subset(cast(size,u), cast(size,v)); }	\
+  static bool singleton_##size(void *v) { return singleton(cast(size,v)); }			\
+  interval_description interval_float##size##_desc =	\
     { create: &create_##size, destroy: &destroy_##size, clone: &clone_##size,	\
       add: &add_##size, sub: &sub_##size, mul: &mul_##size, div: &div_##size,	\
       subset: &subset_##size, singleton: singleton_##size };
+
+INTERVAL_FLOAT(32)
+INTERVAL_FLOAT(64)
+INTERVAL_FLOAT(x80)
+INTERVAL_FLOAT(128)
