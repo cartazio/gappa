@@ -12,6 +12,13 @@ struct proof_scheme
   proof_scheme const *next;
 };
 
+struct instruction;
+
+struct node_theorem: node {
+  char const *name;
+  node_theorem(int nb, property const *h, property const &p, char const *n);
+};
+
 void add_scheme(ast_real const *, node *(*)(property_vect const &, property &));
 void add_basic_scheme(ast_real *);
 node *handle_proof(property_vect const &, property &);

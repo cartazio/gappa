@@ -21,13 +21,10 @@ destroyed by modus or assignation.
 
 node *triviality = (node *)1;
 
-struct node_theorem: node {
-  char const *name;
-  node_theorem(int nb, property const *h, property const &p, char const *n): node(THEOREM), name(n) {
-    res = p;
-    for(int i = 0; i < nb; ++i) hyp.push_back(h[i]);
-  }
-};
+node_theorem::node_theorem(int nb, property const *h, property const &p, char const *n): node(THEOREM), name(n) {
+  res = p;
+  for(int i = 0; i < nb; ++i) hyp.push_back(h[i]);
+}
 
 struct node_modus: node {
   std::string name;
@@ -327,6 +324,18 @@ node *generate_computation(property_vect const &hyp, property &res) {
   return new node_modus(res, n, nodes);
 }
 
+interval create_interval(ast_interval const &, bool widen = true, number_type const & = *REAL_NUMBER);
+
+node *generate_constant(property_vect const &hyp, property &res) {
+  ast_number *const *r = boost::get< ast_number *const >(res.real);
+  assert(r);
+  ast_interval _i = { *r, *r };
+  interval i = create_interval(_i);
+  if (!(i <= res.bnd)) return NULL;
+  res.bnd = i;
+  return new node_theorem(0, NULL, res, "constant");
+}
+
 void add_scheme(ast_real *r, node *(*f)(property_vect const &, property &)) {
   for(proof_scheme const *scheme = r->scheme, *prev = NULL; scheme != NULL;
       prev = scheme, scheme = scheme->next)
@@ -361,6 +370,8 @@ void add_basic_scheme(ast_real *r) {
       add_scheme(r, &generate_refl_error);
   } else if (boost::get< real_op const >(r))
     add_scheme(r, &generate_computation);
+  else if (boost::get< ast_number *const >(r))
+    add_scheme(r, &generate_constant);
 }
 
 node *handle_proof(property_vect const &hyp, property &res) {

@@ -16,11 +16,6 @@ extern node *generate_dichotomy_proof(property_vect const &hyp, property &res);
 extern node *triviality;
 extern std::string get_real_split(number const &f, int &exp, bool &zero);
 
-struct node_theorem: node {
-  char const *name;
-  node_theorem(int nb, property const *h, property const &p, char const *n);
-};
-
 struct auto_flush: std::stringstream {
   ~auto_flush() { std::cout << this->str(); }
 };
@@ -132,9 +127,11 @@ int display(node *n) {
   for(int i = 0, l = n->hyp.size(); i < l; ++i) plouf << " h" << i;
   plouf << '.';
   if (n->type == THEOREM) {
-    plouf << " unfold p" << p_res << ".\n apply " << static_cast< node_theorem * >(n)->name << " with";
+    node_theorem *t = static_cast< node_theorem * >(n);
+    plouf << " unfold p" << p_res << ".\n apply " << t->name << " with";
     for(int i = 0, l = n->hyp.size(); i < l; ++i) plouf << " (" << i + 1 << " := h" << i << ')';
-    plouf << " (" << n->hyp.size() + 1 << " := a" << "TODO" << ").\n compute. trivial.\nQed.\n";
+    //plouf << " (" << n->hyp.size() + 1 << " := a" << "TODO" << ')';
+    plouf << ".\n compute. trivial.\nQed.\n";
   } else if (n->type == MODUS) {
     plouf << '\n';
     typedef std::map< ast_real const *, int > property_map;
