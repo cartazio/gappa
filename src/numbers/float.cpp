@@ -95,28 +95,32 @@ static int exponent(number const &n, float_format const *f) {
   return e;
 }
 
-static bool influenced(number const &n, int e, int e_infl, bool strict) {
+static bool influenced(number const &n, int e, int e_infl, bool infl) {
   mpfr_t x, y;
   mpfr_init2(x, 150);
-  mpfr_init(y);
   mpfr_set_ui_2exp(x, 1, e, GMP_RNDN);
-  mpfr_set_ui_2exp(y, 1, e_infl, GMP_RNDN);
-  mpfr_add(x, x, y, GMP_RNDD);
-  mpfr_clear(y);
+  if (infl) {
+    mpfr_init(y);
+    mpfr_set_ui_2exp(y, 1, e_infl, GMP_RNDN);
+    mpfr_add(x, x, y, GMP_RNDD);
+    mpfr_clear(y);
+  }
   int cmp = mpfr_cmpabs(n.data->val, x);
   mpfr_clear(x);
-  return cmp < 0 || (!strict && cmp == 0);
+  return cmp <= 0;
 }
 
 interval float_rounding_class::absolute_error_from_real(interval const &i, std::string &name) const {
   rounding_fun f = roundings[type];
-  int e1 = exponent(round_number(lower(i), format, f), format),
-      e2 = exponent(round_number(upper(i), format, f), format);
+  number const &v1 = lower(i), &v2 = upper(i);
+  int e1 = exponent(round_number(v1, format, f), format),
+      e2 = exponent(round_number(v2, format, f), format);
   int e = std::max(e1, e2);
   int e_err = type == ROUND_NE ? e - 1 : e;
   e += format->prec - 1;
   name = std::string("float") + ident + "_absolute";
-  if (influenced(lower(i), e, e_err, false) && influenced(upper(i), e, e_err, false)) {
+  if (influenced(v1, e, e_err - 1, type != ROUND_DN || mpfr_sgn(v1.data->val) >= 0) &&
+      influenced(v2, e, e_err - 1, type != ROUND_UP || mpfr_sgn(v1.data->val) <= 0)) {
     name += "_wide";
     --e_err;
   }
