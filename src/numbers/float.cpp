@@ -1,7 +1,9 @@
-#include "parser/ast.hpp"
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
 #include "numbers/round.hpp"
+#include "parser/ast.hpp"
+#include "proofs/proof_graph.hpp"
+#include "proofs/schemes.hpp"
 #include <algorithm>
 
 enum rounding_type { ROUND_UP, ROUND_DN, ROUND_ZR, ROUND_CE };
@@ -131,3 +133,80 @@ interval float_rounding_class::relative_error_from_rounded(interval const &i, st
   return from_exponent(type == ROUND_CE ? -format->prec : 1 - format->prec,
                        type == ROUND_ZR ? -1 : 0);
 }
+
+struct sterbenz_scheme: proof_scheme {
+  virtual node *generate_proof(ast_real const *) const;
+  virtual ast_real_vect needed_reals(ast_real const *) const;
+  static proof_scheme *factory(ast_real const *);
+};
+
+static bool sterbenz_decomposition(ast_real const *real, ast_real const **r1, ast_real const **r2,
+                                   ast_real const **a, ast_real const **b, float_format const **ff) {
+  real_op const *o1 = boost::get< real_op const >(real);
+  if (!o1 || o1->type != BOP_SUB) return false;
+  rounded_real const *rr = boost::get< rounded_real const >(o1->ops[0]);
+  if (!rr) return false;
+  float_rounding_class const *fr = dynamic_cast< float_rounding_class const * >(rr->rounding);
+  if (!fr) return false;
+  real_op const *o2 = boost::get< real_op const >(rr->rounded);
+  if (!o2 || !(o2->type == BOP_ADD || o2->type == BOP_SUB)) return false;
+  if (r1) *r1 = o1->ops[0];
+  if (r2) *r2 = normalize(ast_real(real_op(rr->rounded, BOP_SUB, o1->ops[1])));
+  if (a) *a = o2->ops[0];
+  if (b) *b = o2->ops[1];
+  if (ff) *ff = fr->format;
+  return true;
+}
+
+static node *sterbenz_exponent(ast_real const *r, int &e) {
+  node *n = find_proof(r);
+  if (!n) return NULL;
+  interval const &bnd = n->get_result().bnd;
+  number const &l = lower(bnd), &u = upper(bnd);
+  if (l == u) {
+    int s;
+    mpz_t m;
+    mpz_init(m);
+    split_exact(l.data->val, m, e, s);
+    mpz_clear(m);
+    return n;
+  }
+  rounded_real const *rr = boost::get< rounded_real const >(r);
+  if (!rr) return NULL;
+  float_rounding_class const *fr = dynamic_cast< float_rounding_class const * >(rr->rounding);
+  if (!fr) return NULL;
+  if (contains_zero(bnd)) e = fr->format->min_exp;
+  else e = std::min(exponent(l, fr->format), exponent(u, fr->format));
+  return n;
+}
+
+node *sterbenz_scheme::generate_proof(ast_real const *real) const {
+  ast_real const *r1, *r2, *ra, *rb; float_format const *f;
+  bool b = sterbenz_decomposition(real, &r1, &r2, &ra, &rb, &f);
+  assert(b);
+  int ea, eb;
+  node *na = sterbenz_exponent(ra, ea), *nb = sterbenz_exponent(rb, eb);
+  node *n1 = find_proof(r1), *n2 = find_proof(r2);
+  if (!n1 || !n2 || !na || !nb) return NULL;
+  property const &res1 = n1->get_result(), &res2 = n2->get_result(), &resa = na->get_result(), &resb = nb->get_result();
+  int e = std::max(exponent(lower(res1.bnd), f), exponent(upper(res1.bnd), f));
+  if (ea < e || eb < e) return NULL;
+  property res[] = { resa, resb, res1, res2 };
+  node *ns[] = { na, nb, n1, n2 };
+  return new modus_node(4, ns, new theorem_node(4, res, property(real, res2.bnd), "sterbenz"));
+}
+
+ast_real_vect sterbenz_scheme::needed_reals(ast_real const *real) const {
+  ast_real_vect res(4);
+  bool b = sterbenz_decomposition(real, &res[0], &res[1], &res[2], &res[3], NULL);
+  assert(b);
+  return res;
+}
+
+proof_scheme *sterbenz_scheme::factory(ast_real const *real) {
+  bool b = sterbenz_decomposition(real, NULL, NULL, NULL, NULL, NULL);
+  if (!b) return NULL;
+  return new sterbenz_scheme;
+}
+
+static scheme_register sterbenz_scheme_register(&sterbenz_scheme::factory);
