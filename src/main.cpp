@@ -123,6 +123,7 @@ int display(node *n) {
   switch (n->type) {
   case THEOREM: {
     theorem_node *t = static_cast< theorem_node * >(n);
+    if (!nb_hyps) plouf << '\n';
     plouf << " unfold p" << p_res << ".\n apply " << t->name;
     if (nb_hyps) {
       plouf << " with";
