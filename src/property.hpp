@@ -35,5 +35,4 @@ struct property_vect: std::vector< property > {
   int find_compatible_property(property const &p) const;
 };
 
-
 #endif // PROPERTY_HPP

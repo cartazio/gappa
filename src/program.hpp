@@ -39,13 +39,15 @@ std::basic_ostream< CharType, CharTraits > &operator<<
   return stream;
 }
 
-struct function_match;
+struct bound_computation;
+struct error_computation;
 
 struct function {
   real_op_type type;
   type_id const *return_type;
   type_id const *args_type;
-  function_match const *matches;
+  bound_computation const *bnd_comp;
+  error_computation const *err_comp;
   function(real_op_type t): type(t) {}
 };
 

@@ -13,14 +13,16 @@ struct hypothesis_constraint {
   hypothesis_type type;
 };
 
-struct function_match {
+struct bound_computation {
+  interval (*compute)(interval const **);
+  node *(*generate)(property_bound const *, property_bound &);
+};
+
+struct error_computation {
   hypothesis_constraint res;
   hypothesis_constraint const *constraints;
   interval (*compute)(interval const **);
-  union {
-    node *(*generate_bound)(property_vect const &, property_bound &);
-    node *(*generate_error)(property_vect const &, property_error &);
-  };
+  node *(*generate)(property_vect const &, property_error &);
 };
 
 #endif // FUNCTION_HPP

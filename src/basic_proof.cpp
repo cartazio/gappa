@@ -87,31 +87,15 @@ node *generate_basic_proof_bound(property_vect const &hyp, property_bound &res) 
     res.var = v;
     return new node_assign(n, res);
   }
-  node *n = NULL;
-  node_vect nodes;
-  for(function_match const *m = inst.fun->matches; m->res.var != 0; ++m) {
-    if (m->res.var != -1) continue; /* TODO */
-    if (m->res.type != HYP_BND) continue;
-    graph_layer layer;
-    bool good = true;
-    nodes.clear();
-    property_vect props;
-    for(hypothesis_constraint const *c = m->constraints; c->var != 0; ++c) {
-      variable *v = (c->var < 0) ? inst.out[-1 - c->var] : inst.in[c->var - 1] ;
-      node *nn;
-      if (c->type == HYP_BND || c->type == HYP_SNG) {
-        property_bound p;
-        p.var = v;
-        if (!(nn = generate_basic_proof_bound(hyp, p))) { good = false; break; }
-        if (c->type == HYP_SNG && !is_singleton(p.bnd)) { good = false; break; }
-        props.push_back(p);
-      } else assert(false);
-      nodes.push_back(nn);
-    }
-    if (!good) continue;
-    n = (*m->generate_bound)(props, res);
-    if (n) { layer.flatten(); break; }
+  int l = inst.in.size();
+  node_vect nodes(l);
+  property_bound *props = new property_bound[l];
+  for(int i = 0; i < l; ++i) {
+    props[i].var = inst.in[i];
+    if (!(nodes[i] = generate_basic_proof_bound(hyp, props[i]))) { delete props; return NULL; }
   }
+  node *n = (*inst.fun->bnd_comp->generate)(props, res);
+  delete props;
   if (!n) return NULL;
   return new node_modus(res, n, nodes);
 }
@@ -140,7 +124,7 @@ node *generate_basic_proof_force_error(property_vect const &hyp, property_error 
   if (!op || op->type != inst.fun->type) return NULL;
   node *n = NULL;
   node_vect nodes;
-  for(function_match const *m = inst.fun->matches; m->res.var != 0; ++m) {
+  for(error_computation const *m = inst.fun->err_comp; m->res.var != 0; ++m) {
     if (m->res.var != -1) continue; // TODO
     if (!(m->res.type == HYP_ABS && res.error == 0 || m->res.type == HYP_REL && res.error == 1)) continue;
     graph_layer layer;
@@ -159,7 +143,7 @@ node *generate_basic_proof_force_error(property_vect const &hyp, property_error 
       } else if (c->type == HYP_ABS || c->type == HYP_REL) {
         property_error p;
         p.var = v;
-        if (c->type == HYP_ABS) p.error = 0; else p.error = 1;
+        p.error = (c->type == HYP_ABS) ? 0 : 1;
         assert(c->var >= 1);
         p.real = &op->ops[c->var - 1];
         if (!(nn = generate_basic_proof_error(hyp, p))) { good = false; break; }
@@ -168,7 +152,7 @@ node *generate_basic_proof_force_error(property_vect const &hyp, property_error 
       nodes.push_back(nn);
     }
     if (!good) continue;
-    n = (*m->generate_error)(props, res);
+    n = (*m->generate)(props, res);
     if (n) { layer.flatten(); break; }
   }
   if (!n) return NULL;
