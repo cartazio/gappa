@@ -170,14 +170,16 @@ int display(node *n) {
 int main() {
   yyparse();
   for(node_set::const_iterator i = conclusions.begin(), end = conclusions.end(); i != end; ++i) {
-    graph_layer layer((*i)->hyp);
+    property_vect &hyp = (*i)->hyp;
+    hyp.publish();
+    graph_layer layer(hyp);
     property p = (*i)->res;
     clear_schemes();
-    if (!generate_scheme_tree((*i)->hyp, p.real)) {
+    if (!generate_scheme_tree(hyp, p.real)) {
       std::cout << "no scheme\n";
       continue;
     }
-    node *n = handle_proof((*i)->hyp, p);
+    node *n = handle_proof(hyp, p);
     if (!n || n == triviality) {
       std::cout << "no proof\n";
       continue;

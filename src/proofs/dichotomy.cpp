@@ -23,7 +23,7 @@ struct dichotomy_failure {
 };
 
 void dichotomize(property_vect &hyp, property &res, node_vect &nodes) {
-  property &h = hyp[0];
+  property const &h = hyp[0];
   interval bnd;
   {
     graph_layer layer(hyp);
@@ -40,10 +40,10 @@ void dichotomize(property_vect &hyp, property &res, node_vect &nodes) {
   }
   if (is_singleton(h.bnd)) throw dichotomy_failure(hyp, res, bnd);
   std::pair< interval, interval > ii = split(h.bnd/*, TODO*/);
-  h.bnd = ii.first;
+  hyp.replace_front(property(h.real, ii.first));
   property res1 = res;
   dichotomize(hyp, res1, nodes);
-  h.bnd = ii.second;
+  hyp.replace_front(property(h.real, ii.second));
   property res2 = res;
   dichotomize(hyp, res2, nodes);
   res.bnd = hull(res1.bnd, res2.bnd);
@@ -56,16 +56,16 @@ node *dichotomy_scheme::generate_proof(property_vect const &hyp, property &res) 
   try {
     property res2 = res;
     property_vect hyp2 = hyp;
-    hyp2.insert(hyp2.begin(), varp);
+    hyp2.push_front(varp);
     node_vect nodes;
     dichotomize(hyp2, res2, nodes);
     return new node_dichotomy(hyp, res2, nodes);
   } catch (dichotomy_failure e) { // BLI
-    property &h = e.hyp[0];
+    property const &h = e.hyp[0];
     ast_ident const *v = h.real->get_variable();
     assert(v);
     std::cerr << "failure: when " << v->name << " is " << h.bnd << ", ";
-    property &p = e.res;
+    property const &p = e.res;
     if (ast_ident const *v = p.real->get_variable())
       std::cerr << v->name;
     else
