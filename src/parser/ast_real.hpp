@@ -49,12 +49,21 @@ struct ast_ident;
 
 typedef int placeholder;
 
+struct rounding_placeholder {
+  ast_real const *rounded;
+  int holder;
+  rounding_placeholder(ast_real const *f, int r): rounded(f), holder(r) {}
+  bool operator==(rounding_placeholder const &v) const { return rounded == v.rounded && holder == v.holder; }
+  bool operator<(rounding_placeholder const &v) const { return rounded < v.rounded || (rounded == v.rounded && holder < v.holder); }
+};
+
 typedef boost::variant
   < ast_number const *
   , ast_ident const *
   , real_op
   , rounded_real
   , placeholder
+  , rounding_placeholder
   > ast_real_aux;
 
 struct proof_scheme;
@@ -67,6 +76,7 @@ struct ast_real: ast_real_aux
   ast_real(real_op const &v): ast_real_aux(v), scheme(NULL) {}
   ast_real(rounded_real const &v): ast_real_aux(v), scheme(NULL) {}
   ast_real(placeholder v): ast_real_aux(v), scheme(NULL) {}
+  ast_real(rounding_placeholder const &v): ast_real_aux(v), scheme(NULL) {}
   bool operator==(ast_real const &v) const { return ast_real_aux::operator==(static_cast< ast_real_aux const & >(v)); }
   bool operator<(ast_real const &v) const { return ast_real_aux::operator<(static_cast< ast_real_aux const & >(v)); }
   ast_ident const *get_variable() const

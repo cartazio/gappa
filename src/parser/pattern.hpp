@@ -3,8 +3,9 @@
 
 #include "parser/ast_real.hpp"
 
-bool match(ast_real const *src, ast_real const *dst, ast_real_vect &holders);
-ast_real const *rewrite(ast_real const *dst, ast_real_vect const &holders);
+typedef std::vector< rounding_class const * > rounding_vect;
+bool match(ast_real const *src, ast_real const *dst, ast_real_vect &, rounding_vect &);
+ast_real const *rewrite(ast_real const *, ast_real_vect const &, rounding_vect const &);
 
 class pattern {
   ast_real const *real;

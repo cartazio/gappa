@@ -1,7 +1,22 @@
 #include "proofs/basic_proof.hpp"
 #include "proofs/schemes.hpp"
 
-std::vector< scheme_register::scheme_factory > scheme_register::factories;
+std::vector< scheme_factory const * > scheme_register::factories;
+
+struct scheme_factory_wrapper: scheme_factory {
+  typedef scheme_register::scheme_factory_fun scheme_factory_fun;
+  scheme_factory_fun fun;
+  scheme_factory_wrapper(scheme_factory_fun f): fun(f) {}
+  virtual proof_scheme *operator()(ast_real const *r) const { return (*fun)(r); }
+};
+
+scheme_register::scheme_register(scheme_factory_fun f) {
+  factories.push_back(new scheme_factory_wrapper(f));
+}
+
+scheme_register::scheme_register(scheme_factory const *f) {
+  factories.push_back(f);
+}
 
 struct no_scheme: proof_scheme {
   virtual node *generate_proof(property_vect const &, property &) const { return NULL; }

@@ -13,11 +13,17 @@ struct proof_scheme {
   proof_scheme const *next;
 };
 
+struct scheme_factory {
+  virtual proof_scheme *operator()(ast_real const *) const = 0;
+  virtual ~scheme_factory() {}
+};
+
 struct scheme_register {
-  typedef proof_scheme *(*scheme_factory)(ast_real const *);
-  typedef std::vector< scheme_factory >::const_iterator factory_iterator;
-  static std::vector< scheme_factory > factories;
-  scheme_register(scheme_factory f) { factories.push_back(f); }
+  typedef proof_scheme *(*scheme_factory_fun)(ast_real const *);
+  typedef std::vector< scheme_factory const * >::const_iterator factory_iterator;
+  static std::vector< scheme_factory const * > factories;
+  scheme_register(scheme_factory_fun f);
+  scheme_register(scheme_factory const *);
 };
 
 node *handle_proof(property_vect const &, property &);

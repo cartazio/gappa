@@ -3,6 +3,9 @@ AM_YFLAGS = -d
 
 bin_PROGRAMS = gappa
 
+# Dependencies:
+# parser/ast.cpp initialization requires proofs/field.cpp initialization
+
 gappa_SOURCES = \
 	numbers/float.cpp \
 	numbers/interval.cpp \
@@ -16,7 +19,6 @@ gappa_SOURCES = \
 	numbers/round.hpp \
 	numbers/types.hpp \
 	parser/ast_real.hpp \
-	parser/ast.cpp \
 	parser/ast.hpp \
 	parser/lexer.lpp \
 	parser/parser_aux.cpp \
@@ -26,10 +28,12 @@ gappa_SOURCES = \
 	proofs/basic_proof.cpp \
 	proofs/basic_proof.hpp \
 	proofs/dichotomy.cpp \
+	proofs/field.cpp \
 	proofs/proof_graph.cpp \
 	proofs/proof_graph.hpp \
 	proofs/property.cpp \
 	proofs/property.hpp \
 	proofs/schemes.cpp \
 	proofs/schemes.hpp \
+	parser/ast.cpp \
 	main.cpp
