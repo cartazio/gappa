@@ -5,8 +5,9 @@
 #include <set>
 #include "property.hpp"
 
-enum node_id { HYPOTHESIS, CONCLUSION, THEOREM, MODUS, UNION };
+enum node_id { HYPOTHESIS, CONCLUSION, THEOREM, MODUS, UNION, OTHER };
 
+struct graph_layer;
 struct node;
 
 typedef std::vector< node * > node_vect;
@@ -19,33 +20,32 @@ struct node {
   node_set succ;
   node_id type;
   node(node_id t);
-  ~node();
+  virtual ~node() {}
   void insert_pred(node *);
   void insert_succ(node *);
   void remove_succ(node *);
   void replace_pred(node *, node *);
 };
 
-/*
-struct modus_node: node {
-
-};
-
-struct union_node: node {
-
-};
-*/
-
 struct graph_t {
   node *find_compatible_node(property_vect const &hyp, property const &res) const;
-  node_set const &get_conclusions() const { return conclusions; }
   void insert(node *);
   void erase(node *);
+  graph_t(): father(NULL) {}
+  graph_t *father;
  private:
   node_set nodes;
-  node_set conclusions;
+  friend struct graph_layer;
 };
 
-extern graph_t graph;
+struct graph_layer {
+  graph_layer();
+  ~graph_layer();
+  void flatten() const;
+};
+
+extern node_set conclusions;
+extern graph_t *graph;
+extern graph_t base_graph;
 
 #endif // PROOF_GRAPH_HPP
