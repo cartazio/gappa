@@ -45,19 +45,24 @@ int display(ast_real const *r) {
   return r_id;
 }
 
-static int property_nb = 0;
+typedef std::map< std::string, int > property_map; // (not so) bastard way of doing it
+static property_map displayed_properties;
 
 int display(property const &p) {
-  auto_flush plouf;
-  int p_id = property_nb++;
-  plouf << "Definition p" << p_id << " := ";
+  std::stringstream s;
   std::string const &name = p.var->name->name;
   if (p.type == PROP_BND)
-    plouf << name;
+    s << name;
   else if (p.type == PROP_ABS || p.type == PROP_REL)
-    plouf << (p.type == PROP_ABS ? "ABS(" : "REL(") << name << ", r" << display(p.real) << ')';
+    s << (p.type == PROP_ABS ? "ABS(" : "REL(") << name << ", r" << display(p.real) << ')';
   else assert(false);
-  plouf << " in " << p.bnd << '\n';
+  s << " in " << p.bnd;
+  std::string s_ = s.str();
+  property_map::const_iterator it = displayed_properties.find(s_);
+  if (it != displayed_properties.end()) return it->second;
+  int p_id = displayed_properties.size();
+  displayed_properties.insert(std::make_pair(s_, p_id));
+  std::cout << "Definition p" << p_id << " := " << s_ << '\n';
   return p_id;
 }
 
