@@ -260,9 +260,9 @@ node *computation_scheme::generate_proof(ast_real const *real) const {
     interval const &i1 = res1.bnd;
     if (same_ops && r->type == BOP_MUL) {
       nodes.push_back(n1);
-      s = "square";
+      s = "square_";
       s += 'o' + sign(i1);
-      n = new theorem_node(1, &res1, property(real, square(i1)), "square");
+      n = new theorem_node(1, &res1, property(real, square(i1)), s);
       break;
     }
     node *n2 = find_proof(r->ops[1]);
@@ -330,7 +330,11 @@ node *number_scheme::generate_proof(ast_real const *real) const {
   ast_number const *const *r = boost::get< ast_number const *const >(real);
   assert(r);
   ast_interval _i = { *r, *r };
-  return new theorem_node(0, NULL, property(real, create_interval(_i)), "constant");
+  char const *s;
+  if ((**r).base == 0 || (**r).exponent == 0) s = "constant1";
+  else if ((**r).base == 2) s = "constant2";
+  else s = "constant10";
+  return new theorem_node(0, NULL, property(real, create_interval(_i)), s);
 }
 
 proof_scheme *number_scheme::factory(ast_real const *r) {
