@@ -42,10 +42,12 @@ struct graph_t
 
 struct graph_storage
 {
-  graph_storage(): stored_graph(NULL) {}
+  graph_storage(): stored_graph(NULL), stored_node(NULL) {}
   ~graph_storage();
   void clear();
+  void unstore();
   graph_t *stored_graph;
+  node *stored_node;
 };
 
 struct graph_layer
@@ -53,7 +55,7 @@ struct graph_layer
   graph_layer(property_vect const &);
   ~graph_layer();
   void flatten() const;
-  void store(graph_storage &) const;
+  void store(graph_storage &, node *) const;
 };
 
 extern node_set conclusions;

@@ -114,29 +114,34 @@ void graph_layer::flatten() const {
   flatten_top_graph();
 }
 
-void graph_layer::store(graph_storage &s) const {
-  if (s.stored_graph) {
-    s.stored_graph->father = graph;
-    graph = s.stored_graph;
-    delete_top_graph();
-  }
-  s.stored_graph = graph;
-  graph_t *old_graph = graph->father;
-  graph = new graph_t;
-  graph->father = old_graph;
-}
-
 void graph_storage::clear() {
   if (!stored_graph) return;
   stored_graph->father = graph;
   graph = stored_graph;
   delete_top_graph();
   stored_graph = NULL;
+  stored_node = NULL;
 }
 
-graph_storage::~graph_storage() {
+void graph_layer::store(graph_storage &s, node *n) const {
+  s.clear();
+  s.stored_graph = graph;
+  s.stored_node = n;
+  graph_t *old_graph = graph->father;
+  graph = new graph_t;
+  graph->father = old_graph;
+}
+
+void graph_storage::unstore() {
   if (!stored_graph) return;
+  stored_graph->father = graph;
   graph = stored_graph;
   flatten_top_graph();
   delete_top_graph();
+  stored_graph = NULL;
+  stored_node = NULL;
+}
+
+graph_storage::~graph_storage() {
+  clear();
 }

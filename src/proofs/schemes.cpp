@@ -94,9 +94,12 @@ node *handle_proof(property_vect const &hyp, property &res) {
     lower_best = number::neg_inf;
     upper_best = number::pos_inf;
   }
+  graph_storage lower_store, upper_store;
+  interval lower_bnd, upper_bnd;
   for(proof_scheme const *scheme = res.real->scheme; scheme != NULL; scheme = scheme->next) {
     if (std::count(st.begin(), st.end(), scheme) >= 1) continue; // BLI
     st.push_back(scheme);
+    bool may_need_upper = lower_best > number::neg_inf;
     { // lower bound search
       property res2(res.real, interval(lower_best, number::pos_inf));
       graph_layer layer(hyp);
@@ -107,17 +110,24 @@ node *handle_proof(property_vect const &hyp, property &res) {
           lower_scheme = scheme;
           lower_best = lower_res;
           lower_strict = true;
+          layer.store(lower_store, n);
+          lower_bnd = res2.bnd;
         }
         number const &upper_res = upper(res2.bnd);
         if (upper_res < upper_best || (!upper_strict && upper_res <= upper_best)) {
           upper_scheme = scheme;
           upper_best = upper_res;
           upper_strict = true;
+          if (lower_scheme != scheme) {
+            layer.store(upper_store, n);
+            upper_bnd = res2.bnd;
+          }
           st.pop_back();
           continue;
         }
       }
     }
+    if (may_need_upper && upper_best < number::pos_inf)
     { // in case we didn't find a suitable upper bound because of the lower
       // bound restriction or because of the infinite upper bound
       property res2(res.real, interval(number::neg_inf, upper_best));
@@ -129,6 +139,8 @@ node *handle_proof(property_vect const &hyp, property &res) {
           upper_scheme = scheme;
           upper_best = upper_res;
           upper_strict = true;
+          layer.store(upper_store, n);
+          upper_bnd = res2.bnd;
         }
       }
     }
@@ -138,10 +150,16 @@ node *handle_proof(property_vect const &hyp, property &res) {
   if (lower_scheme == upper_scheme) { // catch also triviality_node
     node *n = triviality_node;
     if (lower_scheme) {
-      res.bnd = interval(lower_best, upper_best);
-      st.push_back(lower_scheme);
-      n = lower_scheme->generate_proof(hyp, res);
-      st.pop_back();
+      if (!lower_store.stored_graph) {
+        st.push_back(lower_scheme);
+        res.bnd = interval(lower_best, upper_best);
+        n = lower_scheme->generate_proof(hyp, res);
+        st.pop_back();
+      } else {
+        res.bnd = lower_bnd;
+        n = lower_store.stored_node;
+        lower_store.unstore();
+      }
       assert(n);
     }
     if (n != triviality && graph->cache_dom == hyp)
@@ -151,20 +169,32 @@ node *handle_proof(property_vect const &hyp, property &res) {
   property res1(res.real), res2(res.real);
   node *n1, *n2;
   if (lower_scheme) {
-    res1.bnd = interval(lower_best, number::pos_inf);
-    st.push_back(lower_scheme);
-    n1 = lower_scheme->generate_proof(hyp, res1);
-    st.pop_back();
+    if (!lower_store.stored_graph) {
+      st.push_back(lower_scheme);
+      res1.bnd = interval(lower_best, number::pos_inf);
+      n1 = lower_scheme->generate_proof(hyp, res1);
+      st.pop_back();
+    } else {
+      res1.bnd = lower_bnd;
+      n1 = lower_store.stored_node;
+      lower_store.unstore();
+    }
     assert(n1);
   } else {
     res1.bnd = res.bnd;
     n1 = triviality_node;
   }
   if (upper_scheme) {
-    res2.bnd = interval(number::neg_inf, upper_best);
-    st.push_back(upper_scheme);
-    n2 = upper_scheme->generate_proof(hyp, res2);
-    st.pop_back();
+    if (!upper_store.stored_graph || n1 != triviality_node) {
+      st.push_back(upper_scheme);
+      res2.bnd = interval(number::neg_inf, upper_best);
+      n2 = upper_scheme->generate_proof(hyp, res2);
+      st.pop_back();
+    } else {
+      res2.bnd = upper_bnd;
+      n2 = upper_store.stored_node;
+      upper_store.unstore();
+    }
     assert(n2);
   } else {
     res2.bnd = res.bnd;
