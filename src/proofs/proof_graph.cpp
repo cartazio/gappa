@@ -199,16 +199,6 @@ ast_real_vect graph_t::get_known_reals() const {
   return res;
 }
 
-bool graph_t::is_useful(property const &res2) const {
-  node_map::const_iterator i = known_reals.find(res2.real);
-  if (i != known_reals.end()) {
-    property const &res1 = i->second->get_result();
-    interval const &i1 = res1.bnd, &i2 = res2.bnd;
-    if (i1 <= i2) return false;
-  }
-  return true;
-}
-
 bool graph_t::try_real(node *n) {
   assert(n && n->graph && n->graph->dominates(this));
   property const &res2 = n->get_result();
@@ -236,15 +226,19 @@ node_vect graph_t::find_useful_axioms(ast_real const *real) {
   node_vect res;
   node_set ax;
   ax.swap(axioms);
-  for(node_set::const_iterator i = ax.begin(), end = ax.end(); i != end; ++i) {
+  node_map::const_iterator j_end = known_reals.end();
+  for(node_set::const_iterator i = ax.begin(), i_end = ax.end(); i != i_end; ++i) {
     node *n = *i;
     property const &p = n->get_result();
     if (p.real == real) {
-      if (is_useful(p)) {
-        res.push_back(n);
-        axioms.insert(n);
+      node_map::const_iterator j = known_reals.find(real);
+      if (j != j_end) {
+        interval const &i1 = j->second->get_result().bnd, &i2 = p.bnd;
+        if (i1 <= i2) continue;
       }
-    } else axioms.insert(n);
+      res.push_back(n);
+    }
+    axioms.insert(n);
   }
   return res;
 }

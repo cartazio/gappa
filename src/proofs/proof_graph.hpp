@@ -90,12 +90,10 @@ class graph_t {
   void remove(node *n) { nodes.erase (n); }
   void insert_axiom(node *);
   void remove_axiom(node *n) { axioms.erase(n); }
-  node *extract_axiom(node *n);
   graph_t(graph_t *, property_vect const &, property_vect const &, proof_helper *, bool);
   ~graph_t();
   node *find_already_known(ast_real const *) const;
   node_vect find_useful_axioms(ast_real const *);
-  bool is_useful(property const &) const;
   bool try_real(node *);
   property_vect const &get_hypotheses() const { return hyp; }
   property_vect const &get_goals() const { return goals; }
