@@ -4,14 +4,16 @@
 #include <vector>
 #include <iostream>
 #include "types.hpp"
+#include "ast_real.hpp"
 
 struct ast_ident;
 struct instruction;
 
 struct variable {
   ast_ident *name;
+  ast_real *real;
   type_id type;
-  variable(ast_ident *n, type_id t = UNDEFINED): name(n), type(t), def(-2) {}
+  variable(ast_ident *n, type_id t = UNDEFINED);
   int get_definition();
  private:
   int def;

@@ -1,6 +1,10 @@
 #include <algorithm>
 #include "program.hpp"
 
+variable::variable(ast_ident *n, type_id t): name(n), type(t), def(-2) {
+  real = new ast_real(this);
+}
+
 int variable::get_definition() {
   if (def != -2) return def;
   def = -1;

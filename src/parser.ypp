@@ -18,6 +18,11 @@ extern void link_variables();
 
 static ast_prop_and implicit;
 
+void ast_real_delete(ast_real *r) {
+  if (boost::get< variable * >(r)) return;
+  delete r;
+}
+
 %}
 
 %error-verbose
@@ -117,13 +122,13 @@ OPERATION:
 
 REAL:
   NUMBER		{ $$ = new ast_real($1); }
-| IDENT			{ $$ = new ast_real(check_variable($1)); }
+| IDENT			{ $$ = check_variable($1)->real; }
 | '+' REAL		{ $$ = $2; }
-| '-' REAL		{ $$ = $2; *$2 = unary_op(UOP_MINUS, *$2); }
-| REAL '+' REAL		{ $$ = $1; *$1 = binary_op(*$1, BOP_ADD, *$3); delete $3; }
-| REAL '-' REAL		{ $$ = $1; *$1 = binary_op(*$1, BOP_SUB, *$3); delete $3; }
-| REAL '*' REAL		{ $$ = $1; *$1 = binary_op(*$1, BOP_MUL, *$3); delete $3; }
-| REAL '/' REAL		{ $$ = $1; *$1 = binary_op(*$1, BOP_DIV, *$3); delete $3; }
+| '-' REAL		{ $$ = new ast_real(unary_op(UOP_MINUS, *$2)); ast_real_delete($2); }
+| REAL '+' REAL		{ $$ = new ast_real(binary_op(*$1, BOP_ADD, *$3)); ast_real_delete($1); ast_real_delete($3); }
+| REAL '-' REAL		{ $$ = new ast_real(binary_op(*$1, BOP_SUB, *$3)); ast_real_delete($1); ast_real_delete($3); }
+| REAL '*' REAL		{ $$ = new ast_real(binary_op(*$1, BOP_MUL, *$3)); ast_real_delete($1); ast_real_delete($3); }
+| REAL '/' REAL		{ $$ = new ast_real(binary_op(*$1, BOP_DIV, *$3)); ast_real_delete($1); ast_real_delete($3); }
 | '(' REAL ')'		{ $$ = $2; }
 
 OPERANDS:
