@@ -21,7 +21,7 @@ static impl_data *read_number_data(ast_number const &n, int p, mp_rnd_t rnd) {
   return res;
 }
 
-static impl_data *read_number(ast_number const &n, interval_float_description *desc, mp_rnd_t rnd) {
+static impl_data *read_number(ast_number const &n, interval_float_description const *desc, mp_rnd_t rnd) {
   if (n.base == 0) return read_number_data(n, real_prec, rnd);
   impl_data *d;
   int p = real_prec, emin = -50000;
@@ -39,12 +39,12 @@ static impl_data *read_number(ast_number const &n, interval_float_description *d
   }
 }
 
-static void dump_float(void *mem, mpfr_t const &f, interval_float_description *desc) { // TODO: little-endian centric
+static void store_float(void *mem, mpfr_t const &f, interval_float_description const *desc) { // TODO: little-endian centric
   int fmt = desc->format_size;
   int min_exp = desc->min_exp;
   int prec = desc->prec;
   bool implicit = prec != 63; // implicit leading digit
-  memset(mem, 0, fmt / 8);
+  memset(mem, 0, fmt >> 3);
   mpz_t frac;
   mpz_init(frac);
   int exp = mpfr_get_z_exp(frac, f);
@@ -67,20 +67,10 @@ static void dump_float(void *mem, mpfr_t const &f, interval_float_description *d
   if (sgn < 0) e |= 1 << 15; // sign
 }
 
-union float32_and_float {
-  float32 soft;
-  float hard;
-};
-
-union float64_and_double {
-  float64 soft;
-  double hard;
-};
-
 interval create_interval(ast_interval const &i, bool widen, type_id _type) {
-  interval_float_description *type =
+  interval_float_description const *type =
     _type == interval_real ? 0 :
-    reinterpret_cast< interval_float_description * >(_type);
+    reinterpret_cast< interval_float_description const * >(_type);
   mp_rnd_t d1 = widen ? GMP_RNDD : GMP_RNDU;
   mp_rnd_t d2 = widen ? GMP_RNDU : GMP_RNDD;
   impl_data *n1 = read_number(i.lower, type, d1);
@@ -90,8 +80,8 @@ interval create_interval(ast_interval const &i, bool widen, type_id _type) {
     res.ptr = new _interval_real(number_real(n1), number_real(n2));
   else {
     char tmp1[16], tmp2[16];
-    dump_float(&tmp1, n1->val, type);
-    dump_float(&tmp2, n2->val, type);
+    store_float(&tmp1, n1->val, type);
+    store_float(&tmp2, n2->val, type);
     if (_type == interval_float32)
       res.ptr = new _interval_float32(number_float32(*(float32 *)tmp1), number_float32(*(float32 *)tmp2));
     else if (_type == interval_float64)
@@ -105,6 +95,37 @@ interval create_interval(ast_interval const &i, bool widen, type_id _type) {
     n2->destroy();
   }
   return res;
+}
+
+static void load_float(void const *_mem, mpfr_t &f, interval_float_description const *desc) { // TODO: little-endian centric
+  void *mem = const_cast< void * >(_mem);
+  int fmt = desc->format_size;
+  int min_exp = desc->min_exp;
+  int prec = desc->prec;
+  bool implicit = prec != 63; // implicit leading digit
+  int exp_pos = prec + (implicit ? 0 : 1); // the exponent is after the mantissa
+  int exp_size = fmt - exp_pos - 1; // all the space except the mantissa and the sign
+  int mask = (1 << exp_size) - 1;
+  short int &e = ((short int *)mem)[exp_pos >> 4]; // last word of the float
+  exp_pos &= 15;
+  int exp = (e >> exp_pos) & mask;
+  exp = exp + min_exp - 1; // biased exponent
+  bool sgn = e >> 15;
+  short int save_e = e;
+  e &= (1 << exp_pos) - 1;
+  if (implicit && exp >= min_exp) e |= 1 << exp_pos; // implicit one
+  mpz_t frac;
+  mpz_init(frac);
+  mpz_import(frac, fmt >> 4, -1, 2, -1, 0, _mem);
+  if (sgn) mpz_neg(frac, frac);
+  mpf_t frac2;
+  mpf_init(frac2);
+  mpf_set_z(frac2, frac);
+  mpz_clear(frac);
+  mpf_mul_2exp(frac2, frac2, exp - prec);
+  mpfr_set_f(f, frac2, GMP_RNDN);
+  mpf_clear(frac2);
+  e = save_e;
 }
 
 static void write_exact(std::ostream &stream, mpfr_t const &f) {
@@ -126,27 +147,28 @@ static void write_approx(std::ostream &stream, mpfr_t const &f) {
   stream << mpfr_get_d(f, GMP_RNDN);  
 }
 
-std::ostream &operator<<(std::ostream &stream, number_float32 const &value) {
-  float32_and_float f;
-  f.soft = value.value;
-  stream << f.hard;
-  return stream;
+static void write_real(std::ostream &stream, impl_data const *data) {
+  write_exact(stream, data->val);
+  stream << " {";
+  write_approx(stream, data->val);
+  stream << '}';
 }
 
-std::ostream &operator<<(std::ostream &stream, number_float64 const &value) {
-  float64_and_double f;
-  f.soft = value.value;
-  stream << f.hard;
-  return stream;
-}
+#define OUTPUT(sz)	\
+  std::ostream &operator<<(std::ostream &stream, number_float##sz const &value) {	\
+    impl_data *d = new impl_data;	\
+    load_float(&value.value, d->val, reinterpret_cast< interval_float_description const * >(interval_float##sz));	\
+    write_real(stream, d);	\
+    d->destroy();	\
+    return stream;	\
+  }
 
-std::ostream &operator<<(std::ostream &, number_floatx80 const &) { throw; }
-std::ostream &operator<<(std::ostream &, number_float128 const &) { throw; }
+OUTPUT(32)
+OUTPUT(64)
+OUTPUT(x80)
+OUTPUT(128)
 
 std::ostream &operator<<(std::ostream &stream, number_real const &value) {
-  write_exact(stream, value.data->val);
-  stream << " {";
-  write_approx(stream, value.data->val);
-  stream << '}';
+  write_real(stream, value.data);
   return stream;
 }
