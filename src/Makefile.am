@@ -1,4 +1,4 @@
-BUILT_SOURCES = parser.h
+BUILT_SOURCES = parser.h softfloat.h
 AM_YFLAGS = -d
 
 bin_PROGRAMS = gappa
@@ -31,7 +31,6 @@ proof_graph.cpp \
 proof_graph.hpp \
 property.cpp \
 property.hpp \
-softfloat.h \
 types.hpp
 
 SOFTFLOAT_ARCH=386-Win32-GCC
