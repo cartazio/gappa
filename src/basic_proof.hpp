@@ -3,6 +3,7 @@
 
 #include "property.hpp"
 #include "proof_graph.hpp"
+#include <string>
 
 extern node *triviality;
 
@@ -15,8 +16,8 @@ struct proof_scheme
 struct instruction;
 
 struct node_theorem: node {
-  char const *name;
-  node_theorem(int nb, property const *h, property const &p, char const *n);
+  std::string name;
+  node_theorem(int nb, property const *h, property const &p, std::string n);
 };
 
 void add_scheme(ast_real const *, node *(*)(property_vect const &, property &));

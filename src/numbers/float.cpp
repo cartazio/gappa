@@ -1,3 +1,4 @@
+#include "../program.hpp"
 #include "interval_utility.hpp"
 #include "real.hpp"
 #include "round.hpp"
@@ -12,22 +13,31 @@ rounding_fun roundings[4] = {
   &float_format::roundCE
 };
 
-struct float_rounding_class: rounding_class {
-  float_format const *format;
-  rounding_type type;
-  char const *ident;
-  float_rounding_class() {}
-  float_rounding_class(float_format const *f, rounding_type t, char const *i): format(f), type(t), ident(i) {}
-  virtual interval bound(interval const &, std::string &) const;
-  virtual interval error(interval const &, std::string &) const;
-};
-
 float_format formats[4] = {
   { min_exp: -149,   prec: 24  },
   { min_exp: -1074,  prec: 53  },
   { min_exp: -16445, prec: 64  },
   { min_exp: -16494, prec: 113 }
 };
+
+struct float_rounding_class: rounding_class {
+  float_format const *format;
+  rounding_type type;
+  char const *ident;
+  float_rounding_class() {}
+  float_rounding_class(float_format const *f, rounding_type t, char const *i);
+  virtual interval bound(interval const &, std::string &) const;
+  virtual interval error(interval const &, std::string &) const;
+};
+
+float_rounding_class::float_rounding_class(float_format const *f, rounding_type t, char const *i)
+  : format(f), type(t), ident(i)
+{
+  ast_ident *n = ast_ident::find(std::string("float") + i);
+  n->id_type = REAL_RND;
+  n->rnd = this;
+}
+
 
 float_rounding_class classes[4][4] = {
   { float_rounding_class(&formats[0], ROUND_UP,  "32up"),

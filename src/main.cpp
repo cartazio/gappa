@@ -76,7 +76,9 @@ int display(ast_real const *r) {
       plouf << '(' << op[o->type] << " r" << display(o->ops[0]) << ")%R";
     else
       plouf << "(r" << display(o->ops[0]) << ' ' << op[o->type] << " r" << display(o->ops[1]) << ")%R";
-  } else assert(false);
+  } else if (rounded_real const *rr = boost::get< rounded_real const >(r))
+    plouf << "roundingTODO r" << display(rr->rounded);
+  else assert(false);
   plouf << ".\n";
   return r_id;
 }

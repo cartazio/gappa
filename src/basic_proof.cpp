@@ -5,6 +5,7 @@
 #include "proof_graph.hpp"
 #include "numbers/interval_arith.hpp"
 #include "numbers/interval_utility.hpp"
+#include "numbers/round.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -21,7 +22,7 @@ destroyed by modus or assignation.
 
 node *triviality = (node *)1;
 
-node_theorem::node_theorem(int nb, property const *h, property const &p, char const *n): node(THEOREM), name(n) {
+node_theorem::node_theorem(int nb, property const *h, property const &p, std::string n): node(THEOREM), name(n) {
   res = p;
   for(int i = 0; i < nb; ++i) hyp.push_back(h[i]);
 }
@@ -47,8 +48,8 @@ node_modus::node_modus(node *n, property const &p): node(MODUS) {
       h.real = inst->in[0]->real;
       hyp.push_back(h);
     }
-    return;
     */
+    return;
   }
   insert_pred(n);
   hyp = n->hyp;
@@ -278,6 +279,23 @@ node *generate_relabs(property_vect const &hyp, property &res) {
 }
 */
 
+node *generate_absolute_error(property_vect const &hyp, property &res) {
+  real_op const *o = boost::get< real_op const >(res.real);
+  assert(o && o->type == BOP_SUB);
+  rounded_real const *rr = boost::get< rounded_real const >(o->ops[1]);
+  assert(rr && o->ops[0] == rr->rounded);
+  property res2(rr->rounded);
+  node *n = handle_proof(hyp, res2);
+  if (!n) return NULL;
+  std::string name;
+  interval bnd = rr->rounding->error(res2.bnd, name);
+  if (!(bnd <= res.bnd)) return NULL;
+  res.bnd = bnd;
+  node_vect nodes;
+  nodes.push_back(n);
+  return new node_modus(res, new node_theorem(1, &res2, res, name), nodes);
+}
+
 node *generate_computation(property_vect const &hyp, property &res) {
   real_op const *r = boost::get< real_op const >(res.real);
   assert(r);
@@ -359,26 +377,16 @@ void add_scheme(ast_real *r, node *(*f)(property_vect const &, property &)) {
 }
 
 void add_basic_scheme(ast_real *r) {
-  if (ast_ident const *v = r->get_variable()) {
-    /*
-    if (v->inst)
-      if (v->inst->fun)
-        add_scheme(r, &generate_basic_bound);
-      else
-        add_scheme(r, &generate_trans_bound);
-    */
-  } /*else if (error_bound const *e = boost::get< error_bound const >(r)) {
-    add_scheme(r, &generate_relabs);
-    if (e->var->inst)
-      if (e->var->inst->fun)
-        add_scheme(r, &generate_basic_error);
-      else
-        add_scheme(r, &generate_trans_error);
-    if (e->var->real == e->real)
-      add_scheme(r, &generate_refl_error);
-  }*/ else if (boost::get< real_op const >(r))
-    add_scheme(r, &generate_computation);
-  else if (boost::get< ast_number const *const >(r))
+  if (real_op const *o = boost::get< real_op const >(r)) {
+    bool absolute = false;
+    if (o->type == BOP_SUB)
+      if (rounded_real const *rr = boost::get< rounded_real const >(o->ops[1]))
+        absolute = o->ops[0] == rr->rounded;
+    if (absolute)
+      add_scheme(r, &generate_absolute_error);
+    else
+      add_scheme(r, &generate_computation);
+  } else if (boost::get< ast_number const *const >(r))
     add_scheme(r, &generate_constant);
 }
 
