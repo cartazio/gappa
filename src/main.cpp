@@ -106,11 +106,12 @@ int display(node *n) {
   static char const *const node_ids[] = { "HYPOTHESIS", "CONCLUSION", "THEOREM", "MODUS", "UNION", "OTHER" };
   auto_flush plouf;
   plouf << "Lemma l" << n_id << " : ";
-  for(property_vect::const_iterator i = n->hyp.begin(), end = n->hyp.end(); i != end; ++i)
+  property_vect const &n_hyp = n->get_hypotheses();
+  for(property_vect::const_iterator i = n_hyp.begin(), end = n_hyp.end(); i != end; ++i)
     plouf << 'p' << display(*i) << " -> ";
-  int p_res = display(n->res);
+  int p_res = display(n->get_result());
   plouf << 'p' << p_res << ".\n";
-  int nb_hyps = n->hyp.size();
+  int nb_hyps = n_hyp.size();
   if (nb_hyps) {
     plouf << " intros";
     for(int i = 0; i < nb_hyps; ++i) plouf << " h" << i;
@@ -118,7 +119,7 @@ int display(node *n) {
   }
   switch (n->type) {
   case THEOREM: {
-    node_theorem *t = static_cast< node_theorem * >(n);
+    theorem_node *t = static_cast< theorem_node * >(n);
     plouf << " unfold p" << p_res << ".\n apply " << t->name;
     if (nb_hyps) {
       plouf << " with";
@@ -131,21 +132,25 @@ int display(node *n) {
     typedef std::map< ast_real const *, int > property_map;
     property_map pmap;
     int num_hyp = 0;
-    for(property_vect::const_iterator j = n->hyp.begin(), j_end = n->hyp.end(); j != j_end; ++j, ++num_hyp)
+    for(property_vect::const_iterator j = n_hyp.begin(), j_end = n_hyp.end(); j != j_end; ++j, ++num_hyp)
       pmap.insert(std::make_pair(j->real, num_hyp));
-    for(node_vect::const_iterator i = ++n->pred.begin(), i_end = n->pred.end(); i != i_end; ++i, ++num_hyp) {
-      plouf << " assert (h" << num_hyp << " : p" << display((*i)->res) << "). apply l" << display(*i) << '.';
-      for(property_vect::const_iterator j = (*i)->hyp.begin(), j_end = (*i)->hyp.end(); j != j_end; ++j) {
+    node_vect const &pred = n->get_subproofs();
+    for(node_vect::const_iterator i = ++pred.begin(), i_end = pred.end(); i != i_end; ++i, ++num_hyp) {
+      node *m = *i;
+      plouf << " assert (h" << num_hyp << " : p" << display(m->get_result()) << "). apply l" << display(m) << '.';
+      property_vect const &m_hyp = m->get_hypotheses();
+      for(property_vect::const_iterator j = m_hyp.begin(), j_end = m_hyp.end(); j != j_end; ++j) {
         property_map::iterator pki = pmap.find(j->real);
         assert(pki != pmap.end());
         plouf << " exact h" << pki->second << '.';
       }
-      pmap.insert(std::make_pair((*i)->res.real, num_hyp));
+      pmap.insert(std::make_pair(m->get_result().real, num_hyp));
       plouf << '\n';
     }
-    node *m = n->pred[0];
+    node *m = pred[0];
     plouf << " apply l" << display(m) << '.';
-    for(property_vect::const_iterator j = m->hyp.begin(), j_end = m->hyp.end(); j != j_end; ++j) {
+    property_vect const &m_hyp = m->get_hypotheses();
+    for(property_vect::const_iterator j = m_hyp.begin(), j_end = m_hyp.end(); j != j_end; ++j) {
       property_map::iterator pki = pmap.find(j->real);
       assert(pki != pmap.end());
       plouf << " exact h" << pki->second << '.';
@@ -154,48 +159,62 @@ int display(node *n) {
     break; }
   case UNION: {
     plouf << "\n union";
-    for(node_vect::const_iterator i = n->pred.begin(), end = n->pred.end(); i != end; ++i)
+    node_vect const &pred = n->get_subproofs();
+    for(node_vect::const_iterator i = pred.begin(), end = pred.end(); i != end; ++i)
       plouf << " l" << display(*i);
     plouf << ".\nQed.\n";
     break; }
   default: {
     plouf << node_ids[n->type];
-    for(node_vect::const_iterator i = n->pred.begin(), end = n->pred.end(); i != end; ++i)
+    node_vect const &pred = n->get_subproofs();
+    for(node_vect::const_iterator i = pred.begin(), end = pred.end(); i != end; ++i)
       plouf << " l" << display(*i);
     plouf << '\n'; }
   }
   return n_id;
 }
 
+extern std::vector< graph_t * > graphs;
+
 int main() {
   yyparse();
-  for(node_set::const_iterator i = conclusions.begin(), end = conclusions.end(); i != end; ++i) {
-    property_vect &hyp = (*i)->hyp;
-    hyp.publish();
-    graph_layer layer(hyp);
-    property p = (*i)->res;
+  for(std::vector< graph_t * >::const_iterator i = graphs.begin(), i_end = graphs.end(); i != i_end; ++i) {
+    graph_t *g = *i;
+    graph_loader loader(g);
+    property_vect goals = g->goals;
+    int nb = goals.size();
+    ast_real_vect all_reals;
+    std::vector< bool > scheme_results(nb);
+    {
+      ast_real_vect dummy;
+      for(int j = 0; j < nb; ++j) 
+        scheme_results[j] = generate_scheme_tree(goals[j].real, all_reals, dummy);
+    }
+    node_vect results(nb);
+    for(int iter = 0; iter < 3; ++iter) {
+      for(ast_real_vect::const_iterator j = all_reals.begin(), j_end = all_reals.end(); j != j_end; ++j)
+        handle_proof(property(*j));
+      for(int j = 0; j < nb; ++j)
+        results[j] = handle_proof(goals[j]);
+    }
     clear_schemes();
-    if (!generate_scheme_tree(hyp, p.real)) {
-      std::cout << "no scheme\n";
-      continue;
+    for(int j = 0; j < nb; ++j) {
+      if (!scheme_results[j])
+        std::cerr << "no scheme\n";
+      else if (!results[j])
+        std::cerr << "no proof\n";
+      else {
+        property const &p = results[j]->get_result();
+        if (ast_ident const *v = p.real->get_variable())
+          std::cerr << v->name;
+        else
+          std::cerr << "...";
+        std::cerr << " in " << p.bnd << '\n';
+      }
     }
-    node *n = handle_proof(hyp, p);
-    if (!n || n == triviality) {
-      std::cout << "no proof\n";
-      continue;
-    }
-    if (ast_ident const *v = p.real->get_variable())
-      std::cout << v->name;
-    else
-      std::cout << "...";
-    std::cout << " in " << p.bnd << '\n';
-    layer.flatten();
-    (*i)->insert_pred(n);
+    std::cout << "\n\n";
+    for(int j = 0; j < nb; ++j)
+      if (results[j]) display(results[j]);
   }
-  std::cout << "\n\n";
-  for(node_set::const_iterator i = conclusions.begin(), end = conclusions.end(); i != end; ++i) {
-    node_vect const &v = (*i)->pred;
-    if (v.empty()) continue;
-    display(v[0]);
-  }
+  return 0;
 }

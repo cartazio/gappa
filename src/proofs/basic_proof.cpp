@@ -19,115 +19,24 @@ carried through the reference parameter. All the trivialities should be
 destroyed by modus or assignation.
 */
 
-node *triviality = (node *)1;
-
-node_theorem::node_theorem(int nb, property const *h, property const &p, std::string n): node(THEOREM), name(n) {
-  res = p;
-  for(int i = 0; i < nb; ++i) hyp.push_back(h[i]);
-}
-
-node_modus::node_modus(node *n, property const &p): node(MODUS) {
-  res = p;
-  if (n == triviality) {
-    /*
-    if (error_bound const *e = boost::get< error_bound const >(p.real)) {
-      assert(e->var->real == e->real);
-    } else {
-      variable const *v = res.real->get_variable();
-      assert(v);
-      instruction *inst = v->inst;
-      assert(inst && !inst->fun);
-      property h = res;
-      h.real = inst->in[0]->real;
-      hyp.push_back(h);
-    }
-    */
-    return;
-  }
-  insert_pred(n);
-  hyp = n->hyp;
-}
-
-node_modus::node_modus(property const &p, node *n, node_vect const &nodes): node(MODUS) {
-  res = p;
-  insert_pred(n);
-  typedef std::map< ast_real const *, interval > property_map;
-  property_map pmap, rmap;
-  for(node_vect::const_iterator i = nodes.begin(), i_end = nodes.end(); i != i_end; ++i) {
-    node *m = *i;
-    if (m == triviality) continue;
-    insert_pred(m);
-    {
-      property const &p = m->res;
-      property_map::iterator pki = rmap.find(p.real);
-      if (pki != rmap.end())
-        pki->second = intersect(pki->second, p.bnd);
-      else
-        rmap.insert(std::make_pair(p.real, p.bnd));
-    }
-    for(property_vect::const_iterator j = m->hyp.begin(), j_end = m->hyp.end(); j != j_end; ++j) {
-      property const &p = *j;
-      property_map::iterator pki = pmap.find(p.real);
-      if (pki != pmap.end())
-        pki->second = hull(pki->second, p.bnd);
-      else
-        pmap.insert(std::make_pair(p.real, p.bnd));
-    }
-  }
-  for(property_vect::const_iterator j = n->hyp.begin(), j_end = n->hyp.end(); j != j_end; ++j) {
-    property const &p = *j;
-    property_map::iterator pki = rmap.find(p.real); // is the hypothesis a result?
-    if (pki != rmap.end() && pki->second <= p.bnd) continue;
-    pki = pmap.find(p.real);
-    if (pki != pmap.end())
-      pki->second = hull(pki->second, p.bnd);
-    else
-      pmap.insert(std::make_pair(p.real, p.bnd));
-  }
-  for(property_map::const_iterator pki = pmap.begin(), pki_end = pmap.end(); pki != pki_end; ++pki) {
-    property p(pki->first, pki->second);
-    hyp.push_back(p);
-  }
-}
-
-// no node should be generated and res should only be modified upon success
-node *generate_triviality(property_vect const &hyp, property &res, bool &optimal) {
-  node *n = graph->find_in_cache(hyp, res);
-  optimal = n;
-  if (!optimal) {
-    int i = hyp.find_compatible_property(res);
-    if (i >= 0) {
-      res = hyp[i];
-      return triviality;
-    }
-    n = graph->find_compatible_node(hyp, res);
-  }
-  if (n) res = n->res;
-  return n;
-}
-
 // ABSOLUTE_ERROR_FROM_REAL
 struct absolute_error_from_real_scheme: proof_scheme {
-  virtual node *generate_proof(property_vect const &, property &) const;
+  virtual node *generate_proof(ast_real const *) const;
   virtual ast_real_vect needed_reals(ast_real const *) const;
   static proof_scheme *factory(ast_real const *);
 };
 
-node *absolute_error_from_real_scheme::generate_proof(property_vect const &hyp, property &res) const {
-  real_op const *o = boost::get< real_op const >(res.real);
+node *absolute_error_from_real_scheme::generate_proof(ast_real const *real) const {
+  real_op const *o = boost::get< real_op const >(real);
   assert(o && o->type == BOP_SUB);
   rounded_real const *rr = boost::get< rounded_real const >(o->ops[1]);
   assert(rr && o->ops[0] == rr->rounded);
-  property res2(rr->rounded);
-  node *n = handle_proof(hyp, res2);
+  node *n = find_proof(rr->rounded);
   if (!n) return NULL;
+  property const &res1 = n->get_result();
   std::string name;
-  interval bnd = rr->rounding->error_from_real(res2.bnd, name);
-  if (!(bnd <= res.bnd)) return NULL;
-  res.bnd = bnd;
-  node_vect nodes;
-  nodes.push_back(n);
-  return new node_modus(res, new node_theorem(1, &res2, res, name), nodes);
+  property res(real, rr->rounding->error_from_real(res1.bnd, name));
+  return new modus_node(1, &n, new theorem_node(1, &res1, res, name));
 }
 
 ast_real_vect absolute_error_from_real_scheme::needed_reals(ast_real const *real) const {
@@ -151,26 +60,22 @@ scheme_register absolute_error_from_real_scheme_register(&absolute_error_from_re
 
 // ABSOLUTE_ERROR_FROM_ROUNDED
 struct absolute_error_from_rounded_scheme: proof_scheme {
-  virtual node *generate_proof(property_vect const &, property &) const;
+  virtual node *generate_proof(ast_real const *) const;
   virtual ast_real_vect needed_reals(ast_real const *) const;
   static proof_scheme *factory(ast_real const *);
 };
 
-node *absolute_error_from_rounded_scheme::generate_proof(property_vect const &hyp, property &res) const {
-  real_op const *o = boost::get< real_op const >(res.real);
+node *absolute_error_from_rounded_scheme::generate_proof(ast_real const *real) const {
+  real_op const *o = boost::get< real_op const >(real);
   assert(o && o->type == BOP_SUB);
   rounded_real const *rr = boost::get< rounded_real const >(o->ops[1]);
   assert(rr && o->ops[0] == rr->rounded);
-  property res2(o->ops[1]);
-  node *n = handle_proof(hyp, res2);
+  node *n = find_proof(o->ops[1]);
   if (!n) return NULL;
+  property const &res1 = n->get_result();
   std::string name;
-  interval bnd = rr->rounding->error_from_rounded(res2.bnd, name);
-  if (!(bnd <= res.bnd)) return NULL;
-  res.bnd = bnd;
-  node_vect nodes;
-  nodes.push_back(n);
-  return new node_modus(res, new node_theorem(1, &res2, res, name), nodes);
+  property res(real, rr->rounding->error_from_rounded(res1.bnd, name));
+  return new modus_node(1, &n, new theorem_node(1, &res1, res, name));
 }
 
 ast_real_vect absolute_error_from_rounded_scheme::needed_reals(ast_real const *real) const {
@@ -194,24 +99,20 @@ scheme_register absolute_error_from_rounded_scheme_register(&absolute_error_from
 
 // ROUNDING_BOUND
 struct rounding_bound_scheme: proof_scheme {
-  virtual node *generate_proof(property_vect const &, property &) const;
+  virtual node *generate_proof(ast_real const *) const;
   virtual ast_real_vect needed_reals(ast_real const *) const;
   static proof_scheme *factory(ast_real const *);
 };
 
-node *rounding_bound_scheme::generate_proof(property_vect const &hyp, property &res) const {
-  rounded_real const *r = boost::get< rounded_real const >(res.real);
+node *rounding_bound_scheme::generate_proof(ast_real const *real) const {
+  rounded_real const *r = boost::get< rounded_real const >(real);
   assert(r);
-  property res2(r->rounded);
-  node *n = handle_proof(hyp, res2);
+  node *n = find_proof(r->rounded);
   if (!n) return NULL;
+  property const &res1 = n->get_result();
   std::string name;
-  interval bnd = r->rounding->bound(res2.bnd, name);
-  if (!(bnd <= res.bnd)) return NULL;
-  res.bnd = bnd;
-  node_vect nodes;
-  nodes.push_back(n);
-  return new node_modus(res, new node_theorem(1, &res2, res, name), nodes);
+  property res(real, r->rounding->bound(res1.bnd, name));
+  return new modus_node(1, &n, new theorem_node(1, &res1, res, name));
 }
 
 ast_real_vect rounding_bound_scheme::needed_reals(ast_real const *real) const {
@@ -229,59 +130,45 @@ scheme_register rounding_bound_scheme_register(&rounding_bound_scheme::factory);
 
 // COMPUTATION
 struct computation_scheme: proof_scheme {
-  virtual node *generate_proof(property_vect const &, property &) const;
+  virtual node *generate_proof(ast_real const *) const;
   virtual ast_real_vect needed_reals(ast_real const *) const;
   static proof_scheme *factory(ast_real const *);
 };
 
-node *computation_scheme::generate_proof(property_vect const &hyp, property &res) const {
-  real_op const *r = boost::get< real_op const >(res.real);
+node *computation_scheme::generate_proof(ast_real const *real) const {
+  real_op const *r = boost::get< real_op const >(real);
   assert(r);
   node_vect nodes;
   node *n = NULL;
   switch (r->ops.size()) {
   case 1: {
     assert(r->type == UOP_MINUS);
-    property res1(r->ops[0]);
-    if (is_defined(res.bnd)) res1.bnd = -res.bnd;
-    node *n1 = handle_proof(hyp, res1);
+    node *n1 = find_proof(r->ops[0]);
     if (!n1) return NULL;
-    res.bnd = -res1.bnd;
+    property const &res = n1->get_result();
     nodes.push_back(n1);
-    n = new node_theorem(1, &res1, res, "neg");
+    n = new theorem_node(1, &res, property(real, -res.bnd), "neg");
     break; }
   case 2: {
     bool same_ops = r->ops[0] == r->ops[1];
-    if (same_ops && r->type == BOP_SUB) {
-      if (!contains_zero(res.bnd)) return NULL;
-      res.bnd = zero();
-      return new node_theorem(0, NULL, res, "sub_refl");
-    }
-    property res1(r->ops[0]);
-    bool do_square = same_ops && r->type == BOP_MUL;
-    if (do_square) res1.bnd = square_rev(res.bnd);
-    node *n1 = handle_proof(hyp, res1);
+    if (same_ops && r->type == BOP_SUB)
+      return new theorem_node(0, NULL, property(real, zero()), "sub_refl");
+    node *n1 = find_proof(r->ops[0]);
     if (!n1) return NULL;
+    property const &res1 = n1->get_result();
     interval const &i1 = res1.bnd;
-    if (do_square) {
-      interval i = square(i1);
-      if (!(i <= res.bnd)) return NULL;
-      res.bnd = i;
+    if (same_ops && r->type == BOP_MUL) {
       nodes.push_back(n1);
-      n = new node_theorem(1, &res1, res, "square");
+      n = new theorem_node(1, &res1, property(real, square(i1)), "square");
       break;
     }
-    property res2(r->ops[1]);
-    switch (r->type) {
-    case BOP_ADD: res2.bnd = add_rev(i1, res.bnd); break;
-    case BOP_SUB: res2.bnd = sub_rev(i1, res.bnd); break;
-    default: ;
-    }
-    node *n2 = handle_proof(hyp, res2);
+    node *n2 = find_proof(r->ops[1]);
     if (!n2) return NULL;
+    property const &res2 = n2->get_result();
     interval const &i2 = res2.bnd;
     char const *s = NULL;
-    interval i;
+    property res(real);
+    interval &i = res.bnd;
     switch (r->type) {
     case BOP_ADD: i = i1 + i2; s = "add"; break;
     case BOP_SUB: i = i1 - i2; s = "sub"; break;
@@ -295,17 +182,15 @@ node *computation_scheme::generate_proof(property_vect const &hyp, property &res
       assert(false);
       return NULL;
     }
-    if (!(i <= res.bnd)) return NULL;
-    res.bnd = i;
     nodes.push_back(n1);
     nodes.push_back(n2);
     property hyps[2] = { res1, res2 };
-    n = new node_theorem(2, hyps, res, s);
+    n = new theorem_node(2, hyps, res, s);
     break; }
   default:
     assert(false);
   }
-  return new node_modus(res, n, nodes);
+  return new modus_node(nodes.size(), &nodes.front(), n);
 }
 
 ast_real_vect computation_scheme::needed_reals(ast_real const *real) const {
@@ -325,21 +210,18 @@ scheme_register computation_scheme_register(&computation_scheme::factory);
 
 // NUMBER
 struct number_scheme: proof_scheme {
-  virtual node *generate_proof(property_vect const &, property &) const;
+  virtual node *generate_proof(ast_real const *) const;
   virtual ast_real_vect needed_reals(ast_real const *) const { return ast_real_vect(); }
   static proof_scheme *factory(ast_real const *);
 };
 
 interval create_interval(ast_interval const &, bool widen = true);
 
-node *number_scheme::generate_proof(property_vect const &, property &res) const {
-  ast_number const *const *r = boost::get< ast_number const *const >(res.real);
+node *number_scheme::generate_proof(ast_real const *real) const {
+  ast_number const *const *r = boost::get< ast_number const *const >(real);
   assert(r);
   ast_interval _i = { *r, *r };
-  interval i = create_interval(_i);
-  if (!(i <= res.bnd)) return NULL;
-  res.bnd = i;
-  return new node_theorem(0, NULL, res, "constant");
+  return new theorem_node(0, NULL, property(real, create_interval(_i)), "constant");
 }
 
 proof_scheme *number_scheme::factory(ast_real const *r) {
@@ -350,14 +232,11 @@ proof_scheme *number_scheme::factory(ast_real const *r) {
 scheme_register number_scheme_register(&number_scheme::factory);
 
 // REWRITE
-node *rewrite_scheme::generate_proof(property_vect const &hyp, property &res) const {
-  property res2(real, res.bnd);
-  node *n = handle_proof(hyp, res2);
+node *rewrite_scheme::generate_proof(ast_real const *r) const {
+  node *n = find_proof(real);
   if (!n) return NULL;
-  res.bnd = res2.bnd;
-  node_vect nodes;
-  nodes.push_back(n);
-  return new node_modus(res, new node_theorem(1, &res2, res, name), nodes);
+  property const &res = n->get_result();
+  return new modus_node(1, &n, new theorem_node(1, &res, property(r, res.bnd), name));
 }
 
 struct rewrite_factory: scheme_factory {

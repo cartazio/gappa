@@ -3,10 +3,10 @@
 
 #include "parser/ast_real.hpp"
 #include "proofs/proof_graph.hpp"
-#include "proofs/proof_graph.hpp"
 
 struct proof_scheme {
-  virtual node *generate_proof(property_vect const &, property &) const = 0;
+  virtual node *generate_proof(ast_real const *) const = 0;
+  virtual node *generate_proof(property const &) const;
   virtual ast_real_vect needed_reals(ast_real const *) const = 0;
   virtual ~proof_scheme() {}
   proof_scheme(): next(NULL) {}
@@ -28,7 +28,8 @@ struct scheme_register {
   static iterator end  () { return factories.end  (); }
 };
 
-node *handle_proof(property_vect const &, property &);
-bool generate_scheme_tree(property_vect const &hyp, ast_real const *);
+node *find_proof(ast_real const *);
+node *handle_proof(property const &);
+bool generate_scheme_tree(ast_real const *, ast_real_vect &, ast_real_vect &);
 
 #endif // PROOFS_SCHEMES_HPP

@@ -21,20 +21,30 @@ scheme_register::scheme_register(scheme_factory const *f) {
 }
 
 struct no_scheme: proof_scheme {
-  virtual node *generate_proof(property_vect const &, property &) const { return NULL; }
+  virtual node *generate_proof(ast_real const *) const { return NULL; }
   virtual ast_real_vect needed_reals(ast_real const *) const { return ast_real_vect(); }
 };
 
 struct yes_scheme: proof_scheme {
-  virtual node *generate_proof(property_vect const &, property &) const { return NULL; }
+  virtual node *generate_proof(ast_real const *) const { return NULL; }
   virtual ast_real_vect needed_reals(ast_real const *) const { return ast_real_vect(); }
 };
 
-bool generate_scheme_tree(property_vect const &hyp, ast_real const *r) {
-  if (r->scheme) return !dynamic_cast< no_scheme const * >(r->scheme);
+bool generate_scheme_tree(ast_real const *r, ast_real_vect &reals, ast_real_vect &discarded) {
+  if (r->scheme) {
+    bool b = !dynamic_cast< no_scheme const * >(r->scheme);
+    if (b) {
+      ast_real_vect::iterator end = discarded.end(), i = std::find(discarded.begin(), end, r);
+      if (i == end) return true;
+      reals.push_back(r);
+      discarded.erase(i);
+    }
+    return b;
+  }
   // put a dummy yes_scheme as a marker for the current real
   r->scheme = new yes_scheme;
   std::vector< proof_scheme * > schemes;
+  unsigned last_real = reals.size();
   typedef scheme_register all_schemes;
   for(all_schemes::iterator i = all_schemes::begin(), i_end = all_schemes::end(); i != i_end; ++i) {
     proof_scheme *s = (**i)(r);
@@ -42,25 +52,50 @@ bool generate_scheme_tree(property_vect const &hyp, ast_real const *r) {
     ast_real_vect v = s->needed_reals(r);
     bool good = true;
     for(ast_real_vect::const_iterator j = v.begin(), j_end = v.end(); j != j_end; ++j) {
-      good = generate_scheme_tree(hyp, *j);
+      good = generate_scheme_tree(*j, reals, discarded);
       if (!good) break;
     }
-    if (good)
+    if (good) {
       schemes.push_back(s);
-    else
+      last_real = reals.size();
+    } else {
       delete s;
+      discarded.insert(discarded.end(), reals.begin() + last_real, reals.end());
+      reals.erase(reals.begin() + last_real, reals.end());
+    }
+  }
+  bool in_hyp = false;
+  {
+    assert(top_graph);
+    node_vect axioms = top_graph->find_good_axioms(r);
+    for(node_vect::const_iterator i = axioms.begin(), i_end = axioms.end(); i != i_end; ++i) {
+      property_vect const &hyp = (*i)->get_hypotheses();
+      bool good = true;
+      for(property_vect::const_iterator j = hyp.begin(), j_end = hyp.end(); j != j_end; ++j) {
+        good = generate_scheme_tree(j->real, reals, discarded);
+        if (!good) break;
+      }
+      if (good) {
+        last_real = reals.size();
+        in_hyp = true;
+      } else
+        discarded.insert(discarded.end(), reals.begin() + last_real, reals.end());
+        reals.erase(reals.begin() + last_real, reals.end());
+    }
   }
   unsigned s = schemes.size();
   if (s == 0) {
-    bool in_hyp = false;
-    for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i) {
-      in_hyp = r == i->real;
-      if (in_hyp) break;
+    if (!in_hyp) {
+      property_vect const &hyp = top_graph->get_hypotheses();
+      for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i) {
+        in_hyp = r == i->real;
+        if (in_hyp) break;
+      }
     }
-    if (in_hyp || graph->has_compatible_hypothesis(r)) {
+    if (in_hyp) {
       // keep the dummy yes_scheme as a marker for an already done real
       // without any non-trivial scheme
-      return true;
+      goto keep_it;
     }
     delete r->scheme;
     // put a dummy no_scheme to mark this real as unusable
@@ -74,139 +109,42 @@ bool generate_scheme_tree(property_vect const &hyp, ast_real const *r) {
     p->next = r->scheme;
     r->scheme = p;
   }
+ keep_it:
+  reals.push_back(r);
   return true;
 }
 
-node *handle_proof(property_vect const &hyp, property &res) {
-  typedef std::vector< proof_scheme const * > scheme_stack;
-  static scheme_stack st;
-  bool optimal;
-  node *triviality_node = generate_triviality(hyp, res, optimal);
-  if (optimal) return triviality_node;
-  proof_scheme const *lower_scheme = NULL, *upper_scheme = NULL;
-  interval best;
-  bool lower_strict = triviality_node, upper_strict = triviality_node;
-  number lower_best, upper_best;
-  if (is_defined(res.bnd)) {
-    lower_best = lower(res.bnd);
-    upper_best = upper(res.bnd);
-  } else {
-    lower_best = number::neg_inf;
-    upper_best = number::pos_inf;
-  }
-  graph_storage lower_store, upper_store;
-  interval lower_bnd, upper_bnd;
+node *proof_scheme::generate_proof(property const &res) const {
+  return generate_proof(res.real);
+}
+
+node *find_proof(ast_real const *real) {
+  return top_graph->find_already_known(real);
+}
+
+node *handle_proof(property const &res) {
   for(proof_scheme const *scheme = res.real->scheme; scheme != NULL; scheme = scheme->next) {
-    if (std::count(st.begin(), st.end(), scheme) >= 1) continue; // BLI
-    st.push_back(scheme);
-    bool may_need_upper = lower_best > number::neg_inf;
-    { // lower bound search
-      property res2(res.real, interval(lower_best, number::pos_inf));
-      graph_layer layer(hyp);
-      node *n = scheme->generate_proof(hyp, res2);
-      if (n) {
-        number const &lower_res = lower(res2.bnd);
-        if (lower_res > lower_best || (!lower_strict && lower_res >= lower_best)) {
-          lower_scheme = scheme;
-          lower_best = lower_res;
-          lower_strict = true;
-          layer.store(lower_store, n);
-          lower_bnd = res2.bnd;
-        }
-        number const &upper_res = upper(res2.bnd);
-        if (upper_res < upper_best || (!upper_strict && upper_res <= upper_best)) {
-          upper_scheme = scheme;
-          upper_best = upper_res;
-          upper_strict = true;
-          if (lower_scheme != scheme) {
-            layer.store(upper_store, n);
-            upper_bnd = res2.bnd;
-          }
-          st.pop_back();
-          continue;
-        }
-      }
-    }
-    if (may_need_upper && upper_best < number::pos_inf)
-    { // in case we didn't find a suitable upper bound because of the lower
-      // bound restriction or because of the infinite upper bound
-      property res2(res.real, interval(number::neg_inf, upper_best));
-      graph_layer layer(hyp);
-      node *n = scheme->generate_proof(hyp, res2);
-      if (n) {
-        number const &upper_res = upper(res2.bnd);
-        if (upper_res < upper_best || (!upper_strict && upper_res <= upper_best)) {
-          upper_scheme = scheme;
-          upper_best = upper_res;
-          upper_strict = true;
-          layer.store(upper_store, n);
-          upper_bnd = res2.bnd;
-        }
-      }
-    }
-    st.pop_back();
+    graph_layer layer;
+    node *n = scheme->generate_proof(res);
+    if (n && top_graph->try_real(n)) layer.flatten();
   }
-  if (!(triviality_node || (lower_scheme && upper_scheme))) return NULL;
-  if (lower_scheme == upper_scheme) { // catch also triviality_node
-    node *n = triviality_node;
-    if (lower_scheme) {
-      if (!lower_store.stored_graph) {
-        st.push_back(lower_scheme);
-        res.bnd = interval(lower_best, upper_best);
-        n = lower_scheme->generate_proof(hyp, res);
-        st.pop_back();
-      } else {
-        res.bnd = lower_bnd;
-        n = lower_store.stored_node;
-        lower_store.unstore();
-      }
-      assert(n);
+  node_vect axioms = top_graph->find_good_axioms(res.real);
+  for(node_vect::const_iterator i = axioms.begin(), i_end = axioms.end(); i != i_end; ++i) {
+    node *n = *i;
+    property_vect const &hyp = n->get_hypotheses();
+    node_vect nodes;
+    bool good = true;
+    for(property_vect::const_iterator j = hyp.begin(), j_end = hyp.end(); j != j_end; ++j) {
+      node *m = find_proof(j->real);
+      if (m && m->get_result().bnd <= j->bnd) nodes.push_back(m);
+      else { good = false; break; }
     }
-    if (n != triviality && graph->cache_dom == hyp)
-      graph->cache[res.real] = n;
-    return n;
-  }
-  property res1(res.real), res2(res.real);
-  node *n1, *n2;
-  if (lower_scheme) {
-    if (!lower_store.stored_graph) {
-      st.push_back(lower_scheme);
-      res1.bnd = interval(lower_best, number::pos_inf);
-      n1 = lower_scheme->generate_proof(hyp, res1);
-      st.pop_back();
-    } else {
-      res1.bnd = lower_bnd;
-      n1 = lower_store.stored_node;
-      lower_store.unstore();
+    if (good) {
+      node *m = new modus_node(nodes.size(), &nodes.front(), n);
+      bool b = top_graph->try_real(m);
+      assert(b);
     }
-    assert(n1);
-  } else {
-    res1.bnd = res.bnd;
-    n1 = triviality_node;
   }
-  if (upper_scheme) {
-    if (!upper_store.stored_graph || n1 != triviality_node) {
-      st.push_back(upper_scheme);
-      res2.bnd = interval(number::neg_inf, upper_best);
-      n2 = upper_scheme->generate_proof(hyp, res2);
-      st.pop_back();
-    } else {
-      res2.bnd = upper_bnd;
-      n2 = upper_store.stored_node;
-      upper_store.unstore();
-    }
-    assert(n2);
-  } else {
-    res2.bnd = res.bnd;
-    n2 = triviality_node;
-  }
-  res.bnd = interval(lower(res1.bnd), upper(res2.bnd));
-  node_vect nodes;
-  nodes.push_back(n1);
-  nodes.push_back(n2);
-  property hyps[2] = { res1, res2 };
-  node *n = new node_modus(res, new node_theorem(2, hyps, res, "intersect"), nodes);
-  if (graph->cache_dom == hyp)
-    graph->cache[res.real] = n;
-  return n;
+  node *n = find_proof(res.real);
+  return (n && n->get_result().bnd <= res.bnd) ? n : NULL;
 }

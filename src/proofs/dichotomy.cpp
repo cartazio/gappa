@@ -7,6 +7,7 @@
 #include <boost/bind.hpp>
 #include <iostream>
 
+/*
 struct node_dichotomy: node {
   node_dichotomy(property_vect const &h, property const &p, node_vect const &n): node(UNION) {
     res = p;
@@ -39,7 +40,7 @@ void dichotomize(property_vect &hyp, property &res, node_vect &nodes) {
     }
   }
   if (is_singleton(h.bnd)) throw dichotomy_failure(hyp, res, bnd);
-  std::pair< interval, interval > ii = split(h.bnd/*, TODO*/);
+  std::pair< interval, interval > ii = split(h.bnd); // TODO
   hyp.replace_front(property(h.real, ii.first));
   property res1 = res;
   dichotomize(hyp, res1, nodes);
@@ -88,7 +89,7 @@ proof_scheme *dichotomy_factory::operator()(ast_real const *r) const {
   if (r != r1) return NULL;
   return new dichotomy_scheme(r2);
 }
-
+*/
 void register_user_dichotomy(ast_real const *r1, ast_real const *r2) {
-  scheme_register dummy(new dichotomy_factory(r1, r2));
+  //scheme_register dummy(new dichotomy_factory(r1, r2));
 }
