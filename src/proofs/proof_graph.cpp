@@ -155,17 +155,8 @@ class graph_node: public node {
  public:
   virtual property const &get_result() const { assert(false); }
   virtual property_vect const &get_hypotheses() const { assert(false); }
-  virtual node_vect const &get_subproofs() const;
+  virtual node_vect const &get_subproofs() const {assert(false); }
 };
-
-node_vect const &graph_node::get_subproofs() const {
-  static node_vect plouf;
-  plouf.clear();
-  node_map const &m = graph->known_reals;
-  for(node_map::const_iterator i = m.begin(), end = m.end(); i != end; ++i)
-    plouf.push_back(i->second);
-  return plouf;
-}
 
 static void delete_forest(node_set &nodes, node *except) {
   while (!nodes.empty()) {

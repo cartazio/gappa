@@ -84,7 +84,6 @@ class graph_t {
   property_vect hyp;		// hypotheses of the graph (they imply the hypotheses from the super-graph)
   property_vect goals;		// goals of the graph (they keep nodes alive)
   bool owned_helper;
-  friend struct graph_node;
  public:
   proof_helper *helper;
   void insert(node *n) { nodes.insert(n); }
