@@ -29,15 +29,6 @@ struct node_reflexive: node {
   }
 };
 
-struct node_theorem: node {
-  std::string name;
-  node_theorem(property_vect const &h, property const &p, std::string const &n): node(THEOREM) {
-    res = p;
-    hyp = h;
-    name = n;
-  }
-};
-
 struct node_modus: node {
   std::string name;
   node_modus(property const &p, node *n, node_vect const &nodes): node(MODUS) {
