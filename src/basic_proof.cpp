@@ -26,21 +26,6 @@ struct node_theorem: node {
   }
 };
 
-namespace {
-
-struct property_key {
-  property_type type;
-  variable *var;
-  ast_real const *real; // only used for ABS and REL
-  property_key(property const &p): type(p.type), var(p.type != PROP_BND ? p.var : NULL), real(p.real) {}
-  bool operator<(property_key const &p) const {
-    return type < p.type || (type == p.type && (var < p.var || (var == p.var && real < p.real)));
-  }
-  typedef std::map< property_key, interval > map;
-};
-
-} // anonymous namespace
-
 struct node_modus: node {
   std::string name;
   node_modus(node *n, property const &p);
@@ -49,18 +34,18 @@ struct node_modus: node {
 
 node_modus::node_modus(node *n, property const &p): node(MODUS) {
   res = p;
-  if (p.type != PROP_BND && p.var->real == p.real) {
-    assert(n == triviality);
-    return;
-  }
   if (n == triviality) {
-    variable const *v = res.real->get_variable();
-    assert(v);
-    instruction *inst = v->inst;
-    assert(inst && !inst->fun);
-    property h = res;
-    h.var = inst->in[0];
-    hyp.push_back(h);
+    if (error_bound const *e = boost::get< error_bound const >(p.real)) {
+      assert(e->var->real == e->real);
+    } else {
+      variable const *v = res.real->get_variable();
+      assert(v);
+      instruction *inst = v->inst;
+      assert(inst && !inst->fun);
+      property h = res;
+      h.real = inst->in[0]->real;
+      hyp.push_back(h);
+    }
     return;
   }
   insert_pred(n);
@@ -71,51 +56,47 @@ node_modus::node_modus(node *n, property const &p): node(MODUS) {
 node_modus::node_modus(property const &p, node *n, node_vect const &nodes): node(MODUS) {
   res = p;
   insert_pred(n);
-  property_key::map pmap, rmap;
+  typedef std::map< ast_real const *, interval > property_map;
+  property_map pmap, rmap;
   for(node_vect::const_iterator i = nodes.begin(), i_end = nodes.end(); i != i_end; ++i) {
     node *m = *i;
     if (m == triviality) continue;
     insert_pred(m);
     {
       property const &p = m->res;
-      property_key pk = p;
-      property_key::map::iterator pki = rmap.find(pk);
+      property_map::iterator pki = rmap.find(p.real);
       if (pki != rmap.end())
         pki->second = intersect(pki->second, p.bnd);
       else
-        rmap.insert(std::make_pair(pk, p.bnd));
+        rmap.insert(std::make_pair(p.real, p.bnd));
     }
     for(property_vect::const_iterator j = m->hyp.begin(), j_end = m->hyp.end(); j != j_end; ++j) {
       property const &p = *j;
-      property_key pk = p;
-      property_key::map::iterator pki = pmap.find(pk);
+      property_map::iterator pki = pmap.find(p.real);
       if (pki != pmap.end())
         pki->second = hull(pki->second, p.bnd);
       else
-        pmap.insert(std::make_pair(pk, p.bnd));
+        pmap.insert(std::make_pair(p.real, p.bnd));
     }
   }
   for(property_vect::const_iterator j = n->hyp.begin(), j_end = n->hyp.end(); j != j_end; ++j) {
     property const &p = *j;
-    property_key pk = p;
-    property_key::map::iterator pki = rmap.find(pk); // is the hypothesis a result?
+    property_map::iterator pki = rmap.find(p.real); // is the hypothesis a result?
     if (pki != rmap.end() && pki->second <= p.bnd) continue;
-    pki = pmap.find(pk);
+    pki = pmap.find(p.real);
     if (pki != pmap.end())
       pki->second = hull(pki->second, p.bnd);
     else
-      pmap.insert(std::make_pair(pk, p.bnd));
+      pmap.insert(std::make_pair(p.real, p.bnd));
   }
-  for(property_key::map::const_iterator pki = pmap.begin(), pki_end = pmap.end(); pki != pki_end; ++pki) {
-    property_key const &pk = pki->first;
-    if (pk.type != PROP_BND && pk.var->real == pk.real) {
-      assert(contains_zero(pki->second));
-      continue;
+  for(property_map::const_iterator pki = pmap.begin(), pki_end = pmap.end(); pki != pki_end; ++pki) {
+    if (error_bound const *e = boost::get< error_bound const >(p.real)) {
+      if (e->var->real == e->real) {
+        assert(contains_zero(pki->second));
+        continue;
+      }
     }
-    property p(pk.type);
-    p.var = pk.var;
-    p.real = pk.real;
-    p.bnd = pki->second;
+    property p(pki->first, pki->second);
     hyp.push_back(p);
   }
 }
@@ -134,8 +115,7 @@ node *generate_triviality(property_vect const &hyp, property &res) {
 }
 
 interval const &compute_triviality(property_vect const &hyp, ast_real const *r) {
-  property bnd(PROP_BND);
-  bnd.real = r;
+  property bnd(r);
   //if (node *n = graph->find_compatible_node(hyp, bnd)) return n->res.bnd;
   int i = hyp.find_compatible_property(bnd);
   if (i < 0) { static interval const not_defined; return not_defined; }
@@ -166,7 +146,6 @@ interval compute_bound(property_vect const &hyp, ast_real const *r) {
 }
 
 node *generate_bound(property_vect const &hyp, property &res) {
-  assert(res.type == PROP_BND);
   if (node *n = generate_triviality(hyp, res)) return n;
   // std::cout << res.var->name->name << " in " << res.bnd << std::endl;
   if (variable const *v = res.real->get_variable()) {
@@ -184,7 +163,6 @@ node *generate_bound(property_vect const &hyp, property &res) {
     boost::scoped_array< property > props(new property[l]);
     boost::scoped_array< interval const * > ints(new interval const *[l]);
     for(int i = 0; i < l; ++i) {
-      props[i].type = PROP_BND;
       props[i].real = inst->in[i]->real;
       if (!(nodes[i] = generate_bound(hyp, props[i]))) return NULL;
       ints[i] = &props[i].bnd;
@@ -199,32 +177,32 @@ node *generate_bound(property_vect const &hyp, property &res) {
 }
 
 node *generate_error_forced(property_vect const &hyp, property &res) {
-  assert(res.type == PROP_ABS || res.type == PROP_REL);
-  if (node *n = generate_triviality(hyp, res)) return n;
-  /*{ static char const *type[] = { "ABS", "REL" };
-    std::cout << type[res.error] << '(' << res.var->name->name << ", ...) in " << res.err << std::endl; }*/
-  if (res.var->real == res.real) {
+  error_bound const *e = boost::get< error_bound const >(res.real);
+  assert(e);
+  if (e->var->real == e->real) {
     if (!contains_zero(res.bnd)) return NULL;
     res.bnd = interval_real();
     return triviality;
   }
-  instruction *inst = res.var->inst;
+  if (node *n = generate_triviality(hyp, res)) return n;
+  instruction *inst = e->var->inst;
   if (!inst) return NULL; /* TODO: unprovable? */
   if (!inst->fun) {
-    variable *v = res.var;
-    res.var = inst->in[0];
+    error_bound e2(e->type, inst->in[0], e->real);
+    ast_real const *r = res.real;
+    res.real = normalize(ast_real(e2));
     node *n = generate_error(hyp, res);
     if (!n) return NULL;
-    res.var = v;
+    res.real = r;
     return new node_modus(n, res);
   }
-  real_op const *op = boost::get< real_op const >(res.real);
+  real_op const *op = boost::get< real_op const >(e->real);
   if (!op || op->type != inst->fun->type) return NULL;
   node *n = NULL;
   node_vect nodes;
   for(error_computation const *m = inst->fun->err_comp; m->res.var != 0; ++m) {
     if (m->res.var != -1) continue; // TODO
-    if (!(m->res.type == HYP_ABS && res.type == PROP_ABS || m->res.type == HYP_REL && res.type == PROP_REL)) continue;
+    if (!(m->res.type == HYP_ABS && e->type == ERROR_ABS || m->res.type == HYP_REL && e->type == ERROR_REL)) continue;
     graph_layer layer;
     bool good = true;
     int l = 0;
@@ -238,15 +216,13 @@ node *generate_error_forced(property_vect const &hyp, property &res) {
       node *nn;
       property &p = props[i];
       if (c->type == HYP_BND || c->type == HYP_SNG) {
-        p.type = PROP_BND;
         p.real = v->real;
         if (!(nn = generate_bound(hyp, p))) { good = false; break; }
         if (c->type == HYP_SNG && !is_singleton(p.bnd)) { good = false; break; }
       } else if (c->type == HYP_ABS || c->type == HYP_REL) {
         assert(c->var >= 1);
-        p.type = c->type == HYP_ABS ? PROP_ABS : PROP_REL;
-        p.var = v;
-        p.real = op->ops[c->var - 1];
+        error_bound ep(c->type == HYP_ABS ? ERROR_ABS : ERROR_REL, v, op->ops[c->var - 1]);
+        p.real = normalize(ast_real(ep));
         if (!(nn = generate_error(hyp, p))) { good = false; break; }
       } else assert(false);
       ints[i] = &p.bnd;
@@ -265,24 +241,22 @@ node *generate_error_forced(property_vect const &hyp, property &res) {
 }
 
 node *generate_error(property_vect const &hyp, property &res) {
-  assert(res.type == PROP_ABS || res.type == PROP_REL);
   property res2 = res;
+  error_bound const *e = boost::get< error_bound const >(res2.real);
+  assert(e);
   {
     graph_layer layer;
     node *n = generate_error_forced(hyp, res);
     if (n) { layer.flatten(); return n; }
   }
-  property bnd(PROP_BND);
-  bnd.real = res2.var->real;
+  property bnd(e->var->real);
   node *nb = generate_bound(hyp, bnd);
   if (!nb) return NULL;
-  property err(res2.type == PROP_ABS ? PROP_REL : PROP_ABS);
-  err.var = res2.var;
-  err.real = res2.real;
+  property err(normalize(ast_real(error_bound(e->type == ERROR_ABS ? ERROR_REL : ERROR_ABS, e->var, e->real))));
   node *ne = generate_error_forced(hyp, err);
   if (!ne) return NULL;
   res = res2;
-  if (res2.type == PROP_ABS)
+  if (e->type == ERROR_ABS)
     res.bnd = static_cast< interval_real const & >(err.bnd) * to_real(bnd.bnd);
   else if (!is_zero(err.bnd)) {
     if (contains_zero(bnd.bnd)) return NULL;
@@ -301,7 +275,7 @@ node *generate_error(property_vect const &hyp, property &res) {
 node *generate_basic_proof(property_vect const &hyp, property const &res) {
   property res2 = res;
   node *n;
-  if (res.type == PROP_BND)
+  if (!boost::get< error_bound const >(res.real))
     n = basic_proof::generate_bound(hyp, res2);
   else
     n = basic_proof::generate_error(hyp, res2);

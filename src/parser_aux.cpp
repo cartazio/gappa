@@ -82,10 +82,8 @@ ast_prop_and merge_prop_and(ast_prop const &_p) {
 }
 
 property generate_property(ast_atom_bound const &p, bool goal) {
-  property r(PROP_BND);
-  r.real = p.real;
+  property r(p.real);
   type_id type = interval_real_desc;
-  assert(r.real->get_variable());
   if (variable const *v = r.real->get_variable()) type = v->type;
   if (p.interval.lower) {
     assert(p.interval.upper);
@@ -94,20 +92,8 @@ property generate_property(ast_atom_bound const &p, bool goal) {
   return r;
 }
 
-property generate_property(ast_atom_error const &p, bool goal) {
-  property r(p.error == 0 ? PROP_ABS : PROP_REL);
-  r.var = p.ident;
-  r.real = p.real;
-  if (p.interval.lower) {
-    assert(p.interval.upper);
-    r.bnd = create_interval(p.interval, goal, interval_real_desc);
-  } else assert(!p.interval.upper);
-  return r;
-}
-
 property generate_property(ast_atom_approx const &p, property **_q) {
-  property r(PROP_BND);
-  r.real = p.ident->real;
+  property r(p.ident->real);
   type_id type = p.ident->type;
   assert(type != UNDEFINED);
   ast_interval i = { p.value, p.value };
@@ -122,8 +108,6 @@ void generate_subgraph(ast_prop_impl const &p, node_id type) {
   for(int i = tmp.size() - 1; i >= 0; i--) {
     ast_prop &q = tmp[i];
     if (ast_atom_bound *r = boost::get< ast_atom_bound >(&q))
-      hyp.push_back(generate_property(*r, false));
-    else if (ast_atom_error *r = boost::get< ast_atom_error >(&q))
       hyp.push_back(generate_property(*r, false));
     else if (ast_atom_approx *r = boost::get< ast_atom_approx >(&q)) {
       property *s;
@@ -140,11 +124,9 @@ void generate_subgraph(ast_prop_impl const &p, node_id type) {
     ast_prop &q = tmp[i];
     node *n = new node(type);
     n->hyp = hyp;
-    if (ast_atom_bound *r = boost::get< ast_atom_bound >(&q))
-      n->res = generate_property(*r, true);
-    else if (ast_atom_error *r = boost::get< ast_atom_error >(&q))
-      n->res = generate_property(*r, true);
-    else assert(false);
+    ast_atom_bound *r = boost::get< ast_atom_bound >(&q);
+    assert(r);
+    n->res = generate_property(*r, true);
   }
 }
 
@@ -157,7 +139,7 @@ void generate_graph(ast_prop const &p, ast_prop_and const &r) {
   } else if (ast_prop_and const *q = boost::get< ast_prop_and >(&p)) {
     for(int i = q->size() - 1; i >= 0; i--)
       generate_graph((*q)[i], r);
-  } else { std::cerr << "Hey!!!"; exit(1); }
+  } else { std::cerr << "Hey!!!\n"; exit(1); }
 }
 
 void link_variables() {

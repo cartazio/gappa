@@ -3,17 +3,17 @@
 #include "numbers/interval_ext.hpp"
 
 bool property::implies(property const &p) const {
-  if (type != p.type || real != p.real) return false;
-  if (type != PROP_BND && var != p.var) return false;
-  return bnd <= p.bnd;
+  return real == p.real && bnd <= p.bnd;
 }
 
 bool property_vect::implies(property_vect const &s) const {
   bool implies_all = true;
   for(const_iterator i = s.begin(), i_end = s.end(); i != i_end; ++i) {
-    if (i->type != PROP_BND && i->var->real == i->real) {
-      assert(contains_zero(i->bnd));
-      continue; // tautology
+    if (error_bound const *e = boost::get< error_bound const >(i->real)) {
+      if (e->var->real == e->real) {
+        assert(contains_zero(i->bnd));
+        continue; // tautology
+      }
     }
     bool implies_i = false;
     for(const_iterator j = begin(), j_end = end(); j != j_end; ++j)

@@ -37,8 +37,7 @@ struct dichotomy_failure {
 };
 
 interval compute_error(property_vect const &hyp, property const &res) { // TODO
-  property tmp = res;
-  tmp.bnd = interval();
+  property tmp(res.real);
   graph_layer layer;
   node *n = basic_proof::generate_error(hyp, tmp);
   if (!n) return interval();
@@ -47,8 +46,8 @@ interval compute_error(property_vect const &hyp, property const &res) { // TODO
 
 void dichotomize(property_vect &hyp, property &res, int idx) {
   property &h = hyp[idx];
-  assert(h.type == PROP_BND);
-  interval bnd = res.type == PROP_BND ? basic_proof::compute_bound(hyp, res.real) : compute_error(hyp, res);
+  error_bound const *e = boost::get< error_bound const >(res.real);
+  interval bnd = !e ? basic_proof::compute_bound(hyp, res.real) : compute_error(hyp, res);
   if (is_defined(bnd) && bnd <= res.bnd) {
     //std::cout << "  " << h.bnd << " -> " << bnd << std::endl;
     res.bnd = bnd;
@@ -73,10 +72,9 @@ node *generate_proof(property_vect const &hyp, property const &res) {
     if (node *n = generate_basic_proof(hyp, res)) { layer.flatten(); return n; }
   }
   if (!is_defined(res.bnd)) return NULL;
-  std::vector< variable * > vars = multiple_definition(res.var); // BLI
+  //std::vector< variable * > vars = multiple_definition(res.var); // BLI
   int i;
-  property bnd(PROP_BND); // TODO
-  bnd.real = vars[0]->real;
+  property bnd(ast_ident::find("x")->var->real); // TODO
   i = hyp.find_compatible_property(bnd);
   assert(i >= 0);
   property res2 = res;
@@ -85,16 +83,17 @@ node *generate_proof(property_vect const &hyp, property const &res) {
     dichotomize(hyp2, res2, i);
   } catch (dichotomy_failure e) { // BLI
     property &h = e.hyp[i];
-    std::cerr << "failure: when " << h.var->name->name << " is " << h.bnd << ", ";
+    variable const *v = h.real->get_variable();
+    assert(v);
+    std::cerr << "failure: when " << v->name->name << " is " << h.bnd << ", ";
     property &p = e.res;
-    std::string const &name = p.var->name->name;
-    if (p.type == PROP_BND)
-      std::cerr << name;
-    else if (p.type == PROP_ABS || p.type == PROP_REL)
-      std::cerr << (p.type == PROP_ABS ? "ABS(" : "REL(") << name << ", ...)";
+    if (error_bound const *e = boost::get< error_bound const >(p.real))
+      std::cerr << (e->type == ERROR_ABS ? "ABS(" : "REL(") << e->var->name->name << ", ...)";
+    else if (variable const *v = p.real->get_variable())
+      std::cerr << v->name->name;
     else assert(false);
     if (is_defined(e.bnd))
-      std::cerr << " is in " << e.bnd << " potentially outside of " << p.bnd << std::endl;
+      std::cerr << " is in " << e.bnd << " potentially outside of " << p.bnd << '\n';
     else
       std::cerr << " is nowhere (!?)\n";
     return NULL;

@@ -117,19 +117,17 @@ static property_map displayed_properties;
 int display(property const &p) {
   std::stringstream s;
   std::string name;
-  if (p.type == PROP_BND) {
-    if (variable const *v = p.real->get_variable())
-      name = '_' + v->name->name;
-    else {
-      std::stringstream s;
-      s << 'r' << display(p.real);
-      name = s.str();
-    }
+  if (variable const *v = p.real->get_variable()) {
+    name = '_' + v->name->name;
     s << "I754s_in";
-  } else if (p.type == PROP_ABS || p.type == PROP_REL) {
-    name = '_' + p.var->name->name;
-    s << "I754s_" << (p.type == PROP_ABS ? "ABS" : "REL") << " r" << display(p.real);
-  } else assert(false);
+  } else if (error_bound const *e = boost::get< error_bound const >(p.real)) {
+    name = '_' + e->var->name->name;
+    s << "I754s_" << (e->type == ERROR_ABS ? "ABS" : "REL") << " r" << display(e->real);
+  } else {
+    s << 'r' << display(p.real);
+    name = s.str();
+    s.str("IR_in");
+  }
   s << " i" << display(p.bnd) << ' ' << name;
   std::string s_ = s.str();
   int p_id = map_finder(displayed_properties, s_);
@@ -137,21 +135,6 @@ int display(property const &p) {
   std::cout << "Definition p" << p_id << " := " << s_ << ".\n";
   return p_id;
 }
-
-namespace {
-
-struct property_key {
-  property_type type;
-  variable *var;
-  ast_real const *real; // only used for ABS and REL
-  property_key(property const &p): type(p.type), var(p.type != PROP_BND ? p.var : NULL), real(p.real) {}
-  bool operator<(property_key const &p) const {
-    return type < p.type || (type == p.type && (var < p.var || (var == p.var && real < p.real)));
-  }
-  typedef std::map< property_key, int > map;
-};
-
-} // anonymous namespace
 
 typedef std::map< node *, int > node_map;
 static node_map displayed_nodes;
@@ -175,39 +158,39 @@ int display(node *n) {
     plouf << " (" << n->hyp.size() + 1 << " := a" << "TODO" << ").\n compute. trivial.\nQed.\n";
   } else if (n->type == MODUS) {
     plouf << '\n';
-    property_key::map pmap;
+    typedef std::map< ast_real const *, int > property_map;
+    property_map pmap;
     int nb_hyps = 0;
-    for(property_vect::const_iterator j = n->hyp.begin(), j_end = n->hyp.end(); j != j_end; ++j, ++nb_hyps) {
-      property_key pk = *j;
-      pmap.insert(std::make_pair(pk, nb_hyps));
-    }
+    for(property_vect::const_iterator j = n->hyp.begin(), j_end = n->hyp.end(); j != j_end; ++j, ++nb_hyps)
+      pmap.insert(std::make_pair(j->real, nb_hyps));
     for(node_vect::const_iterator i = ++n->pred.begin(), i_end = n->pred.end(); i != i_end; ++i, ++nb_hyps) {
       plouf << " assert (h" << nb_hyps << " : p" << display((*i)->res) << "). apply l" << display(*i) << '.';
       for(property_vect::const_iterator j = (*i)->hyp.begin(), j_end = (*i)->hyp.end(); j != j_end; ++j) {
-        if (j->type != PROP_BND && j->var->real == j->real)
-          plouf << " apply refl.";
-        else {
-          property_key pk = *j;
-          property_key::map::iterator pki = pmap.find(pk);
-          assert(pki != pmap.end());
-          plouf << " exact h" << pki->second << '.';
+        if (error_bound const *e = boost::get< error_bound const >(j->real)) {
+          if (e->var->real == e->real) {
+            plouf << " apply refl.";
+            continue;
+          }
         }
+        property_map::iterator pki = pmap.find(j->real);
+        assert(pki != pmap.end());
+        plouf << " exact h" << pki->second << '.';
       }
-      property_key pk = (*i)->res;
-      pmap.insert(std::make_pair(pk, nb_hyps));
+      pmap.insert(std::make_pair((*i)->res.real, nb_hyps));
       plouf << '\n';
     }
     node *m = n->pred[0];
     plouf << " apply l" << display(m) << '.';
     for(property_vect::const_iterator j = m->hyp.begin(), j_end = m->hyp.end(); j != j_end; ++j) {
-      if (j->type != PROP_BND && j->var->real == j->real)
-        plouf << " apply refl.";
-      else {
-        property_key pk = *j;
-        property_key::map::iterator pki = pmap.find(pk);
-        assert(pki != pmap.end());
-        plouf << " exact h" << pki->second << '.';
+      if (error_bound const *e = boost::get< error_bound const >(j->real)) {
+        if (e->var->real == e->real) {
+          plouf << " apply refl.";
+          continue;
+        }
       }
+      property_map::iterator pki = pmap.find(j->real);
+      assert(pki != pmap.end());
+      plouf << " exact h" << pki->second << '.';
     }
     plouf << "\nQed.\n";
   } else {
@@ -226,14 +209,12 @@ int main() {
     node *n = generate_proof((*i)->hyp, (*i)->res);
     if (!n) continue;
     property const &p = n->res;
-    if (p.type == PROP_BND)
-      if (variable const *v = p.real->get_variable())
-        std::cout << v->name->name;
-      else
-        std::cout << "...";
-    else if (p.type == PROP_ABS || p.type == PROP_REL)
-      std::cout << (p.type == PROP_ABS ? "ABS(" : "REL(") << p.var->name->name << ", ...)";
-    else assert(false);
+    if (error_bound const *e = boost::get< error_bound const >(p.real))
+      std::cout << (e->type == ERROR_ABS ? "ABS(" : "REL(") << e->var->name->name << ", ...)";
+    else if (variable const *v = p.real->get_variable())
+      std::cout << v->name->name;
+    else
+      std::cout << "...";
     std::cout << " in " << p.bnd << std::endl;
     layer.flatten();
     (*i)->insert_pred(n);

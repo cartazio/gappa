@@ -20,7 +20,7 @@ struct ast_real;
 
 enum real_op_type { UOP_MINUS, BOP_ADD, BOP_SUB, BOP_MUL, BOP_DIV };
 
-typedef std::vector< ast_real * > ast_real_vect;
+typedef std::vector< ast_real const * > ast_real_vect;
 
 struct real_op
 {
@@ -33,10 +33,23 @@ struct real_op
   bool operator<(real_op const &v) const { return type < v.type || (type == v.type && ops < v.ops); }
 };
 
+enum error_type { ERROR_ABS, ERROR_REL };
+
+struct error_bound
+{
+  error_type type;
+  variable *var;
+  ast_real const *real;
+  error_bound(error_type t, variable *v, ast_real const *r): type(t), var(v), real(r) {}
+  bool operator==(error_bound const &v) const { return type == v.type && var == v.var && real == v.real; }
+  bool operator<(error_bound const &v) const { return type == v.type && (var < v.var || (var == v.var && real < v.real)); }
+};
+
 typedef boost::variant
   < ast_number *
   , variable *
   , real_op
+  , error_bound
   > ast_real_aux;
 
 struct ast_real: ast_real_aux
@@ -44,6 +57,7 @@ struct ast_real: ast_real_aux
   ast_real(ast_number *v): ast_real_aux(v) {}
   ast_real(variable *v): ast_real_aux(v) {}
   ast_real(real_op const &v): ast_real_aux(v) {}
+  ast_real(error_bound const &v): ast_real_aux(v) {}
   bool operator==(ast_real const &v) const { return ast_real_aux::operator==(static_cast< ast_real_aux const & >(v)); }
   bool operator<(ast_real const &v) const { return ast_real_aux::operator<(static_cast< ast_real_aux const & >(v)); }
   variable *get_variable() const { variable *const *v = boost::get< variable * const >(this); return v ? *v : NULL; }

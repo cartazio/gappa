@@ -21,15 +21,6 @@ struct ast_atom_bound {
   ast_atom_bound(ast_real *r, ast_interval i): real(r), interval(i) {}
 };
 
-struct ast_atom_error {
-  variable *ident;
-  ast_real *real;
-  ast_interval interval;
-  int error;
-  ast_atom_error(int e, variable *v, ast_real *r, ast_interval i):
-    ident(v), real(r), interval(i), error(e) {}
-};
-
 struct ast_atom_approx {
   variable *ident;
   ast_number *value;
@@ -43,7 +34,6 @@ typedef boost::variant
   < boost::recursive_wrapper< ast_prop_and >
   , boost::recursive_wrapper< ast_prop_impl >
   , ast_atom_bound
-  , ast_atom_error
   , ast_atom_approx
   > ast_prop;
 

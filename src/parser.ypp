@@ -81,8 +81,6 @@ INTERVAL:
 ATOM:
   REAL IN INTERVAL
   { $$ = new ast_prop(ast_atom_bound($1, $3)); }
-| ERROR '(' IDENT ',' REAL ')' IN INTERVAL
-  { $$ = new ast_prop(ast_atom_error($1, check_prog_variable($3), $5, $8)); }
 
 PROG: OPERATION | PROG OPERATION
 
@@ -127,6 +125,8 @@ NEWREAL:
 REAL:
   NUMBER		{ $$ = new ast_real($1); }
 | IDENT			{ $$ = check_real($1); }
+| ERROR '(' IDENT ',' REAL ')'
+  { $$ = normalize(ast_real(error_bound(error_type($1), check_prog_variable($3), $5))); }
 | '+' REAL		{ $$ = $2; }
 | '-' REAL		{ $$ = normalize(ast_real(real_op(UOP_MINUS, $2))); }
 | REAL '+' REAL		{ $$ = normalize(ast_real(real_op($1, BOP_ADD, $3))); }
