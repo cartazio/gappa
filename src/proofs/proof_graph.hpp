@@ -1,9 +1,9 @@
-#ifndef PROOF_GRAPH_HPP
-#define PROOF_GRAPH_HPP
+#ifndef PROOFS_PROOF_GRAPH_HPP
+#define PROOFS_PROOF_GRAPH_HPP
 
-#include <vector>
+#include "proofs/property.hpp"
 #include <set>
-#include "property.hpp"
+#include <vector>
 
 enum node_id { HYPOTHESIS, CONCLUSION, THEOREM, MODUS, UNION, OTHER };
 
@@ -58,4 +58,4 @@ extern node_set conclusions;
 extern graph_t *graph;
 extern graph_t base_graph;
 
-#endif // PROOF_GRAPH_HPP
+#endif // PROOFS_PROOF_GRAPH_HPP

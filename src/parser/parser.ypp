@@ -1,8 +1,7 @@
 %{
 
 #include <iostream>
-#include "ast.hpp"
-#include "program.hpp"
+#include "parser/ast.hpp"
 
 int yylex(void);
 

@@ -1,10 +1,10 @@
-#include "ast.hpp"
-#include "basic_proof.hpp"
-#include "program.hpp"
-#include "proof_graph.hpp"
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
 #include "numbers/round.hpp"
+#include "parser/ast.hpp"
+#include "proofs/basic_proof.hpp"
+#include "proofs/proof_graph.hpp"
+#include "proofs/schemes.hpp"
 
 #include <iostream>
 #include <map>

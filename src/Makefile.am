@@ -15,19 +15,19 @@ gappa_SOURCES = \
 	numbers/round.cpp \
 	numbers/round.hpp \
 	numbers/types.hpp \
-	ast.cpp \
-	ast.hpp \
-	ast_real.hpp \
-	basic_proof.cpp \
-	basic_proof.hpp \
-	dichotomy.cpp \
-	function.hpp \
-	lexer.lpp \
-	main.cpp \
-	parser_aux.cpp \
-	parser.ypp \
-	program.hpp \
-	proof_graph.cpp \
-	proof_graph.hpp \
-	property.cpp \
-	property.hpp
+	parser/ast_real.hpp \
+	parser/ast.cpp \
+	parser/ast.hpp \
+	parser/lexer.lpp \
+	parser/parser_aux.cpp \
+	parser/parser.ypp \
+	proofs/basic_proof.cpp \
+	proofs/basic_proof.hpp \
+	proofs/dichotomy.cpp \
+	proofs/proof_graph.cpp \
+	proofs/proof_graph.hpp \
+	proofs/property.cpp \
+	proofs/property.hpp \
+	proofs/schemes.cpp \
+	proofs/schemes.hpp \
+	main.cpp

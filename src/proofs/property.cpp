@@ -1,5 +1,4 @@
-#include "program.hpp"
-#include "property.hpp"
+#include "proofs/property.hpp"
 
 bool property::implies(property const &p) const {
   return real == p.real && bnd <= p.bnd;

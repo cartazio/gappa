@@ -1,11 +1,9 @@
-#ifndef AST_HPP
-#define AST_HPP
+#ifndef PARSER_AST_HPP
+#define PARSER_AST_HPP
 
+#include "parser/ast_real.hpp"
 #include <string>
 #include <vector>
-#include "ast_real.hpp"
-#include "property.hpp"
-#include "program.hpp"
 
 struct ast_interval {
   ast_number const *lower, *upper;
@@ -32,6 +30,28 @@ struct ast_prop_impl {
   ast_prop left, right;
 };
 
+struct function;
+
+enum ident_type { UNKNOWN_ID, REAL_FUN, REAL_VAR, REAL_RND };
+
+struct ast_ident {
+  std::string name;
+  union {
+    function const *fun;
+    ast_real const *var;
+    rounding_class const *rnd;
+  };
+  ident_type id_type;
+  ast_ident(std::string const &s): name(s), id_type(UNKNOWN_ID) {}
+  static ast_ident *find(std::string const &s);
+  static ast_ident *temp();
+};
+
+struct function {
+  real_op_type type;
+  function(real_op_type t): type(t) {}
+};
+
 void clear_schemes();
 
-#endif // AST_HPP
+#endif // PARSER_AST_HPP

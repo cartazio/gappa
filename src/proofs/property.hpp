@@ -1,9 +1,9 @@
-#ifndef PROPERTY_HPP
-#define PROPERTY_HPP
+#ifndef PROOFS_PROPERTY_HPP
+#define PROOFS_PROPERTY_HPP
 
-#include <vector>
-#include "ast_real.hpp"
 #include "numbers/interval.hpp"
+#include "parser/ast_real.hpp"
+#include <vector>
 
 struct property {
   ast_real const *real;
@@ -20,4 +20,4 @@ struct property_vect: std::vector< property > {
   int find_compatible_property(property const &p) const;
 };
 
-#endif // PROPERTY_HPP
+#endif // PROOFS_PROPERTY_HPP

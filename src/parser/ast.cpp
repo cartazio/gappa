@@ -1,5 +1,5 @@
-#include "ast.hpp"
-#include "basic_proof.hpp"
+#include "parser/ast.hpp"
+#include "proofs/schemes.hpp"
 
 #include <algorithm>
 #include <cassert>

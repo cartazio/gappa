@@ -1,7 +1,6 @@
-#include "ast.hpp"
-#include "program.hpp"
-#include "proof_graph.hpp"
-#include "property.hpp"
+#include "parser/ast.hpp"
+#include "proofs/proof_graph.hpp"
+#include "proofs/property.hpp"
 #include <cassert>
 #include <iostream>
 

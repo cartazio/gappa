@@ -1,5 +1,5 @@
-#ifndef AST_REAL_HPP
-#define AST_REAL_HPP
+#ifndef PARSER_AST_REAL_HPP
+#define PARSER_AST_REAL_HPP
 
 #include <string>
 #include <vector>
@@ -74,4 +74,4 @@ ast_real *normalize(ast_real const &);
 bool match(ast_real const *, ast_real const *, ast_real_vect &);
 ast_real const *rewrite(ast_real const *, ast_real_vect const &);
 
-#endif // AST_REAL_HPP
+#endif // PARSER_AST_REAL_HPP

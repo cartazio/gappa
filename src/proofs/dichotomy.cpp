@@ -1,9 +1,7 @@
-#include "ast.hpp"
-#include "basic_proof.hpp"
-#include "function.hpp"
 #include "numbers/interval_utility.hpp"
-#include "program.hpp"
-#include "proof_graph.hpp"
+#include "parser/ast.hpp"
+#include "proofs/proof_graph.hpp"
+#include "proofs/schemes.hpp"
 
 #include <algorithm>
 #include <boost/bind.hpp>
