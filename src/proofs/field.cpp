@@ -32,9 +32,13 @@ static pattern a(0), b(1), c(2), d(3);
 
 #define REWRITE(name,lhs,rhs) pattern_register name(lhs, rhs, #name)
 
+REWRITE(absolute_error_sym,
+	a - rnd(a, 0),
+	-(rnd(a, 0) - a));
+
 REWRITE(absolute_error_trans,
-	a - rnd(b, 0),
-	(a - b) + (b - rnd(b, 0)));
+	rnd(a, 0) - b,
+	(rnd(a, 0) - a) + (a - b));
 
 REWRITE(add_decomposition,
 	(a + b) - (c + d),
@@ -55,3 +59,15 @@ REWRITE(mul_decomposition_full_left,
 REWRITE(mul_decomposition_full_right,
 	a * b - c * d,
 	c * (b - d) + d * (a - c) + (a - c) * (b - d));
+
+REWRITE(relative_error_trans,
+	(rnd(a, 0) - b) / b,
+	((rnd(a, 0) - a) / a) + ((a - b) / b) + ((rnd(a, 0) - a) / a) * ((a - b) / b));
+
+REWRITE(relative_to_absolute,
+	a - b,
+	((a - b) / b) * b);
+
+REWRITE(mul_rel_decomposition,
+	(a * b - c * d) / (c * d),
+	(a - c) / c + (b - d) / d + ((a - c) / c) * ((b - d) / d));

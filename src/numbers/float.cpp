@@ -26,8 +26,10 @@ struct float_rounding_class: rounding_class {
   char const *ident;
   float_rounding_class(float_format const *f, rounding_type t, char const *i);
   virtual interval bound(interval const &, std::string &) const;
-  virtual interval error_from_real(interval const &, std::string &) const;
-  virtual interval error_from_rounded(interval const &, std::string &) const;
+  virtual interval absolute_error_from_real   (interval const &, std::string &) const;
+  virtual interval relative_error_from_real   (interval const &, std::string &) const;
+  virtual interval absolute_error_from_rounded(interval const &, std::string &) const;
+  virtual interval relative_error_from_rounded(interval const &, std::string &) const;
   virtual std::string name() const { return std::string("float") + ident; }
 };
 
@@ -95,7 +97,7 @@ static bool influenced(number const &n, int e, int e_infl, bool strict) {
   return cmp < 0 || (!strict && cmp == 0);
 }
 
-interval float_rounding_class::error_from_real(interval const &i, std::string &name) const {
+interval float_rounding_class::absolute_error_from_real(interval const &i, std::string &name) const {
   rounding_fun f = roundings[type];
   int e1 = exponent(round_number(lower(i), format, f), format),
       e2 = exponent(round_number(upper(i), format, f), format);
@@ -107,13 +109,25 @@ interval float_rounding_class::error_from_real(interval const &i, std::string &n
     name += "_wide";
     --e_err;
   }
-  return from_exponent(e_err, type == ROUND_UP ? -1 : (type == ROUND_DN ? 1 : 0));
+  return from_exponent(e_err, type == ROUND_UP ? 1 : (type == ROUND_DN ? -1 : 0));
 }
 
-interval float_rounding_class::error_from_rounded(interval const &i, std::string &name) const {
+interval float_rounding_class::absolute_error_from_rounded(interval const &i, std::string &name) const {
   int e1 = exponent(lower(i), format), e2 = exponent(upper(i), format);
   int e_err = std::max(e1, e2);
   if (type == ROUND_CE) --e_err;
   name = std::string("float") + ident + "_error_inv";
-  return from_exponent(e_err, type == ROUND_UP ? -1 : (type == ROUND_DN ? 1 : 0));
+  return from_exponent(e_err, type == ROUND_UP ? 1 : (type == ROUND_DN ? -1 : 0));
+}
+
+interval float_rounding_class::relative_error_from_rounded(interval const &i, std::string &name) const {
+  name = std::string("float") + ident + "_relative";
+  return from_exponent(type == ROUND_CE ? -format->prec : 1 - format->prec,
+                       type == ROUND_ZR ? -1 : 0);
+}
+
+interval float_rounding_class::relative_error_from_real(interval const &i, std::string &name) const {
+  name = std::string("float") + ident + "_relative";
+  return from_exponent(type == ROUND_CE ? -format->prec : 1 - format->prec,
+                       type == ROUND_ZR ? -1 : 0);
 }

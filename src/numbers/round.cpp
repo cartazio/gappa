@@ -84,6 +84,8 @@ number number_type::rounded_dn(number const &f) const {
   return round_number(f, format, &float_format::roundD);
 }
 
-interval rounding_class::bound(interval const &, std::string &) const              { return interval(); }
-interval rounding_class::error_from_real(interval const &, std::string &) const    { return interval(); }
-interval rounding_class::error_from_rounded(interval const &, std::string &) const { return interval(); }
+interval rounding_class::bound(interval const &, std::string &) const				{ return interval(); }
+interval rounding_class::absolute_error_from_real(interval const &, std::string &) const	{ return interval(); }
+interval rounding_class::relative_error_from_real(interval const &, std::string &) const	{ return interval(); }
+interval rounding_class::absolute_error_from_rounded(interval const &, std::string &) const	{ return interval(); }
+interval rounding_class::relative_error_from_rounded(interval const &, std::string &) const	{ return interval(); }
