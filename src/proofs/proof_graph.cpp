@@ -51,9 +51,10 @@ void graph_t::erase(node *n) {
 
 struct compatible_node_finder {
   property_vect const &hyp;
-  property res;
+  ast_real const *real;
+  interval const *bnd;
   node *best;
-  compatible_node_finder(property_vect const &h, property const &r): hyp(h), res(r), best(NULL) {}
+  compatible_node_finder(property_vect const &h, property const &r): hyp(h), real(r.real), bnd(&r.bnd), best(NULL) {}
   node *find(graph_t const *);
 };
 
@@ -61,8 +62,9 @@ node *compatible_node_finder::find(graph_t const *g) {
   do {
     for(node_set::const_iterator i = g->nodes.begin(), end = g->nodes.end(); i != end; ++i) {
       node *n = *i;
-      if (n->res.real == res.real && (n->res.bnd <= res.bnd || (best && n->res.bnd < res.bnd))) {
-        res.bnd = n->res.bnd;
+      interval const *b = &n->res.bnd;
+      if (n->res.real == real && (*b <= *bnd || (best && *b < *bnd))) {
+        bnd = b;
         best = n;
       }
     }
