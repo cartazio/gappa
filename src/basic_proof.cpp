@@ -79,13 +79,12 @@ node_modus::node_modus(property const &p, node *n, node_vect const &nodes): node
     {
       property const &p = m->res;
       property_key pk = p;
-      property_key::map::iterator pki = pmap.find(pk);
-      if (pki != pmap.end())
+      property_key::map::iterator pki = rmap.find(pk);
+      if (pki != rmap.end())
         pki->second = intersect(pki->second, p.bnd);
       else
-        pmap.insert(std::make_pair(pk, p.bnd));
+        rmap.insert(std::make_pair(pk, p.bnd));
     }
-    rmap.insert(std::make_pair(property_key(m->res), m->res.bnd));
     for(property_vect::const_iterator j = m->hyp.begin(), j_end = m->hyp.end(); j != j_end; ++j) {
       property const &p = *j;
       property_key pk = p;
