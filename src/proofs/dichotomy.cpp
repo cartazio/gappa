@@ -51,6 +51,8 @@ void dichotomy_node::try_graph(graph_t *g2) {
   if (node *n = find_proof(res.real)) {
     if (n->get_result().bnd <= res.bnd) {
       last_graph = top_graph;
+      delete g1;
+      delete g2;
       return;
     }
   }

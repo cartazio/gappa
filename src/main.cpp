@@ -247,6 +247,7 @@ int main() {
     std::cout << "\n\n";
     for(int j = 0; j < nb; ++j)
       if (results[j]) display(results[j]);
+    delete g;
   }
   return 0;
 }
