@@ -93,7 +93,10 @@ node *generate_proof(property_vect const &hyp, property const &res) {
     else if (p.type == PROP_ABS || p.type == PROP_REL)
       std::cerr << (p.type == PROP_ABS ? "ABS(" : "REL(") << name << ", ...)";
     else assert(false);
-    std::cerr << " is in " << e.bnd << " potentially outside of " << p.bnd << std::endl;
+    if (is_defined(e.bnd))
+      std::cerr << " is in " << e.bnd << " potentially outside of " << p.bnd << std::endl;
+    else
+      std::cerr << " is nowhere (!?)\n";
     return NULL;
   }
   return new node_plouf(hyp, res2);
