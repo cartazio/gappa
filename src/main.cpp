@@ -164,7 +164,7 @@ int display(node *n) {
   if (n->type == THEOREM) {
     plouf << " unfold p" << p_res << ".\n apply " << static_cast< node_theorem * >(n)->name << " with";
     for(int i = 0, l = n->hyp.size(); i < l; ++i) plouf << " (" << i + 1 << " := h" << i << ')';
-    plouf << " (" << n->hyp.size() << " := a" << "TODO" << ").\n compute. trivial.\nQed.\n";
+    plouf << " (" << n->hyp.size() + 1 << " := a" << "TODO" << ").\n compute. trivial.\nQed.\n";
   } else if (n->type == MODUS) {
     plouf << '\n';
     property_key::map pmap;
