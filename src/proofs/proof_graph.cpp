@@ -49,11 +49,30 @@ void graph_t::erase(node *n) {
   else nodes.erase(n);
 }
 
+struct compatible_node_finder {
+  property_vect const &hyp;
+  property res;
+  node *best;
+  compatible_node_finder(property_vect const &h, property const &r): hyp(h), res(r), best(NULL) {}
+  node *find(graph_t const *);
+};
+
+node *compatible_node_finder::find(graph_t const *g) {
+  do {
+    for(node_set::const_iterator i = g->nodes.begin(), end = g->nodes.end(); i != end; ++i) {
+      node *n = *i;
+      if (n->res.real == res.real && (n->res.bnd <= res.bnd || (best && n->res.bnd < res.bnd))) {
+        res.bnd = n->res.bnd;
+        best = n;
+      }
+    }
+    g = g->father;
+  } while (g);
+  return best;
+}
+
 node *graph_t::find_compatible_node(property_vect const &hyp, property const &res) const {
-  for(node_set::const_iterator i = nodes.begin(), end = nodes.end(); i != end; ++i)
-    if (hyp.implies((*i)->hyp) && (*i)->res.implies(res)) return *i;
-  if (father) return father->find_compatible_node(hyp, res);
-  return NULL;
+  return compatible_node_finder(hyp, res).find(this);
 }
 
 bool graph_t::has_compatible_hypothesis(ast_real const *r) const {
