@@ -15,6 +15,7 @@ graph_t *graph = &base_graph;
 
 node::node(node_id t): type(t) {
   graph->insert(this);
+  owner = graph;
 }
 
 void node::insert_pred(node *n) {
@@ -65,8 +66,8 @@ graph_layer::graph_layer() {
 graph_layer::~graph_layer() {
   for(node_set::const_iterator i = graph->nodes.begin(), end = graph->nodes.end(); i != end; ++i) {
     node *n = *i;
-    node_vect &pred = n->pred;
-    for(int j = pred.size() - 1; j >= 0; j--) pred[j]->remove_succ(n);
+    for(node_vect::iterator j = n->pred.begin(), end = n->pred.end(); j != end; ++j)
+      if ((*j)->owner != graph) (*j)->remove_succ(n);
     delete n;
   }
   graph_t *old_graph = graph->father;
@@ -77,7 +78,9 @@ graph_layer::~graph_layer() {
 void graph_layer::flatten() const {
   graph_t *old_graph = graph->father;
   assert(graph != NULL);
-  for(node_set::const_iterator i = graph->nodes.begin(), end = graph->nodes.end(); i != end; ++i)
+  for(node_set::const_iterator i = graph->nodes.begin(), end = graph->nodes.end(); i != end; ++i) {
     old_graph->nodes.insert(*i);
+    (*i)->owner = old_graph;
+  }
   graph->nodes.clear();
 }

@@ -7,13 +7,15 @@
 
 enum node_id { HYPOTHESIS, CONCLUSION, THEOREM, MODUS, UNION, OTHER };
 
-struct graph_layer;
 struct node;
+struct graph_t;
+struct graph_layer;
 
 typedef std::vector< node * > node_vect;
 typedef std::set< node * > node_set;
 
 struct node {
+  graph_t *owner;
   property_vect hyp;
   property res;
   node_vect pred;
