@@ -10,6 +10,10 @@ export CXXFLAGS
 main: build build_functions build_numbers
 	$(CXX) -o $@ $(OBJS_functions) $(OBJS_numbers) $(OBJS) -lfl -lmpfr -lgmp
 
+gappa: build build_functions build_numbers
+	$(CXX) -static -o $@ $(OBJS_functions) $(OBJS_numbers) $(OBJS) -lfl -lmpfr -lgmp
+	strip -s $@
+
 build:	$(OBJS)
 
 build_functions:
@@ -17,10 +21,6 @@ build_functions:
 
 build_numbers:
 	$(MAKE) -C numbers
-
-#plouf2.exe: $(OBJS)
-#	$(CXX) -static -o $@ $^ -lfl -lmpfr -lgmp
-#	strip $@
 
 include .depend
 
