@@ -189,7 +189,7 @@ std::string display(node *n) {
     plouf << "Qed.\n";
     break; }
   case INTERSECTION: {
-    plouf << '\n';
+    plouf << " unfold " << p_res << ".\n";
     property_map pmap;
     int num_hyp = 0;
     for(property_vect::const_iterator j = n_hyp.begin(), j_end = n_hyp.end(); j != j_end; ++j, ++num_hyp)
