@@ -25,6 +25,11 @@ bool number::operator<=(number const &v) const {
   //return mpfr_lessequal_p(data->val, v.data->val);
 }
 
+bool number::operator>(number const &v) const {
+  if (mpfr_nan_p(data->val) || mpfr_nan_p(v.data->val)) return false;
+  return mpfr_cmp(data->val, v.data->val) > 0;
+}
+
 bool number::operator==(number const &v) const {
   if (mpfr_nan_p(data->val) || mpfr_nan_p(v.data->val)) return false;
   return mpfr_cmp(data->val, v.data->val) == 0;

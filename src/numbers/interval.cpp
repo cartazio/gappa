@@ -4,6 +4,7 @@
 #include "real.hpp"
 #include <cassert>
 #include <boost/numeric/interval/arith.hpp>
+#include <boost/numeric/interval/arith2.hpp>
 #include <boost/numeric/interval/checking.hpp>
 #include <boost/numeric/interval/interval.hpp>
 #include <boost/numeric/interval/policies.hpp>
@@ -168,6 +169,11 @@ interval operator*(interval const &u, interval const &v) {
 interval operator/(interval const &u, interval const &v) {
   assert(u.base && v.base && !contains_zero(v));
   return plop(plup / plvp);
+}
+
+interval square(interval const &u) {
+  assert(u.base);
+  return plop(square(plup));
 }
 
 interval from_exponent(int exp, int rnd) {

@@ -209,10 +209,24 @@ node *computation_scheme::generate_proof(property_vect const &hyp, property &res
     n = new node_theorem(1, &res1, res, "neg");
     break; }
   case 2: {
+    bool same_ops = r->ops[0] == r->ops[1];
+    if (same_ops && r->type == BOP_SUB) {
+      if (!contains_zero(res.bnd)) return NULL;
+      res.bnd = zero();
+      return new node_theorem(0, NULL, res, "sub_refl");
+    }
     property res1(r->ops[0]);
     node *n1 = handle_proof(hyp, res1);
     if (!n1) return NULL;
     interval const &i1 = res1.bnd;
+    if (same_ops && r->type == BOP_MUL) {
+      interval i = square(i1);
+      if (!(i <= res.bnd)) return NULL;
+      res.bnd = i;
+      nodes.push_back(n1);
+      n = new node_theorem(1, &res1, res, "square");
+      break;
+    }
     property res2(r->ops[1]);
     node *n2 = handle_proof(hyp, res2);
     if (!n2) return NULL;
@@ -248,6 +262,8 @@ node *computation_scheme::generate_proof(property_vect const &hyp, property &res
 ast_real_vect computation_scheme::needed_reals(ast_real const *real) const {
   real_op const *r = boost::get< real_op const >(real);
   assert(r);
+  if (r->type == BOP_SUB && r->ops[0] == r->ops[1])
+    return ast_real_vect(); // special case, x-x is always 0
   return r->ops;
 }
 
@@ -267,7 +283,7 @@ struct number_scheme: proof_scheme {
 
 interval create_interval(ast_interval const &, bool widen = true);
 
-node *number_scheme::generate_proof(property_vect const &hyp, property &res) const {
+node *number_scheme::generate_proof(property_vect const &, property &res) const {
   ast_number const *const *r = boost::get< ast_number const *const >(res.real);
   assert(r);
   ast_interval _i = { *r, *r };
@@ -294,14 +310,3 @@ node *rewrite_scheme::generate_proof(property_vect const &hyp, property &res) co
   nodes.push_back(n);
   return new node_modus(res, new node_theorem(1, &res2, res, name), nodes);
 }
-
-proof_scheme *sub_refl_rewrite_factory(ast_real const *r) {
-  real_op const *o = boost::get< real_op const >(r);
-  if (!o) return NULL;
-  if (o->type != BOP_SUB) return NULL;
-  if (o->ops[0] != o->ops[1]) return NULL;
-  ast_number zero; zero.exponent = zero.base = 0;
-  return new rewrite_scheme(normalize(ast_real(normalize(zero))), "sub_refl");
-}
-
-scheme_register rewrite_scheme_register(sub_refl_rewrite_factory);

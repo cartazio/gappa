@@ -29,6 +29,16 @@ pattern_register absolute_error_trans(
   (pattern(0) - pattern(1)) + (pattern(1) - pattern(rounding_placeholder(pattern(1), 0))),
   "absolute_error_trans");
 
+pattern_register add_decomposition(
+  (pattern(0) + pattern(1)) - (pattern(2) + pattern(3)),
+  (pattern(0) - pattern(2)) + (pattern(1) - pattern(3)),
+  "add_decomposition");
+
+pattern_register sub_decomposition(
+  (pattern(0) - pattern(1)) - (pattern(2) - pattern(3)),
+  (pattern(0) - pattern(2)) - (pattern(1) - pattern(3)),
+  "sub_decomposition");
+
 pattern_register mul_decomposition(
   pattern(0) * pattern(1) - pattern(2) * pattern(3),
   pattern(0) * (pattern(1) - pattern(3)) + pattern(3) * (pattern(0) - pattern(2)),

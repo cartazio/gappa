@@ -8,5 +8,6 @@ interval operator-(interval const &, interval const &);
 interval operator*(interval const &, interval const &);
 interval operator/(interval const &, interval const &);
 interval operator-(interval const &);
+interval square(interval const &);
 
 #endif // NUMBERS_INTERVAL_ARITH_HPP

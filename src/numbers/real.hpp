@@ -38,6 +38,7 @@ struct number {
   ~number() { data->destroy(); }
   number_base *unique() const;
   bool operator<=(number const &v) const;
+  bool operator>(number const &v) const;
   bool operator==(number const &v) const;
   bool operator!=(number const &v) const;
   number operator-() const {
