@@ -159,6 +159,7 @@ TO_REAL(128)
   static bool zero_##sz(void *v) { return in_zero(cast(sz,v)); }	\
   static void *real_##sz(void *v) { return new _interval_real(to_real(lower(cast(sz,v))), to_real(upper(cast(sz,v)))); }	\
   static void *hull_##sz(void *u, void *v) { return gen(sz, hull(cast(sz,u), cast(sz,v))); }	\
+  static void *intersect_##sz(void *u, void *v) { return gen(sz, intersect(cast(sz,u), cast(sz,v))); }	\
   static std::pair< void *, void * > split_##sz(void *v)	\
   { number_float##sz const &l = lower(cast(sz,v)), &u = upper(cast(sz,v)); number_float##sz a = l, b = u;	\
     split(a, b); return std::make_pair(gen2(sz,l,a), gen2(sz,b,u)); }	\
@@ -169,7 +170,8 @@ TO_REAL(128)
     { { create: &create_##sz, destroy: &destroy_##sz, clone: &clone_##sz,	\
         add: &add_##sz, sub: &sub_##sz, mul: &mul_##sz, div: &div_##sz,		\
         subset: &subset_##sz, singleton: &singleton_##sz, in_zero: &zero_##sz,	\
-        to_real: &real_##sz, hull: &hull_##sz, split: split_##sz, output: &output_##sz },	\
+        to_real: &real_##sz, hull: &hull_##sz, intersect: &intersect_##sz,	\
+        split: split_##sz, output: &output_##sz },	\
       mig_exp: &mig_exp_##sz, mag_exp: &mag_exp_##sz, prec: _prec, min_exp: _min,	\
       format_size: _fmt_sz };	\
   interval_description *interval_float##sz = &interval_float##sz##_desc.desc;

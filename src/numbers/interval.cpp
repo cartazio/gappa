@@ -38,6 +38,11 @@ interval hull(interval const &u, interval const &v) {
   return interval(u.desc, (*u.desc->hull)(u.ptr, v.ptr));
 }
 
+interval intersect(interval const &u, interval const &v) {
+  assert(u.desc == v.desc);
+  return interval(u.desc, (*u.desc->intersect)(u.ptr, v.ptr));
+}
+
 std::pair< interval, interval > split(interval const &v) {
   std::pair< void *, void * > p = (*v.desc->split)(v.ptr);
   return std::make_pair(interval(v.desc, p.first), interval(v.desc, p.second));

@@ -73,12 +73,13 @@ static bool subset(void *u, void *v) { return subset(cast(u), cast(v)); }
 static bool singleton(void *v) { return singleton(cast(v)); }
 static bool zero(void *v) { return in_zero(cast(v)); }
 static void *hull(void *u, void *v) { return gen(hull(cast(u), cast(v))); }
+static void *intersect(void *u, void *v) { return gen(intersect(cast(u), cast(v))); }
 static void output(std::ostream &s, void *v) { s << cast(v); }
 
 interval_description interval_real_desc =
   { create: &create, destroy: &destroy, clone: &clone,
     add: &add, sub: &sub, mul: &mul, div: &div,
     subset: &subset, singleton: &singleton, in_zero: &zero,
-    to_real: 0, hull: &hull, split: 0, output: &output };
+    to_real: 0, hull: &hull, intersect: &intersect, split: 0, output: &output };
 
 interval_description *interval_real = &interval_real_desc;

@@ -18,6 +18,7 @@ struct interval_description {
   bool (*in_zero)(void *);
   void *(*to_real)(void *);
   void *(*hull)(void *, void *);
+  void *(*intersect)(void *, void *);
   std::pair< void *, void * >(*split)(void *);
   void (*output)(std::ostream &, void *);
 };
@@ -31,6 +32,7 @@ bool contains_zero(interval const &);
 
 interval to_real(interval const &);
 interval hull(interval const &, interval const &);
+interval intersect(interval const &, interval const &);
 
 std::pair< interval, interval > split(interval const &);
 
