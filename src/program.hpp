@@ -36,13 +36,11 @@ std::basic_ostream< CharType, CharTraits > &operator<<
   return stream;
 }
 
-typedef std::vector< type_id > type_id_vec;
-
 struct function {
   ast_ident *name;
   int real_op;
-  type_id return_type;
-  type_id_vec *args_type;
+  type_id *return_type;
+  type_id *args_type;
   function(ast_ident *n, int r): name(n), real_op(r) {}
 };
 

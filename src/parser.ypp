@@ -93,11 +93,15 @@ OPERATION:
     ast_operands *ops = $5;
     instruction ins;
     ins.fun = fun;
-    std::size_t l = fun->args_type->size();
-    if (l != ops->ops.size()) { std::cerr << "Error: Bad number of arguments for " << f->name << std::endl; exit(1); }
-    for(std::size_t i = 0; i < l; i++)
-      ins.in.push_back(check_variable(ops->ops[i], (*fun->args_type)[i]));
-    ins.out.push_back(check_variable($1, fun->return_type));
+    int l = ops->ops.size();
+    for(int i = 0; i < l; ++i) {
+      if (fun->args_type[i] == UNDEFINED)
+      { std::cerr << "Error: Too many arguments for " << f->name << std::endl; exit(1); }
+      ins.in.push_back(check_variable(ops->ops[i], fun->args_type[i]));
+    }
+    if (fun->args_type[l] != UNDEFINED)
+    { std::cerr << "Error: Too few arguments for " << f->name << std::endl; exit(1); }
+    ins.out.push_back(check_variable($1, fun->return_type[0]));
     program.push_back(ins);
   }
 | IDENT '=' IDENT

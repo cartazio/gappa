@@ -10,20 +10,24 @@ graph_t graph;
 
 void initialize_functions() {
   ast_ident *id;
-  type_id_vec *args = new type_id_vec;
-  args->push_back(FLOAT32);
-  args->push_back(FLOAT32);
+  type_id *args = new type_id[3];
+  args[0] = FLOAT32;
+  args[1] = FLOAT32;
+  args[2] = UNDEFINED;
+  type_id *ret = new type_id[2];
+  ret[0] = FLOAT32;
+  ret[1] = UNDEFINED;
   id = ast_ident::find("add32");
   id->fun = new function(id, BOP_ADD);
-  id->fun->return_type = FLOAT32;
+  id->fun->return_type = ret;
   id->fun->args_type = args;
   id = ast_ident::find("sub32");
   id->fun = new function(id, BOP_SUB);
-  id->fun->return_type = FLOAT32;
+  id->fun->return_type = ret;
   id->fun->args_type = args;
   id = ast_ident::find("mul32");
   id->fun = new function(id, BOP_MUL);
-  id->fun->return_type = FLOAT32;
+  id->fun->return_type = ret;
   id->fun->args_type = args;
 }
 
