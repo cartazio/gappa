@@ -1,7 +1,7 @@
 #include "numbers/interval_utility.hpp"
 #include "parser/ast.hpp"
 #include "proofs/proof_graph.hpp"
-#include "proofs/schemes.hpp"
+#include "proofs/dichotomy.hpp"
 
 #include <algorithm>
 #include <boost/bind.hpp>
@@ -15,24 +15,6 @@ struct node_dichotomy: node {
   }
 };
 
-namespace dichotomy {
-} // namespace dichotomy
-
-namespace basic_proof {
-interval compute_bound(property_vect const &hyp, ast_real const *r);
-node *generate_error(property_vect const &hyp, property &res);
-} // namespace basic_proof
-
-namespace {
-
-/*
-std::vector< ast_ident const * > multiple_definition(ast_ident const *) {
-  std::vector< ast_ident const * > res;
-  res.push_back(ast_ident::find("x"));
-  return res;
-}
-*/
-
 struct dichotomy_failure {
   property_vect hyp;
   property res;
@@ -40,8 +22,8 @@ struct dichotomy_failure {
   dichotomy_failure(property_vect const &h, property const &r, interval const &b): hyp(h), res(r), bnd(b) {}
 };
 
-void dichotomize(property_vect &hyp, property &res, int idx, node_vect &nodes) {
-  property &h = hyp[idx];
+void dichotomize(property_vect &hyp, property &res, node_vect &nodes) {
+  property &h = hyp[0];
   interval bnd;
   {
     graph_layer layer(hyp);
@@ -60,29 +42,26 @@ void dichotomize(property_vect &hyp, property &res, int idx, node_vect &nodes) {
   std::pair< interval, interval > ii = split(h.bnd/*, TODO*/);
   h.bnd = ii.first;
   property res1 = res;
-  dichotomize(hyp, res1, idx, nodes);
+  dichotomize(hyp, res1, nodes);
   h.bnd = ii.second;
   property res2 = res;
-  dichotomize(hyp, res2, idx, nodes);
+  dichotomize(hyp, res2, nodes);
   res.bnd = hull(res1.bnd, res2.bnd);
 }
 
-} // anonymous namespace
-
-node *generate_dichotomy_proof(property_vect const &hyp, property &res) {
-  //std::vector< ast_ident const * > vars = multiple_definition(res.var); // BLI
-  int i;
-  property bnd(ast_ident::find("x")->var); // TODO
-  i = hyp.find_compatible_property(bnd);
-  assert(i >= 0);
+node *dichotomy_scheme::generate_proof(property_vect const &hyp, property &res) const {
+  property varp(real);
+  node *varn = handle_proof(hyp, varp);
+  if (!varn) return NULL;
   try {
     property res2 = res;
     property_vect hyp2 = hyp;
+    hyp2.insert(hyp2.begin(), varp);
     node_vect nodes;
-    dichotomize(hyp2, res2, i, nodes);
+    dichotomize(hyp2, res2, nodes);
     return new node_dichotomy(hyp, res2, nodes);
   } catch (dichotomy_failure e) { // BLI
-    property &h = e.hyp[i];
+    property &h = e.hyp[0];
     ast_ident const *v = h.real->get_variable();
     assert(v);
     std::cerr << "failure: when " << v->name << " is " << h.bnd << ", ";
@@ -97,4 +76,19 @@ node *generate_dichotomy_proof(property_vect const &hyp, property &res) {
       std::cerr << " is nowhere (?!)\n";
     return NULL;
   }
+}
+
+struct dichotomy_factory: scheme_factory {
+  ast_real const *r1, *r2;
+  dichotomy_factory(ast_real const *q1, ast_real const *q2): r1(q1), r2(q2) {}
+  virtual proof_scheme *operator()(ast_real const *) const;
+};
+
+proof_scheme *dichotomy_factory::operator()(ast_real const *r) const {
+  if (r != r1) return NULL;
+  return new dichotomy_scheme(r2);
+}
+
+void register_user_dichotomy(ast_real const *r1, ast_real const *r2) {
+  scheme_register dummy(new dichotomy_factory(r1, r2));
 }

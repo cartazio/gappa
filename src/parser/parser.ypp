@@ -3,6 +3,7 @@
 #include <iostream>
 #include "parser/ast.hpp"
 #include "proofs/basic_proof.hpp"
+#include "proofs/dichotomy.hpp"
 
 int yylex(void);
 
@@ -119,4 +120,6 @@ OPERANDS:
     $$ = $1;
   }
 
-REWRITE: | REWRITE REAL IMPL REAL ';' { register_user_rewrite($2, $4); }
+REWRITE:
+| REWRITE REAL IMPL REAL ';'	{ register_user_rewrite($2, $4); }
+| REWRITE REAL '$' REAL ';'	{ register_user_dichotomy($2, $4); }

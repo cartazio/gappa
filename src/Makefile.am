@@ -28,6 +28,7 @@ gappa_SOURCES = \
 	proofs/basic_proof.cpp \
 	proofs/basic_proof.hpp \
 	proofs/dichotomy.cpp \
+	proofs/dichotomy.hpp \
 	proofs/field.cpp \
 	proofs/proof_graph.cpp \
 	proofs/proof_graph.hpp \
