@@ -249,5 +249,4 @@ void graph_t::populate() {
   if (owned_helper)
     delete helper;
   helper = NULL;
-  std::cerr << "Iterations: " << iter << '\n';
 }
