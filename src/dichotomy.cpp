@@ -6,8 +6,8 @@
 #include "numbers/interval_ext.hpp"
 #include "function.hpp"
 
-struct node_plouf: node {
-  node_plouf(property_vect const &h, property const &p): node(OTHER) {
+struct node_dichotomy: node {
+  node_dichotomy(property_vect const &h, property const &p): node(UNION) {
     res = p;
     hyp = h;
   }
@@ -99,5 +99,5 @@ node *generate_proof(property_vect const &hyp, property const &res) {
       std::cerr << " is nowhere (!?)\n";
     return NULL;
   }
-  return new node_plouf(hyp, res2);
+  return new node_dichotomy(hyp, res2);
 }
