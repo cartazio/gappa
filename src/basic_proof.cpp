@@ -41,25 +41,64 @@ struct property_key {
   bool operator<(property_key const &p) const {
     return type < p.type || (type == p.type && (var < p.var || (var == p.var && real < p.real)));
   }
+  typedef std::map< property_key, interval > map;
 };
 
 } // anonymous namespace
 
 struct node_modus: node {
   std::string name;
-  node_modus(property const &p, node *n, node_vect const &nodes): node(MODUS) {
-    res = p;
-    insert_pred(n);
-    for(node_vect::const_iterator i = nodes.begin(), i_end = nodes.end(); i != i_end; ++i) {
-      node *n = *i;
-      if (n == triviality) continue;
-      insert_pred(n);
-      int sz = hyp.size();
-      for(property_vect::const_iterator j = n->hyp.begin(), j_end = n->hyp.end(); j != j_end; ++j) {
-      }
+  node_modus(property const &p, node *n, node_vect const &nodes);
+};
+
+node_modus::node_modus(property const &p, node *n, node_vect const &nodes): node(MODUS) {
+  res = p;
+  insert_pred(n);
+  property_key::map pmap, rmap;
+  for(node_vect::const_iterator i = nodes.begin(), i_end = nodes.end(); i != i_end; ++i) {
+    node *m = *i;
+    if (m == triviality) continue;
+    insert_pred(m);
+    {
+      property const &p = m->res;
+      property_key pk = p;
+      property_key::map::iterator pki = pmap.find(pk);
+      if (pki != pmap.end())
+        pki->second = intersect(pki->second, p.bnd);
+      else
+        pmap.insert(std::make_pair(pk, p.bnd));
+    }
+    rmap.insert(std::make_pair(property_key(m->res), m->res.bnd));
+    for(property_vect::const_iterator j = m->hyp.begin(), j_end = m->hyp.end(); j != j_end; ++j) {
+      property const &p = *j;
+      property_key pk = p;
+      property_key::map::iterator pki = pmap.find(pk);
+      if (pki != pmap.end())
+        pki->second = hull(pki->second, p.bnd);
+      else
+        pmap.insert(std::make_pair(pk, p.bnd));
     }
   }
-};
+  for(property_vect::const_iterator j = n->hyp.begin(), j_end = n->hyp.end(); j != j_end; ++j) {
+    property const &p = *j;
+    property_key pk = p;
+    property_key::map::iterator pki = rmap.find(pk); // is the hypothesis a result?
+    if (pki != pmap.end() && pki->second <= p.bnd) continue;
+    pki = pmap.find(pk);
+    if (pki != pmap.end())
+      pki->second = hull(pki->second, p.bnd);
+    else
+      pmap.insert(std::make_pair(pk, p.bnd));
+  }
+  for(property_key::map::const_iterator pki = pmap.begin(), pki_end = pmap.end(); pki != pki_end; ++pki) {
+    property_key const &pk = pki->first;
+    property p(pk.type);
+    p.var = pk.var;
+    p.real = pk.real;
+    p.bnd = pki->second;
+    hyp.push_back(p);
+  }
+}
 
 struct node_relabs: node {
   node_relabs(property_vect const &h, property const &p): node(OTHER) {
