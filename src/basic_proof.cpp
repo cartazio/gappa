@@ -260,29 +260,25 @@ node *generate_error(property_vect const &hyp, property &res) {
   }
   property bnd(PROP_BND);
   bnd.var = res2.var;
-  node *n1 = generate_bound(hyp, bnd);
-  if (!n1) return NULL;
-  res.type = res2.type == PROP_ABS ? PROP_REL : PROP_ABS;
-  res.var = res2.var;
-  res.real = res2.real;
-  res.bnd = interval();
-  node *n2 = generate_error_forced(hyp, res);
-  if (!n2) return NULL;
-  res.type = res2.type;
-  if (res2.type == PROP_ABS) {
-    res.bnd = res.bnd * to_real(bnd.bnd);
-    if (!(res.bnd <= res2.bnd)) return NULL;
-  } else {
-    if (!is_zero(res.bnd)) {
-      if (contains_zero(bnd.bnd)) return NULL;
-      res.bnd = res.bnd / to_real(bnd.bnd);
-    }
-    if (!(res.bnd <= res2.bnd)) return NULL;
+  node *nb = generate_bound(hyp, bnd);
+  if (!nb) return NULL;
+  property err(res2.type == PROP_ABS ? PROP_REL : PROP_ABS);
+  err.var = res2.var;
+  err.real = res2.real;
+  node *ne = generate_error_forced(hyp, err);
+  if (!ne) return NULL;
+  res = res2;
+  if (res2.type == PROP_ABS)
+    res.bnd = err.bnd * to_real(bnd.bnd);
+  else if (!is_zero(err.bnd)) {
+    if (contains_zero(bnd.bnd)) return NULL;
+    res.bnd = err.bnd / to_real(bnd.bnd);
   }
+  if (!(res.bnd <= res2.bnd)) return NULL;
   node_vect nodes;
-  nodes.push_back(n1);
-  nodes.push_back(n2);
-  return new node_modus(res, new node_relabs(n1->res, n2->res, res), nodes);
+  nodes.push_back(nb);
+  nodes.push_back(ne);
+  return new node_modus(res, new node_relabs(bnd, err, res), nodes);
 }
 
 } // namespace basic_proof
