@@ -64,7 +64,7 @@ class dependent_node: public result_node {
  public:
   virtual node_vect const &get_subproofs() const { return pred; }
   virtual void clean_dependencies();
-  virtual dependent_node::~dependent_node();
+  virtual ~dependent_node();
 };
 
 struct modus_node: public dependent_node {
