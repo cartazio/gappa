@@ -27,6 +27,16 @@ ast_number *toggle_sign(ast_number const *nn) {
   return normalize(n);
 }
 
+static rounding_class const *rounding_mode = NULL;
+
+static ast_real const *rnd_normalize(ast_real const &real) {
+  ast_real const *r = normalize(real);
+  if (!rounding_mode) return r;
+  if (rounded_real const *rr = boost::get< rounded_real const >(r))
+    if (rr->rounding == rounding_mode) return r;
+  return normalize(ast_real(rounded_real(r, rounding_mode)));
+}
+
 %}
 
 %error-verbose
@@ -40,6 +50,7 @@ ast_number *toggle_sign(ast_number const *nn) {
   ast_real const	*real;
   ast_real_vect		*operands;
   ast_prop		*prop;
+  rounding_class const	*rounding;
 }
 
 %type <prop>      ATOM
@@ -50,6 +61,7 @@ ast_number *toggle_sign(ast_number const *nn) {
 %type <real>      REAL
 %type <operands>  OPERANDS
 %type <prop>      PROP
+%type <rounding>  ROUNDING
 
 %right IMPL
 %left AND
@@ -94,7 +106,23 @@ ATOM:
   REAL IN INTERVAL
   { $$ = new ast_prop(ast_atom_bound($1, $3)); }
 
-PROG: | PROG IDENT '=' REAL ';'	{ check_variable($2, $4); }
+ROUNDING: '<' IDENT '>'
+  {
+    ast_ident *r = $2;
+    if (r->id_type != REAL_RND)
+      { std::cerr << "Error: " << r->name << " is not a rounding\n"; exit(1); }
+    $$ = r->rnd;
+  }   
+
+EQUAL:
+  '='
+| ROUNDING '='	{ rounding_mode = $1; }
+
+PROG: | PROG IDENT EQUAL REAL ';'
+  {
+    check_variable($2, $4);
+    rounding_mode = NULL;
+  }
 
 REAL:
   NUMBER		{ $$ = normalize(ast_real($1)); }
@@ -106,27 +134,22 @@ REAL:
       { std::cerr << "Error: " << f->name << " is not a function\n"; exit(1); }
     function const *fun = f->fun;
     ast_real_vect *ops = $3;
-    $$ = normalize(ast_real(real_op(ROP_UNK, *ops)));
+    $$ = rnd_normalize(ast_real(real_op(ROP_UNK, *ops)));
     delete ops;
   }
-| '<' IDENT '>' '(' REAL ')'
-  {
-    ast_ident *r = $2;
-    if (r->id_type != REAL_RND)
-      { std::cerr << "Error: " << r->name << " is not a rounding\n"; exit(1); }
-    $$ = normalize(ast_real(rounded_real($5, r->rnd)));
-  }
-| REAL '+' REAL		{ $$ = normalize(ast_real(real_op($1, BOP_ADD, $3))); }
-| REAL '-' REAL		{ $$ = normalize(ast_real(real_op($1, BOP_SUB, $3))); }
-| REAL '*' REAL		{ $$ = normalize(ast_real(real_op($1, BOP_MUL, $3))); }
-| REAL '/' REAL		{ $$ = normalize(ast_real(real_op($1, BOP_DIV, $3))); }
+| ROUNDING '(' REAL ')'	{ $$ = rnd_normalize(ast_real(rounded_real($3, $1))); }
+| REAL '+' REAL		{ $$ = rnd_normalize(ast_real(real_op($1, BOP_ADD, $3))); }
+| REAL '-' REAL		{ $$ = rnd_normalize(ast_real(real_op($1, BOP_SUB, $3))); }
+| REAL '*' REAL		{ $$ = rnd_normalize(ast_real(real_op($1, BOP_MUL, $3))); }
+| REAL '/' REAL		{ $$ = rnd_normalize(ast_real(real_op($1, BOP_DIV, $3))); }
 | '(' REAL ')'		{ $$ = $2; }
 | '+' REAL %prec NEG	{ $$ = $2; }
 | '-' REAL %prec NEG
   {
     if (ast_number const *const *n = boost::get< ast_number const *const >($2))
       $$ = normalize(ast_real(toggle_sign(*n)));
-    else $$ = normalize(ast_real(real_op(UOP_MINUS, $2)));
+    else
+      $$ = rnd_normalize(ast_real(real_op(UOP_MINUS, $2)));
   }
 
 OPERANDS:
