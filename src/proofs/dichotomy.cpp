@@ -44,7 +44,7 @@ void dichotomize(property_vect &hyp, property &res, int idx, node_vect &nodes) {
   property &h = hyp[idx];
   interval bnd;
   {
-    graph_layer layer;
+    graph_layer layer(hyp);
     property res0 = res;
     node *n = handle_proof(hyp, res0);
     if (n) {

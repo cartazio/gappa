@@ -18,6 +18,7 @@ struct property {
 struct property_vect: std::vector< property > {
   bool implies(property_vect const &p) const;
   int find_compatible_property(property const &p) const;
+  bool operator==(property_vect const &) const;
 };
 
 #endif // PROOFS_PROPERTY_HPP

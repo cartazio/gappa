@@ -106,8 +106,8 @@ int display(property const &p) {
   return p_id;
 }
 
-typedef std::map< node *, int > node_map;
-static node_map displayed_nodes;
+typedef std::map< node *, int > disp_node_map;
+static disp_node_map displayed_nodes;
 
 int display(node *n) {
   int n_id = map_finder(displayed_nodes, n);
@@ -181,7 +181,7 @@ int display(node *n) {
 int main() {
   yyparse();
   for(node_set::const_iterator i = conclusions.begin(), end = conclusions.end(); i != end; ++i) {
-    graph_layer layer;
+    graph_layer layer((*i)->hyp);
     property p = (*i)->res;
     clear_schemes();
     if (!generate_scheme_tree((*i)->hyp, p.real)) continue;

@@ -91,13 +91,17 @@ node_modus::node_modus(property const &p, node *n, node_vect const &nodes): node
 }
 
 // no node should be generated and res should only be modified upon success
-node *generate_triviality(property_vect const &hyp, property &res) {
-  int i = hyp.find_compatible_property(res);
-  if (i >= 0) {
-    res = hyp[i];
-    return triviality;
+node *generate_triviality(property_vect const &hyp, property &res, bool &optimal) {
+  node *n = graph->find_in_cache(hyp, res);
+  optimal = n;
+  if (!optimal) {
+    int i = hyp.find_compatible_property(res);
+    if (i >= 0) {
+      res = hyp[i];
+      return triviality;
+    }
+    n = graph->find_compatible_node(hyp, res);
   }
-  node *n = graph->find_compatible_node(hyp, res);
   if (n) res = n->res;
   return n;
 }

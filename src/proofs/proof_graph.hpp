@@ -2,6 +2,7 @@
 #define PROOFS_PROOF_GRAPH_HPP
 
 #include "proofs/property.hpp"
+#include <map>
 #include <set>
 #include <vector>
 
@@ -12,6 +13,7 @@ struct graph_t;
 
 typedef std::vector< node * > node_vect;
 typedef std::set< node * > node_set;
+typedef std::map< ast_real const *, node * > node_map;
 
 struct node
 {
@@ -33,6 +35,9 @@ struct graph_t
   graph_t(): father(NULL) {}
   graph_t *father;
   node_set nodes;
+  node *find_in_cache(property_vect const &hyp, property const &res) const;
+  node_map cache;
+  property_vect cache_dom;
 };
 
 struct graph_storage
@@ -44,7 +49,7 @@ struct graph_storage
 
 struct graph_layer
 {
-  graph_layer();
+  graph_layer(property_vect const &);
   ~graph_layer();
   void flatten() const;
   void store(graph_storage &) const;

@@ -73,7 +73,9 @@ bool generate_scheme_tree(property_vect const &hyp, ast_real const *r) {
 node *handle_proof(property_vect const &hyp, property &res) {
   typedef std::vector< proof_scheme const * > scheme_stack;
   static scheme_stack st;
-  node *triviality_node = generate_triviality(hyp, res);
+  bool optimal;
+  node *triviality_node = generate_triviality(hyp, res, optimal);
+  if (optimal) return triviality_node;
   proof_scheme const *lower_scheme = NULL, *upper_scheme = NULL;
   interval best;
   bool lower_strict = triviality_node, upper_strict = triviality_node;
@@ -90,7 +92,7 @@ node *handle_proof(property_vect const &hyp, property &res) {
     st.push_back(scheme);
     { // lower bound search
       property res2(res.real, interval(lower_best, number::pos_inf));
-      graph_layer layer;
+      graph_layer layer(hyp);
       node *n = scheme->generate_proof(hyp, res2);
       if (n) {
         number const &lower_res = lower(res2.bnd);
@@ -112,7 +114,7 @@ node *handle_proof(property_vect const &hyp, property &res) {
     { // in case we didn't find a suitable upper bound because of the lower
       // bound restriction or because of the infinite upper bound
       property res2(res.real, interval(number::neg_inf, upper_best));
-      graph_layer layer;
+      graph_layer layer(hyp);
       node *n = scheme->generate_proof(hyp, res2);
       if (n) {
         number const &upper_res = upper(res2.bnd);
@@ -126,13 +128,17 @@ node *handle_proof(property_vect const &hyp, property &res) {
     st.pop_back();
   }
   if (!(triviality_node || (lower_scheme && upper_scheme))) return NULL;
-  if (lower_scheme == upper_scheme) { // catch only triviality_node
-    if (!lower_scheme) return triviality_node;
-    res.bnd = interval(lower_best, upper_best);
-    st.push_back(lower_scheme);
-    node *n = lower_scheme->generate_proof(hyp, res);
-    st.pop_back();
-    assert(n);
+  if (lower_scheme == upper_scheme) { // catch also triviality_node
+    node *n = triviality_node;
+    if (lower_scheme) {
+      res.bnd = interval(lower_best, upper_best);
+      st.push_back(lower_scheme);
+      n = lower_scheme->generate_proof(hyp, res);
+      st.pop_back();
+      assert(n);
+    }
+    if (n != triviality && graph->cache_dom == hyp)
+      graph->cache[res.real] = n;
     return n;
   }
   property res1(res.real), res2(res.real);
@@ -162,5 +168,8 @@ node *handle_proof(property_vect const &hyp, property &res) {
   nodes.push_back(n1);
   nodes.push_back(n2);
   property hyps[2] = { res1, res2 };
-  return new node_modus(res, new node_theorem(2, hyps, res, "intersect"), nodes);
+  node *n = new node_modus(res, new node_theorem(2, hyps, res, "intersect"), nodes);
+  if (graph->cache_dom == hyp)
+    graph->cache[res.real] = n;
+  return n;
 }

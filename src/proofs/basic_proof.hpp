@@ -19,7 +19,7 @@ struct node_modus: node {
   node_modus(property const &p, node *n, node_vect const &nodes);
 };
 
-node *generate_triviality(property_vect const &hyp, property &res);
+node *generate_triviality(property_vect const &hyp, property &res, bool &optimal);
 
 struct rewrite_scheme: proof_scheme {
   ast_real const *real;

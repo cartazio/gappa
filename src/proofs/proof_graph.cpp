@@ -45,7 +45,7 @@ node *compatible_node_finder::find(graph_t const *g) {
     for(node_set::const_iterator i = g->nodes.begin(), end = g->nodes.end(); i != end; ++i) {
       node *n = *i;
       interval const *b = &n->res.bnd;
-      if (n->res.real == real && (*b <= *bnd || (best && *b < *bnd))) {
+      if (n->res.real == real && (*b <= *bnd || (best && *b < *bnd)) && hyp.implies(n->hyp)) {
         bnd = b;
         best = n;
       }
@@ -66,6 +66,19 @@ bool graph_t::has_compatible_hypothesis(ast_real const *r) const {
   return false;
 }
 
+node *graph_t::find_in_cache(property_vect const &hyp, property const &res) const {
+  if (hyp == cache_dom) {
+    node_map::const_iterator i = cache.find(res.real);
+    if (i != cache.end() && i->second->res.bnd <= res.bnd) {
+      node *n = i->second;
+      assert(hyp.implies(n->hyp) && n->res.implies(res));
+      return n;
+    }
+  }
+  if (father) return father->find_in_cache(hyp, res);
+  return NULL;
+}
+
 static void delete_top_graph() {
   for(node_set::const_iterator i = graph->nodes.begin(), end = graph->nodes.end(); i != end; ++i)
     delete *i;
@@ -81,12 +94,16 @@ static void flatten_top_graph() {
   for(node_set::const_iterator i = graph->nodes.begin(), end = graph->nodes.end(); i != end; ++i)
     old_graph->nodes.insert(*i);
   graph->nodes.clear();
+  if (graph->cache_dom == old_graph->cache_dom)
+    old_graph->cache.insert(graph->cache.begin(), graph->cache.end());
+  graph->cache.clear();
 }
 
-graph_layer::graph_layer() {
+graph_layer::graph_layer(property_vect const &hyp) {
   graph_t *old_graph = graph;
   graph = new graph_t;
   graph->father = old_graph;
+  graph->cache_dom = hyp;
 }
 
 graph_layer::~graph_layer() {
