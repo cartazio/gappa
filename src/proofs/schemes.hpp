@@ -20,10 +20,12 @@ struct scheme_factory {
 
 struct scheme_register {
   typedef proof_scheme *(*scheme_factory_fun)(ast_real const *);
-  typedef std::vector< scheme_factory const * >::const_iterator factory_iterator;
   static std::vector< scheme_factory const * > factories;
   scheme_register(scheme_factory_fun f);
   scheme_register(scheme_factory const *);
+  typedef std::vector< scheme_factory const * >::const_iterator iterator;
+  static iterator begin() { return factories.begin(); }
+  static iterator end  () { return factories.end  (); }
 };
 
 node *handle_proof(property_vect const &, property &);

@@ -34,8 +34,8 @@ bool generate_scheme_tree(property_vect const &hyp, ast_real const *r) {
   if (r->scheme) return !dynamic_cast< no_scheme const * >(r->scheme);
   r->scheme = new yes_scheme;
   std::vector< proof_scheme * > schemes;
-  for(scheme_register::factory_iterator i = scheme_register::factories.begin(), i_end = scheme_register::factories.end();
-      i != i_end; ++i) {
+  typedef scheme_register all_schemes;
+  for(all_schemes::iterator i = all_schemes::begin(), i_end = all_schemes::end(); i != i_end; ++i) {
     proof_scheme *s = (**i)(r);
     if (!s) continue;
     ast_real_vect v = s->needed_reals(r);
