@@ -28,16 +28,23 @@ std::vector< variable * > multiple_definition(variable *v) {
   return res;
 }
 
+struct dichotomy_failure {
+  property_vect hyp;
+  property_bound res;
+  interval bnd;
+  dichotomy_failure(property_vect const &h, property_bound const &r, interval const &b): hyp(h), res(r), bnd(b) {}
+};
+
 void dichotomize(property_vect &hyp, property_bound &res, int idx) {
   property_bound *p = boost::get< property_bound >(&hyp[idx]);
   assert(p);
   interval bnd = basic_proof::compute_bound(hyp, res.var);
   if (is_defined(bnd) && bnd <= res.bnd) {
-    std::cout << "  " << p->bnd << " -> " << bnd << std::endl;
+    //std::cout << "  " << p->bnd << " -> " << bnd << std::endl;
     res.bnd = bnd;
     return;
   }
-  assert(!is_singleton(p->bnd));
+  if (is_singleton(p->bnd)) throw dichotomy_failure(hyp, res, bnd);
   std::pair< interval, interval > ii = split(p->bnd);
   p->bnd = ii.first;
   property_bound res1 = res;
@@ -63,6 +70,16 @@ node *generate_proof(property_vect const &hyp, property const &res) {
   bnd.var = p->var;
   bnd.bnd = p->bnd;
   property_vect hyp2 = hyp;
-  dichotomize(hyp2, bnd, i);
+  try {
+    dichotomize(hyp2, bnd, i);
+  } catch (dichotomy_failure e) {
+    property_bound *h = boost::get< property_bound >(&e.hyp[i]);
+    std::cerr
+      << "dichotomy failure: when "
+      << h->var->name->name << " is " << h->bnd << ", "
+      << e.res.var->name->name << " is in " << e.bnd
+      << " potentially outside of " << e.res.bnd << std::endl;
+    return NULL;
+  }
   return new node_plouf(hyp, bnd);
 }
