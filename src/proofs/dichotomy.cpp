@@ -21,7 +21,7 @@ class dichotomy_node: public dependent_node {
   }
   ~dichotomy_node();
   void dichotomize();
-  void add_graph(graph_t *);
+  bool add_graph(graph_t *);
   void try_graph(graph_t *);
   virtual void clean_dependencies();
 };
@@ -37,12 +37,12 @@ dichotomy_node::~dichotomy_node() {
   clean_dependencies();
 }
 
-void dichotomy_node::add_graph(graph_t *g) {
+bool dichotomy_node::add_graph(graph_t *g) {
   graphs.push_back(g);
   node *n = g->find_already_known(get_result().real);
   insert_pred(n);
   g->purge();
-  g->migrate();
+  return g->migrate();
 }
 
 void dichotomy_node::try_graph(graph_t *g2) {
@@ -65,14 +65,16 @@ void dichotomy_node::try_graph(graph_t *g2) {
       return;
     }
   delete g0;
-  add_graph(g1);
-  // now that g1 has been added, recompute g2 in case some nodes of g1 have migrated
-  tmp_hyp.replace_front(g2->get_hypotheses()[0]);
-  delete g2;
-  g2 = new graph_t(top_graph, tmp_hyp, g1->get_goals(), top_graph->helper, true);
-  g2->populate();
-  node *n = g2->find_already_known(res.real);
-  assert(n->get_result().bnd <= res.bnd);
+  bool recompute = add_graph(g1);
+  if (recompute) {
+    // now that g1 has been added and some of its nodes have moved, recompute g2
+    tmp_hyp.replace_front(g2->get_hypotheses()[0]);
+    delete g2;
+    g2 = new graph_t(top_graph, tmp_hyp, g1->get_goals(), top_graph->helper, true);
+    g2->populate();
+    node *n = g2->find_already_known(res.real);
+    assert(n->get_result().bnd <= res.bnd);
+  }
   last_graph = g2;
 }
 

@@ -308,7 +308,8 @@ void graph_t::purge(node *except) {
   delete_forest(ns, except);
 }
 
-void graph_t::migrate() {
+bool graph_t::migrate() {
+  bool res = false;
   assert(father);
   node_set ns(nodes);
   while (!ns.empty()) {
@@ -328,5 +329,7 @@ void graph_t::migrate() {
     n->graph = father;
     ns.insert(n->succ.begin(), n->succ.end());
     father->try_real(n);
+    res = true;
   }
+  return res;
 }

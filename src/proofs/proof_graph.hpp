@@ -102,7 +102,7 @@ class graph_t {
   void populate();		// fill the proof graph
   void purge(node * = NULL);	// remove all the unused nodes, except for this one
   void flatten();		// move all the nodes in the upper graph
-  void migrate();		// move all the free nodes in the upper graph
+  bool migrate();		// move the free nodes in the upper graph, return true if any
 };
 
 struct graph_loader {
