@@ -38,7 +38,7 @@ REWRITE(absolute_error_trans,
 
 REWRITE(add_decomposition,
 	(a + b) - (c + d),
-	(a - c) + (b + d));
+	(a - c) + (b - d));
 
 REWRITE(sub_decomposition,
 	(a - b) - (c - d),
