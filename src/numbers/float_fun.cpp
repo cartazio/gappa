@@ -62,7 +62,7 @@ static interval bound_compute_add_float(interval const **ints) {
 }
 
 static node *bound_generate_add_float(property const *hyp, property const &res) {
-  return new node_theorem(2, hyp, res, "add");
+  return new node_theorem(2, hyp, res, "bnd_add");
 }
 
 static hypothesis_constraint const const_add_float_abs[4] =
@@ -73,7 +73,7 @@ static interval compute_add_float_abs(interval const **ints) {
 }
 
 static node *generate_add_float_abs(property const *hyp, property const &res) {
-  return new node_theorem(3, hyp, res, "add");
+  return new node_theorem(3, hyp, res, "abs_add");
 }
 
 static hypothesis_constraint const const_add_float_abs_sterbenz[6] =
@@ -86,7 +86,7 @@ static interval compute_add_float_abs_sterbenz(interval const **ints) {
 }
 
 static node *generate_add_float_abs_sterbenz(property const *hyp, property const &res) {
-  return new node_theorem(5, hyp, res, "add_sterbenz");
+  return new node_theorem(5, hyp, res, "asb_add_sterbenz");
 }
 
 static hypothesis_constraint const const_add_float_abs_singleton[5] =
@@ -97,7 +97,7 @@ static interval compute_add_float_abs_singleton(interval const **ints) {
 }
 
 static node *generate_add_float_abs_singleton(property const *hyp, property const &res) {
-  return new node_theorem(4, hyp, res, "add_singleton");
+  return new node_theorem(4, hyp, res, "abs_add_singleton");
 }
 
 void initialize_add() {
@@ -116,7 +116,7 @@ static interval bound_compute_sub_float(interval const **ints) {
 }
 
 static node *bound_generate_sub_float(property const *hyp, property const &res) {
-  return new node_theorem(2, hyp, res, "sub");
+  return new node_theorem(2, hyp, res, "bnd_sub");
 }
 
 static hypothesis_constraint const const_sub_float_abs[4] =
@@ -127,7 +127,7 @@ static interval compute_sub_float_abs(interval const **ints) {
 }
 
 static node *generate_sub_float_abs(property const *hyp, property const &res) {
-  return new node_theorem(3, hyp, res, "sub");
+  return new node_theorem(3, hyp, res, "abs_sub");
 }
 
 static hypothesis_constraint const const_sub_float_abs_sterbenz[6] =
@@ -140,7 +140,7 @@ static interval compute_sub_float_abs_sterbenz(interval const **ints) {
 }
 
 static node *generate_sub_float_abs_sterbenz(property const *hyp, property const &res) {
-  return new node_theorem(5, hyp, res, "sub_sterbenz");
+  return new node_theorem(5, hyp, res, "abs_sub_sterbenz");
 }
 
 static hypothesis_constraint const const_sub_float_abs_singleton[5] =
@@ -151,7 +151,7 @@ static interval compute_sub_float_abs_singleton(interval const **ints) {
 }
 
 static node *generate_sub_float_abs_singleton(property const *hyp, property const &res) {
-  return new node_theorem(4, hyp, res, "sub_singleton");
+  return new node_theorem(4, hyp, res, "abs_sub_singleton");
 }
 
 void initialize_sub() {
@@ -170,7 +170,7 @@ static interval bound_compute_mul_float(interval const **ints) {
 }
 
 static node *bound_generate_mul_float(property const *hyp, property const &res) {
-  return new node_theorem(2, hyp, res, "mul");
+  return new node_theorem(2, hyp, res, "bnd_mul");
 }
 
 static hypothesis_constraint const const_mul_float_abs[6] =
@@ -182,7 +182,7 @@ static interval compute_mul_float_abs(interval const **ints) {
 }
 
 static node *generate_mul_float_abs(property const *hyp, property const &res) {
-  return new node_theorem(5, hyp, res, "mul");
+  return new node_theorem(5, hyp, res, "abs_mul");
 }
 
 static hypothesis_constraint const const_mul_float_abs_singleton[5] =
@@ -194,7 +194,7 @@ static interval compute_mul_float_abs_singleton(interval const **ints) {
 }
 
 static node *generate_mul_float_abs_singleton(property const *hyp, property const &res) {
-  return new node_theorem(4, hyp, res, "mul_singleton");
+  return new node_theorem(4, hyp, res, "abs_mul_singleton");
 }
 
 static hypothesis_constraint const const_mul_float_rel[4] =
@@ -207,7 +207,7 @@ static interval compute_mul_float_rel(interval const **ints) {
 }
 
 static node *generate_mul_float_rel(property const *hyp, property const &res) {
-  return new node_theorem(3, hyp, res, "mul");
+  return new node_theorem(3, hyp, res, "rel_mul");
 }
 
 void initialize_mul() {
