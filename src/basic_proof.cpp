@@ -32,7 +32,7 @@ struct property_key {
   property_type type;
   variable *var;
   ast_real const *real; // only used for ABS and REL
-  property_key(property const &p): type(p.type), var(p.var), real(p.type != PROP_BND ? p.real : NULL) {}
+  property_key(property const &p): type(p.type), var(p.type != PROP_BND ? p.var : NULL), real(p.real) {}
   bool operator<(property_key const &p) const {
     return type < p.type || (type == p.type && (var < p.var || (var == p.var && real < p.real)));
   }
@@ -54,12 +54,12 @@ node_modus::node_modus(node *n, property const &p): node(MODUS) {
     return;
   }
   if (n == triviality) {
-    int idx = res.var->get_definition();
-    assert(idx != -1);
-    instruction &inst = program[idx];
-    assert(!inst.fun);
+    variable const *v = res.real->get_variable();
+    assert(v);
+    instruction *inst = v->inst;
+    assert(inst && !inst->fun);
     property h = res;
-    h.var = inst.in[0];
+    h.var = inst->in[0];
     hyp.push_back(h);
     return;
   }
@@ -133,9 +133,9 @@ node *generate_triviality(property_vect const &hyp, property &res) {
   return triviality;
 }
 
-interval const &compute_triviality(property_vect const &hyp, variable *v) {
+interval const &compute_triviality(property_vect const &hyp, ast_real const *r) {
   property bnd(PROP_BND);
-  bnd.var = v;
+  bnd.real = r;
   //if (node *n = graph->find_compatible_node(hyp, bnd)) return n->res.bnd;
   int i = hyp.find_compatible_property(bnd);
   if (i < 0) { static interval const not_defined; return not_defined; }
@@ -145,55 +145,57 @@ interval const &compute_triviality(property_vect const &hyp, variable *v) {
 node *generate_bound(property_vect const &hyp, property &res);
 node *generate_error(property_vect const &hyp, property &res);
 
-interval compute_bound(property_vect const &hyp, variable *v) {
-  { interval const &res = compute_triviality(hyp, v);
+interval compute_bound(property_vect const &hyp, ast_real const *r) {
+  { interval const &res = compute_triviality(hyp, r);
     if (is_defined(res)) return res; }
-  int idx = v->get_definition();
-  if (idx == -1) return interval();
-  instruction &inst = program[idx];
-  if (!inst.fun) return compute_bound(hyp, inst.in[0]);
-  int l = inst.in.size();
-  boost::scoped_array< interval > ints_(new interval[l]);
-  boost::scoped_array< interval const * > ints(new interval const *[l]);
-  for(int i = 0; i < l; ++i) {
-    ints_[i] = compute_bound(hyp, inst.in[i]);
-    if (!(is_defined(ints_[i]))) return interval();
-    ints[i] = &ints_[i];
-  }
-  return (*inst.fun->bnd_comp->compute)(ints.get());
+  if (variable const *v = r->get_variable()) {
+    instruction *inst = v->inst;
+    if (!inst) return interval();
+    if (!inst->fun) return compute_bound(hyp, inst->in[0]->real);
+    int l = inst->in.size();
+    boost::scoped_array< interval > ints_(new interval[l]);
+    boost::scoped_array< interval const * > ints(new interval const *[l]);
+    for(int i = 0; i < l; ++i) {
+      ints_[i] = compute_bound(hyp, inst->in[i]->real);
+      if (!(is_defined(ints_[i]))) return interval();
+      ints[i] = &ints_[i];
+    }
+    return (*inst->fun->bnd_comp->compute)(ints.get());
+  } else
+    return interval();
 }
 
 node *generate_bound(property_vect const &hyp, property &res) {
   assert(res.type == PROP_BND);
   if (node *n = generate_triviality(hyp, res)) return n;
   // std::cout << res.var->name->name << " in " << res.bnd << std::endl;
-  int idx = res.var->get_definition();
-  if (idx == -1) return NULL; /* TODO: unprovable? */
-  instruction &inst = program[idx];
-  if (!inst.fun) {
-    variable *v = res.var;
-    res.var = inst.in[0];
-    node *n = generate_bound(hyp, res);
-    if (!n) return NULL;
-    res.var = v;
-    return new node_modus(n, res);
-  }
-  int l = inst.in.size();
-  node_vect nodes(l);
-  boost::scoped_array< property > props(new property[l]);
-  boost::scoped_array< interval const * > ints(new interval const *[l]);
-  for(int i = 0; i < l; ++i) {
-    props[i].type = PROP_BND;
-    props[i].var = inst.in[i];
-    if (!(nodes[i] = generate_bound(hyp, props[i]))) return NULL;
-    ints[i] = &props[i].bnd;
-  }
-  interval bnd = (*inst.fun->bnd_comp->compute)(ints.get());
-  if (!is_defined(bnd) || !(bnd <= res.bnd)) return NULL;
-  res.bnd = bnd;
-  node *n = (*inst.fun->bnd_comp->generate)(props.get(), res);
-  assert(n);
-  return new node_modus(res, n, nodes);
+  if (variable const *v = res.real->get_variable()) {
+    instruction *inst = v->inst;
+    if (!inst) return NULL; /* TODO: unprovable? */
+    if (!inst->fun) {
+      res.real = inst->in[0]->real;
+      node *n = generate_bound(hyp, res);
+      if (!n) return NULL;
+      res.real = v->real;
+      return new node_modus(n, res);
+    }
+    int l = inst->in.size();
+    node_vect nodes(l);
+    boost::scoped_array< property > props(new property[l]);
+    boost::scoped_array< interval const * > ints(new interval const *[l]);
+    for(int i = 0; i < l; ++i) {
+      props[i].type = PROP_BND;
+      props[i].real = inst->in[i]->real;
+      if (!(nodes[i] = generate_bound(hyp, props[i]))) return NULL;
+      ints[i] = &props[i].bnd;
+    }
+    interval bnd = (*inst->fun->bnd_comp->compute)(ints.get());
+    if (!is_defined(bnd) || !(bnd <= res.bnd)) return NULL;
+    res.bnd = bnd;
+    node *n = (*inst->fun->bnd_comp->generate)(props.get(), res);
+    assert(n);
+    return new node_modus(res, n, nodes);
+  } else return NULL;
 }
 
 node *generate_error_forced(property_vect const &hyp, property &res) {
@@ -206,22 +208,21 @@ node *generate_error_forced(property_vect const &hyp, property &res) {
     res.bnd = interval_real();
     return triviality;
   }
-  int idx = res.var->get_definition();
-  if (idx == -1) return NULL; /* TODO: unprovable? */
-  instruction &inst = program[idx];
-  if (!inst.fun) {
+  instruction *inst = res.var->inst;
+  if (!inst) return NULL; /* TODO: unprovable? */
+  if (!inst->fun) {
     variable *v = res.var;
-    res.var = inst.in[0];
+    res.var = inst->in[0];
     node *n = generate_error(hyp, res);
     if (!n) return NULL;
     res.var = v;
     return new node_modus(n, res);
   }
   real_op const *op = boost::get< real_op const >(res.real);
-  if (!op || op->type != inst.fun->type) return NULL;
+  if (!op || op->type != inst->fun->type) return NULL;
   node *n = NULL;
   node_vect nodes;
-  for(error_computation const *m = inst.fun->err_comp; m->res.var != 0; ++m) {
+  for(error_computation const *m = inst->fun->err_comp; m->res.var != 0; ++m) {
     if (m->res.var != -1) continue; // TODO
     if (!(m->res.type == HYP_ABS && res.type == PROP_ABS || m->res.type == HYP_REL && res.type == PROP_REL)) continue;
     graph_layer layer;
@@ -233,17 +234,18 @@ node *generate_error_forced(property_vect const &hyp, property &res) {
     boost::scoped_array< interval const * > ints(new interval const *[l]);
     for(int i = 0; i < l; ++i) {
       hypothesis_constraint const *c = &m->constraints[i];
-      variable *v = (c->var < 0) ? inst.out[-1 - c->var] : inst.in[c->var - 1] ;
+      variable *v = (c->var < 0) ? inst->out[-1 - c->var] : inst->in[c->var - 1] ;
       node *nn;
       property &p = props[i];
-      p.var = v;
       if (c->type == HYP_BND || c->type == HYP_SNG) {
         p.type = PROP_BND;
+        p.real = v->real;
         if (!(nn = generate_bound(hyp, p))) { good = false; break; }
         if (c->type == HYP_SNG && !is_singleton(p.bnd)) { good = false; break; }
       } else if (c->type == HYP_ABS || c->type == HYP_REL) {
-        p.type = c->type == HYP_ABS ? PROP_ABS : PROP_REL;
         assert(c->var >= 1);
+        p.type = c->type == HYP_ABS ? PROP_ABS : PROP_REL;
+        p.var = v;
         p.real = op->ops[c->var - 1];
         if (!(nn = generate_error(hyp, p))) { good = false; break; }
       } else assert(false);
@@ -271,7 +273,7 @@ node *generate_error(property_vect const &hyp, property &res) {
     if (n) { layer.flatten(); return n; }
   }
   property bnd(PROP_BND);
-  bnd.var = res2.var;
+  bnd.real = res2.var->real;
   node *nb = generate_bound(hyp, bnd);
   if (!nb) return NULL;
   property err(res2.type == PROP_ABS ? PROP_REL : PROP_ABS);

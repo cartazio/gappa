@@ -13,20 +13,24 @@ struct node;
 struct variable {
   ast_ident *name;
   ast_real *real;
+  instruction *inst;
   type_id type;
   variable(ast_ident *n, type_id t = NULL);
-  int get_definition();
- private:
-  int def;
 };
 
 struct function;
 
+enum ident_type { UNKNOWN_ID, PROG_FUN, PROG_VAR, REAL_VAR };
+
 struct ast_ident {
   std::string name;
-  variable *var;
-  function *fun;
-  ast_ident(std::string const &s): name(s), var(NULL), fun(NULL) {}
+  union {
+    variable *var;
+    function *fun;
+    real_variable *rvar;
+  };
+  ident_type id_type;
+  ast_ident(std::string const &s): name(s), id_type(UNKNOWN_ID) {}
   static ast_ident *find(std::string const &s);
   static ast_ident *temp();
 };
@@ -59,7 +63,7 @@ struct instruction {
   variable_vec out;
 };
 
-typedef std::vector< instruction > program_t;
+typedef std::vector< instruction * > program_t;
 extern program_t program;
 
 #endif // PROGRAM_HPP

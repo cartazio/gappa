@@ -11,9 +11,9 @@ enum property_type { PROP_BND, PROP_ABS, PROP_REL };
 
 struct property {
   property_type type;
-  variable *var;
+  variable *var; // only used for ABS and REL
   interval bnd;
-  ast_real const *real; // only used for ABS and REL
+  ast_real const *real;
   property(): type(property_type(-1)) {}
   property(property_type t): type(t) {}
   bool implies(property const &) const;

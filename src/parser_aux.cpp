@@ -8,16 +8,56 @@
 
 interval create_interval(ast_interval const &, bool widen, type_id);
 
-variable *check_variable(ast_ident *v, type_id t = UNDEFINED) {
-  if (v->fun)
-    { std::cerr << "Error: " << v->name << " is a function symbol" << std::endl; exit(1); }
-  if (!v->var) v->var = new variable(v, t);
-  else if (t != UNDEFINED) {
-    if (v->var->type == UNDEFINED) v->var->type = t;
-    else if (v->var->type != t)
-      { std::cerr << "Error: Type mismatch for " << v->name << std::endl; exit(1); }
+ast_real *check_real(ast_ident *v) {
+  switch (v->id_type) {
+  case PROG_VAR:
+    return v->var->real;
+  case UNKNOWN_ID:
+    { 
+      v->id_type = REAL_VAR;
+      v->rvar = new real_variable(v, NULL);
+    }
+    // no break
+  case REAL_VAR:
+    return v->rvar->real;
+  default:
+    { std::cerr << "Error: " << v->name << " is not a variable\n"; exit(1); }
+    return NULL;
+  }  
+}
+
+variable *check_prog_variable(ast_ident *v, type_id t = UNDEFINED, instruction *ins = NULL) {
+  switch (v->id_type) {
+  case PROG_VAR:
+    if (t != UNDEFINED) {
+      if (v->var->type == UNDEFINED) v->var->type = t;
+      else if (v->var->type != t)
+        { std::cerr << "Error: Type mismatch for " << v->name << '\n'; exit(1); }
+    }
+    break;
+  case UNKNOWN_ID:
+    {
+      v->id_type = PROG_VAR;
+      v->var = new variable(v, t);
+    }
+    break;
+  default:
+    { std::cerr << "Error: " << v->name << " is an already defined symbol\n"; exit(1); }
+  }
+  if (ins != NULL) {
+    if (v->var->inst != NULL)
+      { std::cerr << "Error: " << v->name << "is assigned more than once\n"; exit(1); }
+    v->var->inst = ins;
   }
   return v->var;
+}
+
+real_variable *check_real_variable(ast_ident *v, ast_real *r) {
+  if (v->id_type != UNKNOWN_ID)
+    { std::cerr << "Error: " << v->name << " is an already defined symbol\n"; exit(1); }
+  v->id_type = REAL_VAR;
+  v->rvar = new real_variable(v, r);
+  return v->rvar;
 }
 
 ast_prop_and merge_prop_and(ast_prop const &_p1, ast_prop const &_p2) {
@@ -41,14 +81,15 @@ ast_prop_and merge_prop_and(ast_prop const &_p) {
   }
 }
 
-property generate_property(ast_atom_bound const &p) {
+property generate_property(ast_atom_bound const &p, bool goal) {
   property r(PROP_BND);
-  r.var = p.ident;
-  type_id type = r.var->type;
-  assert(type != UNDEFINED);
+  r.real = p.real;
+  type_id type = interval_real_desc;
+  assert(r.real->get_variable());
+  if (variable const *v = r.real->get_variable()) type = v->type;
   if (p.interval.lower) {
     assert(p.interval.upper);
-    r.bnd = create_interval(p.interval, false, type);
+    r.bnd = create_interval(p.interval, (type == interval_real_desc) && goal, type);
   } else assert(!p.interval.upper);
   return r;
 }
@@ -64,12 +105,10 @@ property generate_property(ast_atom_error const &p, bool goal) {
   return r;
 }
 
-typedef std::pair< property, property > property_pair;
-
 property generate_property(ast_atom_approx const &p, property **_q) {
   property r(PROP_BND);
-  r.var = p.ident;
-  type_id type = r.var->type;
+  r.real = p.ident->real;
+  type_id type = p.ident->type;
   assert(type != UNDEFINED);
   ast_interval i = { p.value, p.value };
   r.bnd = create_interval(i, true, type);
@@ -83,7 +122,7 @@ void generate_subgraph(ast_prop_impl const &p, node_id type) {
   for(int i = tmp.size() - 1; i >= 0; i--) {
     ast_prop &q = tmp[i];
     if (ast_atom_bound *r = boost::get< ast_atom_bound >(&q))
-      hyp.push_back(generate_property(*r));
+      hyp.push_back(generate_property(*r, false));
     else if (ast_atom_error *r = boost::get< ast_atom_error >(&q))
       hyp.push_back(generate_property(*r, false));
     else if (ast_atom_approx *r = boost::get< ast_atom_approx >(&q)) {
@@ -102,7 +141,7 @@ void generate_subgraph(ast_prop_impl const &p, node_id type) {
     node *n = new node(type);
     n->hyp = hyp;
     if (ast_atom_bound *r = boost::get< ast_atom_bound >(&q))
-      n->res = generate_property(*r);
+      n->res = generate_property(*r, true);
     else if (ast_atom_error *r = boost::get< ast_atom_error >(&q))
       n->res = generate_property(*r, true);
     else assert(false);
@@ -127,9 +166,9 @@ void link_variables() {
   do {
     restart = false;
     for(int i = l - 1; i >= 0; i--) {
-      instruction &ins = program[i];
-      variable *v1 = ins.in[0], *v2 = ins.out[0]; // v2=v1 ; if v1 is undefined and v2 is not, propagate to v1
-      if (ins.fun != NULL || v1->type != UNDEFINED || v2->type == UNDEFINED) continue;
+      instruction *ins = program[i];
+      variable *v1 = ins->in[0], *v2 = ins->out[0]; // v2=v1 ; if v1 is undefined and v2 is not, propagate to v1
+      if (ins->fun != NULL || v1->type != UNDEFINED || v2->type == UNDEFINED) continue;
       v1->type = v2->type;
       restart = true;
     }

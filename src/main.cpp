@@ -95,8 +95,8 @@ int display(ast_real const *r) {
   if (r_id < 0) return -r_id;
   auto_flush plouf;
   plouf << "Definition r" << r_id << " := ";
-  if (variable *const *v = boost::get< variable *const >(r))
-    plouf << '_' << (*v)->name->name;
+  if (variable const *v = r->get_variable())
+    plouf << '_' << v->name->name;
   else if (ast_number *const *n = boost::get< ast_number *const >(r))
     if ((*n)->base == 0) plouf << '0';
     else plouf << (*n)->mantissa << ((*n)->base == 2 ? 'b' : 'e') << (*n)->exponent;
@@ -116,13 +116,21 @@ static property_map displayed_properties;
 
 int display(property const &p) {
   std::stringstream s;
-  std::string const &name = p.var->name->name;
-  if (p.type == PROP_BND)
+  std::string name;
+  if (p.type == PROP_BND) {
+    if (variable const *v = p.real->get_variable())
+      name = '_' + v->name->name;
+    else {
+      std::stringstream s;
+      s << 'r' << display(p.real);
+      name = s.str();
+    }
     s << "I754s_in";
-  else if (p.type == PROP_ABS || p.type == PROP_REL)
+  } else if (p.type == PROP_ABS || p.type == PROP_REL) {
+    name = '_' + p.var->name->name;
     s << "I754s_" << (p.type == PROP_ABS ? "ABS" : "REL") << " r" << display(p.real);
-  else assert(false);
-  s << " i" << display(p.bnd) << " _" << name;
+  } else assert(false);
+  s << " i" << display(p.bnd) << ' ' << name;
   std::string s_ = s.str();
   int p_id = map_finder(displayed_properties, s_);
   if (p_id < 0) return -p_id;
@@ -136,7 +144,7 @@ struct property_key {
   property_type type;
   variable *var;
   ast_real const *real; // only used for ABS and REL
-  property_key(property const &p): type(p.type), var(p.var), real(p.type != PROP_BND ? p.real : NULL) {}
+  property_key(property const &p): type(p.type), var(p.type != PROP_BND ? p.var : NULL), real(p.real) {}
   bool operator<(property_key const &p) const {
     return type < p.type || (type == p.type && (var < p.var || (var == p.var && real < p.real)));
   }
@@ -218,11 +226,13 @@ int main() {
     node *n = generate_proof((*i)->hyp, (*i)->res);
     if (!n) continue;
     property const &p = n->res;
-    std::string const &name = p.var->name->name;
     if (p.type == PROP_BND)
-      std::cout << name;
+      if (variable const *v = p.real->get_variable())
+        std::cout << v->name->name;
+      else
+        std::cout << "...";
     else if (p.type == PROP_ABS || p.type == PROP_REL)
-      std::cout << (p.type == PROP_ABS ? "ABS(" : "REL(") << name << ", ...)";
+      std::cout << (p.type == PROP_ABS ? "ABS(" : "REL(") << p.var->name->name << ", ...)";
     else assert(false);
     std::cout << " in " << p.bnd << std::endl;
     layer.flatten();

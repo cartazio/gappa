@@ -17,7 +17,7 @@ namespace dichotomy {
 } // namespace dichotomy
 
 namespace basic_proof {
-interval compute_bound(property_vect const &hyp, variable *v);
+interval compute_bound(property_vect const &hyp, ast_real const *r);
 node *generate_error(property_vect const &hyp, property &res);
 } // namespace basic_proof
 
@@ -48,7 +48,7 @@ interval compute_error(property_vect const &hyp, property const &res) { // TODO
 void dichotomize(property_vect &hyp, property &res, int idx) {
   property &h = hyp[idx];
   assert(h.type == PROP_BND);
-  interval bnd = res.type == PROP_BND ? basic_proof::compute_bound(hyp, res.var) : compute_error(hyp, res);
+  interval bnd = res.type == PROP_BND ? basic_proof::compute_bound(hyp, res.real) : compute_error(hyp, res);
   if (is_defined(bnd) && bnd <= res.bnd) {
     //std::cout << "  " << h.bnd << " -> " << bnd << std::endl;
     res.bnd = bnd;
@@ -73,17 +73,17 @@ node *generate_proof(property_vect const &hyp, property const &res) {
     if (node *n = generate_basic_proof(hyp, res)) { layer.flatten(); return n; }
   }
   if (!is_defined(res.bnd)) return NULL;
-  std::vector< variable * > vars = multiple_definition(res.var);
+  std::vector< variable * > vars = multiple_definition(res.var); // BLI
   int i;
   property bnd(PROP_BND); // TODO
-  bnd.var = vars[0];
+  bnd.real = vars[0]->real;
   i = hyp.find_compatible_property(bnd);
   assert(i >= 0);
   property res2 = res;
   property_vect hyp2 = hyp;
   try {
     dichotomize(hyp2, res2, i);
-  } catch (dichotomy_failure e) {
+  } catch (dichotomy_failure e) { // BLI
     property &h = e.hyp[i];
     std::cerr << "failure: when " << h.var->name->name << " is " << h.bnd << ", ";
     property &p = e.res;

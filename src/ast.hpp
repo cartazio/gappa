@@ -16,9 +16,9 @@ struct ast_operands {
 };
 
 struct ast_atom_bound {
-  variable *ident;
+  ast_real *real;
   ast_interval interval;
-  ast_atom_bound(variable *v, ast_interval i): ident(v), interval(i) {}
+  ast_atom_bound(ast_real *r, ast_interval i): real(r), interval(i) {}
 };
 
 struct ast_atom_error {

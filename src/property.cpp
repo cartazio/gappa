@@ -3,8 +3,8 @@
 #include "numbers/interval_ext.hpp"
 
 bool property::implies(property const &p) const {
-  if (type != p.type || var != p.var) return false;
-  if (type != PROP_BND && real != p.real) return false;
+  if (type != p.type || real != p.real) return false;
+  if (type != PROP_BND && var != p.var) return false;
   return bnd <= p.bnd;
 }
 

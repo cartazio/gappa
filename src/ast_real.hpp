@@ -46,6 +46,7 @@ struct ast_real: ast_real_aux
   ast_real(real_op const &v): ast_real_aux(v) {}
   bool operator==(ast_real const &v) const { return ast_real_aux::operator==(static_cast< ast_real_aux const & >(v)); }
   bool operator<(ast_real const &v) const { return ast_real_aux::operator<(static_cast< ast_real_aux const & >(v)); }
+  variable *get_variable() const { variable *const *v = boost::get< variable * const >(this); return v ? *v : NULL; }
 };
 
 ast_real *normalize(ast_real const &);
@@ -57,5 +58,13 @@ std::basic_ostream< CharType, CharTraits > &operator<<
   stream << "(" << value.type << /*' ' << value.left << ')'*/" ...)"; // TODO
   return stream;
 }
+
+struct ast_ident;
+
+struct real_variable {
+  ast_ident *name;
+  ast_real *real;
+  real_variable(ast_ident *n, ast_real *r): name(n), real(r) {}
+};
 
 #endif // AST_REAL_HPP
