@@ -9,7 +9,9 @@ extern node *triviality;
 
 struct proof_scheme
 {
-  node *(*generate_proof)(property_vect const &, property &);
+  virtual node *generate_proof(property_vect const &, property &) const = 0;
+  virtual ast_real_vect needed_reals(ast_real const *) const = 0;
+  virtual ~proof_scheme() {}
   proof_scheme const *next;
 };
 
@@ -20,8 +22,7 @@ struct node_theorem: node {
   node_theorem(int nb, property const *h, property const &p, std::string n);
 };
 
-void add_scheme(ast_real const *, node *(*)(property_vect const &, property &));
-void add_basic_scheme(ast_real *);
 node *handle_proof(property_vect const &, property &);
+bool generate_scheme_tree(property_vect const &hyp, ast_real const *);
 
 #endif // BASIC_PROOF_HPP

@@ -59,7 +59,7 @@ struct proof_scheme;
 
 struct ast_real: ast_real_aux
 {
-  proof_scheme const *scheme;
+  mutable proof_scheme const *scheme;
   ast_real(ast_number const *v): ast_real_aux(v), scheme(NULL) {}
   ast_real(ast_ident const *v): ast_real_aux(v), scheme(NULL) {}
   ast_real(real_op const &v): ast_real_aux(v), scheme(NULL) {}

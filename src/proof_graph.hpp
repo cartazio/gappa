@@ -32,6 +32,7 @@ struct node
 struct graph_t
 {
   node *find_compatible_node(property_vect const &hyp, property const &res) const;
+  bool has_compatible_hypothesis(ast_real const *) const;
   void insert(node *);
   void erase(node *);
   graph_t(): father(NULL) {}

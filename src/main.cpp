@@ -183,6 +183,7 @@ int main() {
   for(node_set::const_iterator i = conclusions.begin(), end = conclusions.end(); i != end; ++i) {
     graph_layer layer;
     property p = (*i)->res;
+    if (!generate_scheme_tree((*i)->hyp, p.real)) continue;
     node *n = handle_proof((*i)->hyp, p);
     if (!n || n == triviality) continue;
     if (ast_ident const *v = p.real->get_variable())

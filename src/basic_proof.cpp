@@ -279,7 +279,24 @@ node *generate_relabs(property_vect const &hyp, property &res) {
 }
 */
 
-node *generate_absolute_error(property_vect const &hyp, property &res) {
+struct scheme_register {
+  typedef proof_scheme *(*scheme_factory)(ast_real const *);
+  typedef std::vector< scheme_factory >::const_iterator factory_iterator;
+  static std::vector< scheme_factory > factories;
+  //template< class T > scheme_register() { factories.push_back(&T::factory); }
+  scheme_register(scheme_factory f) { factories.push_back(f); }
+};
+
+std::vector< scheme_register::scheme_factory > scheme_register::factories;
+
+// ABSOLUTE_ERROR
+struct absolute_error_scheme: proof_scheme {
+  virtual node *generate_proof(property_vect const &, property &) const;
+  virtual ast_real_vect needed_reals(ast_real const *) const;
+  static proof_scheme *factory(ast_real const *);
+};
+
+node *absolute_error_scheme::generate_proof(property_vect const &hyp, property &res) const {
   real_op const *o = boost::get< real_op const >(res.real);
   assert(o && o->type == BOP_SUB);
   rounded_real const *rr = boost::get< rounded_real const >(o->ops[1]);
@@ -296,7 +313,33 @@ node *generate_absolute_error(property_vect const &hyp, property &res) {
   return new node_modus(res, new node_theorem(1, &res2, res, name), nodes);
 }
 
-node *generate_rounding_bound(property_vect const &hyp, property &res) {
+ast_real_vect absolute_error_scheme::needed_reals(ast_real const *real) const {
+  real_op const *o = boost::get< real_op const >(real);
+  assert(o && o->type == BOP_SUB);
+  rounded_real const *rr = boost::get< rounded_real const >(o->ops[1]);
+  assert(rr && o->ops[0] == rr->rounded);
+  return ast_real_vect(1, rr->rounded);
+}
+
+proof_scheme *absolute_error_scheme::factory(ast_real const *r) {
+  real_op const *o = boost::get< real_op const >(r);
+  if (!o) return NULL;
+  if (o->type != BOP_SUB) return NULL;
+  rounded_real const *rr = boost::get< rounded_real const >(o->ops[1]);
+  if (!rr || o->ops[0] != rr->rounded) return NULL;
+  return new absolute_error_scheme;
+}
+
+scheme_register absolute_error_scheme_register(&absolute_error_scheme::factory);
+
+// ROUNDING_BOUND
+struct rounding_bound_scheme: proof_scheme {
+  virtual node *generate_proof(property_vect const &, property &) const;
+  virtual ast_real_vect needed_reals(ast_real const *) const;
+  static proof_scheme *factory(ast_real const *);
+};
+
+node *rounding_bound_scheme::generate_proof(property_vect const &hyp, property &res) const {
   rounded_real const *r = boost::get< rounded_real const >(res.real);
   assert(r);
   property res2(r->rounded);
@@ -311,7 +354,27 @@ node *generate_rounding_bound(property_vect const &hyp, property &res) {
   return new node_modus(res, new node_theorem(1, &res2, res, name), nodes);
 }
 
-node *generate_computation(property_vect const &hyp, property &res) {
+ast_real_vect rounding_bound_scheme::needed_reals(ast_real const *real) const {
+  rounded_real const *r = boost::get< rounded_real const >(real);
+  assert(r);
+  return ast_real_vect(1, r->rounded);
+}
+
+proof_scheme *rounding_bound_scheme::factory(ast_real const *r) {
+  if (!boost::get< rounded_real const >(r)) return NULL;
+  return new rounding_bound_scheme;
+}
+
+scheme_register rounding_bound_scheme_register(&rounding_bound_scheme::factory);
+
+// COMPUTATION
+struct computation_scheme: proof_scheme {
+  virtual node *generate_proof(property_vect const &, property &) const;
+  virtual ast_real_vect needed_reals(ast_real const *) const;
+  static proof_scheme *factory(ast_real const *);
+};
+
+node *computation_scheme::generate_proof(property_vect const &hyp, property &res) const {
   real_op const *r = boost::get< real_op const >(res.real);
   assert(r);
   node_vect nodes;
@@ -363,9 +426,29 @@ node *generate_computation(property_vect const &hyp, property &res) {
   return new node_modus(res, n, nodes);
 }
 
+ast_real_vect computation_scheme::needed_reals(ast_real const *real) const {
+  real_op const *r = boost::get< real_op const >(real);
+  assert(r);
+  return r->ops;
+}
+
+proof_scheme *computation_scheme::factory(ast_real const *r) {
+  if (!boost::get< real_op const >(r)) return NULL;
+  return new computation_scheme;
+}
+
+scheme_register computation_scheme_register(&computation_scheme::factory);
+
+// NUMBER
+struct number_scheme: proof_scheme {
+  virtual node *generate_proof(property_vect const &, property &) const;
+  virtual ast_real_vect needed_reals(ast_real const *) const { return ast_real_vect(); }
+  static proof_scheme *factory(ast_real const *);
+};
+
 interval create_interval(ast_interval const &, bool widen = true);
 
-node *generate_constant(property_vect const &hyp, property &res) {
+node *number_scheme::generate_proof(property_vect const &hyp, property &res) const {
   ast_number const *const *r = boost::get< ast_number const *const >(res.real);
   assert(r);
   ast_interval _i = { *r, *r };
@@ -375,36 +458,86 @@ node *generate_constant(property_vect const &hyp, property &res) {
   return new node_theorem(0, NULL, res, "constant");
 }
 
-void add_scheme(ast_real *r, node *(*f)(property_vect const &, property &)) {
-  for(proof_scheme const *scheme = r->scheme, *prev = NULL; scheme != NULL;
-      prev = scheme, scheme = scheme->next)
-    if (scheme->generate_proof == f) {
-      if (!prev) return;
-      const_cast< proof_scheme * >(prev)->next = scheme->next;
-      const_cast< proof_scheme * >(scheme)->next = r->scheme;
-      r->scheme = scheme;
-      return;
-    }
-  proof_scheme *s = new proof_scheme;
-  s->generate_proof = f;
-  s->next = r->scheme;
-  r->scheme = s;
+proof_scheme *number_scheme::factory(ast_real const *r) {
+  if (!boost::get< ast_number const *const >(r)) return NULL;
+  return new number_scheme;
 }
 
-void add_basic_scheme(ast_real *r) {
-  if (real_op const *o = boost::get< real_op const >(r)) {
-    bool absolute = false;
-    if (o->type == BOP_SUB)
-      if (rounded_real const *rr = boost::get< rounded_real const >(o->ops[1]))
-        absolute = o->ops[0] == rr->rounded;
-    if (absolute)
-      add_scheme(r, &generate_absolute_error);
+scheme_register number_scheme_register(&number_scheme::factory);
+
+// REWRITE
+struct rewrite_scheme: proof_scheme {
+  ast_real const *real;
+  std::string name;
+  rewrite_scheme(ast_real const *r, std::string const &n): real(r), name(n) {}
+  virtual node *generate_proof(property_vect const &, property &) const;
+  virtual ast_real_vect needed_reals(ast_real const *) const { return ast_real_vect(1, real); }
+  //static proof_scheme *factory(ast_real const *);
+};
+
+node *rewrite_scheme::generate_proof(property_vect const &hyp, property &res) const {
+  property res2(real, res.bnd);
+  node *n = handle_proof(hyp, res2);
+  if (!n) return NULL;
+  res.bnd = res2.bnd;
+  node_vect nodes;
+  nodes.push_back(n);
+  return new node_modus(res, new node_theorem(1, &res2, res, name), nodes);
+}
+
+//scheme_register rewrite_scheme_register(&rewrite_scheme::factory);
+
+//
+struct no_scheme: proof_scheme {
+  virtual node *generate_proof(property_vect const &, property &) const { return NULL; }
+  virtual ast_real_vect needed_reals(ast_real const *) const { return ast_real_vect(); }
+};
+
+struct yes_scheme: proof_scheme {
+  virtual node *generate_proof(property_vect const &, property &) const { return NULL; }
+  virtual ast_real_vect needed_reals(ast_real const *) const { return ast_real_vect(); }
+};
+
+bool generate_scheme_tree(property_vect const &hyp, ast_real const *r) {
+  if (r->scheme) return !dynamic_cast< no_scheme const * >(r->scheme);
+  { static yes_scheme dummy;
+    r->scheme = &dummy; }
+  std::vector< proof_scheme * > schemes;
+  for(scheme_register::factory_iterator i = scheme_register::factories.begin(), i_end = scheme_register::factories.end();
+      i != i_end; ++i) {
+    proof_scheme *s = (**i)(r);
+    if (!s) continue;
+    ast_real_vect v = s->needed_reals(r);
+    bool good = true;
+    for(ast_real_vect::const_iterator j = v.begin(), j_end = v.end(); j != j_end; ++j) {
+      good = generate_scheme_tree(hyp, *j);
+      if (!good) break;
+    }
+    if (good)
+      schemes.push_back(s);
     else
-      add_scheme(r, &generate_computation);
-  } else if (boost::get< ast_number const *const >(r))
-    add_scheme(r, &generate_constant);
-  else if (boost::get< rounded_real const >(r))
-    add_scheme(r, &generate_rounding_bound);
+      delete s;
+  }
+  unsigned s = schemes.size();
+  if (s == 0) {
+    bool in_hyp = false;
+    for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i) {
+      in_hyp = r == i->real;
+      if (in_hyp) break;
+    }
+    if (in_hyp) return true;
+    if (graph->has_compatible_hypothesis(r)) return true;
+    static no_scheme dummy;
+    r->scheme = &dummy;
+    return false;
+  }
+  r->scheme = NULL;
+  for(unsigned i = 0; i < s; ++i) {
+    proof_scheme *p = schemes[i];
+    p->next = r->scheme;
+    r->scheme = p;
+  }
+  return true;
 }
 
 node *handle_proof(property_vect const &hyp, property &res) {
@@ -416,7 +549,7 @@ node *handle_proof(property_vect const &hyp, property &res) {
     st.push_back(scheme);
     graph_layer layer;
     property res2 = res;
-    node *n = (*scheme->generate_proof)(hyp, res);
+    node *n = scheme->generate_proof(hyp, res);
     st.pop_back();
     if (n) {
       layer.flatten();

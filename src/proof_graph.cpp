@@ -52,8 +52,15 @@ void graph_t::erase(node *n) {
 node *graph_t::find_compatible_node(property_vect const &hyp, property const &res) const {
   for(node_set::const_iterator i = nodes.begin(), end = nodes.end(); i != end; ++i)
     if (hyp.implies((*i)->hyp) && (*i)->res.implies(res)) return *i;
-  if (father != NULL) return father->find_compatible_node(hyp, res);
+  if (father) return father->find_compatible_node(hyp, res);
   return NULL;
+}
+
+bool graph_t::has_compatible_hypothesis(ast_real const *r) const {
+  for(node_set::const_iterator i = nodes.begin(), end = nodes.end(); i != end; ++i)
+    if ((*i)->type == HYPOTHESIS && (*i)->res.real == r) return true;
+  if (father) return father->has_compatible_hypothesis(r);
+  return false;
 }
 
 graph_layer::graph_layer() {

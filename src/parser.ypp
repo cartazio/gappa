@@ -15,8 +15,6 @@ extern ast_real const *check_real(ast_ident *v);
 extern void check_variable(ast_ident *v, ast_real const *r);
 extern ast_prop_and merge_prop_and(ast_prop const &p1, ast_prop const &p2);
 extern void generate_graph(ast_prop const &p);
-extern void set_default_schemes();
-
 
 %}
 
@@ -50,12 +48,7 @@ extern void set_default_schemes();
 
 %%
 
-BLOB: PROG '{' PROP '}'
-  {
-    generate_graph(*$3);
-    delete $3;
-    set_default_schemes();
-  }
+BLOB: PROG '{' PROP '}' { generate_graph(*$3); delete $3; }
 
 PROP:
   ATOM			{ $$ = $1; }
