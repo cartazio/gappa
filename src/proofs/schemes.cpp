@@ -67,7 +67,7 @@ bool generate_scheme_tree(ast_real const *r, ast_real_vect &reals, ast_real_vect
   bool in_hyp = false;
   {
     assert(top_graph);
-    node_vect axioms = top_graph->find_good_axioms(r);
+    node_vect axioms = top_graph->find_useful_axioms(r);
     for(node_vect::const_iterator i = axioms.begin(), i_end = axioms.end(); i != i_end; ++i) {
       property_vect const &hyp = (*i)->get_hypotheses();
       bool good = true;
@@ -144,7 +144,7 @@ node *handle_proof(property const &res) {
     node *n = scheme->generate_proof(res);
     if (n && top_graph->try_real(n)) layer.flatten();
   }
-  node_vect axioms = top_graph->find_good_axioms(res.real);
+  node_vect axioms = top_graph->find_useful_axioms(res.real);
   for(node_vect::const_iterator i = axioms.begin(), i_end = axioms.end(); i != i_end; ++i) {
     node *n = *i;
     property_vect const &hyp = n->get_hypotheses();
@@ -155,11 +155,11 @@ node *handle_proof(property const &res) {
       if (m && m->get_result().bnd <= j->bnd) nodes.push_back(m);
       else { good = false; break; }
     }
-    if (good) {
-      node *m = new modus_node(nodes.size(), &nodes.front(), n);
-      bool b = top_graph->try_real(m);
-      assert(b);
-    }
+    if (!good) continue;
+    node *m = new modus_node(nodes.size(), &nodes.front(), n);
+    bool b = top_graph->try_real(m);
+    assert(b);
+    top_graph->remove_axiom(n);
   }
   node *n = find_proof(res.real);
   return (n && n->get_result().bnd <= res.bnd) ? n : NULL;

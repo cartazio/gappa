@@ -64,11 +64,10 @@ struct modus_node: public dependent_node {
 };
 
 class graph_t {
-  graph_t *father;		// super-graph, with encompassing hypotheses
   node_set nodes;		// nodes owned by the graph, each node is implied by hyp
   node_set axioms;		// unusuable axioms (not implied by hyp)
   node_map known_reals;		// best node implied by hyp for each real
-  property_vect hyp;		// hypotheses of all the nodes of the graph
+  property_vect hyp;		// hypotheses of the graph (they imply the hypotheses from the super-graph)
  public:
   property_vect goals;
   void insert(node *n) { nodes.insert(n); }
@@ -78,8 +77,8 @@ class graph_t {
   graph_t(graph_t *, property_vect const &);
   ~graph_t();
   node *find_already_known(ast_real const *) const;
-  node_vect find_good_axioms(ast_real const *) const;
-  bool test_real(property const &) const;
+  node_vect find_useful_axioms(ast_real const *);
+  bool is_useful(property const &) const;
   bool try_real(node *&);
   property_vect const &get_hypotheses() const { return hyp; }
 };

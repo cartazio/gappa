@@ -110,21 +110,26 @@ intersection_node::intersection_node(node *n1, node *n2)
   fill_property_vect(hyp, pmap);
 }
 
-graph_t::graph_t(graph_t *f, property_vect const &h): father(f), hyp(h) {
+graph_t::graph_t(graph_t *f, property_vect const &h): hyp(h) {
+  if (f) {
+    assert(hyp.implies(f->hyp));
+    known_reals = f->known_reals;
+    for(node_set::const_iterator i = f->axioms.begin(), end = f->axioms.end(); i != end; ++i) {
+      node *n = *i;
+      if (hyp.implies(n->get_hypotheses()))
+        try_real(n);
+      else
+        axioms.insert(*i);
+    }
+  }
   for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i) {
     node *n = new hypothesis_node(*i);
     nodes.insert(n);
     try_real(n);
   }
-  if (!f) return;
-  assert(hyp.implies(f->hyp));
-  for(node_set::const_iterator i = f->nodes.begin(), end = f->nodes.end(); i != end; ++i) {
-    node *n = *i;
-    hyp.implies(n->get_hypotheses()) && try_real(n);
-  }
 }
 
-bool graph_t::test_real(property const &res2) const {
+bool graph_t::is_useful(property const &res2) const {
   node_map::const_iterator i = known_reals.find(res2.real);
   if (i != known_reals.end()) {
     property const &res1 = i->second->get_result();
@@ -152,13 +157,19 @@ bool graph_t::try_real(node *&n) {
   return true;
 }
 
-node_vect graph_t::find_good_axioms(ast_real const *real) const {
+node_vect graph_t::find_useful_axioms(ast_real const *real) {
   node_vect res;
+  node_vect useless;
   for(node_set::const_iterator i = axioms.begin(), end = axioms.end(); i != end; ++i) {
     node *n = *i;
     property const &p = n->get_result();
-    if (p.real == real && test_real(p)) res.push_back(n);
+    if (p.real == real) {
+      if (is_useful(p)) res.push_back(n);
+      else useless.push_back(n);
+    }
   }
+  for(node_vect::const_iterator i = useless.begin(), end = useless.end(); i != end; ++i)
+    axioms.erase(*i);
   return res;
 }
 
