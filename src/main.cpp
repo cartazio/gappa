@@ -58,7 +58,7 @@ int display(number_real const &f, interval_float_description const *desc = NULL)
   if (desc) {
     std::cout << // TODO
       "Definition f" << f_id << "a := Float " << s_ << ".\n"
-      "Lemma f" << f_id << "b : Good_f754s f" << f_id << "a. compute. left. repeat split; discriminate. Qed.\n" // TODO
+      "Lemma f" << f_id << "b : Good_f754s f" << f_id << "a. compute. apply Normal_f754s. Qed.\n" // TODO
       "Definition f" << f_id << " := F754s f" << f_id << "a f" << f_id << "b.\n";
   } else
     std::cout << "Definition f" << f_id << " := Float " << s_ << ".\n";
@@ -118,7 +118,7 @@ int display(property const &p) {
   std::stringstream s;
   std::string const &name = p.var->name->name;
   if (p.type == PROP_BND)
-    s << "I754s_BND";
+    s << "I754s_in";
   else if (p.type == PROP_ABS || p.type == PROP_REL)
     s << "I754s_" << (p.type == PROP_ABS ? "ABS" : "REL") << " r" << display(p.real);
   else assert(false);
