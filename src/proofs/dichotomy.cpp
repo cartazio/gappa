@@ -14,12 +14,15 @@ class dichotomy_node: public dependent_node {
   property_vect &tmp_hyp;
   int depth;
  public:
-  dichotomy_node(property_vect &v, property const &p): dependent_node(UNION, p), tmp_hyp(v), depth(0) {
+  graph_t *last_graph;
+  dichotomy_node(property_vect &v, property const &p)
+      : dependent_node(UNION, p), tmp_hyp(v), depth(0), last_graph(NULL) {
     hyp = v;
   }
   ~dichotomy_node();
   void dichotomize();
   void add_graph(graph_t *);
+  void try_graph(graph_t *);
 };
 
 dichotomy_node::~dichotomy_node() {
@@ -32,6 +35,30 @@ void dichotomy_node::add_graph(graph_t *g) {
   insert_pred(g->find_already_known(get_result().real));
 }
 
+void dichotomy_node::try_graph(graph_t *g2) {
+  graph_t *g1 = last_graph;
+  if (!g1) {
+    last_graph = g2;
+    return;
+  }
+  property p(g1->get_hypotheses()[0]);
+  p.bnd = interval(lower(p.bnd), upper(g2->get_hypotheses()[0].bnd));
+  tmp_hyp.replace_front(p);
+  property const &res = get_result();
+  graph_stacker stacker(tmp_hyp);
+  top_graph->prover.goals.push_back(res);
+  top_graph->prover();
+  if (node *n = find_proof(res.real)) {
+    if (n->get_result().bnd <= res.bnd) {
+      last_graph = top_graph;
+      return;
+    }
+  }
+  stacker.clear();
+  add_graph(g1);
+  last_graph = g2;
+}
+
 struct dichotomy_failure {
   property hyp;
   property res;
@@ -42,18 +69,20 @@ struct dichotomy_failure {
 void dichotomy_node::dichotomize() {
   property const &res = get_result();
   interval bnd;
+  graph_t *g = NULL;
   {
     graph_stacker stacker(tmp_hyp);
     top_graph->prover.goals.push_back(res);
     top_graph->prover();
     if (node *n = find_proof(res.real)) {
       bnd = n->get_result().bnd;
-      if (bnd <= res.bnd) {
-        add_graph(top_graph);
-        return;
-      }
+      if (bnd <= res.bnd) g = top_graph;
     }
-    stacker.clear();
+    if (!g) stacker.clear();
+  }
+  if (g) {
+    try_graph(g);
+    return;
   }
   property const &h = tmp_hyp[0];
   rounded_real const *rr = boost::get< rounded_real const >(res.real);
@@ -95,15 +124,14 @@ node *dichotomy_scheme::generate_proof(property const &res) const {
     graph_layer layer;
     dichotomy_node *n = new dichotomy_node(hyp2, res);
     n->dichotomize();
+    n->add_graph(n->last_graph);
     if (varn->type != HYPOTHESIS)
       dich = new modus_node(1, &varn, n);
     else dich = n;
     layer.flatten();
   } catch (dichotomy_failure e) { // BLI
     property const &h = e.hyp;
-    ast_ident const *v = h.real->get_variable();
-    assert(v);
-    std::cerr << "failure: when " << v->name << " is " << h.bnd << ", ";
+    std::cerr << "failure: when ... is " << h.bnd << ", ";
     property const &p = e.res;
     if (ast_ident const *v = p.real->get_variable())
       std::cerr << v->name;
