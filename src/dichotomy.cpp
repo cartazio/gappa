@@ -85,7 +85,7 @@ node *generate_proof(property_vect const &hyp, property const &res) {
     dichotomize(hyp2, res2, i);
   } catch (dichotomy_failure e) {
     property &h = e.hyp[i];
-    std::cerr << "dichotomy failure: when " << h.var->name->name << " is " << h.bnd << ", ";
+    std::cerr << "failure: when " << h.var->name->name << " is " << h.bnd << ", ";
     property &p = e.res;
     std::string const &name = p.var->name->name;
     if (p.type == PROP_BND)
