@@ -53,7 +53,7 @@ int display(interval const &i) {
   std::string const &s_ = s.str();
   int i_id = map_finder(displayed_intervals, s_);
   if (i_id < 0) return -i_id;
-  std::cout << "Definition i" << i_id << " := makepairR " << s_ << ".\n";
+  std::cout << "Definition i" << i_id << " := makepairF " << s_ << ".\n";
   return i_id;
 }
 
@@ -95,7 +95,7 @@ int display(property const &p) {
   std::string s_ = s.str();
   int p_id = map_finder(displayed_properties, s_);
   if (p_id < 0) return -p_id;
-  std::cout << "Definition p" << p_id << " := IR_in i" << s_ << ".\n";
+  std::cout << "Definition p" << p_id << " := IintF i" << s_ << ".\n";
   return p_id;
 }
 
@@ -246,7 +246,10 @@ int main() {
     }
     std::cout << "\n\n";
     for(int j = 0; j < nb; ++j)
-      if (results[j]) display(results[j]);
+      if (results[j]) {
+        std::cout << "Require Export IA_comput.\n";
+        display(results[j]);
+      }
     delete g;
   }
   return 0;
