@@ -245,12 +245,13 @@ int main() {
         std::cerr << "...";
       std::cerr << " in " << p.bnd << '\n';
     }
-    std::cout << "\n\n";
     for(int j = 0; j < nb; ++j)
       if (results[j]) {
-        std::cout << "Require Import IA_comput.\nRequire Import IA_manip.\n";
-        display(results[j]);
+        std::cout << "\n\nRequire Import IA_comput.\nRequire Import IA_manip.\n";
+        break;
       }
+    for(int j = 0; j < nb; ++j)
+      if (results[j]) display(results[j]);
     delete g;
   }
   return 0;
