@@ -110,7 +110,7 @@ intersection_node::intersection_node(node *n1, node *n2)
   fill_property_vect(hyp, pmap);
 }
 
-graph_t::graph_t(graph_t *f, property_vect const &h): hyp(h) {
+graph_t::graph_t(graph_t *f, property_vect const &h): father(f), hyp(h) {
   if (f) {
     assert(hyp.implies(f->hyp));
     known_reals = f->known_reals;
@@ -130,6 +130,12 @@ graph_t::graph_t(graph_t *f, property_vect const &h): hyp(h) {
   }
 }
 
+void graph_t::revalidate_known_reals() {
+  assert(father);
+  for(node_map::const_iterator i = father->known_reals.begin(), end = father->known_reals.end(); i != end; ++i)
+    try_real(i->second); // in case we find better because the super-graph has evolved
+}
+
 bool graph_t::is_useful(property const &res2) const {
   node_map::const_iterator i = known_reals.find(res2.real);
   if (i != known_reals.end()) {
@@ -140,7 +146,7 @@ bool graph_t::is_useful(property const &res2) const {
   return true;
 }
 
-bool graph_t::try_real(node *&n) {
+bool graph_t::try_real(node *n) {
   property const &res2 = n->get_result();
   node_map::iterator i = known_reals.find(res2.real);
   if (i != known_reals.end()) {

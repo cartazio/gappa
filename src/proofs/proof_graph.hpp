@@ -70,6 +70,7 @@ struct proof_handler {
 };
 
 class graph_t {
+  graph_t *father;
   node_set nodes;		// nodes owned by the graph, each node is implied by hyp
   node_set axioms;		// unusuable axioms (not implied by hyp)
   node_map known_reals;		// best node implied by hyp for each real
@@ -85,8 +86,9 @@ class graph_t {
   node *find_already_known(ast_real const *) const;
   node_vect find_useful_axioms(ast_real const *);
   bool is_useful(property const &) const;
-  bool try_real(node *&);
+  bool try_real(node *);
   property_vect const &get_hypotheses() const { return hyp; }
+  void revalidate_known_reals();
 };
 
 extern graph_t *top_graph;
