@@ -5,7 +5,7 @@
 #include "types.hpp"
 #include <sstream>
 
-static number_base *read_number(ast_number const &n, mp_rnd_t rnd) {
+static number read_number(ast_number const &n, mp_rnd_t rnd) {
   number_base *res = new number_base;
   switch (n.base) {
   case 10: {
@@ -26,12 +26,11 @@ static number_base *read_number(ast_number const &n, mp_rnd_t rnd) {
   return res;
 }
 
-interval create_interval(ast_interval const &i, bool widen, number_type const &type) {
+interval create_interval(ast_interval const &i, bool widen/*, number_type const &type*/) {
   mp_rnd_t d1 = widen ? GMP_RNDD : GMP_RNDU;
   mp_rnd_t d2 = widen ? GMP_RNDU : GMP_RNDD;
-  number_base *n1 = read_number(*i.lower, d1);
-  number_base *n2 = read_number(*i.upper, d2);
-  return interval(type.rounded_up(number(n1)), type.rounded_dn(number(n2)));
+  //return interval(type.rounded_up(number(n1)), type.rounded_dn(number(n2)));
+  return interval(read_number(*i.lower, d1), read_number(*i.upper, d2));
 }
 
 static std::string signed_lexical(mpz_t const &frac, bool sgn) {

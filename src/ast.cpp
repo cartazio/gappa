@@ -28,14 +28,6 @@ ast_ident *ast_ident::find(std::string const &s) {
   return ptr;
 }
 
-void make_variables_real() {
-  for(store_t::const_iterator i = store.begin(), end = store.end(); i != end; ++i) {
-    if ((*i)->id_type != PROG_VAR) continue;
-    variable *v = (*i)->var;
-    if (v && !v->type) v->type = REAL_NUMBER;
-  }
-}
-
 template< class T >
 class cache {
   struct less_t {

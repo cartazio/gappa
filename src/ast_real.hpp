@@ -1,10 +1,9 @@
 #ifndef AST_REAL_HPP
 #define AST_REAL_HPP
 
-#include <boost/variant.hpp>
+#include <string>
 #include <vector>
-
-struct variable;
+#include <boost/variant.hpp>
 
 struct ast_number {
   std::string mantissa;
@@ -18,7 +17,7 @@ ast_number *normalize(ast_number const &);
 
 struct ast_real;
 
-enum real_op_type { UOP_MINUS, BOP_ADD, BOP_SUB, BOP_MUL, BOP_DIV };
+enum real_op_type { UOP_MINUS, BOP_ADD, BOP_SUB, BOP_MUL, BOP_DIV, ROP_UNK };
 
 typedef std::vector< ast_real const * > ast_real_vect;
 
@@ -27,30 +26,30 @@ struct real_op
   ast_real_vect ops;
   real_op_type type;
   real_op(real_op_type t, ast_real_vect const &o): ops(o), type(t) {}
-  real_op(real_op_type t, ast_real *o): type(t) { ops.push_back(o); }
-  real_op(ast_real *l, real_op_type t, ast_real *r): type(t) { ops.push_back(l); ops.push_back(r); }
+  real_op(real_op_type t, ast_real const *o): type(t) { ops.push_back(o); }
+  real_op(ast_real const *l, real_op_type t, ast_real const *r): type(t) { ops.push_back(l); ops.push_back(r); }
   bool operator==(real_op const &v) const { return type == v.type && ops == v.ops; }
   bool operator<(real_op const &v) const { return type < v.type || (type == v.type && ops < v.ops); }
 };
 
-enum error_type { ERROR_ABS, ERROR_REL };
+struct rounding_class;
 
-struct error_bound
+struct rounded_real
 {
-  error_type type;
-  variable *var;
-  ast_real const *real;
-  error_bound(error_type t, variable *v, ast_real const *r): type(t), var(v), real(r) {}
-  bool operator==(error_bound const &v) const { return type == v.type && var == v.var && real == v.real; }
-  bool operator<(error_bound const &v) const
-  { return type < v.type || (type == v.type && (var < v.var || (var == v.var && real < v.real))); }
+  ast_real const *rounded;
+  rounding_class const *rounding;
+  rounded_real(ast_real const *f, rounding_class const *r): rounded(f), rounding(r) {}
+  bool operator==(rounded_real const &v) const { return rounded == v.rounded && rounding == v.rounding; }
+  bool operator<(rounded_real const &v) const { return rounded < v.rounded || (rounded == v.rounded && rounding < v.rounding); }
 };
 
+struct ast_ident;
+
 typedef boost::variant
-  < ast_number *
-  , variable *
+  < ast_number const *
+  , ast_ident const *
   , real_op
-  , error_bound
+  , rounded_real
   > ast_real_aux;
 
 struct proof_scheme;
@@ -58,13 +57,14 @@ struct proof_scheme;
 struct ast_real: ast_real_aux
 {
   proof_scheme const *scheme;
-  ast_real(ast_number *v): ast_real_aux(v), scheme(NULL) {}
-  ast_real(variable *v): ast_real_aux(v), scheme(NULL) {}
+  ast_real(ast_number const *v): ast_real_aux(v), scheme(NULL) {}
+  ast_real(ast_ident const *v): ast_real_aux(v), scheme(NULL) {}
   ast_real(real_op const &v): ast_real_aux(v), scheme(NULL) {}
-  ast_real(error_bound const &v): ast_real_aux(v), scheme(NULL) {}
+  ast_real(rounded_real const &v): ast_real_aux(v), scheme(NULL) {}
   bool operator==(ast_real const &v) const { return ast_real_aux::operator==(static_cast< ast_real_aux const & >(v)); }
   bool operator<(ast_real const &v) const { return ast_real_aux::operator<(static_cast< ast_real_aux const & >(v)); }
-  variable *get_variable() const { variable *const *v = boost::get< variable * const >(this); return v ? *v : NULL; }
+  ast_ident const *get_variable() const
+  { ast_ident const *const *v = boost::get< ast_ident const *const >(this); return v ? *v : NULL; }
 };
 
 ast_real *normalize(ast_real const &);
@@ -76,13 +76,5 @@ std::basic_ostream< CharType, CharTraits > &operator<<
   stream << "(" << value.type << /*' ' << value.left << ')'*/" ...)"; // TODO
   return stream;
 }
-
-struct ast_ident;
-
-struct real_variable {
-  ast_ident *name;
-  ast_real *real;
-  real_variable(ast_ident *n, ast_real *r): name(n), real(r) {}
-};
 
 #endif // AST_REAL_HPP

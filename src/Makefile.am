@@ -26,7 +26,6 @@ gappa_SOURCES = \
 	main.cpp \
 	parser_aux.cpp \
 	parser.ypp \
-	program.cpp \
 	program.hpp \
 	proof_graph.cpp \
 	proof_graph.hpp \

@@ -68,11 +68,7 @@ zero		[-+]?((((0+(\.0*)?)|(\.0+))([eE][-+]?{integer})?)|(0+([bB][-+]?{integer})?
 "/\\"		return AND;
 "->"		return IMPL;
 "in"		return IN;
-":="		return ASSIGN;
-"ABS"		{ yylval.toto = 0; return ERROR; }
-"REL"		{ yylval.toto = 1; return ERROR; }
 {zero}		{ read_zero(); return NUMBER; }
 {number}	{ read_number(); return NUMBER; }
 {ident}		{ read_ident(); return IDENT; }
 .		{ return yytext[0]; }
-

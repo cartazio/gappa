@@ -65,9 +65,9 @@ int display(ast_real const *r) {
   if (r_id < 0) return -r_id;
   auto_flush plouf;
   plouf << "Definition r" << r_id << " := ";
-  if (variable const *v = r->get_variable())
-    plouf << '_' << v->name->name;
-  else if (ast_number *const *n = boost::get< ast_number *const >(r))
+  if (ast_ident const *v = r->get_variable())
+    plouf << '_' << v->name;
+  else if (ast_number const *const *n = boost::get< ast_number const *const >(r))
     if ((*n)->base == 0) plouf << '0';
     else plouf << (*n)->mantissa << ((*n)->base == 2 ? 'b' : 'e') << (*n)->exponent;
   else if (real_op const *o = boost::get< real_op const >(r)) {
@@ -76,8 +76,6 @@ int display(ast_real const *r) {
       plouf << '(' << op[o->type] << " r" << display(o->ops[0]) << ")%R";
     else
       plouf << "(r" << display(o->ops[0]) << ' ' << op[o->type] << " r" << display(o->ops[1]) << ")%R";
-  } else if (error_bound const *e = boost::get< error_bound const >(r)) {
-    plouf << "blop";
   } else assert(false);
   plouf << ".\n";
   return r_id;
@@ -89,12 +87,9 @@ static property_map displayed_properties;
 int display(property const &p) {
   std::stringstream s;
   std::string name;
-  if (variable const *v = p.real->get_variable()) {
-    name = '_' + v->name->name;
+  if (ast_ident const *v = p.real->get_variable()) {
+    name = '_' + v->name;
     s << "I754s_in";
-  } else if (error_bound const *e = boost::get< error_bound const >(p.real)) {
-    name = '_' + e->var->name->name;
-    s << "I754s_" << (e->type == ERROR_ABS ? "ABS" : "REL") << " r" << display(e->real);
   } else {
     s << "IR_in";
     std::stringstream ss;
@@ -141,12 +136,14 @@ int display(node *n) {
     for(node_vect::const_iterator i = ++n->pred.begin(), i_end = n->pred.end(); i != i_end; ++i, ++nb_hyps) {
       plouf << " assert (h" << nb_hyps << " : p" << display((*i)->res) << "). apply l" << display(*i) << '.';
       for(property_vect::const_iterator j = (*i)->hyp.begin(), j_end = (*i)->hyp.end(); j != j_end; ++j) {
+        /*
         if (error_bound const *e = boost::get< error_bound const >(j->real)) {
           if (e->var->real == e->real) {
             plouf << " apply refl.";
             continue;
           }
         }
+        */
         property_map::iterator pki = pmap.find(j->real);
         assert(pki != pmap.end());
         plouf << " exact h" << pki->second << '.';
@@ -157,12 +154,14 @@ int display(node *n) {
     node *m = n->pred[0];
     plouf << " apply l" << display(m) << '.';
     for(property_vect::const_iterator j = m->hyp.begin(), j_end = m->hyp.end(); j != j_end; ++j) {
+      /*
       if (error_bound const *e = boost::get< error_bound const >(j->real)) {
         if (e->var->real == e->real) {
           plouf << " apply refl.";
           continue;
         }
       }
+      */
       property_map::iterator pki = pmap.find(j->real);
       assert(pki != pmap.end());
       plouf << " exact h" << pki->second << '.';
@@ -184,10 +183,8 @@ int main() {
     property p = (*i)->res;
     node *n = handle_proof((*i)->hyp, p);
     if (!n || n == triviality) continue;
-    if (error_bound const *e = boost::get< error_bound const >(p.real))
-      std::cout << (e->type == ERROR_ABS ? "ABS(" : "REL(") << e->var->name->name << ", ...)";
-    else if (variable const *v = p.real->get_variable())
-      std::cout << v->name->name;
+    if (ast_ident const *v = p.real->get_variable())
+      std::cout << v->name;
     else
       std::cout << "...";
     std::cout << " in " << p.bnd << '\n';

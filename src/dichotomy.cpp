@@ -27,11 +27,13 @@ node *generate_error(property_vect const &hyp, property &res);
 
 namespace {
 
-std::vector< variable * > multiple_definition(variable *) {
-  std::vector< variable * > res;
-  res.push_back(ast_ident::find("x")->var);
+/*
+std::vector< ast_ident const * > multiple_definition(ast_ident const *) {
+  std::vector< ast_ident const * > res;
+  res.push_back(ast_ident::find("x"));
   return res;
 }
+*/
 
 struct dichotomy_failure {
   property_vect hyp;
@@ -70,9 +72,9 @@ void dichotomize(property_vect &hyp, property &res, int idx, node_vect &nodes) {
 } // anonymous namespace
 
 node *generate_dichotomy_proof(property_vect const &hyp, property &res) {
-  //std::vector< variable * > vars = multiple_definition(res.var); // BLI
+  //std::vector< ast_ident const * > vars = multiple_definition(res.var); // BLI
   int i;
-  property bnd(ast_ident::find("x")->var->real); // TODO
+  property bnd(ast_ident::find("x")->var); // TODO
   i = hyp.find_compatible_property(bnd);
   assert(i >= 0);
   try {
@@ -83,14 +85,12 @@ node *generate_dichotomy_proof(property_vect const &hyp, property &res) {
     return new node_dichotomy(hyp, res2, nodes);
   } catch (dichotomy_failure e) { // BLI
     property &h = e.hyp[i];
-    variable const *v = h.real->get_variable();
+    ast_ident const *v = h.real->get_variable();
     assert(v);
-    std::cerr << "failure: when " << v->name->name << " is " << h.bnd << ", ";
+    std::cerr << "failure: when " << v->name << " is " << h.bnd << ", ";
     property &p = e.res;
-    if (error_bound const *e = boost::get< error_bound const >(p.real))
-      std::cerr << (e->type == ERROR_ABS ? "ABS(" : "REL(") << e->var->name->name << ", ...)";
-    else if (variable const *v = p.real->get_variable())
-      std::cerr << v->name->name;
+    if (ast_ident const *v = p.real->get_variable())
+      std::cerr << v->name;
     else
       std::cerr << "...";
     if (is_defined(e.bnd))

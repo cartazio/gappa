@@ -35,6 +35,7 @@ struct node_modus: node {
 node_modus::node_modus(node *n, property const &p): node(MODUS) {
   res = p;
   if (n == triviality) {
+    /*
     if (error_bound const *e = boost::get< error_bound const >(p.real)) {
       assert(e->var->real == e->real);
     } else {
@@ -47,6 +48,7 @@ node_modus::node_modus(node *n, property const &p): node(MODUS) {
       hyp.push_back(h);
     }
     return;
+    */
   }
   insert_pred(n);
   hyp = n->hyp;
@@ -89,12 +91,14 @@ node_modus::node_modus(property const &p, node *n, node_vect const &nodes): node
       pmap.insert(std::make_pair(p.real, p.bnd));
   }
   for(property_map::const_iterator pki = pmap.begin(), pki_end = pmap.end(); pki != pki_end; ++pki) {
+    /*
     if (error_bound const *e = boost::get< error_bound const >(p.real)) {
       if (e->var->real == e->real) {
         assert(contains_zero(pki->second));
         continue;
       }
     }
+    */
     property p(pki->first, pki->second);
     hyp.push_back(p);
   }
@@ -141,6 +145,7 @@ interval compute_bound(property_vect const &hyp, ast_real const *r) {
 }
 */
 
+/*
 node *generate_trans_bound(property_vect const &hyp, property &res) {
   variable const *v = res.real->get_variable();
   assert(v);
@@ -271,6 +276,7 @@ node *generate_relabs(property_vect const &hyp, property &res) {
   property hyps[2] = { bnd, err };
   return new node_modus(res, new node_theorem(2, hyps, res, "relabs"), nodes);
 }
+*/
 
 node *generate_computation(property_vect const &hyp, property &res) {
   real_op const *r = boost::get< real_op const >(res.real);
@@ -294,8 +300,8 @@ node *generate_computation(property_vect const &hyp, property &res) {
     interval const &i1 = res1.bnd;
     property res2(r->ops[1]);
     node *n2 = handle_proof(hyp, res2);
-    interval const &i2 = res2.bnd;
     if (!n2) return NULL;
+    interval const &i2 = res2.bnd;
     char const *s = NULL;
     interval i;
     switch (r->type) {
@@ -324,10 +330,10 @@ node *generate_computation(property_vect const &hyp, property &res) {
   return new node_modus(res, n, nodes);
 }
 
-interval create_interval(ast_interval const &, bool widen = true, number_type const & = *REAL_NUMBER);
+interval create_interval(ast_interval const &, bool widen = true);
 
 node *generate_constant(property_vect const &hyp, property &res) {
-  ast_number *const *r = boost::get< ast_number *const >(res.real);
+  ast_number const *const *r = boost::get< ast_number const *const >(res.real);
   assert(r);
   ast_interval _i = { *r, *r };
   interval i = create_interval(_i);
@@ -353,13 +359,15 @@ void add_scheme(ast_real *r, node *(*f)(property_vect const &, property &)) {
 }
 
 void add_basic_scheme(ast_real *r) {
-  if (variable *v = r->get_variable()) {
+  if (ast_ident const *v = r->get_variable()) {
+    /*
     if (v->inst)
       if (v->inst->fun)
         add_scheme(r, &generate_basic_bound);
       else
         add_scheme(r, &generate_trans_bound);
-  } else if (error_bound const *e = boost::get< error_bound const >(r)) {
+    */
+  } /*else if (error_bound const *e = boost::get< error_bound const >(r)) {
     add_scheme(r, &generate_relabs);
     if (e->var->inst)
       if (e->var->inst->fun)
@@ -368,9 +376,9 @@ void add_basic_scheme(ast_real *r) {
         add_scheme(r, &generate_trans_error);
     if (e->var->real == e->real)
       add_scheme(r, &generate_refl_error);
-  } else if (boost::get< real_op const >(r))
+  }*/ else if (boost::get< real_op const >(r))
     add_scheme(r, &generate_computation);
-  else if (boost::get< ast_number *const >(r))
+  else if (boost::get< ast_number const *const >(r))
     add_scheme(r, &generate_constant);
 }
 
