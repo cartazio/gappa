@@ -33,6 +33,7 @@ pattern_register absolute_error_trans(
   (pattern(0) - pattern(1)) + (pattern(1) - rounding_p(1, 0)),
   "absolute_error_trans");
 
+/*
 pattern_register add_decomposition(
   (pattern(0) + pattern(1)) - (rounding_p(2, 0) + rounding_p(3, 1)),
   (pattern(0) - rounding_p(2, 0)) + (pattern(1) - rounding_p(3, 1)),
@@ -41,6 +42,17 @@ pattern_register add_decomposition(
 pattern_register sub_decomposition(
   (pattern(0) - pattern(1)) - (rounding_p(2, 0) - rounding_p(3, 1)),
   (pattern(0) - rounding_p(2, 0)) - (pattern(1) - rounding_p(3, 1)),
+  "sub_decomposition");
+*/
+
+pattern_register add_decomposition(
+  (pattern(0) + pattern(1)) - (pattern(2) + pattern(3)),
+  (pattern(0) - pattern(2)) + (pattern(1) - pattern(3)),
+  "add_decomposition");
+
+pattern_register sub_decomposition(
+  (pattern(0) - pattern(1)) - (pattern(2) - pattern(3)),
+  (pattern(0) - pattern(2)) - (pattern(1) - pattern(3)),
   "sub_decomposition");
 
 /*
