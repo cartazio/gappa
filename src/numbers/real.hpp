@@ -37,10 +37,12 @@ struct number {
   number &operator=(number const &v);
   ~number() { data->destroy(); }
   number_base *unique() const;
-  bool operator<=(number const &v) const;
-  bool operator>(number const &v) const;
-  bool operator==(number const &v) const;
-  bool operator!=(number const &v) const;
+  bool operator<=(number const &v) const { return mpfr_lessequal_p(data->val, v.data->val); }
+  bool operator>=(number const &v) const { return mpfr_greaterequal_p(data->val, v.data->val); }
+  bool operator<(number const &v) const { return mpfr_less_p(data->val, v.data->val); }
+  bool operator>(number const &v) const { return mpfr_greater_p(data->val, v.data->val); }
+  bool operator==(number const &v) const { return mpfr_equal_p(data->val, v.data->val); }
+  bool operator!=(number const &v) const { return mpfr_lessgreater_p(data->val, v.data->val); }
   number operator-() const {
     number_base *r = new number_base;
     mpfr_neg(r->val, data->val, GMP_RNDN);
