@@ -103,17 +103,20 @@ static disp_node_map displayed_nodes;
 int display(node *n) {
   int n_id = map_finder(displayed_nodes, n);
   if (n_id < 0) return -n_id;
-  static char const *const node_ids[] = { "HYPOTHESIS", "AXIOM", "THEOREM", "MODUS", "UNION" };
   auto_flush plouf;
-  plouf << "Lemma l" << n_id << " : ";
+  plouf << (n->type == AXIOM ? "Axiom l" : "Lemma l") << n_id << " : ";
   property_vect const &n_hyp = n->get_hypotheses();
   for(property_vect::const_iterator i = n_hyp.begin(), end = n_hyp.end(); i != end; ++i)
     plouf << 'p' << display(*i) << " -> ";
   int p_res = display(n->get_result());
-  plouf << 'p' << p_res << ".\n";
+  plouf << 'p' << p_res << '.';
+  if (n->type == AXIOM) {
+    plouf << '\n';
+    return n_id;
+  }
   int nb_hyps = n_hyp.size();
   if (nb_hyps) {
-    plouf << " intros";
+    plouf << "\n intros";
     for(int i = 0; i < nb_hyps; ++i) plouf << " h" << i;
     plouf << '.';
   }
@@ -164,12 +167,8 @@ int display(node *n) {
       plouf << " l" << display(*i);
     plouf << ".\nQed.\n";
     break; }
-  default: {
-    plouf << node_ids[n->type];
-    node_vect const &pred = n->get_subproofs();
-    for(node_vect::const_iterator i = pred.begin(), end = pred.end(); i != end; ++i)
-      plouf << " l" << display(*i);
-    plouf << '\n'; }
+  default:
+    assert(false);
   }
   return n_id;
 }
