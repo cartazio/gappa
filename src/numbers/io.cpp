@@ -107,6 +107,25 @@ interval create_interval(ast_interval const &i, bool widen, type_id _type) {
   return res;
 }
 
+static void write_exact(std::ostream &stream, mpfr_t const &f) {
+  int sgn = mpfr_sgn(f);
+  if (sgn == 0) { stream << '0'; return; }
+  if (sgn < 0) stream << '-'; // avoid an MPFR bug
+  mpz_t frac;
+  mpz_init(frac);
+  int exp = mpfr_get_z_exp(frac, f);
+  mpz_abs(frac, frac); // ditto
+  char *s = mpz_get_str(NULL, 10, frac);
+  stream << s;
+  free(s);
+  mpz_clear(frac);
+  if (exp != 0) stream << 'b' << exp;
+}
+
+static void write_approx(std::ostream &stream, mpfr_t const &f) {
+  stream << mpfr_get_d(f, GMP_RNDN);  
+}
+
 std::ostream &operator<<(std::ostream &stream, number_float32 const &value) {
   float32_and_float f;
   f.soft = value.value;
@@ -125,10 +144,9 @@ std::ostream &operator<<(std::ostream &, number_floatx80 const &) { throw; }
 std::ostream &operator<<(std::ostream &, number_float128 const &) { throw; }
 
 std::ostream &operator<<(std::ostream &stream, number_real const &value) {
-  mp_exp_t exp;
-  char *buf = mpfr_get_str(NULL, &exp, 2, 5, value.data->val, GMP_RNDN);
-  if (buf[0] == '-') stream << "-0." << buf + 1 << 'B' << exp;
-  else stream << "0." << buf << 'B' << exp;
-  free(buf);
+  write_exact(stream, value.data->val);
+  stream << " {";
+  write_approx(stream, value.data->val);
+  stream << '}';
   return stream;
 }
