@@ -80,7 +80,7 @@ node *handle_proof(property_vect const &hyp, property &res) {
     graph_layer layer;
     property res2 = best_res;
     node *n = scheme->generate_proof(hyp, res2);
-    if (n && res2.bnd < best_res.bnd) {
+    if (n && (res2.bnd < best_res.bnd || (!best_node && res2.bnd <= best_res.bnd))) {
       best_node = n;
       best_res = res2;
       layer.store(storage);
