@@ -6,7 +6,6 @@
 #include "interval.hpp"
 
 program_t program;
-graph_t graph;
 
 void initialize_functions() {
   ast_ident *id;
@@ -36,24 +35,17 @@ extern int yyparse(void);
 int main() {
   initialize_functions();
   yyparse();
-  node_set const &c = graph.get_conclusions();
-  std::cout << c.size() << " conclusions" << std::endl;
-  for(node_set::const_iterator i = c.begin(); i != c.end(); ++i) {
-    /*
-    if (property_bound *r = boost::get< property_bound >(&(*i)->res))
-      std::cout << "* " << r->var->name->name << " in " << r->bnd << std::endl;
-    else if (property_error *r = boost::get< property_error >(&(*i)->res)) {
-      static char const *type[] = { "ABS", "REL" };
-      std::cout << "* " << type[r->error] << '(' << r->var->name->name << ", " << *r->real << ") in " << r->err << std::endl;
-    } else assert(false);
-    */
-    generator *g = generate_basic_proof((*i)->hyp, (*i)->res);
-    if (!g) continue;
-    if (property_bound *r = boost::get< property_bound >(&g->res))
+  std::cout << conclusions.size() << " conclusions" << std::endl;
+  for(node_set::const_iterator i = conclusions.begin(), end = conclusions.end(); i != end; ++i) {
+    graph_layer layer;
+    node *n = generate_basic_proof((*i)->hyp, (*i)->res);
+    if (!n) continue;
+    if (property_bound *r = boost::get< property_bound >(&n->res))
       std::cout << r->var->name->name << " in " << r->bnd << std::endl;
-    else if (property_error *r = boost::get< property_error >(&g->res)) {
+    else if (property_error *r = boost::get< property_error >(&n->res)) {
       static char const *type[] = { "ABS", "REL" };
       std::cout << type[r->error] << '(' << r->var->name->name << ", ...) in " << r->err << std::endl;
     } else assert(false);
+    layer.flatten();
   }
 }
