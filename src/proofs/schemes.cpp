@@ -1,3 +1,5 @@
+#include "numbers/interval_utility.hpp"
+#include "numbers/real.hpp"
 #include "proofs/basic_proof.hpp"
 #include "proofs/schemes.hpp"
 
@@ -71,22 +73,94 @@ bool generate_scheme_tree(property_vect const &hyp, ast_real const *r) {
 node *handle_proof(property_vect const &hyp, property &res) {
   typedef std::vector< proof_scheme const * > scheme_stack;
   static scheme_stack st;
-  property best_res = res;
-  node *best_node = generate_triviality(hyp, best_res);
-  graph_storage storage;
+  node *triviality_node = generate_triviality(hyp, res);
+  proof_scheme const *lower_scheme = NULL, *upper_scheme = NULL;
+  interval best;
+  bool lower_strict = triviality_node, upper_strict = triviality_node;
+  number lower_best, upper_best;
+  if (is_defined(res.bnd)) {
+    lower_best = lower(res.bnd);
+    upper_best = upper(res.bnd);
+  } else {
+    lower_best = number::neg_inf;
+    upper_best = number::pos_inf;
+  }
   for(proof_scheme const *scheme = res.real->scheme; scheme != NULL; scheme = scheme->next) {
-    if (std::count(st.begin(), st.end(), scheme) >= 3) continue; // BLI
+    if (std::count(st.begin(), st.end(), scheme) >= 1) continue; // BLI
     st.push_back(scheme);
-    graph_layer layer;
-    property res2 = best_res;
-    node *n = scheme->generate_proof(hyp, res2);
-    if (n && (res2.bnd < best_res.bnd || (!best_node && res2.bnd <= best_res.bnd))) {
-      best_node = n;
-      best_res = res2;
-      layer.store(storage);
+    { // lower bound search
+      property res2(res.real, interval(lower_best, number::pos_inf));
+      graph_layer layer;
+      node *n = scheme->generate_proof(hyp, res2);
+      if (n) {
+        number const &lower_res = lower(res2.bnd);
+        if (lower_res > lower_best || (!lower_strict && lower_res >= lower_best)) {
+          lower_scheme = scheme;
+          lower_best = lower_res;
+          lower_strict = true;
+        }
+        number const &upper_res = upper(res2.bnd);
+        if (upper_res < upper_best || (!upper_strict && upper_res <= upper_best)) {
+          upper_scheme = scheme;
+          upper_best = upper_res;
+          upper_strict = true;
+          st.pop_back();
+          continue;
+        }
+      }
+    }
+    { // in case we didn't find a suitable upper bound because of the lower
+      // bound restriction or because of the infinite upper bound
+      property res2(res.real, interval(number::neg_inf, upper_best));
+      graph_layer layer;
+      node *n = scheme->generate_proof(hyp, res2);
+      if (n) {
+        number const &upper_res = upper(res2.bnd);
+        if (upper_res < upper_best || (!upper_strict && upper_res <= upper_best)) {
+          upper_scheme = scheme;
+          upper_best = upper_res;
+          upper_strict = true;
+        }
+      }
     }
     st.pop_back();
   }
-  if (best_node) res = best_res;
-  return best_node;
+  if (!(triviality_node || (lower_scheme && upper_scheme))) return NULL;
+  if (lower_scheme == upper_scheme) { // catch only triviality_node
+    if (!lower_scheme) return triviality_node;
+    res.bnd = interval(lower_best, upper_best);
+    st.push_back(lower_scheme);
+    node *n = lower_scheme->generate_proof(hyp, res);
+    st.pop_back();
+    assert(n);
+    return n;
+  }
+  property res1(res.real), res2(res.real);
+  node *n1, *n2;
+  if (lower_scheme) {
+    res1.bnd = interval(lower_best, number::pos_inf);
+    st.push_back(lower_scheme);
+    n1 = lower_scheme->generate_proof(hyp, res1);
+    st.pop_back();
+    assert(n1);
+  } else {
+    res1.bnd = res.bnd;
+    n1 = triviality_node;
+  }
+  if (upper_scheme) {
+    res2.bnd = interval(number::neg_inf, upper_best);
+    st.push_back(upper_scheme);
+    n2 = upper_scheme->generate_proof(hyp, res2);
+    st.pop_back();
+    assert(n2);
+  } else {
+    res2.bnd = res.bnd;
+    n2 = triviality_node;
+  }
+  res.bnd = interval(lower(res1.bnd), upper(res2.bnd));
+  node_vect nodes;
+  nodes.push_back(n1);
+  nodes.push_back(n2);
+  property hyps[2] = { res1, res2 };
+  return new node_modus(res, new node_theorem(2, hyps, res, "intersect"), nodes);
 }
