@@ -115,6 +115,11 @@ void graph_layer::flatten() const {
 }
 
 void graph_layer::store(graph_storage &s) const {
+  if (s.stored_graph) {
+    s.stored_graph->father = graph;
+    graph = s.stored_graph;
+    delete_top_graph();
+  }
   s.stored_graph = graph;
   graph_t *old_graph = graph->father;
   graph = new graph_t;
