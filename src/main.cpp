@@ -238,13 +238,10 @@ int main() {
       ast_real_vect reals;
       for(int j = 0; j < nb; ++j)
         reals.push_back(goals[j].real);
-      proof_helper *schemes = generate_scheme_tree(reals);
-      g->prover.helper = schemes;
+      g->prover.helper = generate_proof_helper(reals);
       for(int j = 0; j < nb; ++j)
         scheme_results[j] = reals[j];
       g->prover();
-      delete_scheme_tree(schemes);
-      g->prover.helper = NULL;
     }
     node_vect results(nb);
     std::cerr << "\n\n";

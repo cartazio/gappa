@@ -34,7 +34,8 @@ struct proof_helper;
 
 node *find_proof(ast_real const *);
 node *find_proof(property const &);
-proof_helper *generate_scheme_tree(ast_real_vect &);
-void delete_scheme_tree(proof_helper *);
+proof_helper *generate_proof_helper(ast_real_vect &);
+proof_helper *duplicate_proof_helper(proof_helper const *);
+void delete_proof_helper(proof_helper *);
 
 #endif // PROOFS_SCHEMES_HPP

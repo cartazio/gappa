@@ -69,7 +69,7 @@ struct proof_helper;
 struct proof_handler {
   proof_helper *helper;
   property_vect goals;
-  void operator()() const;
+  void operator()();
 };
 
 class graph_t {
@@ -91,6 +91,7 @@ class graph_t {
   bool is_useful(property const &) const;
   bool try_real(node *);
   property_vect const &get_hypotheses() const { return hyp; }
+  ast_real_vect get_known_reals() const;
   void revalidate_known_reals();
 };
 

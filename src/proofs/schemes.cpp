@@ -39,6 +39,7 @@ struct proof_helper {
 
   typedef std::set< proof_scheme const * > scheme_set;
   scheme_set source_schemes;
+  scheme_set owned_schemes;
 
   struct real_dependency {
     scheme_set dependent;
@@ -50,6 +51,7 @@ struct proof_helper {
   void delete_scheme(proof_scheme const *, ast_real const *);
 
   proof_helper(ast_real_vect &);
+  proof_helper(proof_helper const &);
   ~proof_helper();
 
   void insert_dependent(scheme_set &, ast_real const *) const;
@@ -151,30 +153,35 @@ proof_helper::proof_helper(ast_real_vect &targets) {
     real_dependencies::iterator j = reals.find(*i);
     if (j == reals.end())
       *i = NULL;
-    else j->second.dependent.erase(NULL);
   }
 }
 
+proof_helper::proof_helper(proof_helper const &h)
+  : axiom_reals(h.axiom_reals), reals(h.reals) {
+}
+
 proof_helper::~proof_helper() {
-  for(real_dependencies::iterator i = reals.begin(), i_end = reals.end(); i != i_end; ++i) {
-    scheme_set &v = i->second.schemes;
-    for(scheme_set::iterator j = v.begin(), j_end = v.end(); j != j_end; ++j)
-      delete *j;
-  }
+  for(scheme_set::iterator j = owned_schemes.begin(), j_end = owned_schemes.end(); j != j_end; ++j)
+    delete *j;
 }
 
 void proof_helper::insert_dependent(scheme_set &v, ast_real const *real) const {
   real_dependencies::const_iterator i = reals.find(real);
-  assert(i != reals.end());
+  if (i == reals.end()) return;
   real_dependency const &r = i->second;
   v.insert(r.dependent.begin(), r.dependent.end());
 }
 
-proof_helper *generate_scheme_tree(ast_real_vect &reals) {
+proof_helper *generate_proof_helper(ast_real_vect &reals) {
   return new proof_helper(reals);
 }
 
-void delete_scheme_tree(proof_helper *h) {
+proof_helper *duplicate_proof_helper(proof_helper const *h) {
+  if (!h) return NULL;
+  return new proof_helper(*h);
+}
+
+void delete_proof_helper(proof_helper *h) {
   delete h;
 }
 
@@ -191,8 +198,8 @@ node *find_proof(property const &res) {
   return (n && n->get_result().bnd <= res.bnd) ? n : NULL;
 }
 
-void proof_handler::operator()() const {
-  assert(helper);
+void proof_handler::operator()() {
+  assert(top_graph && helper);
   typedef proof_helper::real_set real_set;
   typedef std::map< ast_real const *, interval const * > bound_map;
   bound_map bounds;
@@ -202,8 +209,8 @@ void proof_handler::operator()() const {
   bound_map::const_iterator bounds_end = bounds.end();
   proof_helper::scheme_set missing_schemes = helper->source_schemes;
   {
-    real_set &v = helper->axiom_reals;
-    for(real_set::const_iterator i = v.begin(), i_end = v.end(); i != i_end; ++i)
+    ast_real_vect const &v = top_graph->get_known_reals();
+    for(ast_real_vect::const_iterator i = v.begin(), i_end = v.end(); i != i_end; ++i)
       helper->insert_dependent(missing_schemes, *i);
   }
   int iter = 0;
@@ -247,5 +254,7 @@ void proof_handler::operator()() const {
       }
     }
   }
+  delete helper;
+  helper = NULL;
   std::cerr << "Iterations: " << iter << '\n';
 }

@@ -1,6 +1,7 @@
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
 #include "proofs/proof_graph.hpp"
+#include "proofs/schemes.hpp"
 
 graph_t *top_graph = NULL;
 node_vect *top_layer = NULL;
@@ -121,7 +122,7 @@ graph_t::graph_t(graph_t *f, property_vect const &h): father(f), hyp(h) {
       else
         axioms.insert(*i);
     }
-    prover.helper = f->prover.helper;
+    prover.helper = duplicate_proof_helper(f->prover.helper);
   } else prover.helper = NULL;
   for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i) {
     node *n = new hypothesis_node(*i);
@@ -134,6 +135,13 @@ void graph_t::revalidate_known_reals() {
   assert(father);
   for(node_map::const_iterator i = father->known_reals.begin(), end = father->known_reals.end(); i != end; ++i)
     try_real(i->second); // in case we find better because the super-graph has evolved
+}
+
+ast_real_vect graph_t::get_known_reals() const {
+  ast_real_vect res(known_reals.size());
+  for(node_map::const_iterator i = known_reals.begin(), end = known_reals.end(); i != end; ++i)
+    res.push_back(i->first);
+  return res;
 }
 
 bool graph_t::is_useful(property const &res2) const {
@@ -193,6 +201,7 @@ void graph_t::insert_axiom(node *n) {
 graph_t::~graph_t() {
   for(node_set::const_iterator i = nodes.begin(), end = nodes.end(); i != end; ++i)
     delete *i;
+  delete_proof_helper(prover.helper);
 }
 
 graph_layer::~graph_layer() {

@@ -106,11 +106,24 @@ struct dichotomy_scheme: proof_scheme {
   ast_real const *var;
   mutable node *dich;
   mutable bool already_here;
-  dichotomy_scheme(ast_real const *v, ast_real const *r): proof_scheme(r), var(v), dich(NULL), already_here(false) {}
+  proof_helper *helper;
+  dichotomy_scheme(ast_real const *v, ast_real const *r);
+  ~dichotomy_scheme() { delete_proof_helper(helper); }
   virtual node *generate_proof(interval const &) const;
   virtual node *generate_proof() const { return dich; }
   virtual ast_real_vect needed_reals() const;
 };
+
+static bool no_dichotomy = false;
+
+dichotomy_scheme::dichotomy_scheme(ast_real const *v, ast_real const *r)
+  : proof_scheme(r), var(v), dich(NULL), already_here(false) {
+  ast_real_vect reals(1, r);
+  no_dichotomy = true;
+  helper = generate_proof_helper(reals);
+  no_dichotomy = false;
+  assert(reals[0]);
+}
 
 ast_real_vect dichotomy_scheme::needed_reals() const {
   ast_real_vect res;
@@ -118,6 +131,12 @@ ast_real_vect dichotomy_scheme::needed_reals() const {
   res.push_back(var);
   return res;
 }
+
+struct proof_helper_stacker {
+  proof_helper *old;
+  proof_helper_stacker(proof_helper *h): old(top_graph->prover.helper) { top_graph->prover.helper = h; }
+  ~proof_helper_stacker() { top_graph->prover.helper = old; }
+};
 
 node *dichotomy_scheme::generate_proof(interval const &bnd) const {
   if (dich || already_here) return dich;
@@ -131,6 +150,7 @@ node *dichotomy_scheme::generate_proof(interval const &bnd) const {
     for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
       if (i->real != var) hyp2.push_back(*i);
     graph_layer layer;
+    proof_helper_stacker stacker(helper);
     dichotomy_node *n = new dichotomy_node(hyp2, property(real, bnd));
     n->dichotomize();
     n->add_graph(n->last_graph);
@@ -160,7 +180,7 @@ struct dichotomy_factory: scheme_factory {
 };
 
 proof_scheme *dichotomy_factory::operator()(ast_real const *r) const {
-  if (r != dst) return NULL;
+  if (no_dichotomy || r != dst) return NULL;
   return new dichotomy_scheme(var, dst);
 }
 
