@@ -102,7 +102,7 @@ struct graph_loader {
 
 struct graph_stacker: graph_loader {
   graph_stacker(property_vect const &h): graph_loader(new graph_t(top_graph, h)) {}
-  ~graph_stacker() { delete top_graph; }
+  void clear() { delete top_graph; top_graph = NULL; }
 };
 
 struct graph_layer {
