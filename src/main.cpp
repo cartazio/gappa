@@ -98,8 +98,7 @@ std::string display(ast_real const *r) {
   return name;
 }
 
-typedef std::map< std::string, int > property_map; // (not so) bastard way of doing it
-static property_map displayed_properties;
+static std::map< std::string, int > displayed_properties;
 
 std::string display(property const &p) {
   std::stringstream s;
@@ -110,6 +109,27 @@ std::string display(property const &p) {
   if (p_id >= 0)
     std::cout << "Definition " << name << " := IintF " << s_ << ".\n";
   return name;
+}
+
+std::string display(node *n);
+
+typedef std::map< ast_real const *, std::pair< int, interval const * > > property_map;
+
+void invoke_lemma(auto_flush &plouf, node *m, property_map const &pmap) {
+  plouf << " apply " << display(m) << '.';
+  property_vect const &m_hyp = m->get_hypotheses();
+  for(property_vect::const_iterator j = m_hyp.begin(), j_end = m_hyp.end(); j != j_end; ++j) {
+    property_map::const_iterator pki = pmap.find(j->real);
+    assert(pki != pmap.end());
+    int h = pki->second.first;
+    interval const &i = *pki->second.second;
+    assert(i <= j->bnd);
+    if (j->bnd <= i)
+      plouf << " exact h" << h << '.';
+    else
+      plouf << " unfold " << display(*j) << ". apply subset with (1 := h" << h << "). reflexivity.";
+  }
+  plouf << '\n';
 }
 
 typedef std::map< node *, int > disp_node_map;
@@ -157,42 +177,27 @@ std::string display(node *n) {
     break; }
   case MODUS: {
     plouf << '\n';
-    typedef std::map< ast_real const *, int > property_map;
     property_map pmap;
     int num_hyp = 0;
     for(property_vect::const_iterator j = n_hyp.begin(), j_end = n_hyp.end(); j != j_end; ++j, ++num_hyp)
-      pmap.insert(std::make_pair(j->real, num_hyp));
+      pmap.insert(std::make_pair(j->real, std::make_pair(num_hyp, &j->bnd)));
     node_vect const &pred = n->get_subproofs();
     for(node_vect::const_iterator i = ++pred.begin(), i_end = pred.end(); i != i_end; ++i, ++num_hyp) {
       node *m = *i;
       property const &res = m->get_result();
-      plouf << " assert (h" << num_hyp << " : " << display(res) << "). apply " << display(m) << '.';
-      property_vect const &m_hyp = m->get_hypotheses();
-      for(property_vect::const_iterator j = m_hyp.begin(), j_end = m_hyp.end(); j != j_end; ++j) {
-        property_map::iterator pki = pmap.find(j->real);
-        assert(pki != pmap.end());
-        plouf << " exact h" << pki->second << '.';
-      }
-      pmap.insert(std::make_pair(res.real, num_hyp));
-      plouf << '\n';
+      plouf << " assert (h" << num_hyp << " : " << display(res) << ").";
+      invoke_lemma(plouf, m, pmap);
+      pmap.insert(std::make_pair(res.real, std::make_pair(num_hyp, &res.bnd)));
     }
-    node *m = pred[0];
-    plouf << " apply " << display(m) << '.';
-    property_vect const &m_hyp = m->get_hypotheses();
-    for(property_vect::const_iterator j = m_hyp.begin(), j_end = m_hyp.end(); j != j_end; ++j) {
-      property_map::iterator pki = pmap.find(j->real);
-      assert(pki != pmap.end());
-      plouf << " exact h" << pki->second << '.';
-    }
-    plouf << "\nQed.\n";
+    invoke_lemma(plouf, pred[0], pmap);
+    plouf << "Qed.\n";
     break; }
   case INTERSECTION: {
     plouf << '\n';
-    typedef std::map< ast_real const *, int > property_map;
     property_map pmap;
     int num_hyp = 0;
     for(property_vect::const_iterator j = n_hyp.begin(), j_end = n_hyp.end(); j != j_end; ++j, ++num_hyp)
-      pmap.insert(std::make_pair(j->real, num_hyp));
+      pmap.insert(std::make_pair(j->real, std::make_pair(num_hyp, &j->bnd)));
     node_vect const &pred = n->get_subproofs();
     int num[2];
     for(int i = 0; i < 2; ++i) {
@@ -201,17 +206,11 @@ std::string display(node *n) {
       if (m->type == HYPOTHESIS) {
         property_map::iterator pki = pmap.find(res.real);
         assert(pki != pmap.end());
-        num[i] = pki->second;
+        num[i] = pki->second.first;
         continue;
       }
-      plouf << " assert (h" << num_hyp << " : " << display(res) << "). apply " << display(m) << '.';
-      property_vect const &m_hyp = m->get_hypotheses();
-      for(property_vect::const_iterator j = m_hyp.begin(), j_end = m_hyp.end(); j != j_end; ++j) {
-        property_map::iterator pki = pmap.find(j->real);
-        assert(pki != pmap.end());
-        plouf << " exact h" << pki->second << '.';
-      }
-      plouf << '\n';
+      plouf << " assert (h" << num_hyp << " : " << display(res) << ").";
+      invoke_lemma(plouf, m, pmap);
       num[i] = num_hyp++;
     }
     plouf << " apply intersect with (1 := h" << num[0] << ") (2 := h" << num[1] << ").\n"
