@@ -16,6 +16,7 @@ extern ast_real const *check_real(ast_ident *v);
 extern void check_variable(ast_ident *v, ast_real const *r);
 extern ast_prop_and merge_prop_and(ast_prop const &p1, ast_prop const &p2);
 extern void generate_graph(ast_prop const &p);
+extern void test_ringularity(ast_real const *, ast_real const *);
 
 ast_number *toggle_sign(ast_number const *nn) {
   ast_number n = *nn;
@@ -142,5 +143,10 @@ OPERANDS:
   }
 
 REWRITE:
-| REWRITE REAL IMPL REAL ';'	{ register_user_rewrite($2, $4); }
+| REWRITE REAL IMPL REAL ';'
+  {
+    ast_real const *r1 = $2, *r2 = $4;
+    test_ringularity(r1, r2);
+    register_user_rewrite(r1, r2);
+  }
 | REWRITE REAL '$' REAL ';'	{ register_user_dichotomy($2, $4); }

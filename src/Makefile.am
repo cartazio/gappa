@@ -27,6 +27,7 @@ gappa_SOURCES = \
 	parser/parser.ypp \
 	parser/pattern.cpp \
 	parser/pattern.hpp \
+	parser/ring.cpp \
 	proofs/basic_proof.cpp \
 	proofs/basic_proof.hpp \
 	proofs/dichotomy.cpp \
