@@ -219,11 +219,8 @@ void graph_t::populate() {
     node *n;
     if (i != bounds_end) n = s->generate_proof(*i->second);
     else n = s->generate_proof();
-    if (n)
-      if (try_real(n))
-        helper->insert_dependent(missing_schemes, s->real);
-      else
-        delete n; // we are leaking some nodes here, but they will be purged later on
+    if (n && try_real(n))
+      helper->insert_dependent(missing_schemes, s->real);
     real_set v;
     v.swap(helper->axiom_reals);
     for(real_set::iterator i = v.begin(), i_end = v.end(); i != i_end; ++i) {

@@ -167,6 +167,25 @@ node_vect const &graph_node::get_subproofs() const {
   return plouf;
 }
 
+static void delete_forest(node_set &nodes, node *except) {
+  while (!nodes.empty()) {
+    node *n = *nodes.begin();
+    nodes.erase(n);
+    if (n == except || !n->succ.empty()) continue;
+    if (n->type != UNION) {
+      node_vect const &v = n->get_subproofs();
+      nodes.insert(v.begin(), v.end());
+    }
+    delete n;
+  }
+}
+
+static void delete_tree(node *n) {
+  node_set ns;
+  ns.insert(n);
+  delete_forest(ns, NULL);
+}
+
 graph_t::graph_t(graph_t *f, property_vect const &h, property_vect const &g, proof_helper *p, bool o)
   : father(f), known_node(new graph_node(this)), hyp(h), goals(g), owned_helper(o) {
   graph_loader loader(this);
@@ -178,11 +197,8 @@ graph_t::graph_t(graph_t *f, property_vect const &h, property_vect const &g, pro
   }
   if (owned_helper) helper = duplicate_proof_helper(p);
   else helper = p;
-  for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i) {
-    node *n = new hypothesis_node(*i);
-    if (!try_real(n))
-      delete n;
-  }
+  for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
+    try_real(new hypothesis_node(*i));
 }
 
 ast_real_vect graph_t::get_known_reals() const {
@@ -219,6 +235,7 @@ bool graph_t::try_real(node *n) {
     }
     dst = n;
     old->succ.erase(known_node);
+    delete_tree(old);
   }
   n->succ.insert(known_node);
   return true;
@@ -251,8 +268,7 @@ void graph_t::insert_axiom(node *n) {
   if (hyp.implies(n->get_hypotheses())) {
     graph_loader loader(this);
     node *m = new modus_node(0, NULL, n);
-    if (!try_real(m))
-      delete m;
+    try_real(m);
   } else axioms.insert(n);
 }
 
@@ -304,14 +320,7 @@ void graph_t::purge(node *except) {
       known_reals.insert(*i);
   }
   node_set ns(nodes);
-  while (!ns.empty()) {
-    node *n = *ns.begin();
-    ns.erase(n);
-    if (n == except || n->graph != this || !n->succ.empty() || n->type == GRAPH) continue;
-    node_vect const &v = n->get_subproofs();
-    ns.insert(v.begin(), v.end());
-    delete n;
-  }
+  delete_forest(ns, except);
 }
 
 void graph_t::migrate() {
@@ -332,7 +341,7 @@ void graph_t::migrate() {
     nodes.erase(n);
     father->nodes.insert(n);
     n->graph = father;
-    father->try_real(n);
     ns.insert(n->succ.begin(), n->succ.end());
+    father->try_real(n);
   }
 }
