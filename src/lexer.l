@@ -1,0 +1,74 @@
+%{
+
+#include <string>
+#include <map>
+#include <iostream>
+#include "ast.hpp"
+#include "parser.tab.hpp"
+
+extern YYSTYPE yylval;
+
+void read_number() {
+  int dec = -1;
+  char *ptr = yytext;
+  ast_number *num = new ast_number;
+  char c = *ptr;
+  switch (c) {
+  case '-': ptr++; num->mantissa = '-'; break;
+  case '+': ptr++; // nobreak;
+  default: num->mantissa = '+';
+  }
+  for(; *ptr; ptr++) {
+    char c = *ptr;
+    if (c == '.') { dec = 0; continue; }
+    if (c > '9') break;
+    if (dec >= 0) dec++;
+    num->mantissa += c;
+  }
+  c = *ptr;
+  switch (c) {
+  case 'b': case 'B': ptr++; num->base = 2; break;
+  case 'e': case 'E': ptr++; // nobreak;
+  default: num->base = 10;
+  }
+  if (*ptr) num->exponent = atoi(ptr);
+  else num->exponent = 0;
+  if (dec > 0) num->exponent -= dec;
+  yylval.number = num;
+}
+
+void read_zero() {
+  ast_number *num = new ast_number;
+  num->base = 0;
+  yylval.number = num;
+}
+
+void read_ident() {
+  yylval.ident = ast_ident::find(yytext);
+}
+
+%}
+
+alpha	[a-zA-Z]
+digit	[0-9]
+
+ident		{alpha}({alpha}|{digit}|_)*
+integer		{digit}+
+binary		{integer}([bB][-+]?{integer})?
+decimal		(({integer}(\.{integer}?)?)|(\.{integer}))([eE][-+]?{integer})?
+number		[-+]?({binary}|{decimal})
+zero		[-+]?((((0+(\.0*)?)|(\.0+))([eE][-+]?{integer})?)|(0+([bB][-+]?{integer})?))
+
+%%
+
+[ \t\n]		// Ignore les caracteres inutiles
+"/\\"		return AND;
+"->"		return IMPL;
+"in"		return IN;
+"ABS"		{ yylval.toto = 0; return ERROR; }
+"REL"		{ yylval.toto = 1; return ERROR; }
+{zero}		{ read_zero(); return NUMBER; }
+{number}	{ read_number(); return NUMBER; }
+{ident}		{ read_ident(); return IDENT; }
+.		{ return yytext[0]; }
+

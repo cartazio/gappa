@@ -1,0 +1,6 @@
+#ifndef TYPES_HPP
+#define TYPES_HPP
+
+enum type_id { UNDEFINED, FLOAT32, FLOAT64, FLOAT80, FLOAT128 };
+
+#endif // TYPES_HPP

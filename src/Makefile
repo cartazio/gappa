@@ -1,0 +1,24 @@
+CXX=g++-3.4
+CXXFLAGS=-Wall -ansi -g -O2
+OBJS=main.o lexer.yy.o parser.tab.o ast.o program.o parser.o proof_graph.o number.o property.o basic_proof.o softfloat.o
+
+main: $(OBJS)
+	$(CXX) -o $@ $^ -lfl -lmpfr -lgmp
+
+plouf2.exe: $(OBJS)
+	$(CXX) -static -o $@ $^ -lfl -lmpfr -lgmp
+	strip $@
+
+include .depend
+
+.depend: *.hpp *.cpp
+	g++ -MM *.cpp > .depend
+
+parser.tab.cpp parser.tab.hpp: parser.ypp
+	bison -d parser.ypp
+
+lexer.yy.cpp: lexer.l parser.tab.hpp
+	flex -o lexer.yy.cpp lexer.l
+
+softfloat.o:
+	cp /home/gmelquio/src/SoftFloat-2b/softfloat/bits64/386-Win32-GCC/softfloat.o .
