@@ -47,13 +47,13 @@ interval from_exponent(int exp, int rnd) {
 std::ostream &operator<<(std::ostream &, number_real const &);
 
 template<class T, class Policies>
-std::ostream &operator<<(std::ostream &stream, const boost::numeric::interval<T, Policies> &value) {
+std::ostream &operator<<(std::ostream &stream, boost::numeric::interval<T, Policies> const &value) {
   if (empty(value)) {
     return stream << "[]";
   } else if (singleton(value)) {
     return stream << '[' << lower(value) << ']';
   } else {
-    return stream << '[' << lower(value) << ',' << upper(value) << ']';
+    return stream << '[' << lower(value) << ", " << upper(value) << ']';
   }
 }
 
