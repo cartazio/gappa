@@ -31,6 +31,14 @@ struct node_reflexive: node {
   }
 };
 
+struct node_relabs: node {
+  node_relabs(property const &b, property const &e, property const &p): node(OTHER) {
+    res = p;
+    hyp.push_back(b);
+    hyp.push_back(e);
+  }
+};
+
 namespace {
 
 struct property_key {
@@ -83,7 +91,7 @@ node_modus::node_modus(property const &p, node *n, node_vect const &nodes): node
     property const &p = *j;
     property_key pk = p;
     property_key::map::iterator pki = rmap.find(pk); // is the hypothesis a result?
-    if (pki != pmap.end() && pki->second <= p.bnd) continue;
+    if (pki != rmap.end() && pki->second <= p.bnd) continue;
     pki = pmap.find(pk);
     if (pki != pmap.end())
       pki->second = hull(pki->second, p.bnd);
@@ -99,15 +107,6 @@ node_modus::node_modus(property const &p, node *n, node_vect const &nodes): node
     hyp.push_back(p);
   }
 }
-
-struct node_relabs: node {
-  node_relabs(node *nb, node *ne, property_vect const &h, property const &p): node(OTHER) {
-    res = p;
-    hyp = h;
-    insert_pred(nb);
-    insert_pred(ne);
-  }
-};
 
 namespace basic_proof {
 
@@ -273,15 +272,17 @@ node *generate_error(property_vect const &hyp, property &res) {
   if (res2.type == PROP_ABS) {
     res.bnd = res.bnd * to_real(bnd.bnd);
     if (!(res.bnd <= res2.bnd)) return NULL;
-    return new node_relabs(n1, n2, hyp, res);
   } else {
     if (!is_zero(res.bnd)) {
       if (contains_zero(bnd.bnd)) return NULL;
       res.bnd = res.bnd / to_real(bnd.bnd);
     }
     if (!(res.bnd <= res2.bnd)) return NULL;
-    return new node_relabs(n1, n2, hyp, res);
   }
+  node_vect nodes;
+  nodes.push_back(n1);
+  nodes.push_back(n2);
+  return new node_modus(res, new node_relabs(n1->res, n2->res, res), nodes);
 }
 
 } // namespace basic_proof
