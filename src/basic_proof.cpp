@@ -211,12 +211,14 @@ node *generate_error(property_vect const &hyp, property &res) {
   res.type = res2.type;
   if (res2.type == PROP_ABS) {
     res.bnd = res.bnd * to_real(bnd.bnd);
+    if (!(res.bnd <= res2.bnd)) return NULL;
     return new node_plouf(hyp, res);
   } else {
     if (!is_zero(res.bnd)) {
       if (contains_zero(bnd.bnd)) return NULL;
       res.bnd = res.bnd / to_real(bnd.bnd);
     }
+    if (!(res.bnd <= res2.bnd)) return NULL;
     return new node_plouf(hyp, res);
   }
 }

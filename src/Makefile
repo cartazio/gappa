@@ -1,4 +1,4 @@
-CXX=g++-3.4
+CXX=g++-3.5
 CXXFLAGS=-Wall -Wextra -ansi -g -O2
 OBJS=ast.o basic_proof.o dichotomy.o lexer.yy.o main.o parser.o parser.tab.o program.o proof_graph.o property.o
 OBJS_functions=functions/float.o

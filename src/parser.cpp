@@ -72,7 +72,7 @@ property generate_property(ast_atom_approx const &p, property **_q) {
   type_id type = r.var->type;
   assert(type != UNDEFINED);
   ast_interval i(p.value, p.value);
-  r.bnd = create_interval(i, false, type);
+  r.bnd = create_interval(i, true, type);
   *_q = NULL; /* TODO */
   return r;
 }

@@ -60,7 +60,7 @@ static void store_float(void *mem, mpfr_t const &f, interval_float_description c
   int exp_size = fmt - exp_pos - 1; // all the space except the mantissa and the sign
   int mask = (1 << exp_size) - 1;
   exp = (exp + 1 - min_exp) & mask; // biased exponent
-  short int &e = ((short int *)mem)[exp_pos >> 4]; // last word of the float
+  short int &e = static_cast< short int * >(mem)[exp_pos >> 4]; // last word of the float
   exp_pos &= 15;
   if (implicit) e &= ~(1 << exp_pos); // remove implicit one
   e |= exp << exp_pos;
@@ -106,7 +106,7 @@ void load_float(void const *_mem, mpfr_t &f, interval_float_description const *d
   int exp_pos = prec + (implicit ? 0 : 1); // the exponent is after the mantissa
   int exp_size = fmt - exp_pos - 1; // all the space except the mantissa and the sign
   int mask = (1 << exp_size) - 1;
-  short int &e = ((short int *)mem)[exp_pos >> 4]; // last word of the float
+  short int &e = static_cast< short int * >(mem)[exp_pos >> 4]; // last word of the float
   exp_pos &= 15;
   int exp = (e >> exp_pos) & mask;
   exp = exp + min_exp - 1; // biased exponent
@@ -116,7 +116,7 @@ void load_float(void const *_mem, mpfr_t &f, interval_float_description const *d
   if (implicit && exp >= min_exp) e |= 1 << exp_pos; // implicit one
   mpz_t frac;
   mpz_init(frac);
-  mpz_import(frac, fmt >> 4, -1, 2, -1, 0, _mem);
+  mpz_import(frac, fmt >> 4, -1, 2, -1, 0, mem);
   if (sgn) mpz_neg(frac, frac);
   mpf_t frac2;
   mpf_init(frac2);
