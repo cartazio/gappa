@@ -47,6 +47,8 @@ struct node_plouf: node {
   }
 };
 
+namespace basic_proof {
+
 template< class T >
 node *generate_triviality(property_vect const &hyp, T &res) {
   if (node *n = graph->find_compatible_node(hyp, res)) {
@@ -63,17 +65,13 @@ node *generate_triviality(property_vect const &hyp, T &res) {
   return triviality;
 }
 
-struct do_generate_basic_proof: boost::static_visitor< node * > {
-  property_vect const &hyp;
-  do_generate_basic_proof(property_vect const &h): hyp(h) {}
-  node *operator()(property_bound const &res) const;
-  node *operator()(property_error const &res) const;
-};
+node *generate_bound(property_vect const &hyp, property_bound &res);
+node *generate_error(property_vect const &hyp, property_error &res);
 
-node *generate_basic_proof_bound(property_vect const &hyp, property_bound &res);
-node *generate_basic_proof_error(property_vect const &hyp, property_error &res);
+interval compute_bound(property_vect const &hyp, variable const *v) {
+}
 
-node *generate_basic_proof_bound(property_vect const &hyp, property_bound &res) {
+node *generate_bound(property_vect const &hyp, property_bound &res) {
   if (node *n = generate_triviality(hyp, res)) return n;
   // std::cout << res.var->name->name << " in " << res.bnd << std::endl;
   int idx = res.var->get_definition();
@@ -82,7 +80,7 @@ node *generate_basic_proof_bound(property_vect const &hyp, property_bound &res) 
   if (!inst.fun) {
     variable *v = res.var;
     res.var = inst.in[0];
-    node *n = generate_basic_proof_bound(hyp, res);
+    node *n = generate_bound(hyp, res);
     if (!n) return NULL;
     res.var = v;
     return new node_assign(n, res);
@@ -92,7 +90,7 @@ node *generate_basic_proof_bound(property_vect const &hyp, property_bound &res) 
   property_bound *props = new property_bound[l];
   for(int i = 0; i < l; ++i) {
     props[i].var = inst.in[i];
-    if (!(nodes[i] = generate_basic_proof_bound(hyp, props[i]))) { delete props; return NULL; }
+    if (!(nodes[i] = generate_bound(hyp, props[i]))) { delete props; return NULL; }
   }
   node *n = (*inst.fun->bnd_comp->generate)(props, res);
   delete props;
@@ -100,7 +98,7 @@ node *generate_basic_proof_bound(property_vect const &hyp, property_bound &res) 
   return new node_modus(res, n, nodes);
 }
 
-node *generate_basic_proof_force_error(property_vect const &hyp, property_error &res) {
+node *generate_error_forced(property_vect const &hyp, property_error &res) {
   if (node *n = generate_triviality(hyp, res)) return n;
   /*{ static char const *type[] = { "ABS", "REL" };
     std::cout << type[res.error] << '(' << res.var->name->name << ", ...) in " << res.err << std::endl; }*/
@@ -115,7 +113,7 @@ node *generate_basic_proof_force_error(property_vect const &hyp, property_error 
   if (!inst.fun) {
     variable *v = res.var;
     res.var = inst.in[0];
-    node *n = generate_basic_proof_error(hyp, res);
+    node *n = generate_error(hyp, res);
     if (!n) return NULL;
     res.var = v;
     return new node_assign(n, res);
@@ -137,7 +135,7 @@ node *generate_basic_proof_force_error(property_vect const &hyp, property_error 
       if (c->type == HYP_BND || c->type == HYP_SNG) {
         property_bound p;
         p.var = v;
-        if (!(nn = generate_basic_proof_bound(hyp, p))) { good = false; break; }
+        if (!(nn = generate_bound(hyp, p))) { good = false; break; }
         if (c->type == HYP_SNG && !is_singleton(p.bnd)) { good = false; break; }
         props.push_back(p);
       } else if (c->type == HYP_ABS || c->type == HYP_REL) {
@@ -146,7 +144,7 @@ node *generate_basic_proof_force_error(property_vect const &hyp, property_error 
         p.error = (c->type == HYP_ABS) ? 0 : 1;
         assert(c->var >= 1);
         p.real = &op->ops[c->var - 1];
-        if (!(nn = generate_basic_proof_error(hyp, p))) { good = false; break; }
+        if (!(nn = generate_error(hyp, p))) { good = false; break; }
         props.push_back(p);
       } else assert(false);
       nodes.push_back(nn);
@@ -159,22 +157,22 @@ node *generate_basic_proof_force_error(property_vect const &hyp, property_error 
   return new node_modus(res, n, nodes);
 }
 
-node *generate_basic_proof_error(property_vect const &hyp, property_error &res) {
+node *generate_error(property_vect const &hyp, property_error &res) {
   property_error res2 = res;
   {
     graph_layer layer;
-    node *n = generate_basic_proof_force_error(hyp, res);
+    node *n = generate_error_forced(hyp, res);
     if (n) { layer.flatten(); return n; }
   }
   property_bound bnd;
   bnd.var = res2.var;
-  node *n = generate_basic_proof_bound(hyp, bnd);
+  node *n = generate_bound(hyp, bnd);
   if (!n) return NULL;
   res.var = res2.var;
   res.real = res2.real;
   res.err = interval();
   res.error = 1 - res2.error;
-  n = generate_basic_proof_force_error(hyp, res);
+  n = generate_error_forced(hyp, res);
   if (!n) return NULL;
   if (res2.error == 0) {
     res.error = 0;
@@ -190,19 +188,32 @@ node *generate_basic_proof_error(property_vect const &hyp, property_error &res) 
   }
 }
 
+} // namespace basic_proof
+
+namespace {
+
+struct do_generate_basic_proof: boost::static_visitor< node * > {
+  property_vect const &hyp;
+  do_generate_basic_proof(property_vect const &h): hyp(h) {}
+  node *operator()(property_bound const &res) const;
+  node *operator()(property_error const &res) const;
+};
+
 node *do_generate_basic_proof::operator()(property_bound const &res) const {
   property_bound res2 = res;
-  node *n = generate_basic_proof_bound(hyp, res2);
+  node *n = basic_proof::generate_bound(hyp, res2);
   assert(n != triviality); // TODO
   return n;
 }
 
 node *do_generate_basic_proof::operator()(property_error const &res) const {
   property_error res2 = res;
-  node *n = generate_basic_proof_error(hyp, res2);
+  node *n = basic_proof::generate_error(hyp, res2);
   assert(n != triviality); // TODO
   return n;
 }
+
+} // anonymous namespace
 
 node *generate_basic_proof(property_vect const &hyp, property const &res) {
   return boost::apply_visitor(do_generate_basic_proof(hyp), res);
