@@ -132,7 +132,7 @@ int display(node *n) {
       plouf << " with";
       for(int i = 0; i < nb_hyps; ++i) plouf << " (" << i + 1 << " := h" << i << ')';
     }
-    plouf << ".\n compute. trivial.\nQed.\n";
+    plouf << ".\n reflexivity.\nQed.\n";
     break; }
   case MODUS: {
     plouf << '\n';
@@ -194,7 +194,7 @@ int display(node *n) {
       num[i] = num_hyp++;
     }
     plouf << " apply intersect with (1 := h" << num[0] << ") (2 := h" << num[1] << ").\n"
-             " compute. trivial.\nQed.\n";
+             " reflexivity.\nQed.\n";
     break; }
   case UNION: {
     plouf << "\n union";
@@ -248,7 +248,7 @@ int main() {
     std::cout << "\n\n";
     for(int j = 0; j < nb; ++j)
       if (results[j]) {
-        std::cout << "Require Export IA_comput.\n";
+        std::cout << "Require Import IA_comput.\nRequire Import IA_manip.\n";
         display(results[j]);
       }
     delete g;
