@@ -2,7 +2,6 @@
 #include "number_ext.hpp"
 #include <boost/numeric/interval/arith.hpp>
 #include <boost/numeric/interval/utility.hpp>
-#include <boost/numeric/interval/io.hpp>
 #include "ast.hpp"
 
 interval::interval(ast_interval const &i, bool widen, type_id type) {
@@ -30,6 +29,21 @@ interval::interval(ast_interval const &i, bool widen, type_id type) {
 }
 
 namespace {
+
+template<class T, class Policies, class CharType, class CharTraits>
+std::basic_ostream<CharType, CharTraits> &operator<<
+  (std::basic_ostream<CharType, CharTraits> &stream,
+   const boost::numeric::interval<T, Policies> &value)
+{
+  if (empty(value)) {
+    return stream << "[]";
+  } else if (singleton(value)) {
+    return stream << '[' << lower(value) << ']';
+  } else {
+    return stream << '[' << lower(value) << ',' << upper(value) << ']';
+  }
+}
+
 struct do_add: boost::static_visitor< interval > {
   template< typename T, typename U >
   interval operator()(T const &, U const &) const { throw; /* TODO */ }
@@ -169,7 +183,8 @@ struct do_output: boost::static_visitor< void > {
   template< typename T >
   void operator()(T const &) const { throw; }
 };
-}
+
+} // anonymous namespace
 
 interval interval::operator+(interval const &v) const { return boost::apply_visitor(do_add(), value, v.value); }
 interval interval::operator-(interval const &v) const { return boost::apply_visitor(do_sub(), value, v.value); }
