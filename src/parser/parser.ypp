@@ -17,6 +17,15 @@ extern void check_variable(ast_ident *v, ast_real const *r);
 extern ast_prop_and merge_prop_and(ast_prop const &p1, ast_prop const &p2);
 extern void generate_graph(ast_prop const &p);
 
+ast_number *toggle_sign(ast_number const *nn) {
+  ast_number n = *nn;
+  if (n.base) {
+    char &c = n.mantissa[0];
+    c = c == '+' ? '-' : '+';
+  }
+  return normalize(n);
+}
+
 %}
 
 %error-verbose
@@ -34,6 +43,7 @@ extern void generate_graph(ast_prop const &p);
 
 %type <prop>      ATOM
 %type <number>    NUMBER
+%type <number>    SNUMBER
 %type <ident>     IDENT
 %type <interval>  INTERVAL
 %type <real>      REAL
@@ -44,6 +54,7 @@ extern void generate_graph(ast_prop const &p);
 %left AND
 %left '+' '-'
 %left '*' '/'
+%left NEG
 
 %%
 
@@ -69,8 +80,13 @@ PROP:
     }
   }
 
+SNUMBER:
+  NUMBER	{ $$ = $1; }
+| '+' NUMBER	{ $$ = $2; }
+| '-' NUMBER	{ $$ = toggle_sign($2); }
+
 INTERVAL:
-  '[' NUMBER ',' NUMBER ']'	{ ast_interval i = { $2, $4 }; $$ = i; }
+  '[' SNUMBER ',' SNUMBER ']'	{ ast_interval i = { $2, $4 }; $$ = i; }
 | '?'				{ ast_interval i = { NULL, NULL }; $$ = i; }
 
 ATOM:
@@ -99,13 +115,18 @@ REAL:
       { std::cerr << "Error: " << r->name << " is not a rounding\n"; exit(1); }
     $$ = normalize(ast_real(rounded_real($5, r->rnd)));
   }
-| '+' REAL		{ $$ = $2; }
-| '-' REAL		{ $$ = normalize(ast_real(real_op(UOP_MINUS, $2))); }
 | REAL '+' REAL		{ $$ = normalize(ast_real(real_op($1, BOP_ADD, $3))); }
 | REAL '-' REAL		{ $$ = normalize(ast_real(real_op($1, BOP_SUB, $3))); }
 | REAL '*' REAL		{ $$ = normalize(ast_real(real_op($1, BOP_MUL, $3))); }
 | REAL '/' REAL		{ $$ = normalize(ast_real(real_op($1, BOP_DIV, $3))); }
 | '(' REAL ')'		{ $$ = $2; }
+| '+' REAL %prec NEG	{ $$ = $2; }
+| '-' REAL %prec NEG
+  {
+    if (ast_number const *const *n = boost::get< ast_number const *const >($2))
+      $$ = normalize(ast_real(toggle_sign(*n)));
+    else $$ = normalize(ast_real(real_op(UOP_MINUS, $2)));
+  }
 
 OPERANDS:
   REAL

@@ -12,24 +12,18 @@ void read_number() {
   int dec = -1;
   char *ptr = yytext;
   ast_number num;
-  char c = *ptr;
-  switch (c) {
-  case '-': ptr++; num.mantissa = '-'; break;
-  case '+': ptr++; // nobreak;
-  default: num.mantissa = '+';
-  }
-  for(; *ptr; ptr++) {
+  num.mantissa = '+';
+  for(; *ptr; ++ptr) {
     char c = *ptr;
     if (c == '.') { dec = 0; continue; }
     if (c > '9') break;
-    if (dec >= 0) dec++;
+    if (dec >= 0) ++dec;
     num.mantissa += c;
   }
-  c = *ptr;
-  switch (c) {
-  case 'b': case 'B': ptr++; num.base = 2; break;
-  case 'e': case 'E': ptr++; // nobreak;
-  default: num.base = 10;
+  switch (*ptr) {
+  case 'e': case 'E': ++ptr; num.base = 10; break;
+  case 'b': case 'B': ++ptr; // nobreak;
+  default: num.base = 2;
   }
   if (*ptr) num.exponent = atoi(ptr);
   else num.exponent = 0;
@@ -59,8 +53,8 @@ ident		{alpha}({alpha}|{digit}|_)*
 integer		{digit}+
 binary		{integer}([bB][-+]?{integer})?
 decimal		(({integer}(\.{integer}?)?)|(\.{integer}))([eE][-+]?{integer})?
-number		[-+]?({binary}|{decimal})
-zero		[-+]?((((0+(\.0*)?)|(\.0+))([eE][-+]?{integer})?)|(0+([bB][-+]?{integer})?))
+number		({binary}|{decimal})
+zero		((((0+(\.0*)?)|(\.0+))([eE][-+]?{integer})?)|(0+([bB][-+]?{integer})?))
 
 %%
 
