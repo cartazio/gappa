@@ -8,6 +8,7 @@ struct proof_scheme {
   virtual node *generate_proof() const = 0;
   virtual node *generate_proof(interval const &) const;
   virtual ast_real_vect needed_reals() const = 0;
+  virtual bool dummy() const { return false; }
   virtual ~proof_scheme() {}
   proof_scheme(ast_real const *r): real(r) {}
   ast_real const *real;

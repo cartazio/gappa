@@ -20,8 +20,17 @@ scheme_register::scheme_register(scheme_factory const *f) {
   factories.push_back(f);
 }
 
+struct dummy_scheme: proof_scheme {
+  ast_real_vect reals;
+  dummy_scheme(ast_real const *r, ast_real_vect const &v): proof_scheme(r), reals(v) {}
+  virtual bool dummy() const { return true; }
+  virtual node *generate_proof() const { assert(false); return NULL; }
+  virtual ast_real_vect needed_reals() const { return reals; }
+};
+
 static proof_scheme const *get_scheme(ast_real const *real) {
   if (!real->schemes) {
+    // no scheme list, let's generate it
     typedef scheme_register all_schemes;
     proof_scheme_list *p = new proof_scheme_list;
     for(all_schemes::iterator i = all_schemes::begin(), i_end = all_schemes::end(); i != i_end; ++i) {
@@ -29,6 +38,19 @@ static proof_scheme const *get_scheme(ast_real const *real) {
       if (!s) continue;
       p->push_back(s);
     }
+    assert(top_graph);
+    // maybe there are some axioms?
+    node_vect axioms = top_graph->find_useful_axioms(real);
+    for(node_vect::const_iterator i = axioms.begin(), i_end = axioms.end(); i != i_end; ++i) {
+      property_vect const &hyp = (*i)->get_hypotheses();
+      ast_real_vect v;
+      for(property_vect::const_iterator j = hyp.begin(), j_end = hyp.end(); j != j_end; ++j)
+        v.push_back(j->real);
+      p->push_back(new dummy_scheme(real, v));
+    }
+    // or an hypothesis?
+    if (top_graph->find_already_known(real))
+      p->push_back(new dummy_scheme(real, ast_real_vect()));
     real->schemes = p;
   }
   proof_scheme_list &l = *real->schemes;
@@ -52,6 +74,7 @@ static void revert_schemes(proof_scheme_list &schemes, unsigned from) {
   schemes.erase(begin, end);
 }
 
+// FIXME !!!
 bool generate_scheme_tree(ast_real const *r, proof_scheme_list &schemes, ast_real_vect &found) {
   // do we already know about this real?
   bool good_real = find(found, r, false);
@@ -70,35 +93,12 @@ bool generate_scheme_tree(ast_real const *r, proof_scheme_list &schemes, ast_rea
       revert_schemes(schemes, from_scheme);
       found.erase(found.begin() + from_real, found.end());
     } else {
-      schemes.push_back(s);
+      if (!s->dummy())
+        schemes.push_back(s);
       if (!good_real) good_real = find(found, r, true);
       from_scheme = schemes.size();
       from_real = found.size();
     }
-  }
-  // maybe it is an axiom
-  assert(top_graph);
-  node_vect axioms = top_graph->find_useful_axioms(r);
-  for(node_vect::const_iterator i = axioms.begin(), i_end = axioms.end(); i != i_end; ++i) {
-    property_vect const &hyp = (*i)->get_hypotheses();
-    bool good_axiom = true;
-    for(property_vect::const_iterator j = hyp.begin(), j_end = hyp.end(); j != j_end; ++j) {
-      good_axiom = generate_scheme_tree(j->real, schemes, found);
-      if (!good_axiom) break;
-    }
-    if (!good_axiom) {
-      revert_schemes(schemes, from_scheme);
-      found.erase(found.begin() + from_real, found.end());
-    } else {
-      if (!good_real) good_real = find(found, r, true);
-      from_scheme = schemes.size();
-      from_real = found.size();
-    }
-  }
-  // or an hypothesis
-  if (top_graph->find_already_known(r)) {
-    if (!good_real) good_real = find(found, r, true);
-    from_real = found.size();
   }
   // maybe we just found it in an underlying iteration
   if (!good_real) good_real = find(found, r, false);
