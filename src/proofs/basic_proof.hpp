@@ -23,4 +23,6 @@ struct rewrite_scheme: proof_scheme {
   virtual ast_real_vect needed_reals(ast_real const *) const { return ast_real_vect(1, real); }
 };
 
+void register_user_rewrite(ast_real const *, ast_real const *);
+
 #endif // PROOFS_BASIC_PROOF_HPP

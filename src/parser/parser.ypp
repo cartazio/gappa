@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include "parser/ast.hpp"
+#include "proofs/basic_proof.hpp"
 
 int yylex(void);
 
@@ -19,7 +20,7 @@ extern void generate_graph(ast_prop const &p);
 
 %error-verbose
 
-%token IDENT NUMBER ERROR IN AND IMPL ASSIGN
+%token IDENT NUMBER IN AND IMPL
 
 %union {
   ast_number		*number;
@@ -28,14 +29,12 @@ extern void generate_graph(ast_prop const &p);
   ast_real const	*real;
   ast_real_vect		*operands;
   ast_prop		*prop;
-  int toto;
 }
 
 %type <prop>      ATOM
 %type <number>    NUMBER
 %type <ident>     IDENT
 %type <interval>  INTERVAL
-%type <toto>      ERROR
 %type <real>      REAL
 %type <operands>  OPERANDS
 %type <prop>      PROP
@@ -47,7 +46,7 @@ extern void generate_graph(ast_prop const &p);
 
 %%
 
-BLOB: PROG '{' PROP '}' { generate_graph(*$3); delete $3; }
+BLOB: PROG '{' PROP '}' REWRITE { generate_graph(*$3); delete $3; }
 
 PROP:
   ATOM			{ $$ = $1; }
@@ -119,3 +118,5 @@ OPERANDS:
     $1->push_back($3);
     $$ = $1;
   }
+
+REWRITE: | REWRITE REAL IMPL REAL ';' { register_user_rewrite($2, $4); }

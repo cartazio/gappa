@@ -310,3 +310,19 @@ node *rewrite_scheme::generate_proof(property_vect const &hyp, property &res) co
   nodes.push_back(n);
   return new node_modus(res, new node_theorem(1, &res2, res, name), nodes);
 }
+
+struct rewrite_factory: scheme_factory {
+  ast_real const *r1, *r2;
+  std::string name;
+  rewrite_factory(ast_real const *q1, ast_real const *q2): r1(q1), r2(q2) {}
+  virtual proof_scheme *operator()(ast_real const *) const;
+};
+
+proof_scheme *rewrite_factory::operator()(ast_real const *r) const {
+  if (r != r1) return NULL;
+  return new rewrite_scheme(r2, "user_defined");
+}
+
+void register_user_rewrite(ast_real const *r1, ast_real const *r2) {
+  scheme_register dummy(new rewrite_factory(r1, r2));
+}
