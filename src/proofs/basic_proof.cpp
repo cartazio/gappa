@@ -59,7 +59,7 @@ proof_scheme *absolute_error_from_real_scheme::factory(ast_real const *real) {
   return new absolute_error_from_real_scheme;
 }
 
-scheme_register absolute_error_from_real_scheme_register(&absolute_error_from_real_scheme::factory);
+static scheme_register absolute_error_from_real_scheme_register(&absolute_error_from_real_scheme::factory);
 
 // ABSOLUTE_ERROR_FROM_ROUNDED
 struct absolute_error_from_rounded_scheme: proof_scheme {
@@ -92,7 +92,7 @@ proof_scheme *absolute_error_from_rounded_scheme::factory(ast_real const *real) 
   return new absolute_error_from_rounded_scheme;
 }
 
-scheme_register absolute_error_from_rounded_scheme_register(&absolute_error_from_rounded_scheme::factory);
+static scheme_register absolute_error_from_rounded_scheme_register(&absolute_error_from_rounded_scheme::factory);
 
 // RELATIVE_ERROR_FROM_REAL
 struct relative_error_from_real_scheme: proof_scheme {
@@ -125,7 +125,7 @@ proof_scheme *relative_error_from_real_scheme::factory(ast_real const *real) {
   return new relative_error_from_real_scheme;
 }
 
-scheme_register relative_error_from_real_scheme_register(&relative_error_from_real_scheme::factory);
+static scheme_register relative_error_from_real_scheme_register(&relative_error_from_real_scheme::factory);
 
 // RELATIVE_ERROR_FROM_ROUNDED
 struct relative_error_from_rounded_scheme: proof_scheme {
@@ -158,7 +158,7 @@ proof_scheme *relative_error_from_rounded_scheme::factory(ast_real const *real) 
   return new relative_error_from_rounded_scheme;
 }
 
-scheme_register relative_error_from_rounded_scheme_register(&relative_error_from_rounded_scheme::factory);
+static scheme_register relative_error_from_rounded_scheme_register(&relative_error_from_rounded_scheme::factory);
 
 // ROUNDING_BOUND
 struct rounding_bound_scheme: proof_scheme {
@@ -189,7 +189,7 @@ proof_scheme *rounding_bound_scheme::factory(ast_real const *r) {
   return new rounding_bound_scheme;
 }
 
-scheme_register rounding_bound_scheme_register(&rounding_bound_scheme::factory);
+static scheme_register rounding_bound_scheme_register(&rounding_bound_scheme::factory);
 
 // COMPUTATION
 struct computation_scheme: proof_scheme {
@@ -269,7 +269,7 @@ proof_scheme *computation_scheme::factory(ast_real const *r) {
   return new computation_scheme;
 }
 
-scheme_register computation_scheme_register(&computation_scheme::factory);
+static scheme_register computation_scheme_register(&computation_scheme::factory);
 
 // NUMBER
 struct number_scheme: proof_scheme {
@@ -292,7 +292,7 @@ proof_scheme *number_scheme::factory(ast_real const *r) {
   return new number_scheme;
 }
 
-scheme_register number_scheme_register(&number_scheme::factory);
+static scheme_register number_scheme_register(&number_scheme::factory);
 
 // REWRITE
 node *rewrite_scheme::generate_proof(ast_real const *r) const {

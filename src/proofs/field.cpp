@@ -30,7 +30,7 @@ static pattern rnd(pattern const &a, int b) {
 
 static pattern a(0), b(1), c(2), d(3);
 
-#define REWRITE(name,lhs,rhs) pattern_register name(lhs, rhs, #name)
+#define REWRITE(name,lhs,rhs) static pattern_register name(lhs, rhs, #name)
 
 REWRITE(absolute_error_sym,
 	a - rnd(a, 0),
