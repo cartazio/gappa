@@ -144,17 +144,17 @@ node *dichotomy_scheme::generate_proof(interval const &bnd) const {
   if (dich) return dich;
   node *varn = find_proof(var);
   if (!varn) return NULL;
+  property_vect hyp2;
+  hyp2.push_back(varn->get_result());
+  property_vect const &hyp = top_graph->get_hypotheses();
+  for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
+    if (i->real != var) hyp2.push_back(*i);
+  property_vect goals;
+  goals.push_back(property(real, bnd));
+  graph_t *g = new graph_t(top_graph, hyp2, goals, helper, false);
+  graph_loader loader(g);
+  dichotomy_node *n = new dichotomy_node(hyp2, property(real, bnd));
   try {
-    property_vect hyp2;
-    hyp2.push_back(varn->get_result());
-    property_vect const &hyp = top_graph->get_hypotheses();
-    for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
-      if (i->real != var) hyp2.push_back(*i);
-    property_vect goals;
-    goals.push_back(property(real, bnd));
-    graph_t *g = new graph_t(top_graph, hyp2, goals, helper, false);
-    graph_loader loader(g);
-    dichotomy_node *n = new dichotomy_node(hyp2, property(real, bnd));
     n->dichotomize();
     n->add_graph(n->last_graph);
     if (varn->type != HYPOTHESIS)
@@ -173,6 +173,7 @@ node *dichotomy_scheme::generate_proof(interval const &bnd) const {
       std::cerr << " is nowhere (?!)\n";
     dich = NULL;
   }
+  delete g;
   return dich;
 }
 
