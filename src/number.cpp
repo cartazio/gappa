@@ -14,6 +14,13 @@ number_real::number_real(int v) {
 bool number_real::operator<=(number_real const &v) const {
   if (mpfr_nan_p(data->val) || mpfr_nan_p(v.data->val)) return false;
   return mpfr_cmp(data->val, v.data->val) <= 0;
+  //return mpfr_lessequal_p(data->val, v.data->val);
+}
+
+bool number_real::operator==(number_real const &v) const {
+  if (mpfr_nan_p(data->val) || mpfr_nan_p(v.data->val)) return false;
+  return mpfr_cmp(data->val, v.data->val) == 0;
+  //return mpfr_equal_p(data->val, v.data->val);
 }
 
 number_real const &min(number_real const &x, number_real const &y)

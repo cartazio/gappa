@@ -78,6 +78,7 @@ struct number_real {
   number_real &operator=(number_real const &v) { impl_data const *d = v.data->clone(); data->destroy(); data = d; return *this; }
   ~number_real() { data->destroy(); }
   bool operator<=(number_real const &v) const;
+  bool operator==(number_real const &v) const;
 };
 
 number_real const &min(number_real const &x, number_real const &y);
