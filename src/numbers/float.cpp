@@ -81,7 +81,7 @@ static int exponent(number const &n, float_format const *f) {
   return e;
 }
 
-static bool influenced(number const &n, float_format const *f, int e, int e_infl, bool strict) {
+static bool influenced(number const &n, int e, int e_infl, bool strict) {
   mpfr_t x, y;
   mpfr_init2(x, 150);
   mpfr_init(y);
@@ -102,7 +102,7 @@ interval float_rounding_class::error(interval const &i, std::string &name) const
   int e_err = type == ROUND_CE ? e - 1 : e;
   e += format->prec - 1;
   name = std::string("float") + ident + "_error";
-  if (influenced(lower(i), format, e, e_err, false) && influenced(upper(i), format, e, e_err, false)) {
+  if (influenced(lower(i), e, e_err, false) && influenced(upper(i), e, e_err, false)) {
     name += "_wide";
     --e_err;
   }
