@@ -59,7 +59,7 @@ std::ostream &operator<<(std::ostream &stream, boost::numeric::interval<T, Polic
 
 
 #define pcast(p) static_cast< _interval_real * >(p)
-#define cast(p) *static_cast< _interval_real * >(p)
+#define cast(p) (*static_cast< _interval_real * >(p))
 #define gen(p) new _interval_real(p)
 
 static void *create() { return new _interval_real; }
@@ -75,7 +75,7 @@ static void output(std::ostream &s, void *v) { s << cast(v); }
 interval_description interval_real_desc_ =
   { create: &create, destroy: &destroy, clone: &clone,
     subset: &subset, singleton: &singleton, in_zero: &zero,
-    to_real: 0, hull: &hull, intersect: &intersect, split: 0, output: &output };
+    to_real: &clone, hull: &hull, intersect: &intersect, split: 0, output: &output };
 
 interval_description *interval_real_desc = &interval_real_desc_;
 
@@ -87,3 +87,6 @@ interval_real operator*(interval_real const &u, interval_real const &v)
 { return interval_real(gen(cast(u.ptr) * cast(v.ptr))); }
 interval_real operator/(interval_real const &u, interval_real const &v)
 { return interval_real(gen(cast(u.ptr) / cast(v.ptr))); }
+
+number_real lower(interval_real const &v) { return cast(v.ptr).lower(); }
+number_real upper(interval_real const &v) { return cast(v.ptr).upper(); }
