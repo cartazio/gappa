@@ -83,7 +83,7 @@ static int exponent(number const &n, float_format const *f) {
 
 static bool influenced(number const &n, float_format const *f, int e, int e_infl, bool strict) {
   mpfr_t x, y;
-  mpfr_init(x);
+  mpfr_init2(x, 150);
   mpfr_init(y);
   mpfr_set_ui_2exp(x, 1, e, GMP_RNDN);
   mpfr_set_ui_2exp(y, 1, e_infl, GMP_RNDN);
@@ -99,7 +99,7 @@ interval float_rounding_class::error(interval const &i, std::string &name) const
   int e1 = exponent(round_number(lower(i), format, f), format),
       e2 = exponent(round_number(upper(i), format, f), format);
   int e = std::max(e1, e2);
-  int e_err = type == ROUND_CE ? e : e - 1;
+  int e_err = type == ROUND_CE ? e - 1 : e;
   e += format->prec - 1;
   name = std::string("float") + ident + "_error";
   if (influenced(lower(i), format, e, e_err, false) && influenced(upper(i), format, e, e_err, false)) {

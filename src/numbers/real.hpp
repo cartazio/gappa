@@ -12,7 +12,7 @@ struct ref_counter_t {
 };
 
 namespace {
-int const real_prec = 128;
+int const real_prec = 150;
 
 struct number_base {
   mutable ref_counter_t ref_counter;
