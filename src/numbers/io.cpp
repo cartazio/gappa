@@ -1,5 +1,4 @@
 #include "../ast.hpp"
-#include "float.hpp"
 #include "interval_utility.hpp"
 #include "real.hpp"
 #include "round.hpp"

@@ -5,8 +5,6 @@ bin_PROGRAMS = gappa
 
 gappa_SOURCES = \
 	numbers/float.cpp \
-	numbers/float.hpp \
-	numbers/float_fun.cpp \
 	numbers/interval.cpp \
 	numbers/interval.hpp \
 	numbers/interval_arith.hpp \

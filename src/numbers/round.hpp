@@ -23,7 +23,6 @@ class float_format {
   bool rndZ(rnd const &) const { return false; }
   bool rndU(rnd const &) const;
   bool rndCE(rnd const &) const;
-  float_format(unsigned p, int e): min_exp(e), prec(p) {}
  public:
   int min_exp;
   unsigned prec;
@@ -34,8 +33,15 @@ class float_format {
 };
 
 struct number_type;
+struct number;
+struct interval;
 
 typedef void (float_format::*rounding_fun)(mpfr_t &) const;
 number round_number(number const &, number_type const &, rounding_fun);
+
+struct rounding_class {
+  virtual interval bound(interval const &, char const *&) const = 0;
+  virtual interval error(interval const &, char const *&) const = 0;
+};
 
 #endif // NUMBERS_ROUND_HPP

@@ -2,7 +2,6 @@
 #include "basic_proof.hpp"
 #include "program.hpp"
 #include "proof_graph.hpp"
-#include "numbers/float.hpp"
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
 #include "numbers/round.hpp"

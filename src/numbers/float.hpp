@@ -1,4 +1,0 @@
-#ifndef NUMBERS_FLOAT_HPP
-#define NUMBERS_FLOAT_HPP
-
-#endif // NUMBERS_FLOAT_HPP
