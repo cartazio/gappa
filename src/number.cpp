@@ -111,7 +111,7 @@ void split(number_float32 &u, number_float32 &v) {
   float32 m = float32_mul(float32_add(u.value, v.value), half);
   if (m == u.value || m == v.value) return;
   float32 n = m + 1; // n is near m since m != -1 (NaN)
-  if (m >= 0) { u.value = n; v.value = m; } else { u.value = m; v.value = n; }
+  if (m >= 0) { u.value = m; v.value = n; } else { u.value = n; v.value = m; }
 }
 
 void split(number_float64 &u, number_float64 &v) { throw; u = v; }
