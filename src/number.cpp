@@ -99,6 +99,17 @@ int ulp_exponent(number_float64 const &v) { return exponent(v) - 52; }
 int ulp_exponent(number_floatx80 const &v) { return exponent(v) - 63; }
 int ulp_exponent(number_float128 const &v) { return exponent(v) - 112; }
 
+void split(number_float32 &u, number_float32 &v) {
+  static float32 half = 126 << 23;
+  float32 m = float32_mul(float32_add(u.value, v.value), half);
+  if (m == u.value || m == v.value) return;
+  float32 n = m + 1; // n is near m since m != -1 (NaN)
+  if (m >= 0) { u.value = n; v.value = m; } else { u.value = m; v.value = n; }
+}
+
+void split(number_float64 &u, number_float64 &v) { throw; u = v; }
+void split(number_floatx80 &u, number_floatx80 &v) { throw; u = v; }
+void split(number_float128 &u, number_float128 &v) { throw; u = v; }
 
 static impl_data *read_number_data(ast_number const &n, int p, mp_rnd_t rnd) {
   impl_data *res = new impl_data;

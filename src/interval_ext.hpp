@@ -9,6 +9,7 @@ int ulp_exponent(interval const &);
 interval from_exponent(int, mp_rnd_t);
 int mig_exponent(interval const &);
 int mag_exponent(interval const &);
+std::pair< interval, interval > split(interval const &);
 
 template< class CharType, class CharTraits >
 std::basic_ostream< CharType, CharTraits > &operator<<

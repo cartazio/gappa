@@ -110,6 +110,20 @@ struct do_is_singleton: boost::static_visitor< bool > {
   bool operator()(T const &v) const { return singleton(v); }
 };
 
+struct do_split: boost::static_visitor< std::pair< interval, interval > > {
+  std::pair< interval, interval > operator()(interval_real const &) const { throw; }
+  std::pair< interval, interval > operator()(interval_not_defined const &) const { throw; }
+  template< class T >
+  std::pair< interval, interval > operator()(T const &v) const {
+    typedef typename T::base_type type;
+    type l = lower(v), u = upper(v);
+    split(l, u);
+    return std::make_pair(
+      interval(interval_variant(T(lower(v), l))),
+      interval(interval_variant(T(u, upper(v)))));
+  }
+};
+
 template< class CharType, class CharTraits >
 struct do_output: boost::static_visitor< void > {
   typedef std::basic_ostream< CharType, CharTraits > ostream;
@@ -133,6 +147,7 @@ int ulp_exponent(interval const &v) { return boost::apply_visitor(do_ulp_exponen
 int mig_exponent(interval const &v) { return boost::apply_visitor(do_mig_exponent(), v.value); }
 int mag_exponent(interval const &v) { return boost::apply_visitor(do_mag_exponent(), v.value); }
 bool is_singleton(interval const &v) { return boost::apply_visitor(do_is_singleton(), v.value); }
+std::pair< interval, interval > split(interval const &v) { return boost::apply_visitor(do_split(), v.value); }
 
 template< class CharType, class CharTraits >
 std::basic_ostream< CharType, CharTraits > &operator<<
