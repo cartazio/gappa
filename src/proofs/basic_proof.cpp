@@ -6,6 +6,13 @@
 #include "proofs/proof_graph.hpp"
 #include "proofs/schemes.hpp"
 
+struct rewrite_node: public theorem_node {
+  ast_real_vect subs;
+  rewrite_node(int nb, property const h[], property const &p, std::string const &n, ast_real_vect const &s)
+    : theorem_node(nb, h, p, n), subs(s) {}
+  virtual ast_real_vect sub_expressions() const { return subs; }
+};
+
 static bool absolute_error_decomposition(ast_real const *real, ast_real const **f, rounded_real const **r) {
   real_op const *o = boost::get< real_op const >(real);
   if (!o || o->type != BOP_SUB) return false;
@@ -259,7 +266,7 @@ node *computation_scheme::generate_proof() const {
   case 2: {
     bool same_ops = r->ops[0] == r->ops[1];
     if (same_ops && r->type == BOP_SUB)
-      return new theorem_node(0, NULL, property(real, zero()), "sub_refl");
+      return new rewrite_node(0, NULL, property(real, zero()), "sub_refl", ast_real_vect(1, r->ops[0]));
     std::string s;
     node *n1 = find_proof(r->ops[0]);
     if (!n1) return NULL;
@@ -353,13 +360,6 @@ proof_scheme *number_scheme::factory(ast_real const *real) {
 static scheme_register number_scheme_register(&number_scheme::factory);
 
 // REWRITE
-struct rewrite_node: public theorem_node {
-  ast_real_vect subs;
-  rewrite_node(int nb, property const h[], property const &p, std::string const &n, ast_real_vect const &s)
-    : theorem_node(nb, h, p, n), subs(s) {}
-  virtual ast_real_vect sub_expressions() const { return subs; }
-};
-
 node *rewrite_scheme::generate_proof() const {
   node *n = find_proof(rewritten);
   if (!n) return NULL;
