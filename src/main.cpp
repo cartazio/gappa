@@ -8,9 +8,9 @@
 #include "functions/float.hpp"
 
 static void initialize_functions() {
-  initialize_add32();
-  //initialize_sub32();
-  initialize_mul32();
+  initialize_add();
+  initialize_sub();
+  initialize_mul();
 }
 
 extern int yyparse(void);

@@ -42,12 +42,11 @@ std::basic_ostream< CharType, CharTraits > &operator<<
 struct function_match;
 
 struct function {
-  ast_ident *name;
   int real_op;
   type_id *return_type;
   type_id *args_type;
   function_match *matches;
-  function(ast_ident *n, int r): name(n), real_op(r) {}
+  function(int r): real_op(r) {}
 };
 
 typedef std::vector< variable * > variable_vec;
