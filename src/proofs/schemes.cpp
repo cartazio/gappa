@@ -222,7 +222,8 @@ void graph_t::populate() {
     if (n)
       if (try_real(n))
         helper->insert_dependent(missing_schemes, s->real);
-      else delete n; // we are leaking some nodes here, but they will be purged later on
+      else
+        delete n; // we are leaking some nodes here, but they will be purged later on
     real_set v;
     v.swap(helper->axiom_reals);
     for(real_set::iterator i = v.begin(), i_end = v.end(); i != i_end; ++i) {
@@ -233,11 +234,9 @@ void graph_t::populate() {
         property_vect const &hyp = n->get_hypotheses();
         node_vect nodes;
         bool good = true;
-        for(property_vect::const_iterator k = hyp.begin(), k_end = hyp.end(); k != k_end; ++k) {
-          node *m = find_proof(k->real);
-          if (m && m->get_result().bnd <= k->bnd) nodes.push_back(m);
+        for(property_vect::const_iterator k = hyp.begin(), k_end = hyp.end(); k != k_end; ++k)
+          if (node *m = find_proof(*k)) nodes.push_back(m);
           else { good = false; break; }
-        }
         if (!good) {
           helper->axiom_reals.insert(real);
           continue;
