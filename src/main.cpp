@@ -1,21 +1,20 @@
-#include <iostream>
-#include <map>
-#include <sstream>
 #include "ast.hpp"
 #include "basic_proof.hpp"
 #include "program.hpp"
 #include "proof_graph.hpp"
 #include "numbers/float.hpp"
-#include "numbers/interval_ext.hpp"
+#include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
+#include "numbers/round.hpp"
+
+#include <iostream>
+#include <map>
+#include <sstream>
 
 extern int yyparse(void);
 extern node *generate_dichotomy_proof(property_vect const &hyp, property &res);
 extern node *triviality;
-extern number_real lower(interval_real const &v);
-extern number_real upper(interval_real const &v);
-extern std::string get_real_split(number_real const &f, int &exp, bool &zero);
-extern std::string get_float_split(number_real const &f, int &exp, bool &zero, interval_float_description const *desc);
+extern std::string get_real_split(number const &f, int &exp, bool &zero);
 
 struct node_theorem: node {
   char const *name;
@@ -38,30 +37,16 @@ int map_finder(std::map< T, int > &m, T const &k) {
 typedef std::map< std::string, int > float_map; // (not so) bastard way of doing it
 static float_map displayed_floats;
 
-int display(number_real const &f, interval_float_description const *desc = NULL) {
+int display(number const &f) {
   std::stringstream s;
   bool zero;
-  int exp, zero_exp;
-  s << '(';
-  if (desc) {
-    s << get_float_split(f, exp, zero, desc);
-    zero_exp = desc->min_exp - desc->prec;
-  } else {
-    s << get_real_split(f, exp, zero);
-    zero_exp = 0;
-  }
-  s << ") (" << (zero ? zero_exp : exp) << ')';
-  std::string s_ = s.str();
-  s << ' ' << desc;
-  int f_id = map_finder(displayed_floats, s.str());
+  int exp;
+  s << '(' << get_real_split(f, exp, zero);
+  s << ") (" << (zero ? 0 : exp) << ')';
+  std::string const &s_ = s.str();
+  int f_id = map_finder(displayed_floats, s_);
   if (f_id < 0) return -f_id;
-  if (desc) {
-    std::cout << // TODO
-      "Definition f" << f_id << "a := Float " << s_ << ".\n"
-      "Lemma f" << f_id << "b : Good_f754s f" << f_id << "a. compute. apply Normal_f754s. Qed.\n" // TODO
-      "Definition f" << f_id << " := F754s f" << f_id << "a f" << f_id << "b.\n";
-  } else
-    std::cout << "Definition f" << f_id << " := Float " << s_ << ".\n";
+  std::cout << "Definition f" << f_id << " := Float " << s_ << ".\n";
   return f_id;
 }
 
@@ -70,20 +55,11 @@ static interval_map displayed_intervals;
 
 int display(interval const &i) {
   std::stringstream s;
-  interval_real const &r = to_real(i);
-  interval_float_description const *desc =
-    i.desc == interval_real_desc ? NULL : reinterpret_cast< interval_float_description const * >(i.desc);
-  s << 'f' << display(lower(r), desc) << " f" << display(upper(r), desc);
-  std::string s_ = s.str();
-  s << ' ' << desc;
-  int i_id = map_finder(displayed_intervals, s.str());
+  s << 'f' << display(lower(i)) << " f" << display(upper(i));
+  std::string const &s_ = s.str();
+  int i_id = map_finder(displayed_intervals, s_);
   if (i_id < 0) return -i_id;
-  std::cout << "Definition i" << i_id << " := ";
-  if (desc)
-    std::cout << "I754s " << s_; // TODO
-  else
-    std::cout << "makepairR " << s_;
-  std::cout << ".\n";
+  std::cout << "Definition i" << i_id << " := makepairR " << s_ << ".\n";
   return i_id;
 }
 
@@ -218,7 +194,7 @@ int main() {
       std::cout << v->name->name;
     else
       std::cout << "...";
-    std::cout << " in " << p.bnd << std::endl;
+    std::cout << " in " << p.bnd << '\n';
     layer.flatten();
     (*i)->insert_pred(n);
   }

@@ -89,15 +89,15 @@ ATOM:
   REAL IN INTERVAL
   { $$ = new ast_prop(ast_atom_bound($1, $3)); }
 
-PROG: OPERATION | PROG OPERATION
+PROG: | PROG OPERATION
 
 OPERATION:
   IDENT ASSIGN IDENT '(' OPERANDS ')' ';'
   {
     ast_ident *f = $3;
-    function *fun = f->fun;
-    if (!fun)
+    if (f->id_type != PROG_FUN)
       { std::cerr << "Error: " << f->name << " is not a function" << '\n'; exit(1); }
+    function *fun = f->fun;
     ast_operands *ops = $5;
     instruction *ins = new instruction;
     ins->fun = fun;

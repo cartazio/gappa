@@ -27,10 +27,10 @@ class float_format {
  public:
   int min_exp;
   unsigned prec;
-  void roundZ(mpfr_t &f) { round(f, &float_format::rndZ, &float_format::rndZ); }
-  void roundU(mpfr_t &f) { round(f, &float_format::rndU, &float_format::rndZ); }
-  void roundD(mpfr_t &f) { round(f, &float_format::rndZ, &float_format::rndU); }
-  void roundCE(mpfr_t &f) { round(f, &float_format::rndCE, &float_format::rndCE); }
+  void roundZ(mpfr_t &f) const { round(f, &float_format::rndZ, &float_format::rndZ); }
+  void roundU(mpfr_t &f) const { round(f, &float_format::rndU, &float_format::rndZ); }
+  void roundD(mpfr_t &f) const { round(f, &float_format::rndZ, &float_format::rndU); }
+  void roundCE(mpfr_t &f) const { round(f, &float_format::rndCE, &float_format::rndCE); }
 };
 
 #endif // NUMBERS_ROUND_HPP

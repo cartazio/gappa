@@ -1,13 +1,15 @@
+#include "ast.hpp"
+#include "basic_proof.hpp"
+#include "function.hpp"
+#include "program.hpp"
+#include "proof_graph.hpp"
+#include "numbers/interval_arith.hpp"
+#include "numbers/interval_utility.hpp"
+
 #include <algorithm>
 #include <iostream>
 #include <map>
 #include <boost/scoped_array.hpp>
-#include "basic_proof.hpp"
-#include "proof_graph.hpp"
-#include "program.hpp"
-#include "ast.hpp"
-#include "numbers/interval_ext.hpp"
-#include "function.hpp"
 
 /*
 Trivialities are emitted when the result of a basic proof directly
@@ -180,7 +182,7 @@ node *generate_refl_error(property_vect const &hyp, property &res) {
   error_bound const *e = boost::get< error_bound const >(res.real);
   assert(e && e->var->real == e->real);
   if (!contains_zero(res.bnd)) return NULL;
-  res.bnd = interval_real();
+  res.bnd = zero();
   return triviality;
 }
 
@@ -259,12 +261,12 @@ node *generate_relabs(property_vect const &hyp, property &res) {
   if (!ne) return NULL;
   res = res2;
   if (e->type == ERROR_ABS)
-    res.bnd = static_cast< interval_real const & >(err.bnd) * to_real(bnd.bnd);
+    res.bnd = err.bnd * bnd.bnd;
   else if (!is_zero(err.bnd)) {
     if (contains_zero(bnd.bnd)) return NULL;
-    res.bnd = static_cast< interval_real const & >(err.bnd) / to_real(bnd.bnd);
+    res.bnd = err.bnd / bnd.bnd;
   } else
-    res.bnd = interval();
+    res.bnd = zero();
   if (!(res.bnd <= res2.bnd)) return NULL;
   node_vect nodes;
   nodes.push_back(nb);
@@ -284,7 +286,7 @@ node *generate_computation(property_vect const &hyp, property &res) {
     property res1(r->ops[0]);
     node *n1 = handle_proof(hyp, res1);
     if (!n1) return NULL;
-    res.bnd = - to_real(res1.bnd);
+    res.bnd = -res1.bnd;
     nodes.push_back(n1);
     n = new node_theorem(1, &res1, res, "neg");
     break; }
@@ -292,13 +294,13 @@ node *generate_computation(property_vect const &hyp, property &res) {
     property res1(r->ops[0]);
     node *n1 = handle_proof(hyp, res1);
     if (!n1) return NULL;
-    interval_real i1 = to_real(res1.bnd);
+    interval const &i1 = res1.bnd;
     property res2(r->ops[1]);
     node *n2 = handle_proof(hyp, res2);
-    interval_real i2 = to_real(res2.bnd);
+    interval const &i2 = res2.bnd;
     if (!n2) return NULL;
     char const *s = NULL;
-    interval_real i;
+    interval i;
     switch (r->type) {
     case BOP_ADD: i = i1 + i2; s = "add"; break;
     case BOP_SUB: i = i1 - i2; s = "sub"; break;

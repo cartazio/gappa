@@ -1,12 +1,13 @@
+#include "ast.hpp"
+#include "basic_proof.hpp"
+#include "function.hpp"
+#include "numbers/interval_utility.hpp"
+#include "program.hpp"
+#include "proof_graph.hpp"
+
 #include <algorithm>
 #include <boost/bind.hpp>
 #include <iostream>
-#include "basic_proof.hpp"
-#include "proof_graph.hpp"
-#include "program.hpp"
-#include "ast.hpp"
-#include "numbers/interval_ext.hpp"
-#include "function.hpp"
 
 struct node_dichotomy: node {
   node_dichotomy(property_vect const &h, property const &p, node_vect const &n): node(UNION) {
@@ -56,7 +57,7 @@ void dichotomize(property_vect &hyp, property &res, int idx, node_vect &nodes) {
     }
   }
   if (is_singleton(h.bnd)) throw dichotomy_failure(hyp, res, bnd);
-  std::pair< interval, interval > ii = split(h.bnd);
+  std::pair< interval, interval > ii = split(h.bnd/*, TODO*/);
   h.bnd = ii.first;
   property res1 = res;
   dichotomize(hyp, res1, idx, nodes);
@@ -90,11 +91,12 @@ node *generate_dichotomy_proof(property_vect const &hyp, property &res) {
       std::cerr << (e->type == ERROR_ABS ? "ABS(" : "REL(") << e->var->name->name << ", ...)";
     else if (variable const *v = p.real->get_variable())
       std::cerr << v->name->name;
-    else assert(false);
+    else
+      std::cerr << "...";
     if (is_defined(e.bnd))
       std::cerr << " is in " << e.bnd << " potentially outside of " << p.bnd << '\n';
     else
-      std::cerr << " is nowhere (!?)\n";
+      std::cerr << " is nowhere (?!)\n";
     return NULL;
   }
 }

@@ -1,14 +1,17 @@
 #ifndef PROGRAM_HPP
 #define PROGRAM_HPP
 
-#include <vector>
-#include <iostream>
-#include "types.hpp"
 #include "ast_real.hpp"
+#include "numbers/types.hpp"
+
+#include <iostream>
+#include <vector>
 
 struct ast_ident;
 struct instruction;
 struct node;
+
+typedef number_type const *type_id;
 
 struct variable {
   ast_ident *name;

@@ -1,6 +1,5 @@
 #include "program.hpp"
 #include "property.hpp"
-#include "numbers/interval_ext.hpp"
 
 bool property::implies(property const &p) const {
   return real == p.real && bnd <= p.bnd;

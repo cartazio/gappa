@@ -1,4 +1,6 @@
+#include "real.hpp"
 #include "round.hpp"
+#include "types.hpp"
 #include <algorithm>
 #include <cassert>
 
@@ -63,4 +65,20 @@ void float_format::round(mpfr_t &f, rnd_fun g1, rnd_fun g2) const {
   assert(v == 0);
   mpfr_mul_2si(f, f, r.e, GMP_RNDN);
   if (s) mpfr_neg(f, f, GMP_RNDN);
+}
+
+number number_type::rounded_up(number const &f) const {
+  if (!format) return f;
+  number res = f;
+  number_base *d = res.unique();
+  format->roundU(d->val);
+  return res;
+}
+
+number number_type::rounded_dn(number const &f) const {
+  if (!format) return f;
+  number res = f;
+  number_base *d = res.unique();
+  format->roundD(d->val);
+  return number(d);
 }

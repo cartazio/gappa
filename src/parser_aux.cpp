@@ -1,12 +1,11 @@
-#include <cassert>
-#include <iostream>
 #include "ast.hpp"
 #include "program.hpp"
 #include "proof_graph.hpp"
 #include "property.hpp"
-#include "numbers/interval_ext.hpp"
+#include <cassert>
+#include <iostream>
 
-interval create_interval(ast_interval const &, bool widen, type_id);
+interval create_interval(ast_interval const &, bool widen, number_type const &);
 
 ast_real *check_real(ast_ident *v) {
   switch (v->id_type) {
@@ -83,11 +82,11 @@ ast_prop_and merge_prop_and(ast_prop const &_p) {
 
 property generate_property(ast_atom_bound const &p, bool goal) {
   property r(p.real);
-  type_id type = interval_real_desc;
+  type_id type = REAL_NUMBER;
   if (variable const *v = r.real->get_variable()) type = v->type;
   if (p.interval.lower) {
     assert(p.interval.upper);
-    r.bnd = create_interval(p.interval, (type == interval_real_desc) && goal, type);
+    r.bnd = create_interval(p.interval, (type == REAL_NUMBER) && goal, *type);
   } else assert(!p.interval.upper);
   return r;
 }
@@ -97,7 +96,7 @@ property generate_property(ast_atom_approx const &p, property **_q) {
   type_id type = p.ident->type;
   assert(type != UNDEFINED);
   ast_interval i = { p.value, p.value };
-  r.bnd = create_interval(i, true, type);
+  r.bnd = create_interval(i, true, *type);
   *_q = NULL; /* TODO */
   return r;
 }
