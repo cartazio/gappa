@@ -196,6 +196,38 @@ proof_scheme *rounding_bound_scheme::factory(ast_real const *r) {
 
 static scheme_register rounding_bound_scheme_register(&rounding_bound_scheme::factory);
 
+// ENFORCE_BOUND
+struct enforce_bound_scheme: proof_scheme {
+  virtual node *generate_proof(ast_real const *) const;
+  virtual ast_real_vect needed_reals(ast_real const *) const;
+  static proof_scheme *factory(ast_real const *);
+};
+
+node *enforce_bound_scheme::generate_proof(ast_real const *real) const {
+  rounded_real const *r = boost::get< rounded_real const >(real);
+  assert(r);
+  node *n = find_proof(real);
+  if (!n) return NULL;
+  property const &res1 = n->get_result();
+  std::string name;
+  property res(real, r->rounding->enforce(res1.bnd, name));
+  if (!is_defined(res.bnd)) return NULL;
+  return new modus_node(1, &n, new theorem_node(1, &res1, res, name));
+}
+
+ast_real_vect enforce_bound_scheme::needed_reals(ast_real const *real) const {
+  rounded_real const *r = boost::get< rounded_real const >(real);
+  assert(r);
+  return ast_real_vect(1, real);
+}
+
+proof_scheme *enforce_bound_scheme::factory(ast_real const *r) {
+  if (!boost::get< rounded_real const >(r)) return NULL;
+  return new enforce_bound_scheme;
+}
+
+static scheme_register enforce_bound_scheme_register(&enforce_bound_scheme::factory);
+
 // COMPUTATION
 struct computation_scheme: proof_scheme {
   virtual node *generate_proof(ast_real const *) const;

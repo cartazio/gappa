@@ -68,14 +68,6 @@ bool generate_scheme_tree(ast_real const *r, ast_real_vect &reals, ast_real_vect
       reals.erase(reals.begin() + last_real, reals.end());
     }
   }
-  if (need_self_tristate == 2) { // only self-referencing schemes, no interesting one
-    for(std::vector< proof_scheme * >::iterator i = schemes.begin(), end = schemes.end(); i != end; ++i)
-      delete *i;
-    schemes.clear();
-    discarded.insert(discarded.end(), reals.begin() + last_real_tmp, reals.end());
-    reals.erase(reals.begin() + last_real_tmp, reals.end());
-    last_real = last_real_tmp;
-  }
   bool in_hyp = false;
   {
     assert(top_graph);
@@ -110,6 +102,14 @@ bool generate_scheme_tree(ast_real const *r, ast_real_vect &reals, ast_real_vect
       discarded.insert(discarded.end(), reals.begin() + last_real, reals.end());
       reals.erase(reals.begin() + last_real, reals.end());
     }
+  }
+  if (!in_hyp && need_self_tristate == 2) { // only self-referencing schemes, no interesting one
+    for(std::vector< proof_scheme * >::iterator i = schemes.begin(), end = schemes.end(); i != end; ++i)
+      delete *i;
+    schemes.clear();
+    discarded.insert(discarded.end(), reals.begin() + last_real_tmp, reals.end());
+    reals.erase(reals.begin() + last_real_tmp, reals.end());
+    last_real = last_real_tmp;
   }
   unsigned s = schemes.size();
   if (s == 0) {
