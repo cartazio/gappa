@@ -80,6 +80,7 @@ struct interval {
   interval(interval_variant const &v): value(v) {}
   interval(ast_interval const &, bool widen, type_id = UNDEFINED);
   interval operator+(interval const &) const;
+  interval operator-(interval const &) const;
   interval operator*(interval const &) const;
   bool operator<=(interval const &) const;
 };

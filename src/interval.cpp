@@ -40,6 +40,16 @@ struct do_add: boost::static_visitor< interval > {
   }
 };
 
+struct do_sub: boost::static_visitor< interval > {
+  template< typename T, typename U >
+  interval operator()(T const &, U const &) const { throw; /* TODO */ }
+  template< typename T >
+  typename boost::disable_if< boost::is_same< T, interval_not_defined >, interval >::type // interval
+  operator()(T const &lhs, T const &rhs) const {
+    return interval_variant(lhs - rhs);
+  }
+};
+
 struct do_mul: boost::static_visitor< interval > {
   template< typename T, typename U >
   interval operator()(T const &, U const &) const { throw; /* TODO */ }
@@ -94,6 +104,7 @@ struct do_output: boost::static_visitor< void > {
 }
 
 interval interval::operator+(interval const &v) const { return boost::apply_visitor(do_add(), value, v.value); }
+interval interval::operator-(interval const &v) const { return boost::apply_visitor(do_sub(), value, v.value); }
 interval interval::operator*(interval const &v) const { return boost::apply_visitor(do_mul(), value, v.value); }
 bool interval::operator<=(interval const &v) const { return boost::apply_visitor(do_subset_of(), value, v.value); }
 interval to_real(interval const &v) { return interval_variant(boost::apply_visitor(do_to_real(), v.value)); }
