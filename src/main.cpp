@@ -119,61 +119,59 @@ int display(node *n) {
     plouf << 'p' << display(*i) << " -> ";
   int p_res = display(n->res);
   plouf << 'p' << p_res << ".\n";
-  plouf << " intros";
-  for(int i = 0, l = n->hyp.size(); i < l; ++i) plouf << " h" << i;
-  plouf << '.';
-  if (n->type == THEOREM) {
+  int nb_hyps = n->hyp.size();
+  if (nb_hyps) {
+    plouf << " intros";
+    for(int i = 0; i < nb_hyps; ++i) plouf << " h" << i;
+    plouf << '.';
+  }
+  switch (n->type) {
+  case THEOREM: {
     node_theorem *t = static_cast< node_theorem * >(n);
-    plouf << " unfold p" << p_res << ".\n apply " << t->name << " with";
-    for(int i = 0, l = n->hyp.size(); i < l; ++i) plouf << " (" << i + 1 << " := h" << i << ')';
-    //plouf << " (" << n->hyp.size() + 1 << " := a" << "TODO" << ')';
+    plouf << " unfold p" << p_res << ".\n apply " << t->name;
+    if (nb_hyps) {
+      plouf << " with";
+      for(int i = 0; i < nb_hyps; ++i) plouf << " (" << i + 1 << " := h" << i << ')';
+    }
     plouf << ".\n compute. trivial.\nQed.\n";
-  } else if (n->type == MODUS) {
+    break; }
+  case MODUS: {
     plouf << '\n';
     typedef std::map< ast_real const *, int > property_map;
     property_map pmap;
-    int nb_hyps = 0;
-    for(property_vect::const_iterator j = n->hyp.begin(), j_end = n->hyp.end(); j != j_end; ++j, ++nb_hyps)
-      pmap.insert(std::make_pair(j->real, nb_hyps));
-    for(node_vect::const_iterator i = ++n->pred.begin(), i_end = n->pred.end(); i != i_end; ++i, ++nb_hyps) {
-      plouf << " assert (h" << nb_hyps << " : p" << display((*i)->res) << "). apply l" << display(*i) << '.';
+    int num_hyp = 0;
+    for(property_vect::const_iterator j = n->hyp.begin(), j_end = n->hyp.end(); j != j_end; ++j, ++num_hyp)
+      pmap.insert(std::make_pair(j->real, num_hyp));
+    for(node_vect::const_iterator i = ++n->pred.begin(), i_end = n->pred.end(); i != i_end; ++i, ++num_hyp) {
+      plouf << " assert (h" << num_hyp << " : p" << display((*i)->res) << "). apply l" << display(*i) << '.';
       for(property_vect::const_iterator j = (*i)->hyp.begin(), j_end = (*i)->hyp.end(); j != j_end; ++j) {
-        /*
-        if (error_bound const *e = boost::get< error_bound const >(j->real)) {
-          if (e->var->real == e->real) {
-            plouf << " apply refl.";
-            continue;
-          }
-        }
-        */
         property_map::iterator pki = pmap.find(j->real);
         assert(pki != pmap.end());
         plouf << " exact h" << pki->second << '.';
       }
-      pmap.insert(std::make_pair((*i)->res.real, nb_hyps));
+      pmap.insert(std::make_pair((*i)->res.real, num_hyp));
       plouf << '\n';
     }
     node *m = n->pred[0];
     plouf << " apply l" << display(m) << '.';
     for(property_vect::const_iterator j = m->hyp.begin(), j_end = m->hyp.end(); j != j_end; ++j) {
-      /*
-      if (error_bound const *e = boost::get< error_bound const >(j->real)) {
-        if (e->var->real == e->real) {
-          plouf << " apply refl.";
-          continue;
-        }
-      }
-      */
       property_map::iterator pki = pmap.find(j->real);
       assert(pki != pmap.end());
       plouf << " exact h" << pki->second << '.';
     }
     plouf << "\nQed.\n";
-  } else {
+    break; }
+  case UNION: {
+    plouf << "\n union";
+    for(node_vect::const_iterator i = n->pred.begin(), end = n->pred.end(); i != end; ++i)
+      plouf << " l" << display(*i);
+    plouf << ".\nQed.\n";
+    break; }
+  default: {
     plouf << node_ids[n->type];
     for(node_vect::const_iterator i = n->pred.begin(), end = n->pred.end(); i != end; ++i)
       plouf << " l" << display(*i);
-    plouf << '\n';
+    plouf << '\n'; }
   }
   return n_id;
 }
