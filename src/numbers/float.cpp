@@ -141,7 +141,7 @@ static number_real to_real(number_float128 const &) { throw; }
 #define gen(sz,p) new _interval_float##sz(p)
 #define gen2(sz,p,q) new _interval_float##sz(p,q)
 
-#define INTERVAL_FLOAT(sz,_prec,_min)		\
+#define INTERVAL_FLOAT(sz, _prec, _min, _fmt_sz)		\
   static void *create_##sz() { return new _interval_float##sz; }		\
   static void destroy_##sz(void *v) { delete pcast(sz,v); }			\
   static void *clone_##sz(void *v) { return gen(sz, cast(sz,v)); }	\
@@ -165,13 +165,14 @@ static number_real to_real(number_float128 const &) { throw; }
         add: &add_##sz, sub: &sub_##sz, mul: &mul_##sz, div: &div_##sz,		\
         subset: &subset_##sz, singleton: &singleton_##sz, in_zero: &zero_##sz,	\
         to_real: &real_##sz, hull: &hull_##sz, split: split_##sz, output: &output_##sz },	\
-      mig_exp: &mig_exp_##sz, mag_exp: &mag_exp_##sz, prec: _prec, min_exp: _min };	\
+      mig_exp: &mig_exp_##sz, mag_exp: &mag_exp_##sz, prec: _prec, min_exp: _min,	\
+      format_size: _fmt_sz };	\
   interval_description *interval_float##sz = &interval_float##sz##_desc.desc;
 
-INTERVAL_FLOAT(32, 23, -126)
-INTERVAL_FLOAT(64, 52, -1022)
-INTERVAL_FLOAT(x80, 63, -16382)
-INTERVAL_FLOAT(128, 112, -16382)
+INTERVAL_FLOAT(32, 23, -126, 32)
+INTERVAL_FLOAT(64, 52, -1022, 64)
+INTERVAL_FLOAT(x80, 63, -16382, 80)
+INTERVAL_FLOAT(128, 112, -16382, 128)
 
 #define fdesc(p) reinterpret_cast< interval_float_description const * >(p)
 

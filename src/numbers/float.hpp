@@ -44,6 +44,7 @@ struct interval_float_description {
   int (*mag_exp)(void *);
   int prec;
   int min_exp;
+  int format_size;
 };
 
 #endif // NUMBERS_FLOAT_HPP
