@@ -167,16 +167,17 @@ node_vect const &graph_node::get_subproofs() const {
   return plouf;
 }
 
-graph_t::graph_t(graph_t *f, property_vect const &h)
-  : father(f), known_node(new graph_node(this)), hyp(h) {
+graph_t::graph_t(graph_t *f, property_vect const &h, property_vect const &g, proof_helper *p, bool o)
+  : father(f), known_node(new graph_node(this)), hyp(h), goals(g), owned_helper(o) {
   graph_loader loader(this);
   if (f) {
     assert(hyp.implies(f->hyp));
     known_reals = f->known_reals;
     for(node_set::const_iterator i = f->axioms.begin(), end = f->axioms.end(); i != end; ++i)
       insert_axiom(*i);
-    prover.helper = duplicate_proof_helper(f->prover.helper);
-  } else prover.helper = NULL;
+  }
+  if (owned_helper) helper = duplicate_proof_helper(p);
+  else helper = p;
   for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i) {
     node *n = new hypothesis_node(*i);
     if (!try_real(n))
@@ -269,7 +270,8 @@ graph_t::~graph_t() {
   ns.swap(nodes);
   for(node_set::const_iterator i = ns.begin(), end = ns.end(); i != end; ++i)
     delete *i;
-  delete_proof_helper(prover.helper);
+  if (owned_helper)
+    delete_proof_helper(helper);
   delete known_node;
 }
 
@@ -291,7 +293,7 @@ void graph_t::flatten() {
 
 void graph_t::purge(node *except) {
   std::set< ast_real const * > reals;
-  for(property_vect::const_iterator i = prover.goals.begin(), i_end = prover.goals.end(); i != i_end; ++i)
+  for(property_vect::const_iterator i = goals.begin(), i_end = goals.end(); i != i_end; ++i)
     reals.insert(i->real);
   node_map m;
   m.swap(known_reals);

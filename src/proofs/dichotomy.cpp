@@ -55,19 +55,24 @@ void dichotomy_node::try_graph(graph_t *g2) {
   p.bnd = interval(lower(p.bnd), upper(g2->get_hypotheses()[0].bnd));
   tmp_hyp.replace_front(p);
   property const &res = get_result();
-  graph_stacker stacker(tmp_hyp);
-  top_graph->prover.goals.push_back(res);
-  top_graph->prover();
-  if (node *n = find_proof(res.real)) {
+  graph_t *g0 = new graph_t(top_graph, tmp_hyp, g1->get_goals(), top_graph->helper, true);
+  g0->populate();
+  if (node *n = g0->find_already_known(res.real))
     if (n->get_result().bnd <= res.bnd) {
-      last_graph = top_graph;
-      stacker.keep();
+      last_graph = g0;
       delete g1;
       delete g2;
       return;
     }
-  }
+  delete g0;
   add_graph(g1);
+  // now that g1 has been added, recompute g2 in case some nodes of g1 have migrated
+  tmp_hyp.replace_front(g2->get_hypotheses()[0]);
+  delete g2;
+  g2 = new graph_t(top_graph, tmp_hyp, g1->get_goals(), top_graph->helper, true);
+  g2->populate();
+  node *n = g2->find_already_known(res.real);
+  assert(n->get_result().bnd <= res.bnd);
   last_graph = g2;
 }
 
@@ -81,24 +86,18 @@ struct dichotomy_failure {
 void dichotomy_node::dichotomize() {
   property const &res = get_result();
   interval bnd;
-  graph_t *g = NULL;
-  {
-    graph_stacker stacker(tmp_hyp);
-    top_graph->prover.goals.push_back(res);
-    top_graph->prover();
-    if (node *n = find_proof(res.real)) {
-      bnd = n->get_result().bnd;
-      if (bnd <= res.bnd) g = top_graph;
-    }
-    if (g) stacker.keep();
-  }
+  graph_t *g = new graph_t(top_graph, tmp_hyp, top_graph->get_goals(), top_graph->helper, true);
+  g->populate();
+  if (node *n = g->find_already_known(res.real)) {
+    bnd = n->get_result().bnd;
+    if (!(bnd <= res.bnd)) { delete g; g = NULL; }
+  } else { delete g; g = NULL; }
   if (g) {
     try_graph(g);
     return;
   }
   property const &h = tmp_hyp[0];
-  rounded_real const *rr = boost::get< rounded_real const >(res.real);
-  if (rr) {
+  if (rounded_real const *rr = boost::get< rounded_real const >(res.real)) {
     std::string dummy;
     interval i = rr->rounding->enforce(h.bnd, dummy);
     if (!is_defined(i) || is_singleton(i)) throw dichotomy_failure(h, res, bnd);
@@ -141,12 +140,6 @@ ast_real_vect dichotomy_scheme::needed_reals() const {
   return res;
 }
 
-struct proof_helper_stacker {
-  proof_helper *old;
-  proof_helper_stacker(proof_helper *h): old(top_graph->prover.helper) { top_graph->prover.helper = h; }
-  ~proof_helper_stacker() { top_graph->prover.helper = old; }
-};
-
 node *dichotomy_scheme::generate_proof(interval const &bnd) const {
   if (dich) return dich;
   node *varn = find_proof(var);
@@ -157,19 +150,18 @@ node *dichotomy_scheme::generate_proof(interval const &bnd) const {
     property_vect const &hyp = top_graph->get_hypotheses();
     for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
       if (i->real != var) hyp2.push_back(*i);
-    graph_stacker layer;
-    proof_helper_stacker stacker(helper);
     property_vect goals;
     goals.push_back(property(real, bnd));
-    top_graph->prover.goals = goals;
+    graph_t *g = new graph_t(top_graph, hyp2, goals, helper, false);
+    graph_loader loader(g);
     dichotomy_node *n = new dichotomy_node(hyp2, property(real, bnd));
     n->dichotomize();
     n->add_graph(n->last_graph);
     if (varn->type != HYPOTHESIS)
       dich = new modus_node(1, &varn, n);
     else dich = n;
-    top_graph->purge(dich);
-    top_graph->flatten();
+    g->purge(dich);
+    g->flatten();
   } catch (dichotomy_failure e) { // BLI
     property const &h = e.hyp;
     std::cerr << "failure: when " << dump_real(h.real) << " is " << h.bnd << ", ";

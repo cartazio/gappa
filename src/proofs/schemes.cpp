@@ -198,8 +198,8 @@ node *find_proof(property const &res) {
   return (n && n->get_result().bnd <= res.bnd) ? n : NULL;
 }
 
-void proof_handler::operator()() {
-  assert(top_graph && helper);
+void graph_t::populate() {
+  graph_loader loader(this);
   typedef proof_helper::real_set real_set;
   typedef std::map< ast_real const *, interval const * > bound_map;
   bound_map bounds;
@@ -208,32 +208,26 @@ void proof_handler::operator()() {
       bounds[i->real] = &i->bnd;
   bound_map::const_iterator bounds_end = bounds.end();
   proof_helper::scheme_set missing_schemes = helper->source_schemes;
-  {
-    ast_real_vect const &v = top_graph->get_known_reals();
-    for(ast_real_vect::const_iterator i = v.begin(), i_end = v.end(); i != i_end; ++i)
-      helper->insert_dependent(missing_schemes, *i);
-  }
+  for(node_map::const_iterator i = known_reals.begin(), i_end = known_reals.end(); i != i_end; ++i)
+    helper->insert_dependent(missing_schemes, i->first);
   int iter = 0;
   while (iter != 1000000 && !missing_schemes.empty()) {
     ++iter;
     proof_scheme const *s = *missing_schemes.begin();
     missing_schemes.erase(s);
     bound_map::const_iterator i = bounds.find(s->real);
-    {
-      graph_stacker layer;
-      node *n;
-      if (i != bounds_end) n = s->generate_proof(*i->second);
-      else n = s->generate_proof();
-      if (n && top_graph->try_real(n)) {
-        top_graph->flatten();
+    node *n;
+    if (i != bounds_end) n = s->generate_proof(*i->second);
+    else n = s->generate_proof();
+    if (n)
+      if (try_real(n))
         helper->insert_dependent(missing_schemes, s->real);
-      }
-    }
+      else delete n; // we are leaking some nodes here, but they will be purged later on
     real_set v;
     v.swap(helper->axiom_reals);
     for(real_set::iterator i = v.begin(), i_end = v.end(); i != i_end; ++i) {
       ast_real const *real = *i;
-      node_vect axioms = top_graph->find_useful_axioms(real);
+      node_vect axioms = find_useful_axioms(real);
       for(node_vect::const_iterator j = axioms.begin(), j_end = axioms.end(); j != j_end; ++j) {
         node *n = *j;
         property_vect const &hyp = n->get_hypotheses();
@@ -249,14 +243,15 @@ void proof_handler::operator()() {
           continue;
         }
         node *m = new modus_node(nodes.size(), &nodes.front(), n);
-        bool b = top_graph->try_real(m);
+        bool b = try_real(m);
         assert(b);
-        top_graph->remove_axiom(n);
+        remove_axiom(n);
         helper->insert_dependent(missing_schemes, real);
       }
     }
   }
-  delete helper;
+  if (owned_helper)
+    delete helper;
   helper = NULL;
   std::cerr << "Iterations: " << iter << '\n';
 }

@@ -231,18 +231,18 @@ int main() {
   for(std::vector< graph_t * >::const_iterator i = graphs.begin(), i_end = graphs.end(); i != i_end; ++i) {
     graph_t *g = *i;
     graph_loader loader(g);
-    property_vect const &goals = g->prover.goals;
+    property_vect const &goals = g->get_goals();
     int nb = goals.size();
     std::vector< bool > scheme_results(nb);
     {
       ast_real_vect reals;
       for(int j = 0; j < nb; ++j)
         reals.push_back(goals[j].real);
-      g->prover.helper = generate_proof_helper(reals);
+      g->helper = generate_proof_helper(reals);
       for(int j = 0; j < nb; ++j)
         scheme_results[j] = reals[j];
-      g->prover();
     }
+    g->populate();
     node_vect results(nb);
     std::cerr << "\n\n";
     for(int j = 0; j < nb; ++j) {

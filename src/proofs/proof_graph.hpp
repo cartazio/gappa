@@ -73,12 +73,6 @@ struct modus_node: public dependent_node {
 
 struct proof_helper;
 
-struct proof_handler {
-  proof_helper *helper;
-  property_vect goals;
-  void operator()();
-};
-
 class graph_node;
 
 class graph_t {
@@ -88,23 +82,27 @@ class graph_t {
   node_set axioms;		// unusuable axioms (not implied by hyp)
   node_map known_reals;		// best node implied by hyp for each real
   property_vect hyp;		// hypotheses of the graph (they imply the hypotheses from the super-graph)
+  property_vect goals;		// goals of the graph (they keep nodes alive)
+  bool owned_helper;
   friend struct graph_node;
  public:
-  proof_handler prover;
+  proof_helper *helper;
   void insert(node *n) { nodes.insert(n); }
   void remove(node *n) { nodes.erase (n); }
   void insert_axiom(node *);
   void remove_axiom(node *n) { axioms.erase(n); }
   node *extract_axiom(node *n);
-  graph_t(graph_t *, property_vect const &);
+  graph_t(graph_t *, property_vect const &, property_vect const &, proof_helper *, bool);
   ~graph_t();
   node *find_already_known(ast_real const *) const;
   node_vect find_useful_axioms(ast_real const *);
   bool is_useful(property const &) const;
   bool try_real(node *);
   property_vect const &get_hypotheses() const { return hyp; }
+  property_vect const &get_goals() const { return goals; }
   ast_real_vect get_known_reals() const;
   bool dominates(graph_t const *) const;
+  void populate();		// fill the proof graph
   void purge(node * = NULL);	// remove all the unused nodes, except for this one
   void flatten();		// move all the nodes in the upper graph
   void migrate();		// move all the free nodes in the upper graph
@@ -114,12 +112,6 @@ struct graph_loader {
   graph_t *old_graph;
   graph_loader(graph_t *g): old_graph(top_graph) { top_graph = g; }
   ~graph_loader() { top_graph = old_graph; }
-};
-
-struct graph_stacker: graph_loader {
-  graph_stacker(property_vect const &h = top_graph->get_hypotheses()): graph_loader(new graph_t(top_graph, h)) {}
-  void keep() { top_graph = NULL; }
-  ~graph_stacker() { delete top_graph; }
 };
 
 #endif // PROOFS_PROOF_GRAPH_HPP
