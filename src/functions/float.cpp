@@ -1,10 +1,9 @@
-#include "../ast.hpp"
-#include "../program.hpp"
-#include "../function.hpp"
-#include "../interval.hpp"
-#include "../interval_ext.hpp"
-#include "../property.hpp"
-#include "../proof_graph.hpp"
+#include "ast.hpp"
+#include "program.hpp"
+#include "function.hpp"
+#include "numbers/interval_ext.hpp"
+#include "property.hpp"
+#include "proof_graph.hpp"
 #include <boost/preprocessor/cat.hpp>
 #include <boost/preprocessor/stringize.hpp>
 
@@ -244,4 +243,22 @@ void initialize_mul() {
     do_constraint(REL, mul_float_rel),
     { { 0 } } };
   bop_definitions(mul, MUL);
+}
+
+/********** init **********/
+
+namespace  {
+
+struct loader {
+  loader();
+};
+
+loader::loader() {
+  initialize_add();
+  initialize_sub();
+  initialize_mul();
+}
+
+loader init;
+
 }

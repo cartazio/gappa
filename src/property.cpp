@@ -1,6 +1,5 @@
 #include "property.hpp"
-#include "number.hpp"
-#include "interval.hpp"
+#include "numbers/interval_ext.hpp"
 
 bool operator>(property const &u, property const &v) {
   if (u.type != v.type || u.var != v.var) return false;

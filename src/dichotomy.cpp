@@ -3,7 +3,7 @@
 #include "proof_graph.hpp"
 #include "program.hpp"
 #include "ast.hpp"
-#include "interval_ext.hpp"
+#include "numbers/interval_ext.hpp"
 #include "function.hpp"
 
 struct node_plouf: node {

@@ -1,7 +1,7 @@
 #ifndef FUNCTION_HPP
 #define FUNCTION_HPP
 
-#include "interval.hpp"
+#include "numbers/interval.hpp"
 #include "property.hpp"
 #include "program.hpp"
 #include "proof_graph.hpp"

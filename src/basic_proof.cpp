@@ -4,7 +4,7 @@
 #include "proof_graph.hpp"
 #include "program.hpp"
 #include "ast.hpp"
-#include "interval_ext.hpp"
+#include "numbers/interval_ext.hpp"
 #include "function.hpp"
 
 node *triviality = new node(OTHER);
@@ -61,7 +61,7 @@ node *generate_triviality(property_vect const &hyp, property &res) {
   return triviality;
 }
 
-static interval const not_defined = interval_variant(interval_not_defined());
+static interval const not_defined;
 
 interval const &compute_triviality(property_vect const &hyp, variable *v) {
   property bnd(PROP_BND);
@@ -133,7 +133,7 @@ node *generate_error_forced(property_vect const &hyp, property &res) {
     std::cout << type[res.error] << '(' << res.var->name->name << ", ...) in " << res.err << std::endl; }*/
   if (variable *const *v = boost::get< variable *const >(res.real))
     if (res.var == *v) {
-      res.bnd = interval(interval_variant(interval_real()));
+      res.bnd = interval(&interval_real_desc);
       return new node_reflexive(res);
     }
   int idx = res.var->get_definition();

@@ -3,7 +3,7 @@
 
 #include <vector>
 #include "ast_real.hpp"
-#include "interval.hpp"
+#include "numbers/interval.hpp"
 
 struct variable;
 

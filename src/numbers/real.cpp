@@ -107,7 +107,10 @@ static void *add(void *u, void *v) { return new interval_real(cast(u) + cast(v))
 static void *sub(void *u, void *v) { return new interval_real(cast(u) - cast(v)); }
 static void *mul(void *u, void *v) { return new interval_real(cast(u) * cast(v)); }
 static void *div(void *u, void *v) { return new interval_real(cast(u) / cast(v)); }
+static bool subset(void *u, void *v) { return subset(cast(u), cast(v)); }
+static bool singleton(void *v) { return singleton(cast(v)); }
 
 interval_description interval_real_desc =
   { create: &create, destroy: &destroy, clone: &clone,
-    add: &add, sub: &sub, mul: &mul, div: &div };
+    add: &add, sub: &sub, mul: &mul, div: &div,
+    subset: &subset, singleton: &singleton };

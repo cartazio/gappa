@@ -14,9 +14,4 @@ struct interval {
   ~interval();
 };
 
-interval operator+(interval const &, interval const &);
-interval operator-(interval const &, interval const &);
-interval operator*(interval const &, interval const &);
-interval operator/(interval const &, interval const &);
-
 #endif // NUMBERS_INTERVAL_HPP

@@ -3,20 +3,12 @@
 #include "program.hpp"
 #include "proof_graph.hpp"
 #include "basic_proof.hpp"
-#include "interval_ext.hpp"
-#include "functions/float.hpp"
-
-static void initialize_functions() {
-  initialize_add();
-  initialize_sub();
-  initialize_mul();
-}
+#include "numbers/interval_ext.hpp"
 
 extern int yyparse(void);
 extern node *generate_proof(property_vect const &hyp, property const &res);
 
 int main() {
-  initialize_functions();
   yyparse();
   std::cout << conclusions.size() << " conclusions" << std::endl;
   for(node_set::const_iterator i = conclusions.begin(), end = conclusions.end(); i != end; ++i) {

@@ -4,8 +4,9 @@
 #include "program.hpp"
 #include "proof_graph.hpp"
 #include "property.hpp"
-#include "number.hpp"
-#include "interval.hpp"
+#include "numbers/interval_ext.hpp"
+
+interval create_interval(ast_interval const &, bool widen, type_id = UNDEFINED);
 
 variable *check_variable(ast_ident *v, type_id t = UNDEFINED) {
   if (v->fun)
@@ -46,7 +47,7 @@ property generate_property(ast_atom_bound const &p) {
   type_id type = r.var->type;
   assert(type != UNDEFINED);
   if (p.interval) {
-    r.bnd = interval(*p.interval, false, type);
+    r.bnd = create_interval(*p.interval, false, type);
     delete p.interval;
   }
   return r;
@@ -57,7 +58,7 @@ property generate_property(ast_atom_error const &p, bool goal) {
   r.var = p.ident;
   r.real = p.real;
   if (p.interval) {
-    r.bnd = interval(*p.interval, goal);
+    r.bnd = create_interval(*p.interval, goal);
     delete p.interval;
   }
   return r;
@@ -71,7 +72,7 @@ property generate_property(ast_atom_approx const &p, property **_q) {
   type_id type = r.var->type;
   assert(type != UNDEFINED);
   ast_interval i(p.value, p.value);
-  r.bnd = interval(i, false, type);
+  r.bnd = create_interval(i, false, type);
   *_q = NULL; /* TODO */
   return r;
 }
