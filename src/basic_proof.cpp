@@ -31,6 +31,26 @@ struct node_reflexive: node {
   }
 };
 
+struct node_theorem: node {
+  std::string name;
+  node_theorem(property_vect const &h, property const &p, std::string const &n): node(THEOREM) {
+    res = p;
+    hyp = h;
+    name = n;
+  }
+};
+
+struct node_modus: node {
+  std::string name;
+  node_modus(property const &p, node *n, node_vect const &nodes): node(MODUS) {
+    res = p;
+    insert_pred(n);
+    for(node_vect::const_iterator i = nodes.begin(), end = nodes.end(); i != end; ++i)
+      insert_pred(*i);
+    /* TODO: hypotheses */
+  }
+};
+
 struct node_plouf: node {
   node_plouf(property_vect const &h, property const &p): node(OTHER) {
     res = p;
@@ -79,7 +99,11 @@ node *do_generate_basic_proof::operator()(property_bound const &res) const {
   else if (inst.fun->name->name == "mul32") p.bnd = lhs->bnd * rhs->bnd;
   else assert(false);
   //if (!(p > res)) return NULL;
-  return new node_plouf(hyp, p);
+  property_vect hyp2;
+  hyp2.push_back(*lhs);
+  hyp2.push_back(*rhs);
+  node *n = new node_theorem(hyp2, p, inst.fun->name->name);
+  return new node_modus(p, n, nodes);
 }
 
 node *do_generate_basic_proof::operator()(property_error const &res) const {
