@@ -120,7 +120,7 @@ void generate_graph(ast_prop const &p) {
     if (hyp.size() != real_set.size()) // we don't want to encounter: x in [0,2] /\ x in [1,3] -> ...
       { std::cerr << "Error: you don't want to have multiple hypotheses concerning the same real.\n"; exit(1); }
     graph_t *g = new graph_t(NULL, hyp);
-    g->goals = goal;
+    g->prover.goals = goal;
     for(node_vect::const_iterator i = axioms.begin(), end = axioms.end(); i != end; ++i)
       g->insert_axiom(*i);
     graphs.push_back(g);

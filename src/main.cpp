@@ -215,36 +215,34 @@ int main() {
   for(std::vector< graph_t * >::const_iterator i = graphs.begin(), i_end = graphs.end(); i != i_end; ++i) {
     graph_t *g = *i;
     graph_loader loader(g);
-    property_vect goals = g->goals;
+    property_vect const &goals = g->prover.goals;
     int nb = goals.size();
-    ast_real_vect all_reals;
+    g->prover.ordered_reals = new ast_real_vect;
+    ast_real_vect &all_reals = *g->prover.ordered_reals;
     std::vector< bool > scheme_results(nb);
     {
       ast_real_vect dummy;
       for(int j = 0; j < nb; ++j) 
         scheme_results[j] = generate_scheme_tree(goals[j].real, all_reals, dummy);
     }
-    node_vect results(nb);
-    for(int iter = 0; iter < 3; ++iter) {
-      for(ast_real_vect::const_iterator j = all_reals.begin(), j_end = all_reals.end(); j != j_end; ++j)
-        handle_proof(property(*j));
-      for(int j = 0; j < nb; ++j)
-        results[j] = handle_proof(goals[j]);
-    }
+    g->prover();
+    delete g->prover.ordered_reals;
     clear_schemes();
+    node_vect results(nb);
+    std::cerr << "\n\n";
     for(int j = 0; j < nb; ++j) {
-      if (!scheme_results[j])
-        std::cerr << "no scheme\n";
-      else if (!results[j])
-        std::cerr << "no proof\n";
-      else {
-        property const &p = results[j]->get_result();
-        if (ast_ident const *v = p.real->get_variable())
-          std::cerr << v->name;
-        else
-          std::cerr << "...";
-        std::cerr << " in " << p.bnd << '\n';
+      node *n = find_proof(goals[j]);
+      results[j] = n;
+      if (!n) {
+        std::cerr << (scheme_results[j] ? "no proof\n" : "no scheme\n");
+        continue;
       }
+      property const &p = n->get_result();
+      if (ast_ident const *v = p.real->get_variable())
+        std::cerr << v->name;
+      else
+        std::cerr << "...";
+      std::cerr << " in " << p.bnd << '\n';
     }
     std::cout << "\n\n";
     for(int j = 0; j < nb; ++j)

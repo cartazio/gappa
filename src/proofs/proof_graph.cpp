@@ -121,7 +121,8 @@ graph_t::graph_t(graph_t *f, property_vect const &h): hyp(h) {
       else
         axioms.insert(*i);
     }
-  }
+    prover.ordered_reals = f->prover.ordered_reals;
+  } else prover.ordered_reals = NULL;
   for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i) {
     node *n = new hypothesis_node(*i);
     nodes.insert(n);

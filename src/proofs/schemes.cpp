@@ -138,13 +138,21 @@ node *find_proof(ast_real const *real) {
   return top_graph->find_already_known(real);
 }
 
-node *handle_proof(property const &res) {
+void handle_proof(property const &res) {
   for(proof_scheme const *scheme = res.real->scheme; scheme != NULL; scheme = scheme->next) {
     graph_layer layer;
     node *n = scheme->generate_proof(res);
     if (n && top_graph->try_real(n)) layer.flatten();
   }
-  node_vect axioms = top_graph->find_useful_axioms(res.real);
+}
+
+void handle_proof(ast_real const *real) {
+  for(proof_scheme const *scheme = real->scheme; scheme != NULL; scheme = scheme->next) {
+    graph_layer layer;
+    node *n = scheme->generate_proof(real);
+    if (n && top_graph->try_real(n)) layer.flatten();
+  }
+  node_vect axioms = top_graph->find_useful_axioms(real);
   for(node_vect::const_iterator i = axioms.begin(), i_end = axioms.end(); i != i_end; ++i) {
     node *n = *i;
     property_vect const &hyp = n->get_hypotheses();
@@ -161,6 +169,19 @@ node *handle_proof(property const &res) {
     assert(b);
     top_graph->remove_axiom(n);
   }
+}
+  
+node *find_proof(property const &res) {
   node *n = find_proof(res.real);
   return (n && n->get_result().bnd <= res.bnd) ? n : NULL;
+}
+
+void proof_handler::operator()() const {
+  assert(ordered_reals);
+  for(int iter = 0; iter < 3; ++iter) {
+    for(ast_real_vect::const_iterator j = ordered_reals->begin(), j_end = ordered_reals->end(); j != j_end; ++j)
+      handle_proof(*j);
+    for(property_vect::const_iterator j = goals.begin(), j_end = goals.end(); j != j_end; ++j)
+      handle_proof(*j);
+  }
 }

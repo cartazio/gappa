@@ -63,13 +63,19 @@ struct modus_node: public dependent_node {
   modus_node(int nb, node *nodes[], node *n);
 };
 
+struct proof_handler {
+  ast_real_vect *ordered_reals;
+  property_vect goals;
+  void operator()() const;
+};
+
 class graph_t {
   node_set nodes;		// nodes owned by the graph, each node is implied by hyp
   node_set axioms;		// unusuable axioms (not implied by hyp)
   node_map known_reals;		// best node implied by hyp for each real
   property_vect hyp;		// hypotheses of the graph (they imply the hypotheses from the super-graph)
  public:
-  property_vect goals;
+  proof_handler prover;
   void insert(node *n) { nodes.insert(n); }
   void remove(node *n) { nodes.erase (n); }
   void insert_axiom(node *);

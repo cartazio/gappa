@@ -29,7 +29,9 @@ struct scheme_register {
 };
 
 node *find_proof(ast_real const *);
-node *handle_proof(property const &);
+node *find_proof(property const &);
+void handle_proof(ast_real const *);
+void handle_proof(property const &);
 bool generate_scheme_tree(ast_real const *, ast_real_vect &, ast_real_vect &);
 
 #endif // PROOFS_SCHEMES_HPP
