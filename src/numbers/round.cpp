@@ -29,7 +29,7 @@ bool float_format::rndU(rnd const &r) const {
   return r.g || r.s;
 }
 
-bool float_format::rndCE(rnd const &r) const {
+bool float_format::rndNE(rnd const &r) const {
   // the lower bit of the mantissa is not necessarily the ulp bit
   // but testing for it works since the guard bit can only be 1 if
   // the number was to precise and got truncated

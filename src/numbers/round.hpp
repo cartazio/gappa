@@ -23,14 +23,14 @@ class float_format {
   void round(mpfr_t &f, rnd_fun g1, rnd_fun g2) const;
   bool rndZ(rnd const &) const { return false; }
   bool rndU(rnd const &) const;
-  bool rndCE(rnd const &) const;
+  bool rndNE(rnd const &) const;
  public:
   int min_exp;
   unsigned prec;
   void roundZ(mpfr_t &f) const { round(f, &float_format::rndZ, &float_format::rndZ); }
   void roundU(mpfr_t &f) const { round(f, &float_format::rndU, &float_format::rndZ); }
   void roundD(mpfr_t &f) const { round(f, &float_format::rndZ, &float_format::rndU); }
-  void roundCE(mpfr_t &f) const { round(f, &float_format::rndCE, &float_format::rndCE); }
+  void roundNE(mpfr_t &f) const { round(f, &float_format::rndNE, &float_format::rndNE); }
 };
 
 struct number;

@@ -6,13 +6,13 @@
 #include "proofs/schemes.hpp"
 #include <algorithm>
 
-enum rounding_type { ROUND_UP, ROUND_DN, ROUND_ZR, ROUND_CE };
+enum rounding_type { ROUND_UP, ROUND_DN, ROUND_ZR, ROUND_NE };
 
 static rounding_fun roundings[4] = {
   &float_format::roundU,
   &float_format::roundD,
   &float_format::roundZ,
-  &float_format::roundCE
+  &float_format::roundNE
 };
 
 static float_format formats[4] = {
@@ -49,19 +49,19 @@ static float_rounding_class classes[4][4] = {
   { float_rounding_class(&formats[0], ROUND_UP,  "32up"),
     float_rounding_class(&formats[0], ROUND_DN,  "32dn"),
     float_rounding_class(&formats[0], ROUND_ZR,  "32zr"),
-    float_rounding_class(&formats[0], ROUND_CE,  "32ce") },
+    float_rounding_class(&formats[0], ROUND_NE,  "32ne") },
   { float_rounding_class(&formats[1], ROUND_UP,  "64up"),
     float_rounding_class(&formats[1], ROUND_DN,  "64dn"),
     float_rounding_class(&formats[1], ROUND_ZR,  "64zr"),
-    float_rounding_class(&formats[1], ROUND_CE,  "64ce") },
+    float_rounding_class(&formats[1], ROUND_NE,  "64ne") },
   { float_rounding_class(&formats[2], ROUND_UP,  "80up"),
     float_rounding_class(&formats[2], ROUND_DN,  "80dn"),
     float_rounding_class(&formats[2], ROUND_ZR,  "80zr"),
-    float_rounding_class(&formats[2], ROUND_CE,  "80ce") },
+    float_rounding_class(&formats[2], ROUND_NE,  "80ne") },
   { float_rounding_class(&formats[3], ROUND_UP, "128up"),
     float_rounding_class(&formats[3], ROUND_DN, "128dn"),
     float_rounding_class(&formats[3], ROUND_ZR, "128zr"),
-    float_rounding_class(&formats[3], ROUND_CE, "128ce") }
+    float_rounding_class(&formats[3], ROUND_NE, "128ne") }
 };
 
 interval float_rounding_class::enforce(interval const &i, std::string &name) const {
@@ -113,7 +113,7 @@ interval float_rounding_class::absolute_error_from_real(interval const &i, std::
   int e1 = exponent(round_number(lower(i), format, f), format),
       e2 = exponent(round_number(upper(i), format, f), format);
   int e = std::max(e1, e2);
-  int e_err = type == ROUND_CE ? e - 1 : e;
+  int e_err = type == ROUND_NE ? e - 1 : e;
   e += format->prec - 1;
   name = std::string("float") + ident + "_absolute";
   if (influenced(lower(i), e, e_err, false) && influenced(upper(i), e, e_err, false)) {
@@ -126,20 +126,20 @@ interval float_rounding_class::absolute_error_from_real(interval const &i, std::
 interval float_rounding_class::absolute_error_from_rounded(interval const &i, std::string &name) const {
   int e1 = exponent(lower(i), format), e2 = exponent(upper(i), format);
   int e_err = std::max(e1, e2);
-  if (type == ROUND_CE) --e_err;
+  if (type == ROUND_NE) --e_err;
   name = std::string("float") + ident + "_absolute_inv";
   return from_exponent(e_err, type == ROUND_UP ? 1 : (type == ROUND_DN ? -1 : 0));
 }
 
 interval float_rounding_class::relative_error_from_real(interval const &i, std::string &name) const {
   name = std::string("float") + ident + "_relative";
-  return from_exponent(type == ROUND_CE ? -format->prec : 1 - format->prec,
+  return from_exponent(type == ROUND_NE ? -format->prec : 1 - format->prec,
                        type == ROUND_ZR ? -1 : 0);
 }
 
 interval float_rounding_class::relative_error_from_rounded(interval const &i, std::string &name) const {
   name = std::string("float") + ident + "_relative_inv";
-  return from_exponent(type == ROUND_CE ? -format->prec : 1 - format->prec,
+  return from_exponent(type == ROUND_NE ? -format->prec : 1 - format->prec,
                        type == ROUND_ZR ? -1 : 0);
 }
 
