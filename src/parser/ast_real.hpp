@@ -3,7 +3,9 @@
 
 #include <string>
 #include <vector>
-#include <boost/variant.hpp>
+#include <boost/variant/get.hpp>
+#include <boost/variant/recursive_wrapper.hpp>
+#include <boost/variant/variant.hpp>
 
 struct ast_number {
   std::string mantissa;
@@ -64,6 +66,7 @@ struct ast_real: ast_real_aux
   ast_real(ast_ident const *v): ast_real_aux(v), scheme(NULL) {}
   ast_real(real_op const &v): ast_real_aux(v), scheme(NULL) {}
   ast_real(rounded_real const &v): ast_real_aux(v), scheme(NULL) {}
+  ast_real(placeholder v): ast_real_aux(v), scheme(NULL) {}
   bool operator==(ast_real const &v) const { return ast_real_aux::operator==(static_cast< ast_real_aux const & >(v)); }
   bool operator<(ast_real const &v) const { return ast_real_aux::operator<(static_cast< ast_real_aux const & >(v)); }
   ast_ident const *get_variable() const

@@ -21,6 +21,8 @@ gappa_SOURCES = \
 	parser/lexer.lpp \
 	parser/parser_aux.cpp \
 	parser/parser.ypp \
+	parser/pattern.cpp \
+	parser/pattern.hpp \
 	proofs/basic_proof.cpp \
 	proofs/basic_proof.hpp \
 	proofs/dichotomy.cpp \
