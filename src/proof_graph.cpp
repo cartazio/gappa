@@ -17,13 +17,13 @@ node::node(node_id t): type(t) {
   graph->insert(this);
 }
 
+void node::insert_succ(node *n) {
+  succ.insert(n);
+}
+
 void node::insert_pred(node *n) {
   pred.push_back(n);
   n->insert_succ(this);
-}
-
-void node::insert_succ(node *n) {
-  succ.insert(n);
 }
 
 void node::remove_succ(node *n) {

@@ -17,6 +17,7 @@ extern real_variable *check_real_variable(ast_ident *v, ast_real *r);
 extern ast_prop_and merge_prop_and(ast_prop const &p1, ast_prop const &p2);
 extern void generate_graph(ast_prop const &p, ast_prop_and const &r);
 extern void link_variables();
+extern void set_default_schemes();
 
 static ast_prop_and implicit;
 
@@ -52,7 +53,13 @@ static ast_prop_and implicit;
 
 %%
 
-BLOB: PROG REALS '{' PROP '}'	{ link_variables(); generate_graph(*$4, implicit); delete $4; }
+BLOB: PROG REALS '{' PROP '}'
+  {
+    link_variables();
+    generate_graph(*$4, implicit);
+    delete $4;
+    set_default_schemes();
+  }
 
 PROP:
   ATOM			{ $$ = $1; }

@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <boost/bind.hpp>
 #include <iostream>
 #include "basic_proof.hpp"
 #include "proof_graph.hpp"
@@ -7,9 +9,10 @@
 #include "function.hpp"
 
 struct node_dichotomy: node {
-  node_dichotomy(property_vect const &h, property const &p): node(UNION) {
+  node_dichotomy(property_vect const &h, property const &p, node_vect const &n): node(UNION) {
     res = p;
     hyp = h;
+    std::for_each(n.begin(), n.end(), boost::bind(&node_dichotomy::insert_pred, this, _1));
   }
 };
 
@@ -36,51 +39,47 @@ struct dichotomy_failure {
   dichotomy_failure(property_vect const &h, property const &r, interval const &b): hyp(h), res(r), bnd(b) {}
 };
 
-interval compute_error(property_vect const &hyp, property const &res) { // TODO
-  property tmp(res.real);
-  graph_layer layer;
-  node *n = basic_proof::generate_error(hyp, tmp);
-  if (!n) return interval();
-  return tmp.bnd;
-}
-
-void dichotomize(property_vect &hyp, property &res, int idx) {
+void dichotomize(property_vect &hyp, property &res, int idx, node_vect &nodes) {
   property &h = hyp[idx];
-  error_bound const *e = boost::get< error_bound const >(res.real);
-  interval bnd = !e ? basic_proof::compute_bound(hyp, res.real) : compute_error(hyp, res);
-  if (is_defined(bnd) && bnd <= res.bnd) {
-    //std::cout << "  " << h.bnd << " -> " << bnd << std::endl;
-    res.bnd = bnd;
-    return;
+  interval bnd;
+  {
+    graph_layer layer;
+    property res0 = res;
+    node *n = handle_proof(hyp, res0);
+    if (n) {
+      bnd = res0.bnd;
+      if (bnd <= res.bnd) {
+        nodes.push_back(n);
+        layer.flatten();
+        return;
+      }
+    }
   }
   if (is_singleton(h.bnd)) throw dichotomy_failure(hyp, res, bnd);
   std::pair< interval, interval > ii = split(h.bnd);
   h.bnd = ii.first;
   property res1 = res;
-  dichotomize(hyp, res1, idx);
+  dichotomize(hyp, res1, idx, nodes);
   h.bnd = ii.second;
   property res2 = res;
-  dichotomize(hyp, res2, idx);
+  dichotomize(hyp, res2, idx, nodes);
   res.bnd = hull(res1.bnd, res2.bnd);
 }
 
 } // anonymous namespace
 
-node *generate_proof(property_vect const &hyp, property const &res) {
-  {
-    graph_layer layer;
-    if (node *n = generate_basic_proof(hyp, res)) { layer.flatten(); return n; }
-  }
-  if (!is_defined(res.bnd)) return NULL;
+node *generate_dichotomy_proof(property_vect const &hyp, property &res) {
   //std::vector< variable * > vars = multiple_definition(res.var); // BLI
   int i;
   property bnd(ast_ident::find("x")->var->real); // TODO
   i = hyp.find_compatible_property(bnd);
   assert(i >= 0);
-  property res2 = res;
-  property_vect hyp2 = hyp;
   try {
-    dichotomize(hyp2, res2, i);
+    property res2 = res;
+    property_vect hyp2 = hyp;
+    node_vect nodes;
+    dichotomize(hyp2, res2, i, nodes);
+    return new node_dichotomy(hyp, res2, nodes);
   } catch (dichotomy_failure e) { // BLI
     property &h = e.hyp[i];
     variable const *v = h.real->get_variable();
@@ -98,5 +97,4 @@ node *generate_proof(property_vect const &hyp, property const &res) {
       std::cerr << " is nowhere (!?)\n";
     return NULL;
   }
-  return new node_dichotomy(hyp, res2);
 }

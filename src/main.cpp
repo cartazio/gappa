@@ -10,7 +10,7 @@
 #include "numbers/real.hpp"
 
 extern int yyparse(void);
-extern node *generate_proof(property_vect const &hyp, property const &res);
+extern node *generate_dichotomy_proof(property_vect const &hyp, property &res);
 extern node *triviality;
 extern number_real lower(interval_real const &v);
 extern number_real upper(interval_real const &v);
@@ -206,7 +206,7 @@ int main() {
   yyparse();
   for(node_set::const_iterator i = conclusions.begin(), end = conclusions.end(); i != end; ++i) {
     graph_layer layer;
-    node *n = generate_proof((*i)->hyp, (*i)->res);
+    node *n = handle_proof((*i)->hyp, (*i)->res);
     if (!n) continue;
     property const &p = n->res;
     if (error_bound const *e = boost::get< error_bound const >(p.real))

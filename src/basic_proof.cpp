@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <map>
 #include <boost/scoped_array.hpp>
@@ -52,7 +53,6 @@ node_modus::node_modus(node *n, property const &p): node(MODUS) {
   hyp = n->hyp;
 }
 
-
 node_modus::node_modus(property const &p, node *n, node_vect const &nodes): node(MODUS) {
   res = p;
   insert_pred(n);
@@ -101,8 +101,6 @@ node_modus::node_modus(property const &p, node *n, node_vect const &nodes): node
   }
 }
 
-namespace basic_proof {
-
 node *generate_triviality(property_vect const &hyp, property &res) {
   if (node *n = graph->find_compatible_node(hyp, res)) {
     res = n->res;
@@ -122,9 +120,7 @@ interval const &compute_triviality(property_vect const &hyp, ast_real const *r) 
   return hyp[i].bnd;
 }
 
-node *generate_bound(property_vect const &hyp, property &res);
-node *generate_error(property_vect const &hyp, property &res);
-
+/*
 interval compute_bound(property_vect const &hyp, ast_real const *r) {
   { interval const &res = compute_triviality(hyp, r);
     if (is_defined(res)) return res; }
@@ -144,58 +140,69 @@ interval compute_bound(property_vect const &hyp, ast_real const *r) {
   } else
     return interval();
 }
+*/
 
-node *generate_bound(property_vect const &hyp, property &res) {
-  if (node *n = generate_triviality(hyp, res)) return n;
-  // std::cout << res.var->name->name << " in " << res.bnd << std::endl;
-  if (variable const *v = res.real->get_variable()) {
-    instruction *inst = v->inst;
-    if (!inst) return NULL; /* TODO: unprovable? */
-    if (!inst->fun) {
-      res.real = inst->in[0]->real;
-      node *n = generate_bound(hyp, res);
-      if (!n) return NULL;
-      res.real = v->real;
-      return new node_modus(n, res);
-    }
-    int l = inst->in.size();
-    node_vect nodes(l);
-    boost::scoped_array< property > props(new property[l]);
-    boost::scoped_array< interval const * > ints(new interval const *[l]);
-    for(int i = 0; i < l; ++i) {
-      props[i].real = inst->in[i]->real;
-      if (!(nodes[i] = generate_bound(hyp, props[i]))) return NULL;
-      ints[i] = &props[i].bnd;
-    }
-    interval bnd = (*inst->fun->bnd_comp->compute)(ints.get());
-    if (!is_defined(bnd) || !(bnd <= res.bnd)) return NULL;
-    res.bnd = bnd;
-    node *n = (*inst->fun->bnd_comp->generate)(props.get(), res);
-    assert(n);
-    return new node_modus(res, n, nodes);
-  } else return NULL;
+node *generate_trans_bound(property_vect const &hyp, property &res) {
+  variable const *v = res.real->get_variable();
+  assert(v);
+  instruction *inst = v->inst;
+  assert(inst && !inst->fun);
+  res.real = inst->in[0]->real;
+  node *n = handle_proof(hyp, res);
+  if (!n) return NULL;
+  res.real = v->real;
+  return new node_modus(n, res);
 }
 
-node *generate_error_forced(property_vect const &hyp, property &res) {
+node *generate_basic_bound(property_vect const &hyp, property &res) {
+  variable const *v = res.real->get_variable();
+  assert(v);
+  instruction *inst = v->inst;
+  assert(inst && inst->fun);
+  int l = inst->in.size();
+  node_vect nodes(l);
+  boost::scoped_array< property > props(new property[l]);
+  boost::scoped_array< interval const * > ints(new interval const *[l]);
+  for(int i = 0; i < l; ++i) {
+    props[i].real = inst->in[i]->real;
+    if (!(nodes[i] = handle_proof(hyp, props[i]))) return NULL;
+    ints[i] = &props[i].bnd;
+  }
+  interval bnd = (*inst->fun->bnd_comp->compute)(ints.get());
+  if (!is_defined(bnd) || !(bnd <= res.bnd)) return NULL;
+  res.bnd = bnd;
+  node *n = (*inst->fun->bnd_comp->generate)(props.get(), res);
+  assert(n);
+  return new node_modus(res, n, nodes);
+}
+
+node *generate_refl_error(property_vect const &hyp, property &res) {
+  error_bound const *e = boost::get< error_bound const >(res.real);
+  assert(e && e->var->real == e->real);
+  if (!contains_zero(res.bnd)) return NULL;
+  res.bnd = interval_real();
+  return triviality;
+}
+
+node *generate_trans_error(property_vect const &hyp, property &res) {
   error_bound const *e = boost::get< error_bound const >(res.real);
   assert(e);
-  if (e->var->real == e->real) {
-    if (!contains_zero(res.bnd)) return NULL;
-    res.bnd = interval_real();
-    return triviality;
-  }
-  if (node *n = generate_triviality(hyp, res)) return n;
   instruction *inst = e->var->inst;
-  if (!inst) return NULL; /* TODO: unprovable? */
-  if (!inst->fun) {
-    error_bound e2(e->type, inst->in[0], e->real);
-    ast_real const *r = res.real;
-    res.real = normalize(ast_real(e2));
-    node *n = generate_error(hyp, res);
-    if (!n) return NULL;
-    res.real = r;
-    return new node_modus(n, res);
-  }
+  assert(inst && !inst->fun);
+  error_bound e2(e->type, inst->in[0], e->real);
+  ast_real const *r = res.real;
+  res.real = normalize(ast_real(e2));
+  node *n = handle_proof(hyp, res);
+  if (!n) return NULL;
+  res.real = r;
+  return new node_modus(n, res);
+}
+
+node *generate_basic_error(property_vect const &hyp, property &res) {
+  error_bound const *e = boost::get< error_bound const >(res.real);
+  assert(e);
+  instruction *inst = e->var->inst;
+  assert(inst && inst->fun);
   real_op const *op = boost::get< real_op const >(e->real);
   if (!op || op->type != inst->fun->type) return NULL;
   node *n = NULL;
@@ -217,13 +224,13 @@ node *generate_error_forced(property_vect const &hyp, property &res) {
       property &p = props[i];
       if (c->type == HYP_BND || c->type == HYP_SNG) {
         p.real = v->real;
-        if (!(nn = generate_bound(hyp, p))) { good = false; break; }
+        if (!(nn = handle_proof(hyp, p))) { good = false; break; }
         if (c->type == HYP_SNG && !is_singleton(p.bnd)) { good = false; break; }
       } else if (c->type == HYP_ABS || c->type == HYP_REL) {
         assert(c->var >= 1);
         error_bound ep(c->type == HYP_ABS ? ERROR_ABS : ERROR_REL, v, op->ops[c->var - 1]);
         p.real = normalize(ast_real(ep));
-        if (!(nn = generate_error(hyp, p))) { good = false; break; }
+        if (!(nn = handle_proof(hyp, p))) { good = false; break; }
       } else assert(false);
       ints[i] = &p.bnd;
       nodes.push_back(nn);
@@ -240,20 +247,15 @@ node *generate_error_forced(property_vect const &hyp, property &res) {
   return new node_modus(res, n, nodes);
 }
 
-node *generate_error(property_vect const &hyp, property &res) {
+node *generate_relabs(property_vect const &hyp, property &res) {
   property res2 = res;
   error_bound const *e = boost::get< error_bound const >(res2.real);
   assert(e);
-  {
-    graph_layer layer;
-    node *n = generate_error_forced(hyp, res);
-    if (n) { layer.flatten(); return n; }
-  }
   property bnd(e->var->real);
-  node *nb = generate_bound(hyp, bnd);
+  node *nb = handle_proof(hyp, bnd);
   if (!nb) return NULL;
   property err(normalize(ast_real(error_bound(e->type == ERROR_ABS ? ERROR_REL : ERROR_ABS, e->var, e->real))));
-  node *ne = generate_error_forced(hyp, err);
+  node *ne = handle_proof(hyp, err);
   if (!ne) return NULL;
   res = res2;
   if (e->type == ERROR_ABS)
@@ -261,7 +263,8 @@ node *generate_error(property_vect const &hyp, property &res) {
   else if (!is_zero(err.bnd)) {
     if (contains_zero(bnd.bnd)) return NULL;
     res.bnd = static_cast< interval_real const & >(err.bnd) / to_real(bnd.bnd);
-  }
+  } else
+    res.bnd = interval();
   if (!(res.bnd <= res2.bnd)) return NULL;
   node_vect nodes;
   nodes.push_back(nb);
@@ -270,14 +273,57 @@ node *generate_error(property_vect const &hyp, property &res) {
   return new node_modus(res, new node_theorem(2, hyps, res, "relabs"), nodes);
 }
 
-} // namespace basic_proof
+void add_scheme(ast_real *r, node *(*f)(property_vect const &, property &)) {
+  for(proof_scheme const *scheme = r->scheme, *prev = NULL; scheme != NULL;
+      prev = scheme, scheme = scheme->next)
+    if (scheme->generate_proof == f) {
+      if (!prev) return;
+      const_cast< proof_scheme * >(prev)->next = scheme->next;
+      const_cast< proof_scheme * >(scheme)->next = r->scheme;
+      r->scheme = scheme;
+      return;
+    }
+  proof_scheme *s = new proof_scheme;
+  s->generate_proof = f;
+  s->next = r->scheme;
+  r->scheme = s;
+}
 
-node *generate_basic_proof(property_vect const &hyp, property const &res) {
-  property res2 = res;
-  node *n;
-  if (!boost::get< error_bound const >(res.real))
-    n = basic_proof::generate_bound(hyp, res2);
-  else
-    n = basic_proof::generate_error(hyp, res2);
-  return n;
+void add_basic_scheme(ast_real *r) {
+  if (variable *v = r->get_variable()) {
+    if (v->inst)
+      if (v->inst->fun)
+        add_scheme(r, &generate_basic_bound);
+      else
+        add_scheme(r, &generate_trans_bound);
+  } else if (error_bound const *e = boost::get< error_bound const >(r)) {
+    add_scheme(r, &generate_relabs);
+    if (e->var->inst)
+      if (e->var->inst->fun)
+        add_scheme(r, &generate_basic_error);
+      else
+        add_scheme(r, &generate_trans_error);
+    if (e->var->real == e->real)
+      add_scheme(r, &generate_refl_error);
+  }
+}
+
+node *handle_proof(property_vect const &hyp, property &res) {
+  typedef std::vector< proof_scheme const * > scheme_stack;
+  static scheme_stack st;
+  if (node *n = generate_triviality(hyp, res)) return n;
+  for(proof_scheme const *scheme = res.real->scheme; scheme != NULL; scheme = scheme->next) {
+    if (std::count(st.begin(), st.end(), scheme) >= 3) continue; // BLI
+    st.push_back(scheme);
+    graph_layer layer;
+    property res2 = res;
+    node *n = (*scheme->generate_proof)(hyp, res);
+    st.pop_back();
+    if (n) {
+      layer.flatten();
+      return n;
+    }
+    res = res2;
+  }
+  return NULL;
 }

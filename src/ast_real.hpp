@@ -42,7 +42,8 @@ struct error_bound
   ast_real const *real;
   error_bound(error_type t, variable *v, ast_real const *r): type(t), var(v), real(r) {}
   bool operator==(error_bound const &v) const { return type == v.type && var == v.var && real == v.real; }
-  bool operator<(error_bound const &v) const { return type == v.type && (var < v.var || (var == v.var && real < v.real)); }
+  bool operator<(error_bound const &v) const
+  { return type < v.type || (type == v.type && (var < v.var || (var == v.var && real < v.real))); }
 };
 
 typedef boost::variant
@@ -52,12 +53,15 @@ typedef boost::variant
   , error_bound
   > ast_real_aux;
 
+struct proof_scheme;
+
 struct ast_real: ast_real_aux
 {
-  ast_real(ast_number *v): ast_real_aux(v) {}
-  ast_real(variable *v): ast_real_aux(v) {}
-  ast_real(real_op const &v): ast_real_aux(v) {}
-  ast_real(error_bound const &v): ast_real_aux(v) {}
+  proof_scheme const *scheme;
+  ast_real(ast_number *v): ast_real_aux(v), scheme(NULL) {}
+  ast_real(variable *v): ast_real_aux(v), scheme(NULL) {}
+  ast_real(real_op const &v): ast_real_aux(v), scheme(NULL) {}
+  ast_real(error_bound const &v): ast_real_aux(v), scheme(NULL) {}
   bool operator==(ast_real const &v) const { return ast_real_aux::operator==(static_cast< ast_real_aux const & >(v)); }
   bool operator<(ast_real const &v) const { return ast_real_aux::operator<(static_cast< ast_real_aux const & >(v)); }
   variable *get_variable() const { variable *const *v = boost::get< variable * const >(this); return v ? *v : NULL; }

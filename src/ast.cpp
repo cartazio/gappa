@@ -1,5 +1,7 @@
+#include <algorithm>
 #include <set>
 #include "ast.hpp"
+#include "basic_proof.hpp"
 #include "numbers/interval_ext.hpp"
 
 namespace {
@@ -34,28 +36,36 @@ void make_variables_real() {
 }
 
 template< class T >
-struct cache {
-  T *find(T const &);
- private:
+class cache {
   struct less_t {
     bool operator()(T const *v1, T const *v2) { return *v1 < *v2; }
   };
   typedef std::set< T *, less_t > store_t;
   store_t store;
+ public:
+  T *find(T const &, void (*)(T *) = NULL);
+  typedef typename store_t::iterator iterator;
+  iterator begin() const { return store.begin(); }
+  iterator end  () const { return store.end  (); }
 };
 
 template< class T >
-T *cache< T >::find(T const &v) {
+T *cache< T >::find(T const &v, void (*f)(T *)) {
   typename store_t::const_iterator i = store.find(const_cast< T * >(&v));
   T *ptr;
   if (i == store.end()) {
     ptr = new T(v);
     store.insert(ptr);
+    if (f) (*f)(ptr);
   } else ptr = *i;
   return ptr;
 }
 
-static cache< ast_real > ast_real_cache;
-ast_real *normalize(ast_real const &v) { return ast_real_cache.find(v); }
 static cache< ast_number > ast_number_cache;
 ast_number *normalize(ast_number const &v) { return ast_number_cache.find(v); }
+static cache< ast_real > ast_real_cache;
+ast_real *normalize(ast_real const &v) { return ast_real_cache.find(v, &add_basic_scheme); }
+
+void set_default_schemes() {
+  std::for_each(ast_real_cache.begin(), ast_real_cache.end(), &add_basic_scheme);
+}

@@ -14,7 +14,8 @@ struct graph_layer;
 typedef std::vector< node * > node_vect;
 typedef std::set< node * > node_set;
 
-struct node {
+struct node
+{
   property_vect hyp;
   property res;
   node_vect pred;
@@ -28,7 +29,8 @@ struct node {
   void replace_pred(node *, node *);
 };
 
-struct graph_t {
+struct graph_t
+{
   node *find_compatible_node(property_vect const &hyp, property const &res) const;
   void insert(node *);
   void erase(node *);
