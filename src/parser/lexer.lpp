@@ -4,11 +4,9 @@
 #include <map>
 #include <iostream>
 #include "parser/ast.hpp"
-#include "parser.h"
+#include "parser/parser.h"
 
-extern YYSTYPE yylval;
-
-void read_number() {
+void read_number(YYSTYPE *yylval) {
   int dec = -1;
   char *ptr = yytext;
   ast_number num;
@@ -28,23 +26,27 @@ void read_number() {
   if (*ptr) num.exponent = atoi(ptr);
   else num.exponent = 0;
   if (dec > 0) num.exponent -= dec;
-  yylval.number = normalize(num);
+  yylval->number = normalize(num);
 }
 
-void read_zero() {
+void read_zero(YYSTYPE *yylval) {
   ast_number num;
   num.base = 0;
   num.exponent = 0;
-  yylval.number = normalize(num);
+  yylval->number = normalize(num);
 }
 
-void read_ident() {
-  yylval.ident = ast_ident::find(yytext);
+void read_ident(YYSTYPE *yylval) {
+  yylval->ident = ast_ident::find(yytext);
 }
+
+#define YY_USER_INIT	yylloc->first_line = 1;
+#define YY_USER_ACTION	yylloc->first_column += yyleng;
 
 %}
 
 %option noyywrap
+%option bison-locations
 
 alpha	[a-zA-Z]
 digit	[0-9]
@@ -58,12 +60,13 @@ zero		((((0+(\.0*)?)|(\.0+))([eE][-+]?{integer})?)|(0+([bB][-+]?{integer})?))
 
 %%
 
-[ \t\n]
+[ \t]
+\n		{ ++yylloc->first_line; yylloc->first_column = 0; }
 #[^\n]*
 "/\\"		return AND;
 "->"		return IMPL;
 "in"		return IN;
-{zero}		{ read_zero(); return NUMBER; }
-{number}	{ read_number(); return NUMBER; }
-{ident}		{ read_ident(); return IDENT; }
+{zero}		{ read_zero(yylval);	return NUMBER; }
+{number}	{ read_number(yylval);	return NUMBER; }
+{ident}		{ read_ident(yylval);	return IDENT;  }
 .		{ return yytext[0]; }

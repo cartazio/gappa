@@ -1,14 +1,17 @@
 %{
+#define yyerror(msg) my_yyerror(yylloc, msg)
 
-#include <iostream>
 #include "parser/ast.hpp"
+#include "parser/parser.h"
 #include "proofs/basic_proof.hpp"
 #include "proofs/dichotomy.hpp"
 
-int yylex(void);
+#include <iostream>
 
-int yyerror(char* errstr) {
-    std::cerr << "Error: " << errstr << std::endl;
+int yylex(YYSTYPE *yylval_param, YYLTYPE *yylloc_param);
+
+int my_yyerror(YYLTYPE &yylloc, char const *errstr) {
+    std::cerr << "Error: " << errstr << " at line " << yylloc.first_line << " column " << yylloc.first_column << '\n';
     return EXIT_FAILURE;
 }
 
@@ -40,6 +43,8 @@ static ast_real const *rnd_normalize(ast_real const &real) {
 %}
 
 %error-verbose
+%pure-parser
+%locations
 
 %token IDENT NUMBER IN AND IMPL
 
