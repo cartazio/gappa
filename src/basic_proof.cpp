@@ -109,7 +109,10 @@ node_modus::node_modus(property const &p, node *n, node_vect const &nodes): node
   }
   for(property_key::map::const_iterator pki = pmap.begin(), pki_end = pmap.end(); pki != pki_end; ++pki) {
     property_key const &pk = pki->first;
-    if (pk.type != PROP_BND && pk.var->real == pk.real) continue;
+    if (pk.type != PROP_BND && pk.var->real == pk.real) {
+      assert(contains_zero(pki->second));
+      continue;
+    }
     property p(pk.type);
     p.var = pk.var;
     p.real = pk.real;
@@ -199,11 +202,11 @@ node *generate_error_forced(property_vect const &hyp, property &res) {
   if (node *n = generate_triviality(hyp, res)) return n;
   /*{ static char const *type[] = { "ABS", "REL" };
     std::cout << type[res.error] << '(' << res.var->name->name << ", ...) in " << res.err << std::endl; }*/
-  if (variable *const *v = boost::get< variable *const >(res.real))
-    if (res.var == *v) {
-      res.bnd = interval(interval_real);
-      return triviality;
-    }
+  if (res.var->real == res.real) {
+    if (!contains_zero(res.bnd)) return NULL;
+    res.bnd = interval(interval_real);
+    return triviality;
+  }
   int idx = res.var->get_definition();
   if (idx == -1) return NULL; /* TODO: unprovable? */
   instruction &inst = program[idx];
