@@ -472,7 +472,6 @@ struct rewrite_scheme: proof_scheme {
   rewrite_scheme(ast_real const *r, std::string const &n): real(r), name(n) {}
   virtual node *generate_proof(property_vect const &, property &) const;
   virtual ast_real_vect needed_reals(ast_real const *) const { return ast_real_vect(1, real); }
-  //static proof_scheme *factory(ast_real const *);
 };
 
 node *rewrite_scheme::generate_proof(property_vect const &hyp, property &res) const {
@@ -485,7 +484,16 @@ node *rewrite_scheme::generate_proof(property_vect const &hyp, property &res) co
   return new node_modus(res, new node_theorem(1, &res2, res, name), nodes);
 }
 
-//scheme_register rewrite_scheme_register(&rewrite_scheme::factory);
+proof_scheme *sub_refl_rewrite_factory(ast_real const *r) {
+  real_op const *o = boost::get< real_op const >(r);
+  if (!o) return NULL;
+  if (o->type != BOP_SUB) return NULL;
+  if (o->ops[0] != o->ops[1]) return NULL;
+  ast_number zero; zero.exponent = zero.base = 0;
+  return new rewrite_scheme(normalize(ast_real(normalize(zero))), "sub_refl");
+}
+
+scheme_register rewrite_scheme_register(sub_refl_rewrite_factory);
 
 //
 struct no_scheme: proof_scheme {
@@ -541,14 +549,13 @@ bool generate_scheme_tree(property_vect const &hyp, ast_real const *r) {
 node *handle_proof(property_vect const &hyp, property &res) {
   typedef std::vector< proof_scheme const * > scheme_stack;
   static scheme_stack st;
-  node *best_node = NULL;;
+  node *best_node;
   property best_res;
   graph_storage storage;
   {
     graph_layer layer;
     property res2 = res;
-    if (node *n = generate_triviality(hyp, res2)) {
-      best_node = n;
+    if ((best_node = generate_triviality(hyp, res2))) {
       best_res = res2;
       layer.store(storage);
     }
@@ -559,7 +566,7 @@ node *handle_proof(property_vect const &hyp, property &res) {
     graph_layer layer;
     property res2 = res;
     node *n = scheme->generate_proof(hyp, res2);
-    if (n) {
+    if (n && res2.bnd <= best_res.bnd) {
       best_node = n;
       best_res = res2;
       layer.store(storage);
