@@ -32,3 +32,30 @@ void make_variables_real() {
     if (v && !v->type) v->type = interval_real;
   }
 }
+
+template< class T >
+struct cache {
+  T *find(T const &);
+ private:
+  struct less_t {
+    bool operator()(T const *v1, T const *v2) { return *v1 < *v2; }
+  };
+  typedef std::set< T *, less_t > store_t;
+  store_t store;
+};
+
+template< class T >
+T *cache< T >::find(T const &v) {
+  typename store_t::const_iterator i = store.find(const_cast< T * >(&v));
+  T *ptr;
+  if (i == store.end()) {
+    ptr = new T(v);
+    store.insert(ptr);
+  } else ptr = *i;
+  return ptr;
+}
+
+static cache< ast_real > ast_real_cache;
+ast_real *normalize(ast_real const &v) { return ast_real_cache.find(v); }
+static cache< ast_number > ast_number_cache;
+ast_number *normalize(ast_number const &v) { return ast_number_cache.find(v); }

@@ -46,10 +46,10 @@ property generate_property(ast_atom_bound const &p) {
   r.var = p.ident;
   type_id type = r.var->type;
   assert(type != UNDEFINED);
-  if (p.interval) {
-    r.bnd = create_interval(*p.interval, false, type);
-    delete p.interval;
-  }
+  if (p.interval.lower) {
+    assert(p.interval.upper);
+    r.bnd = create_interval(p.interval, false, type);
+  } else assert(!p.interval.upper);
   return r;
 }
 
@@ -57,10 +57,10 @@ property generate_property(ast_atom_error const &p, bool goal) {
   property r(p.error == 0 ? PROP_ABS : PROP_REL);
   r.var = p.ident;
   r.real = p.real;
-  if (p.interval) {
-    r.bnd = create_interval(*p.interval, goal, interval_real);
-    delete p.interval;
-  }
+  if (p.interval.lower) {
+    assert(p.interval.upper);
+    r.bnd = create_interval(p.interval, goal, interval_real);
+  } else assert(!p.interval.upper);
   return r;
 }
 
@@ -71,7 +71,7 @@ property generate_property(ast_atom_approx const &p, property **_q) {
   r.var = p.ident;
   type_id type = r.var->type;
   assert(type != UNDEFINED);
-  ast_interval i(p.value, p.value);
+  ast_interval i = { p.value, p.value };
   r.bnd = create_interval(i, true, type);
   *_q = NULL; /* TODO */
   return r;

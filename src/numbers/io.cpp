@@ -3,26 +3,26 @@
 #include "ast.hpp"
 #include <sstream>
 
-static impl_data *read_number_data(ast_number const &n, int p, mp_rnd_t rnd) {
+static impl_data *read_number_data(ast_number *n, int p, mp_rnd_t rnd) {
   impl_data *res = new impl_data;
   assert(p >= 2); // TODO
   mpfr_set_prec(res->val, p);
-  if (n.base == 10) {
+  if (n->base == 10) {
     std::stringstream s;
-    s << n.mantissa << 'e' << n.exponent;
+    s << n->mantissa << 'e' << n->exponent;
     mpfr_set_str(res->val, s.str().c_str(), 10, rnd);
-  } else if (n.base == 2) {
-    mpfr_set_str(res->val, n.mantissa.c_str(), 10, rnd);
-    mpfr_mul_2si(res->val, res->val, n.exponent, rnd);
+  } else if (n->base == 2) {
+    mpfr_set_str(res->val, n->mantissa.c_str(), 10, rnd);
+    mpfr_mul_2si(res->val, res->val, n->exponent, rnd);
   } else {
-    assert(n.base == 0);
+    assert(n->base == 0);
     mpfr_set_ui(res->val, 0, rnd);
   }
   return res;
 }
 
-static impl_data *read_number(ast_number const &n, interval_float_description const *desc, mp_rnd_t rnd) {
-  if (n.base == 0) return read_number_data(n, real_prec, rnd);
+static impl_data *read_number(ast_number *n, interval_float_description const *desc, mp_rnd_t rnd) {
+  if (n->base == 0) return read_number_data(n, real_prec, rnd);
   impl_data *d;
   int p = real_prec, emin = -50000;
   if (desc) {

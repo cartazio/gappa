@@ -18,11 +18,6 @@ extern void link_variables();
 
 static ast_prop_and implicit;
 
-void ast_real_delete(ast_real *r) {
-  if (boost::get< variable * >(r)) return;
-  delete r;
-}
-
 %}
 
 %error-verbose
@@ -32,7 +27,7 @@ void ast_real_delete(ast_real *r) {
 %union {
   ast_number	*number;
   ast_ident	*ident;
-  ast_interval	*interval;
+  ast_interval	interval;
   ast_real	*real;
   ast_operands	*operands;
   ast_prop	*prop;
@@ -78,8 +73,8 @@ PROP:
   }
 
 INTERVAL:
-  '[' NUMBER ',' NUMBER ']'	{ $$ = new ast_interval(*$2, *$4); delete $2; delete $4; }
-| '?'				{ $$ = NULL; }
+  '[' NUMBER ',' NUMBER ']'	{ ast_interval i = { $2, $4 }; $$ = i; }
+| '?'				{ ast_interval i = { NULL, NULL }; $$ = i; }
 
 ATOM:
   IDENT IN INTERVAL
@@ -108,6 +103,7 @@ OPERATION:
     { std::cerr << "Error: Too few arguments for " << f->name << std::endl; exit(1); }
     ins.out.push_back(check_variable($1, fun->return_type[0]));
     program.push_back(ins);
+    delete ops;
   }
 | IDENT '=' IDENT
   {
@@ -118,17 +114,17 @@ OPERATION:
     program.push_back(ins);
   }
 | IDENT '=' NUMBER
-  { implicit = merge_prop_and(implicit, ast_atom_approx(check_variable($1), *$3)); delete $3; }
+  { implicit = merge_prop_and(implicit, ast_atom_approx(check_variable($1), $3)); }
 
 REAL:
   NUMBER		{ $$ = new ast_real($1); }
 | IDENT			{ $$ = check_variable($1)->real; }
 | '+' REAL		{ $$ = $2; }
-| '-' REAL		{ $$ = new ast_real(real_op(UOP_MINUS, *$2)); ast_real_delete($2); }
-| REAL '+' REAL		{ $$ = new ast_real(real_op(*$1, BOP_ADD, *$3)); ast_real_delete($1); ast_real_delete($3); }
-| REAL '-' REAL		{ $$ = new ast_real(real_op(*$1, BOP_SUB, *$3)); ast_real_delete($1); ast_real_delete($3); }
-| REAL '*' REAL		{ $$ = new ast_real(real_op(*$1, BOP_MUL, *$3)); ast_real_delete($1); ast_real_delete($3); }
-| REAL '/' REAL		{ $$ = new ast_real(real_op(*$1, BOP_DIV, *$3)); ast_real_delete($1); ast_real_delete($3); }
+| '-' REAL		{ $$ = normalize(ast_real(real_op(UOP_MINUS, $2))); }
+| REAL '+' REAL		{ $$ = normalize(ast_real(real_op($1, BOP_ADD, $3))); }
+| REAL '-' REAL		{ $$ = normalize(ast_real(real_op($1, BOP_SUB, $3))); }
+| REAL '*' REAL		{ $$ = normalize(ast_real(real_op($1, BOP_MUL, $3))); }
+| REAL '/' REAL		{ $$ = normalize(ast_real(real_op($1, BOP_DIV, $3))); }
 | '(' REAL ')'		{ $$ = $2; }
 
 OPERANDS:

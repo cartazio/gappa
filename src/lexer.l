@@ -11,36 +11,37 @@ extern YYSTYPE yylval;
 void read_number() {
   int dec = -1;
   char *ptr = yytext;
-  ast_number *num = new ast_number;
+  ast_number num;
   char c = *ptr;
   switch (c) {
-  case '-': ptr++; num->mantissa = '-'; break;
+  case '-': ptr++; num.mantissa = '-'; break;
   case '+': ptr++; // nobreak;
-  default: num->mantissa = '+';
+  default: num.mantissa = '+';
   }
   for(; *ptr; ptr++) {
     char c = *ptr;
     if (c == '.') { dec = 0; continue; }
     if (c > '9') break;
     if (dec >= 0) dec++;
-    num->mantissa += c;
+    num.mantissa += c;
   }
   c = *ptr;
   switch (c) {
-  case 'b': case 'B': ptr++; num->base = 2; break;
+  case 'b': case 'B': ptr++; num.base = 2; break;
   case 'e': case 'E': ptr++; // nobreak;
-  default: num->base = 10;
+  default: num.base = 10;
   }
-  if (*ptr) num->exponent = atoi(ptr);
-  else num->exponent = 0;
-  if (dec > 0) num->exponent -= dec;
-  yylval.number = num;
+  if (*ptr) num.exponent = atoi(ptr);
+  else num.exponent = 0;
+  if (dec > 0) num.exponent -= dec;
+  yylval.number = normalize(num);
 }
 
 void read_zero() {
-  ast_number *num = new ast_number;
-  num->base = 0;
-  yylval.number = num;
+  ast_number num;
+  num.base = 0;
+  num.exponent = 0;
+  yylval.number = normalize(num);
 }
 
 void read_ident() {

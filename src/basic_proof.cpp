@@ -192,7 +192,7 @@ node *generate_error_forced(property_vect const &hyp, property &res) {
       } else if (c->type == HYP_ABS || c->type == HYP_REL) {
         p.type = c->type == HYP_ABS ? PROP_ABS : PROP_REL;
         assert(c->var >= 1);
-        p.real = &op->ops[c->var - 1];
+        p.real = op->ops[c->var - 1];
         if (!(nn = generate_error(hyp, p))) { good = false; break; }
       } else assert(false);
       ints[i] = &p.bnd;

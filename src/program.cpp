@@ -4,7 +4,7 @@
 program_t program;
 
 variable::variable(ast_ident *n, type_id t): name(n), type(t), def(-2) {
-  real = new ast_real(this);
+  real = normalize(ast_real(this));
 }
 
 int variable::get_definition() {

@@ -3,7 +3,7 @@
 
 bool operator>(property const &u, property const &v) {
   if (u.type != v.type || u.var != v.var) return false;
-  if (u.type != PROP_BND && !(*u.real == *v.real)) return false;
+  if (u.type != PROP_BND && u.real != v.real) return false;
   return u.bnd <= v.bnd;
 }
 
