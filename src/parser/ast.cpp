@@ -73,18 +73,6 @@ ast_number *normalize(ast_number const &v) { return ast_number_cache.find(v); }
 static cache< ast_real > ast_real_cache;
 ast_real *normalize(ast_real const &v) { return ast_real_cache.find(v); }
 
-void clear_schemes() {
-  for(cache< ast_real >::iterator i = ast_real_cache.begin(), i_end = ast_real_cache.end(); i != i_end; ++i) {
-    proof_scheme_list *&s = (*i)->schemes;
-    if (s) {
-      for(proof_scheme_list::const_iterator j = s->begin(), j_end = s->end(); j != j_end; ++j)
-        delete *j;
-      delete s;
-      s = NULL;
-    }
-  }
-}
-
 std::string dump_real(ast_real const *r, int prio) {
   if (r->name)
     return r->name->name;

@@ -236,17 +236,16 @@ int main() {
     int nb = goals.size();
     std::vector< bool > scheme_results(nb);
     {
-      proof_scheme_list *schemes = new proof_scheme_list;
-      g->prover.ordered_schemes = schemes;
-      ast_real_vect dummy;
-      for(int j = 0; j < nb; ++j) 
-        scheme_results[j] = generate_scheme_tree(goals[j].real, *schemes, dummy);
+      ast_real_vect reals;
+      for(int j = 0; j < nb; ++j)
+        reals.push_back(goals[j].real);
+      proof_helper *schemes = generate_scheme_tree(reals);
+      g->prover.helper = schemes;
+      for(int j = 0; j < nb; ++j)
+        scheme_results[j] = reals[j];
       g->prover();
-      for(proof_scheme_list::const_iterator j = schemes->begin(), j_end = schemes->end(); j != j_end; ++j)
-        delete *j;
-      delete schemes;
-      g->prover.ordered_schemes = NULL;
-      clear_schemes();
+      delete_scheme_tree(schemes);
+      g->prover.helper = NULL;
     }
     node_vect results(nb);
     std::cerr << "\n\n";
@@ -254,7 +253,8 @@ int main() {
       node *n = find_proof(goals[j]);
       results[j] = n;
       if (!n) {
-        std::cerr << (scheme_results[j] ? "no proof\n" : "no scheme\n");
+        std::cerr << "no " << (scheme_results[j] ? "proof" : "path")
+                  << " for " << dump_real(goals[j].real) << '\n';
         continue;
       }
       property const &p = n->get_result();

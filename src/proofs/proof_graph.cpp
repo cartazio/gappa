@@ -121,8 +121,8 @@ graph_t::graph_t(graph_t *f, property_vect const &h): father(f), hyp(h) {
       else
         axioms.insert(*i);
     }
-    prover.ordered_schemes = f->prover.ordered_schemes;
-  } else prover.ordered_schemes = NULL;
+    prover.helper = f->prover.helper;
+  } else prover.helper = NULL;
   for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i) {
     node *n = new hypothesis_node(*i);
     nodes.insert(n);

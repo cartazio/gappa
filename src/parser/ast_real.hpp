@@ -70,19 +70,15 @@ typedef boost::variant
   , rounding_placeholder
   > ast_real_aux;
 
-struct proof_scheme;
-typedef std::vector< proof_scheme const * > proof_scheme_list;
-
 struct ast_real: ast_real_aux
 {
-  mutable proof_scheme_list *schemes;
   mutable ast_ident const *name;
-  ast_real(ast_ident const *v): ast_real_aux(undefined_real()), schemes(NULL), name(v) {}
-  ast_real(ast_number const *v): ast_real_aux(v), schemes(NULL), name(NULL) {}
-  ast_real(real_op const &v): ast_real_aux(v), schemes(NULL), name(NULL) {}
-  ast_real(rounded_real const &v): ast_real_aux(v), schemes(NULL), name(NULL) {}
-  ast_real(placeholder v): ast_real_aux(v), schemes(NULL), name(NULL) {}
-  ast_real(rounding_placeholder const &v): ast_real_aux(v), schemes(NULL), name(NULL) {}
+  ast_real(ast_ident const *v): ast_real_aux(undefined_real()), name(v) {}
+  ast_real(ast_number const *v): ast_real_aux(v), name(NULL) {}
+  ast_real(real_op const &v): ast_real_aux(v), name(NULL) {}
+  ast_real(rounded_real const &v): ast_real_aux(v), name(NULL) {}
+  ast_real(placeholder v): ast_real_aux(v), name(NULL) {}
+  ast_real(rounding_placeholder const &v): ast_real_aux(v), name(NULL) {}
   bool operator==(ast_real const &v) const;
   bool operator<(ast_real const &v) const;
 };

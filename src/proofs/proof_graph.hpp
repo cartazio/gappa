@@ -64,8 +64,10 @@ struct modus_node: public dependent_node {
   modus_node(int nb, node *nodes[], node *n);
 };
 
+struct proof_helper;
+
 struct proof_handler {
-  proof_scheme_list *ordered_schemes;
+  proof_helper *helper;
   property_vect goals;
   void operator()() const;
 };

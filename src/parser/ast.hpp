@@ -52,7 +52,6 @@ struct function {
   function(real_op_type t): type(t) {}
 };
 
-void clear_schemes();
 std::string dump_real(ast_real const *, int = 0);
 
 #endif // PARSER_AST_HPP
