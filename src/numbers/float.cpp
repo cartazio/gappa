@@ -24,7 +24,6 @@ struct float_rounding_class: rounding_class {
   float_format const *format;
   rounding_type type;
   char const *ident;
-  float_rounding_class() {}
   float_rounding_class(float_format const *f, rounding_type t, char const *i);
   virtual interval bound(interval const &, std::string &) const;
   virtual interval error(interval const &, std::string &) const;
@@ -107,5 +106,5 @@ interval float_rounding_class::error(interval const &i, std::string &name) const
     name += "_wide";
     --e_err;
   }
-  return from_exponent(e_err, type == ROUND_UP ? 1 : (type == ROUND_DN ? - 1 : 0));
+  return from_exponent(e_err, type == ROUND_UP ? -1 : (type == ROUND_DN ? 1 : 0));
 }
