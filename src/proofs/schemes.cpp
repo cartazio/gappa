@@ -44,25 +44,37 @@ bool generate_scheme_tree(ast_real const *r, ast_real_vect &reals, ast_real_vect
   // put a dummy yes_scheme as a marker for the current real
   r->scheme = new yes_scheme;
   std::vector< proof_scheme * > schemes;
-  unsigned last_real = reals.size();
+  unsigned last_real = reals.size(), last_real_tmp = last_real;
+  int need_self_tristate = 1;
   typedef scheme_register all_schemes;
   for(all_schemes::iterator i = all_schemes::begin(), i_end = all_schemes::end(); i != i_end; ++i) {
     proof_scheme *s = (**i)(r);
     if (!s) continue;
     ast_real_vect v = s->needed_reals(r);
-    bool good = true;
+    bool good = true, need_self = false;
     for(ast_real_vect::const_iterator j = v.begin(), j_end = v.end(); j != j_end; ++j) {
+      if (*j == r) need_self = true;
       good = generate_scheme_tree(*j, reals, discarded);
       if (!good) break;
     }
     if (good) {
       schemes.push_back(s);
       last_real = reals.size();
+      if (!need_self) need_self_tristate = 0;
+      else if (need_self_tristate == 1) need_self_tristate = 2;
     } else {
       delete s;
       discarded.insert(discarded.end(), reals.begin() + last_real, reals.end());
       reals.erase(reals.begin() + last_real, reals.end());
     }
+  }
+  if (need_self_tristate == 2) { // only self-referencing schemes, no interesting one
+    for(std::vector< proof_scheme * >::iterator i = schemes.begin(), end = schemes.end(); i != end; ++i)
+      delete *i;
+    schemes.clear();
+    discarded.insert(discarded.end(), reals.begin() + last_real_tmp, reals.end());
+    reals.erase(reals.begin() + last_real_tmp, reals.end());
+    last_real = last_real_tmp;
   }
   bool in_hyp = false;
   {

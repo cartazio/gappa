@@ -78,7 +78,7 @@ struct dichotomy_scheme: proof_scheme {
   dichotomy_scheme(ast_real const *r): real(r), dich(NULL), already_here(false) {}
   virtual node *generate_proof(property const &) const;
   virtual node *generate_proof(ast_real const *) const { return dich; }
-  virtual ast_real_vect needed_reals(ast_real const *) const { return ast_real_vect(); }
+  virtual ast_real_vect needed_reals(ast_real const *r) const { return ast_real_vect(1, r); }
 };
 
 node *dichotomy_scheme::generate_proof(property const &res) const {
