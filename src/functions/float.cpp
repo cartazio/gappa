@@ -36,7 +36,7 @@ static void extract_intervals(property_vect const &hyp, interval const **ints) {
 #define bop_definition(type, TYPE, PREC)	\
   fun = new function(BOP_##TYPE);		\
   fun->args_type = args##PREC;			\
-  fun->return_type = ret##PREC;				\
+  fun->return_type = ret##PREC;			\
   fun->matches = match;				\
   ast_ident::find(BOOST_PP_STRINGIZE(BOOST_PP_CAT(type, PREC)))->fun = fun
 
@@ -54,7 +54,8 @@ interval const not_defined = interval(interval_variant(interval_not_defined()));
 
 /********** add **********/
 
-static hypothesis_constraint const_add_float_bnd[3] = { { 1, HYP_BND }, { 2, HYP_BND }, { 0 } };
+static hypothesis_constraint const const_add_float_bnd[3] =
+  { { 1, HYP_BND }, { 2, HYP_BND }, { 0 } };
 
 static interval compute_add_float_bnd(interval const **ints) {
   return *ints[0] + *ints[1];
@@ -67,7 +68,8 @@ static node *generate_add_float_bnd(property_vect const &hyp, property_bound &re
   return new node_theorem(hyp, res, "add");
 }
 
-static hypothesis_constraint const_add_float_abs[4] = { { -1, HYP_BND }, { 1, HYP_ABS }, { 2, HYP_ABS }, { 0 } };
+static hypothesis_constraint const const_add_float_abs[4] =
+  { { -1, HYP_BND }, { 1, HYP_ABS }, { 2, HYP_ABS }, { 0 } };
 
 static interval compute_add_float_abs(interval const **ints) {
   return *ints[1] + *ints[2] + from_exponent(ulp_exponent(*ints[0]), GMP_RNDN);
@@ -80,7 +82,7 @@ static node *generate_add_float_abs(property_vect const &hyp, property_error &re
   return new node_theorem(hyp, res, "add");
 }
 
-static hypothesis_constraint const_add_float_abs_sterbenz[6] =
+static hypothesis_constraint const const_add_float_abs_sterbenz[6] =
   { { -1, HYP_BND }, { 1, HYP_BND }, { 2, HYP_BND }, { 1, HYP_ABS }, { 2, HYP_ABS }, { 0 } };
 
 static interval compute_add_float_abs_sterbenz(interval const **ints) {
@@ -97,7 +99,7 @@ static node *generate_add_float_abs_sterbenz(property_vect const &hyp, property_
   return new node_theorem(hyp, res, "add_sterbenz");
 }
 
-static hypothesis_constraint const_add_float_abs_singleton[5] =
+static hypothesis_constraint const const_add_float_abs_singleton[5] =
   { { 1, HYP_BND }, { 2, HYP_BND }, { 1, HYP_ABS }, { 2, HYP_ABS }, { 0 } };
 
 static interval compute_add_float_abs_singleton(interval const **ints) {
@@ -114,18 +116,19 @@ static node *generate_add_float_abs_singleton(property_vect const &hyp, property
 }
 
 void initialize_add() {
-  static function_match match[5] = {
+  static const function_match match[5] = {
     do_match(BND, add_float_bnd, bound),
-    do_match(ABS, add_float_abs, error),
-    do_match(ABS, add_float_abs_sterbenz, error),
     do_match(ABS, add_float_abs_singleton, error),
+    do_match(ABS, add_float_abs_sterbenz, error),
+    do_match(ABS, add_float_abs, error),
     { { 0 } } };
   bop_definitions(add, ADD);
 }
 
 /********** sub **********/
 
-static hypothesis_constraint const_sub_float_bnd[3] = { { 1, HYP_BND }, { 2, HYP_BND }, { 0 } };
+static hypothesis_constraint const const_sub_float_bnd[3] =
+  { { 1, HYP_BND }, { 2, HYP_BND }, { 0 } };
 
 static interval compute_sub_float_bnd(interval const **ints) {
   return *ints[0] - *ints[1];
@@ -138,10 +141,11 @@ static node *generate_sub_float_bnd(property_vect const &hyp, property_bound &re
   return new node_theorem(hyp, res, "sub");
 }
 
-static hypothesis_constraint const_sub_float_abs[4] = { { -1, HYP_BND }, { 1, HYP_ABS }, { 2, HYP_ABS }, { 0 } };
+static hypothesis_constraint const const_sub_float_abs[4] =
+  { { -1, HYP_BND }, { 1, HYP_ABS }, { 2, HYP_ABS }, { 0 } };
 
 static interval compute_sub_float_abs(interval const **ints) {
-  return *ints[1] + *ints[2] + from_exponent(ulp_exponent(*ints[0]), GMP_RNDN);
+  return *ints[1] - *ints[2] + from_exponent(ulp_exponent(*ints[0]), GMP_RNDN);
 }
 
 static node *generate_sub_float_abs(property_vect const &hyp, property_error &res) {
@@ -151,17 +155,52 @@ static node *generate_sub_float_abs(property_vect const &hyp, property_error &re
   return new node_theorem(hyp, res, "sub");
 }
 
+static hypothesis_constraint const const_sub_float_abs_sterbenz[6] =
+  { { -1, HYP_BND }, { 1, HYP_BND }, { 2, HYP_BND }, { 1, HYP_ABS }, { 2, HYP_ABS }, { 0 } };
+
+static interval compute_sub_float_abs_sterbenz(interval const **ints) {
+  int e = mag_exponent(*ints[0]);
+  if (e > mig_exponent(*ints[1]) || e > mig_exponent(*ints[2])) return not_defined;
+  return *ints[3] - *ints[4];
+}
+
+static node *generate_sub_float_abs_sterbenz(property_vect const &hyp, property_error &res) {
+  interval const *ints[5];
+  extract_intervals(hyp, ints);
+  res.err = compute_sub_float_abs_sterbenz(ints);
+  if (is_not_defined(res.err)) return NULL;
+  return new node_theorem(hyp, res, "sub_sterbenz");
+}
+
+static hypothesis_constraint const const_sub_float_abs_singleton[5] =
+  { { 1, HYP_BND }, { 2, HYP_BND }, { 1, HYP_ABS }, { 2, HYP_ABS }, { 0 } };
+
+static interval compute_sub_float_abs_singleton(interval const **ints) {
+  if (!is_singleton(*ints[0]) || !is_singleton(*ints[1])) return not_defined;
+  return to_real(*ints[0]) - to_real(*ints[1]) - to_real(*ints[0] - *ints[1]) + *ints[2] - *ints[3];
+}
+
+static node *generate_sub_float_abs_singleton(property_vect const &hyp, property_error &res) {
+  interval const *ints[4];
+  extract_intervals(hyp, ints);
+  res.err = compute_sub_float_abs_singleton(ints);
+  if (is_not_defined(res.err)) return NULL;
+  return new node_theorem(hyp, res, "sub_singleton");
+}
+
 void initialize_sub() {
-  static function_match match[3] = {
-    { { -1, HYP_BND }, const_sub_float_bnd, &compute_sub_float_bnd, { generate_bound: &generate_sub_float_bnd } },
-    { { -1, HYP_ABS }, const_sub_float_abs, &compute_sub_float_abs, { generate_error: &generate_sub_float_abs } },
+  static const function_match match[5] = {
+    do_match(BND, sub_float_bnd, bound),
+    do_match(ABS, sub_float_abs_singleton, error),
+    do_match(ABS, sub_float_abs_sterbenz, error),
+    do_match(ABS, sub_float_abs, error),
     { { 0 } } };
   bop_definitions(sub, SUB);
 }
 
 /********** mul **********/
 
-static hypothesis_constraint const_mul_float_bnd[3] = { { 1, HYP_BND }, { 2, HYP_BND }, { 0 } };
+static hypothesis_constraint const const_mul_float_bnd[3] = { { 1, HYP_BND }, { 2, HYP_BND }, { 0 } };
 
 static interval compute_mul_float_bnd(interval const **ints) {
   return *ints[0] * *ints[1];
@@ -174,11 +213,12 @@ static node *generate_mul_float_bnd(property_vect const &hyp, property_bound &re
   return new node_theorem(hyp, res, "mul");
 }
 
-static hypothesis_constraint const_mul_float_abs[6] =
+static hypothesis_constraint const const_mul_float_abs[6] =
   { { -1, HYP_BND }, { 1, HYP_BND }, { 2, HYP_BND }, { 1, HYP_ABS }, { 2, HYP_ABS }, { 0 } };
 
 static interval compute_mul_float_abs(interval const **ints) {
-  return *ints[3] * to_real(*ints[2]) + *ints[4] * to_real(*ints[1]) + from_exponent(ulp_exponent(*ints[0]), GMP_RNDN);
+  return *ints[3] * to_real(*ints[2]) + *ints[4] * to_real(*ints[1])
+       + *ints[3] * *ints[4] + from_exponent(ulp_exponent(*ints[0]), GMP_RNDN);
 }
 
 static node *generate_mul_float_abs(property_vect const &hyp, property_error &res) {
@@ -188,10 +228,28 @@ static node *generate_mul_float_abs(property_vect const &hyp, property_error &re
   return new node_theorem(hyp, res, "mul");
 }
 
+static hypothesis_constraint const const_mul_float_abs_singleton[5] =
+  { { 1, HYP_BND }, { 2, HYP_BND }, { 1, HYP_ABS }, { 2, HYP_ABS }, { 0 } };
+
+static interval compute_mul_float_abs_singleton(interval const **ints) {
+  if (!is_singleton(*ints[0]) || !is_singleton(*ints[1])) return not_defined;
+  interval i0 = to_real(*ints[0]), i1 = to_real(*ints[1]);
+  return i0 * i1 - to_real(*ints[0] * *ints[1]) + *ints[2] * i1 + *ints[3] * i0 + *ints[2] * *ints[3];
+}
+
+static node *generate_mul_float_abs_singleton(property_vect const &hyp, property_error &res) {
+  interval const *ints[4];
+  extract_intervals(hyp, ints);
+  res.err = compute_mul_float_abs_singleton(ints);
+  if (is_not_defined(res.err)) return NULL;
+  return new node_theorem(hyp, res, "mul_singleton");
+}
+
 void initialize_mul() {
-  static function_match match[3] = {
-    { { -1, HYP_BND }, const_mul_float_bnd, &compute_mul_float_bnd, { generate_bound: &generate_mul_float_bnd } },
-    { { -1, HYP_ABS }, const_mul_float_abs, &compute_mul_float_abs, { generate_error: &generate_mul_float_abs } },
+  static const function_match match[4] = {
+    do_match(BND, mul_float_bnd, bound),
+    do_match(ABS, mul_float_abs_singleton, error),
+    do_match(ABS, mul_float_abs, error),
     { { 0 } } };
   bop_definitions(mul, MUL);
 }
