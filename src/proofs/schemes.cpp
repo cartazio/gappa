@@ -157,7 +157,7 @@ proof_helper::proof_helper(ast_real_vect &targets) {
 }
 
 proof_helper::proof_helper(proof_helper const &h)
-  : axiom_reals(h.axiom_reals), reals(h.reals) {
+  : axiom_reals(h.axiom_reals), source_schemes(h.source_schemes), reals(h.reals) {
 }
 
 proof_helper::~proof_helper() {
