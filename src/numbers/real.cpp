@@ -1,9 +1,5 @@
 #include <gmp.h>
 #include <mpfr.h>
-#include <boost/numeric/interval/interval.hpp>
-#include <boost/numeric/interval/rounded_arith.hpp>
-#include <boost/numeric/interval/checking.hpp>
-#include <boost/numeric/interval/policies.hpp>
 #include "interval_ext.hpp"
 
 struct ref_counter_t {
@@ -54,6 +50,13 @@ bool is_pos(::number_real const &v)  { return mpfr_sgn(v.data->val) > 0; }
 
 } } } }
 
+#include <boost/numeric/interval/interval.hpp>
+#include <boost/numeric/interval/rounded_arith.hpp>
+#include <boost/numeric/interval/checking.hpp>
+#include <boost/numeric/interval/policies.hpp>
+#include <boost/numeric/interval/arith.hpp>
+#include <boost/numeric/interval/utility.hpp>
+
 class real_policies {
   typedef number_real T;
 public:
@@ -94,10 +97,17 @@ public:
 
 typedef boost::numeric::interval< number_real, real_policies > interval_real;
 
+#define pcast(p) static_cast< interval_real * >(p)
+#define cast(p) *static_cast< interval_real * >(p)
+
 static void *create() { return new interval_real; }
-static void destroy(void *p) { delete static_cast< interval_real * >(p); }
+static void destroy(void *v) { delete pcast(v); }
+static void *clone(void *v) { return new interval_real(cast(v)); }
+static void *add(void *u, void *v) { return new interval_real(cast(u) + cast(v)); }
+static void *sub(void *u, void *v) { return new interval_real(cast(u) - cast(v)); }
+static void *mul(void *u, void *v) { return new interval_real(cast(u) * cast(v)); }
+static void *div(void *u, void *v) { return new interval_real(cast(u) / cast(v)); }
 
 interval_description interval_real_desc =
-  { create: &create, destroy: &destroy };
-
-
+  { create: &create, destroy: &destroy, clone: &clone,
+    add: &add, sub: &sub, mul: &mul, div: &div };

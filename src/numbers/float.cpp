@@ -2,7 +2,9 @@
 #include <boost/numeric/interval/rounded_arith.hpp>
 #include <boost/numeric/interval/checking.hpp>
 #include <boost/numeric/interval/policies.hpp>
-#include "interval.hpp"
+#include <boost/numeric/interval/arith.hpp>
+#include <boost/numeric/interval/utility.hpp>
+#include "interval_ext.hpp"
 extern "C" {
 #include "softfloat.h"
 }
@@ -31,3 +33,19 @@ NUMBER_FLOAT(32)
 NUMBER_FLOAT(64)
 NUMBER_FLOAT(x80)
 NUMBER_FLOAT(128)
+
+#define pcast(size,p) static_cast< interval_float##size * >(p)
+#define cast(size,p) *static_cast< interval_float##size * >(p)
+
+#define INTERVAL_FLOAT(size)		\
+  typedef boost::numeric::interval< number_float##size > interval_float##size;	\
+  static void *create_##size() { return new interval_float##size; }		\
+  static void destroy_##size(void *v) { delete pcast(size,v); }			\
+  static void *clone_##size(void *v) { return new interval_float##size(cast(size,v)); }	\
+  static void *add_##size(void *u, void *v) { return new interval_float##size(cast(size,u) + cast(size,v)); }	\
+  static void *sub_##size(void *u, void *v) { return new interval_float##size(cast(size,u) - cast(size,v)); }	\
+  static void *mul_##size(void *u, void *v) { return new interval_float##size(cast(size,u) * cast(size,v)); }	\
+  static void *div_##size(void *u, void *v) { return new interval_float##size(cast(size,u) / cast(size,v)); }	\
+  interval_description interval_float##size_desc =	\
+    { create: &create_##size, destroy: &destroy_##size, clone: &clone_##size,	\
+      add: &add_##size, sub: &sub_##size, mul: &mul_##size, div: &div_##size };
