@@ -55,6 +55,7 @@ static void dump_float(void *mem, mpfr_t const &f, interval_float_description *d
     exp = exp + mpfr_get_prec(f) - 1; // normalize the exponent
     if (exp < min_exp) exp = min_exp - 1; // subnormal number
   }
+  mpz_clear(frac);
   int exp_pos = prec + (implicit ? 0 : 1); // the exponent is after the mantissa
   int exp_size = fmt - exp_pos - 1; // all the space except the mantissa and the sign
   int mask = (1 << exp_size) - 1;
