@@ -85,11 +85,22 @@ int display(node *n) {
     plouf << 'p' << display(*i) << " -> ";
   plouf << 'p' << display(n->res) << ".\n";
   plouf << " intros";
-  for(int i = 0, l = n->hyp.size(); i < l; ++i) plouf << " h" << i;
+  int nb_hyps = n->hyp.size();
+  for(int i = 0; i < nb_hyps; ++i) plouf << " h" << i;
   plouf << ".\n";
   if (n->type == THEOREM) {
     plouf << " apply " << static_cast< node_theorem * >(n)->name << '.';
     for(int i = 0, l = n->hyp.size(); i < l; ++i) plouf << " exact h" << i << '.';
+    plouf << "\nQed.\n";
+  } else if (n->type == MODUS) {
+    for(node_vect::const_iterator i = ++n->pred.begin(), i_end = n->pred.end(); i != i_end; ++i) {
+      plouf << " assert (h" << nb_hyps++ << " : p" << display((*i)->res) << "). apply l" << display(*i) << '.';
+      for(property_vect::const_iterator j = (*i)->hyp.begin(), j_end = (*i)->hyp.end(); j != j_end; ++j) plouf << " exact h?.";
+      plouf << '\n';
+    }
+    node *m = n->pred[0];
+    plouf << " apply l" << display(m) << '.';
+    for(int i = 0, l = m->hyp.size(); i < l; ++i) plouf << " exact h?.";
     plouf << "\nQed.\n";
   } else {
     plouf << node_ids[n->type];
