@@ -22,6 +22,7 @@ bool is_singleton(interval const &v) {
 }
 
 bool contains_zero(interval const &v) {
+  if (!is_defined(v.desc)) return true;
   return (*v.desc->in_zero)(v.ptr);
 }
 
