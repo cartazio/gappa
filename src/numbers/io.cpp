@@ -5,6 +5,7 @@
 
 static impl_data *read_number_data(ast_number const &n, int p, mp_rnd_t rnd) {
   impl_data *res = new impl_data;
+  assert(p >= 2); // TODO
   mpfr_set_prec(res->val, p);
   if (n.base == 10) {
     std::stringstream s;
@@ -38,6 +39,33 @@ static impl_data *read_number(ast_number const &n, interval_float_description *d
   }
 }
 
+static void dump_float(void *mem, mpfr_t const &f, interval_float_description *desc) { // TODO: little-endian centric
+  int fmt = desc->format_size;
+  int min_exp = desc->min_exp;
+  int prec = desc->prec;
+  bool implicit = prec != 63; // implicit leading digit
+  memset(mem, 0, fmt / 8);
+  mpz_t frac;
+  mpz_init(frac);
+  int exp = mpfr_get_z_exp(frac, f);
+  int sgn = mpz_sgn(frac);
+  if (sgn == 0) exp = min_exp - 1;
+  else {
+    mpz_export(mem, 0, -1, 2, -1, 0, frac); // export does not consider the sign
+    exp = exp + mpfr_get_prec(f) - 1; // normalize the exponent
+    if (exp < min_exp) exp = min_exp - 1; // subnormal number
+  }
+  int exp_pos = prec + (implicit ? 0 : 1); // the exponent is after the mantissa
+  int exp_size = fmt - exp_pos - 1; // all the space except the mantissa and the sign
+  int mask = (1 << exp_size) - 1;
+  exp = (exp + 1 - min_exp) & mask; // biased exponent
+  short int &e = ((short int *)mem)[exp_pos >> 4]; // last word of the float
+  exp_pos &= 15;
+  if (implicit) e &= ~(1 << exp_pos); // remove implicit one
+  e |= exp << exp_pos;
+  if (sgn < 0) e |= 1 << 15; // sign
+}
+
 union float32_and_float {
   float32 soft;
   float hard;
@@ -60,17 +88,18 @@ interval create_interval(ast_interval const &i, bool widen, type_id _type) {
   if (_type == interval_real)
     res.ptr = new _interval_real(number_real(n1), number_real(n2));
   else {
-    if (_type == interval_float32) {
-      float32_and_float tmp1, tmp2;
-      tmp1.hard = mpfr_get_d(n1->val, d1);
-      tmp2.hard = mpfr_get_d(n2->val, d2);
-      res.ptr = new _interval_float32(number_float32(tmp1.soft), number_float32(tmp2.soft));
-    } else if (_type == interval_float64) {
-      float64_and_double tmp1, tmp2;
-      tmp1.hard = mpfr_get_d(n1->val, d1);
-      tmp2.hard = mpfr_get_d(n2->val, d2);
-      res.ptr = new _interval_float64(number_float64(tmp1.soft), number_float64(tmp2.soft));
-    } else assert(false); /* TODO */
+    char tmp1[16], tmp2[16];
+    dump_float(&tmp1, n1->val, type);
+    dump_float(&tmp2, n2->val, type);
+    if (_type == interval_float32)
+      res.ptr = new _interval_float32(number_float32(*(float32 *)tmp1), number_float32(*(float32 *)tmp2));
+    else if (_type == interval_float64)
+      res.ptr = new _interval_float64(number_float64(*(float64 *)tmp1), number_float64(*(float64 *)tmp2));
+    else if (_type == interval_floatx80)
+      res.ptr = new _interval_floatx80(number_floatx80(*(floatx80 *)tmp1), number_floatx80(*(floatx80 *)tmp2));
+    else if (_type == interval_float128)
+      res.ptr = new _interval_float128(number_float128(*(float128 *)tmp1), number_float128(*(float128 *)tmp2));
+    else assert(false);
     n1->destroy();
     n2->destroy();
   }
