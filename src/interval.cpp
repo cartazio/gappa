@@ -60,6 +60,17 @@ struct do_mul: boost::static_visitor< interval > {
   }
 };
 
+struct do_div: boost::static_visitor< interval > {
+  template< typename T, typename U >
+  interval operator()(T const &, U const &) const { throw; /* TODO */ }
+  template< typename T >
+  typename boost::disable_if< boost::is_same< T, interval_not_defined >, interval >::type // interval
+  operator()(T const &lhs, T const &rhs) const {
+    if (in_zero(rhs)) throw;
+    return interval_variant(lhs / rhs);
+  }
+};
+
 struct do_subset_of: boost::static_visitor< bool > {
   template< typename T >
   bool operator()(T const &, interval_not_defined const &) const { return true; }
@@ -110,6 +121,18 @@ struct do_is_singleton: boost::static_visitor< bool > {
   bool operator()(T const &v) const { return singleton(v); }
 };
 
+struct do_is_zero: boost::static_visitor< bool > {
+  bool operator()(interval_not_defined const &) const { return false; }
+  template< class T >
+  bool operator()(T const &v) const { return singleton(v) && in_zero(v); }
+};
+
+struct do_contains_zero: boost::static_visitor< bool > {
+  bool operator()(interval_not_defined const &) const { return true; }
+  template< class T >
+  bool operator()(T const &v) const { return in_zero(v); }
+};
+
 struct do_split: boost::static_visitor< std::pair< interval, interval > > {
   std::pair< interval, interval > operator()(interval_real const &) const { throw; }
   std::pair< interval, interval > operator()(interval_not_defined const &) const { throw; }
@@ -141,12 +164,15 @@ struct do_output: boost::static_visitor< void > {
 interval interval::operator+(interval const &v) const { return boost::apply_visitor(do_add(), value, v.value); }
 interval interval::operator-(interval const &v) const { return boost::apply_visitor(do_sub(), value, v.value); }
 interval interval::operator*(interval const &v) const { return boost::apply_visitor(do_mul(), value, v.value); }
+interval interval::operator/(interval const &v) const { return boost::apply_visitor(do_div(), value, v.value); }
 bool interval::operator<=(interval const &v) const { return boost::apply_visitor(do_subset_of(), value, v.value); }
 interval to_real(interval const &v) { return interval_variant(boost::apply_visitor(do_to_real(), v.value)); }
 int ulp_exponent(interval const &v) { return boost::apply_visitor(do_ulp_exponent(), v.value); }
 int mig_exponent(interval const &v) { return boost::apply_visitor(do_mig_exponent(), v.value); }
 int mag_exponent(interval const &v) { return boost::apply_visitor(do_mag_exponent(), v.value); }
 bool is_singleton(interval const &v) { return boost::apply_visitor(do_is_singleton(), v.value); }
+bool is_zero(interval const &v) { return boost::apply_visitor(do_is_zero(), v.value); }
+bool contains_zero(interval const &v) { return boost::apply_visitor(do_contains_zero(), v.value); }
 std::pair< interval, interval > split(interval const &v) { return boost::apply_visitor(do_split(), v.value); }
 
 template< class CharType, class CharTraits >
@@ -165,6 +191,6 @@ interval from_exponent(int e, mp_rnd_t r) {
   return interval_variant(interval_real(number_real(l), number_real(u)));
 }
 
-bool is_not_defined(interval const &v) {
-  return boost::get< interval_not_defined const >(&v.value);
+bool is_defined(interval const &v) {
+  return !boost::get< interval_not_defined const >(&v.value);
 }

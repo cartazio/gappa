@@ -10,6 +10,10 @@ interval from_exponent(int, mp_rnd_t);
 int mig_exponent(interval const &);
 int mag_exponent(interval const &);
 std::pair< interval, interval > split(interval const &);
+bool is_singleton(interval const &);
+bool is_defined(interval const &);
+bool is_zero(interval const &);
+bool contains_zero(interval const &);
 
 template< class CharType, class CharTraits >
 std::basic_ostream< CharType, CharTraits > &operator<<

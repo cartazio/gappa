@@ -80,10 +80,8 @@ struct interval {
   interval operator+(interval const &) const;
   interval operator-(interval const &) const;
   interval operator*(interval const &) const;
+  interval operator/(interval const &) const;
   bool operator<=(interval const &) const;
 };
-
-bool is_singleton(interval const &);
-bool is_not_defined(interval const &);
 
 #endif // INTERVAL_HPP
