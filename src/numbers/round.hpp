@@ -43,6 +43,7 @@ struct rounding_class {
   virtual interval bound(interval const &, std::string &) const = 0;
   virtual interval error(interval const &, std::string &) const = 0;
   virtual std::string name() const = 0;
+  virtual ~rounding_class() {}
 };
 
 #endif // NUMBERS_ROUND_HPP

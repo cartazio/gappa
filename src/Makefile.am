@@ -8,6 +8,7 @@ bin_PROGRAMS = gappa
 
 gappa_SOURCES = \
 	numbers/float.cpp \
+	numbers/homogen.cpp \
 	numbers/interval.cpp \
 	numbers/interval.hpp \
 	numbers/interval_arith.hpp \

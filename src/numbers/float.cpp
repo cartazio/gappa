@@ -1,7 +1,7 @@
 #include "parser/ast.hpp"
-#include "interval_utility.hpp"
-#include "real.hpp"
-#include "round.hpp"
+#include "numbers/interval_utility.hpp"
+#include "numbers/real.hpp"
+#include "numbers/round.hpp"
 #include <algorithm>
 
 enum rounding_type { ROUND_UP, ROUND_DN, ROUND_ZR, ROUND_CE };
