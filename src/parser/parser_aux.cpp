@@ -106,8 +106,9 @@ void generate_graph(ast_prop const &p) {
       generate_graph((*q)[i]);
   } else {
     ast_prop_impl const *q = boost::get< ast_prop_impl >(&p);
+    ast_prop_impl tmp;
     if (!q) {
-      ast_prop_impl tmp;
+      tmp.left = ast_prop(ast_prop_and());
       tmp.right = p;
       q = &tmp;
     }
