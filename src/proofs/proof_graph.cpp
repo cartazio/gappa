@@ -201,6 +201,7 @@ graph_layer::~graph_layer() {
       top_graph->remove(*i);
       delete *i;
     }
+    delete top_layer;
   }
   top_layer = old_layer;
 }
