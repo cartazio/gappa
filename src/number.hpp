@@ -15,6 +15,7 @@ extern "C" {
     float##size value;				\
     number_float##size(int v): value(int32_to_float##size(v)) {}	\
     number_float##size(float##size v): value(v) {}			\
+    type operator-() const { return type(float##size##_neg(value)); }	\
     type operator+(type const &v) const { return type(float##size##_add(value, v.value)); }	\
     type operator-(type const &v) const { return type(float##size##_sub(value, v.value)); }	\
     type operator*(type const &v) const { return type(float##size##_mul(value, v.value)); }	\
@@ -32,8 +33,6 @@ NUMBER_FLOAT(32)
 NUMBER_FLOAT(64)
 NUMBER_FLOAT(x80)
 NUMBER_FLOAT(128)
-
-inline number_float32 operator-(number_float32 const &v) { return number_float32(v.value xor (1 << 31)); }
 
 union float32_and_float {
   float32 soft;
