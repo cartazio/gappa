@@ -8,11 +8,20 @@
 #include "numbers/interval_ext.hpp"
 #include "function.hpp"
 
+/*
+Trivialities are emitted when the result of a basic proof directly
+matches one of the hypotheses. They all are the same node, and it does
+not convey any interesting information. Consequently the result is
+carried through the reference argument. All the trivialities should be
+destroyed by modus or assignation.
+*/
+
 node *triviality = new node(OTHER);
 
 struct node_assign: node {
   node_assign(node *n, property const &p): node(OTHER) {
-    insert_pred(n);
+    if (n != triviality) // TODO
+      insert_pred(n);
     res = p;
     hyp = n->hyp;
   }
@@ -290,6 +299,6 @@ node *generate_basic_proof(property_vect const &hyp, property const &res) {
     n = basic_proof::generate_bound(hyp, res2);
   else
     n = basic_proof::generate_error(hyp, res2);
-  if (n == triviality) return new node_trivial(res);
+  if (n == triviality) n = new node_trivial(res2);
   return n;
 }
