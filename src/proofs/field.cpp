@@ -71,9 +71,10 @@ REWRITE(mul_decomposition_full_right,
 	a * b - c * d,
 	c * (b - d) + d * (a - c) + (a - c) * (b - d));
 
-REWRITE(relative_error_trans,
+REWRIT3(relative_transitivity, //relative_error_trans,
 	(rnd(a, 0) - b) / b,
-	((rnd(a, 0) - a) / a) + ((a - b) / b) + ((rnd(a, 0) - a) / a) * ((a - b) / b));
+	(rnd(a, 0) - a) / a + (a - b) / b + ((rnd(a, 0) - a) / a) * ((a - b) / b),
+	(a - c) / c + (c - b) / b + ((a - c) / c) * ((c - b) / b));
 
 REWRITE(relative_to_absolute,
 	a - b,
