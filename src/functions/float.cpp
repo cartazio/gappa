@@ -65,9 +65,7 @@ static interval bound_compute_add_float(interval const **ints) {
   return *ints[0] + *ints[1];
 }
 
-static node *bound_generate_add_float(property_bound const *hyp, property_bound &res) {
-  interval const *ints[2] = { &hyp[0].bnd, &hyp[1].bnd };
-  res.bnd = bound_compute_add_float(ints);
+static node *bound_generate_add_float(property_bound const *hyp, property_bound const &res) {
   return new node_theorem(2, hyp, res, "add");
 }
 
@@ -131,9 +129,7 @@ static interval bound_compute_sub_float(interval const **ints) {
   return *ints[0] - *ints[1];
 }
 
-static node *bound_generate_sub_float(property_bound const *hyp, property_bound &res) {
-  interval const *ints[2] = { &hyp[0].bnd, &hyp[1].bnd };
-  res.bnd = bound_compute_sub_float(ints);
+static node *bound_generate_sub_float(property_bound const *hyp, property_bound const &res) {
   return new node_theorem(2, hyp, res, "sub");
 }
 
@@ -197,9 +193,7 @@ static interval bound_compute_mul_float(interval const **ints) {
   return *ints[0] * *ints[1];
 }
 
-static node *bound_generate_mul_float(property_bound const *hyp, property_bound &res) {
-  interval const *ints[2] = { &hyp[0].bnd, &hyp[1].bnd };
-  res.bnd = bound_compute_mul_float(ints);
+static node *bound_generate_mul_float(property_bound const *hyp, property_bound const &res) {
   return new node_theorem(2, hyp, res, "mul");
 }
 

@@ -15,7 +15,7 @@ struct hypothesis_constraint {
 
 struct bound_computation {
   interval (*compute)(interval const **);
-  node *(*generate)(property_bound const *, property_bound &);
+  node *(*generate)(property_bound const *, property_bound const &);
 };
 
 struct error_computation {

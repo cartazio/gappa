@@ -121,12 +121,17 @@ node *generate_bound(property_vect const &hyp, property_bound &res) {
   int l = inst.in.size();
   node_vect nodes(l);
   boost::scoped_array< property_bound > props(new property_bound[l]);
+  boost::scoped_array< interval const * > ints(new interval const *[l]);
   for(int i = 0; i < l; ++i) {
     props[i].var = inst.in[i];
     if (!(nodes[i] = generate_bound(hyp, props[i]))) return NULL;
+    ints[i] = &props[i].bnd;
   }
+  interval bnd = (*inst.fun->bnd_comp->compute)(ints.get());
+  if (!is_defined(bnd) || !(bnd <= res.bnd)) return NULL;
+  res.bnd = bnd;
   node *n = (*inst.fun->bnd_comp->generate)(props.get(), res);
-  if (!n) return NULL;
+  assert(n);
   return new node_modus(res, n, nodes);
 }
 
