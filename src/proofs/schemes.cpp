@@ -78,9 +78,25 @@ bool generate_scheme_tree(ast_real const *r, ast_real_vect &reals, ast_real_vect
       if (good) {
         last_real = reals.size();
         in_hyp = true;
-      } else
+      } else {
         discarded.insert(discarded.end(), reals.begin() + last_real, reals.end());
         reals.erase(reals.begin() + last_real, reals.end());
+      }
+    }
+  }
+  if (node *n = top_graph->find_already_known(r)) {
+    property_vect const &hyp = n->get_hypotheses();
+    bool good = true;
+    for(property_vect::const_iterator j = hyp.begin(), j_end = hyp.end(); j != j_end; ++j) {
+      good = generate_scheme_tree(j->real, reals, discarded);
+      if (!good) break;
+    }
+    if (good) {
+      last_real = reals.size();
+      in_hyp = true;
+    } else {
+      discarded.insert(discarded.end(), reals.begin() + last_real, reals.end());
+      reals.erase(reals.begin() + last_real, reals.end());
     }
   }
   unsigned s = schemes.size();
