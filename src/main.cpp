@@ -38,17 +38,18 @@ int display(ast_real const *r) {
   auto_flush plouf;
   plouf << "Definition r" << r_id << " := ";
   if (variable *const *v = boost::get< variable *const >(r))
-    plouf << (*v)->name->name;
+    plouf << '_' << (*v)->name->name;
   else if (ast_number *const *n = boost::get< ast_number *const >(r))
     if ((*n)->base == 0) plouf << '0';
     else plouf << (*n)->mantissa << ((*n)->base == 2 ? 'b' : 'e') << (*n)->exponent;
   else if (real_op const *o = boost::get< real_op const >(r)) {
     static char const op[] = "-+-*/";
-    plouf << op[o->type];
-    for(ast_real_vect::const_iterator i = o->ops.begin(), end = o->ops.end(); i != end; ++i)
-      plouf << " r" << display(*i);
+    if (o->ops.size() == 1)
+      plouf << '(' << op[o->type] << " r" << display(o->ops[0]) << ")%R";
+    else
+      plouf << "(r" << display(o->ops[0]) << ' ' << op[o->type] << " r" << display(o->ops[1]) << ")%R";
   } else assert(false);
-  plouf << '\n';
+  plouf << ".\n";
   return r_id;
 }
 
@@ -61,7 +62,7 @@ int display(property const &p) {
   if (p.type == PROP_BND)
     s << name;
   else if (p.type == PROP_ABS || p.type == PROP_REL)
-    s << (p.type == PROP_ABS ? "ABS(" : "REL(") << name << ", r" << display(p.real) << ')';
+    s << (p.type == PROP_ABS ? "ABS" : "REL") << "(_" << name << ", r" << display(p.real) << ')';
   else assert(false);
   s << " in " << p.bnd;
   std::string s_ = s.str();
@@ -82,7 +83,7 @@ int display(node *n) {
   plouf << "Lemma l" << n_id << ": ";
   for(property_vect::const_iterator i = n->hyp.begin(), end = n->hyp.end(); i != end; ++i)
     plouf << 'p' << display(*i) << " -> ";
-  plouf << 'p' << display(n->res) << "\n " << node_ids[n->type];
+  plouf << 'p' << display(n->res) << ".\n " << node_ids[n->type];
   if (n->type == THEOREM)
     plouf << " (" << static_cast< node_theorem * >(n)->name << ')';
   else if (n->type == OTHER)
