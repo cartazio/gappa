@@ -10,6 +10,7 @@ interval from_exponent(int, mp_rnd_t);
 int mig_exponent(interval const &);
 int mag_exponent(interval const &);
 bool is_singleton(interval const &);
+bool is_not_defined(interval const &);
 
 template< class CharType, class CharTraits >
 std::basic_ostream< CharType, CharTraits > &operator<<

@@ -74,19 +74,40 @@ struct do_subset_of: boost::static_visitor< bool > {
 };
 
 struct do_to_real: boost::static_visitor< interval_real > {
-  interval_real operator ()(interval_float32 const &v) const {
+  interval_real operator()(interval_float32 const &v) const {
     return interval_real(to_real(lower(v)), to_real(upper(v)));
   }
   template< typename T >
   interval_real operator()(T const &) const { throw; }
 };
 
-struct do_exponent: boost::static_visitor< int > {
-  int operator ()(interval_float32 const &v) const {
-    return ulp_exponent(norm(v));
-  }
-  template< typename T >
-  int operator()(T const &) const { throw; }
+struct do_ulp_exponent: boost::static_visitor< int > {
+  int operator()(interval_real const &) const { throw; }
+  int operator()(interval_not_defined const &) const { throw; }
+  template< class T >
+  int operator()(T const &v) const { return ulp_exponent(norm(v)); }
+};
+
+struct do_mig_exponent: boost::static_visitor< int > {
+  int operator()(interval_real const &) const { throw; }
+  int operator()(interval_not_defined const &) const { throw; }
+  template< class T >
+  int operator()(T const &v) const
+  { return exponent(std::max(typename T::base_type(0), std::max(lower(v), -upper(v)))); }
+};
+
+struct do_mag_exponent: boost::static_visitor< int > {
+  int operator()(interval_real const &) const { throw; }
+  int operator()(interval_not_defined const &) const { throw; }
+  template< class T >
+  int operator()(T const &v) const { return exponent(norm(v)); }
+};
+
+struct do_is_singleton: boost::static_visitor< bool > {
+  bool operator()(interval_real const &) const { throw; }
+  bool operator()(interval_not_defined const &) const { throw; }
+  template< class T >
+  bool operator()(T const &v) const { return singleton(v); }
 };
 
 template< class CharType, class CharTraits >
@@ -94,10 +115,10 @@ struct do_output: boost::static_visitor< void > {
   typedef std::basic_ostream< CharType, CharTraits > ostream;
   ostream &stream;
   do_output(ostream &s): stream(s) {}
-  void operator ()(interval_float32 const &v) const { stream << v; }
-  void operator ()(interval_float64 const &v) const { stream << v; }
-  void operator ()(interval_real const &v) const { stream << v; }
-  void operator ()(interval_not_defined const &) const { stream << '?'; }
+  void operator()(interval_float32 const &v) const { stream << v; }
+  void operator()(interval_float64 const &v) const { stream << v; }
+  void operator()(interval_real const &v) const { stream << v; }
+  void operator()(interval_not_defined const &) const { stream << '?'; }
   template< typename T >
   void operator()(T const &) const { throw; }
 };
@@ -108,7 +129,10 @@ interval interval::operator-(interval const &v) const { return boost::apply_visi
 interval interval::operator*(interval const &v) const { return boost::apply_visitor(do_mul(), value, v.value); }
 bool interval::operator<=(interval const &v) const { return boost::apply_visitor(do_subset_of(), value, v.value); }
 interval to_real(interval const &v) { return interval_variant(boost::apply_visitor(do_to_real(), v.value)); }
-int ulp_exponent(interval const &v) { return boost::apply_visitor(do_exponent(), v.value); }
+int ulp_exponent(interval const &v) { return boost::apply_visitor(do_ulp_exponent(), v.value); }
+int mig_exponent(interval const &v) { return boost::apply_visitor(do_mig_exponent(), v.value); }
+int mag_exponent(interval const &v) { return boost::apply_visitor(do_mag_exponent(), v.value); }
+bool is_singleton(interval const &v) { return boost::apply_visitor(do_is_singleton(), v.value); }
 
 template< class CharType, class CharTraits >
 std::basic_ostream< CharType, CharTraits > &operator<<
@@ -124,4 +148,8 @@ interval from_exponent(int e, mp_rnd_t r) {
   mpfr_mul_2si(u->val, u->val, e - 1, GMP_RNDN);
   mpfr_neg(l->val, u->val, GMP_RNDN);
   return interval_variant(interval_real(number_real(l), number_real(u)));
+}
+
+bool is_not_defined(interval const &v) {
+  return boost::get< interval_not_defined const >(&v.value);
 }

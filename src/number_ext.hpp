@@ -51,5 +51,9 @@ int ulp_exponent(number_float32 const &);
 int ulp_exponent(number_float64 const &);
 int ulp_exponent(number_floatx80 const &);
 int ulp_exponent(number_float128 const &);
+int exponent(number_float32 const &);
+int exponent(number_float64 const &);
+int exponent(number_floatx80 const &);
+int exponent(number_float128 const &);
 
 #endif // NUMBER_EXT_HPP

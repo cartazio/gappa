@@ -40,12 +40,65 @@ union float32_inside {
   float32 value;
 };
 
-int ulp_exponent(number_float32 const &v) {
+int exponent(number_float32 const &v) {
   float32_inside f;
   f.value = v.value;
   int e = f.exponent;
-  return ((e == 0) ? -126 : e - 127) - 23;
+  return (e == 0) ? -126 : e - 127;
 }
+
+union float64_inside {
+  struct {
+    unsigned long long int mantissa:52;
+    unsigned long long int exponent:11;
+    unsigned long long int negative:1;
+  };
+  float64 value;
+};
+
+int exponent(number_float64 const &v) {
+  float64_inside f;
+  f.value = v.value;
+  int e = f.exponent;
+  return (e == 0) ? -1022 : e - 1023;
+}
+
+union floatx80_inside {
+  struct {
+    unsigned int exponent:15;
+    unsigned int negative:1;
+  };
+  unsigned int value;
+};
+
+int exponent(number_floatx80 const &v) {
+  floatx80_inside f;
+  f.value = v.value.high;
+  int e = f.exponent;
+  return (e == 0) ? -16382 : e - 16383;
+}
+
+union float128_inside {
+  struct {
+    unsigned long long int mantissa2:48;
+    unsigned long long int exponent:15;
+    unsigned long long int negative:1;
+  };
+  unsigned long long int value;
+};
+
+int exponent(number_float128 const &v) {
+  float128_inside f;
+  f.value = v.value.high;
+  int e = f.exponent;
+  return (e == 0) ? -16382 : e - 16383;
+}
+
+int ulp_exponent(number_float32 const &v) { return exponent(v) - 23; }
+int ulp_exponent(number_float64 const &v) { return exponent(v) - 52; }
+int ulp_exponent(number_floatx80 const &v) { return exponent(v) - 63; }
+int ulp_exponent(number_float128 const &v) { return exponent(v) - 112; }
+
 
 static impl_data *read_number_data(ast_number const &n, int p, mp_rnd_t rnd) {
   impl_data *res = new impl_data;
