@@ -243,6 +243,7 @@ node *computation_scheme::generate_proof(property_vect const &hyp, property &res
   case 1: {
     assert(r->type == UOP_MINUS);
     property res1(r->ops[0]);
+    if (is_defined(res.bnd)) res1.bnd = -res.bnd;
     node *n1 = handle_proof(hyp, res1);
     if (!n1) return NULL;
     res.bnd = -res1.bnd;
@@ -257,10 +258,12 @@ node *computation_scheme::generate_proof(property_vect const &hyp, property &res
       return new node_theorem(0, NULL, res, "sub_refl");
     }
     property res1(r->ops[0]);
+    bool do_square = same_ops && r->type == BOP_MUL;
+    if (do_square) res1.bnd = square_rev(res.bnd);
     node *n1 = handle_proof(hyp, res1);
     if (!n1) return NULL;
     interval const &i1 = res1.bnd;
-    if (same_ops && r->type == BOP_MUL) {
+    if (do_square) {
       interval i = square(i1);
       if (!(i <= res.bnd)) return NULL;
       res.bnd = i;
@@ -269,6 +272,11 @@ node *computation_scheme::generate_proof(property_vect const &hyp, property &res
       break;
     }
     property res2(r->ops[1]);
+    switch (r->type) {
+    case BOP_ADD: res2.bnd = add_rev(i1, res.bnd); break;
+    case BOP_SUB: res2.bnd = sub_rev(i1, res.bnd); break;
+    default: ;
+    }
     node *n2 = handle_proof(hyp, res2);
     if (!n2) return NULL;
     interval const &i2 = res2.bnd;

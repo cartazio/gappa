@@ -18,12 +18,12 @@ public:
   struct rounding {
     static T conv_down(int v)		{ RES(w); mpfr_set_si(w->val, v, GMP_RNDD); return T(w); }
     static T conv_up  (int v)		{ RES(w); mpfr_set_si(w->val, v, GMP_RNDU); return T(w); }
-  /*static T conv_down(double v)	{ RES(w); mpfr_set_d(w->val, v, GMP_RNDD); return T(w); }
-    static T conv_up  (double v)	{ RES(w); mpfr_set_d(w->val, v, GMP_RNDU); return T(w); }*/
     static T conv_down(T const &v)	{ return v; }
     static T conv_up  (T const &v)	{ return v; }
     static T opp_down(T const &v)	{ RES(w); mpfr_neg(w->val, v.data->val, GMP_RNDD); return T(w); }
     static T opp_up  (T const &v)	{ RES(w); mpfr_neg(w->val, v.data->val, GMP_RNDU); return T(w); }
+    static T sqrt_down(T const &v)	{ RES(w); mpfr_sqrt(w->val, v.data->val, GMP_RNDD); return T(w); }
+    static T sqrt_up  (T const &v)	{ RES(w); mpfr_sqrt(w->val, v.data->val, GMP_RNDU); return T(w); }
 #   define BINARY_FUNC(name) \
     static T name##_down(T const &x, T const &y) \
     { RES(z); mpfr_##name(z->val, x.data->val, y.data->val, GMP_RNDD); return T(z); } \
@@ -199,4 +199,31 @@ number const &lower(interval const &u) {
 number const &upper(interval const &u) {
   assert(u.base);
   return plup.upper();
+}
+
+interval add_rev(interval const &u, interval const &r) {
+  assert(u.base);
+  if (!(r.base)) return interval();
+  typedef real_policies::rounding rnd;
+  number a = rnd::sub_down(lower(r), lower(u)), b = rnd::sub_up(upper(r), upper(u));
+  if (!(a <= b)) return interval();
+  return interval(a, b);
+}
+
+interval sub_rev(interval const &u, interval const &r) {
+  assert(u.base);
+  if (!(r.base)) return interval();
+  typedef real_policies::rounding rnd;
+  number a = rnd::sub_down(upper(u), upper(r)), b = rnd::sub_up(lower(u), lower(r));
+  if (!(a <= b)) return interval();
+  return interval(a, b);
+}
+
+interval square_rev(interval const &r) {
+  if (!(r.base)) return interval();
+  typedef real_policies::rounding rnd;
+  number const &u = upper(r);
+  if (boost::numeric::interval_lib::user::is_neg(u)) return interval();
+  number a = rnd::sqrt_up(u);
+  return interval(-a, a);
 }
