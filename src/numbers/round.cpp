@@ -30,7 +30,10 @@ bool float_format::rndU(rnd const &r) const {
 }
 
 bool float_format::rndCE(rnd const &r) const {
-  return r.g && (r.s || !mpz_tstbit(r.m, 0));
+  // the lower bit of the mantissa is not necessarily the ulp bit
+  // but testing for it works since the guard bit can only be 1 if
+  // the number was to precise and got truncated
+  return r.g && (r.s || mpz_tstbit(r.m, 0));
 }
 
 void float_format::succ(mpz_t &m, int &e) const {
