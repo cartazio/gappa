@@ -124,9 +124,10 @@ int display(property const &p) {
     name = '_' + e->var->name->name;
     s << "I754s_" << (e->type == ERROR_ABS ? "ABS" : "REL") << " r" << display(e->real);
   } else {
-    s << 'r' << display(p.real);
-    name = s.str();
-    s.str("IR_in");
+    s << "IR_in";
+    std::stringstream ss;
+    ss << 'r' << display(p.real);
+    name = ss.str();
   }
   s << " i" << display(p.bnd) << ' ' << name;
   std::string s_ = s.str();

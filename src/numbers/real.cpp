@@ -79,6 +79,8 @@ interval_description interval_real_desc_ =
 
 interval_description *interval_real_desc = &interval_real_desc_;
 
+interval_real operator-(interval_real const &u)
+{ return interval_real(gen(- cast(u.ptr))); }
 interval_real operator+(interval_real const &u, interval_real const &v)
 { return interval_real(gen(cast(u.ptr) + cast(v.ptr))); }
 interval_real operator-(interval_real const &u, interval_real const &v)

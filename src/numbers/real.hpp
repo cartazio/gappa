@@ -32,14 +32,24 @@ struct number_real {
   impl_data const *data;
   mpfr_t const &mpfr_data() const { return data->val; }
 
-  number_real() { data = empty_mpfr->clone(); }
+  number_real(): data(empty_mpfr->clone()) {}
   number_real(int v);
-  number_real(impl_data const *d) { data = d; }
-  number_real(number_real const &v) { data = v.data->clone(); }
-  number_real &operator=(number_real const &v) { impl_data const *d = v.data->clone(); data->destroy(); data = d; return *this; }
+  number_real(impl_data const *d): data(d) {}
+  number_real(number_real const &v): data(v.data->clone()) {}
+  number_real &operator=(number_real const &v) {
+    impl_data const *d = v.data->clone();
+    data->destroy();
+    data = d;
+    return *this;
+  }
   ~number_real() { data->destroy(); }
   bool operator<=(number_real const &v) const;
   bool operator==(number_real const &v) const;
+  number_real operator-() const {
+    impl_data *r = new impl_data();
+    mpfr_neg(r->val, data->val, GMP_RNDN);
+    return number_real(r);
+  }
 };
 
 number_real const &min(number_real const &x, number_real const &y);

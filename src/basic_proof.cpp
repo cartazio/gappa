@@ -112,6 +112,7 @@ node *generate_triviality(property_vect const &hyp, property &res) {
   return triviality;
 }
 
+/*
 interval const &compute_triviality(property_vect const &hyp, ast_real const *r) {
   property bnd(r);
   //if (node *n = graph->find_compatible_node(hyp, bnd)) return n->res.bnd;
@@ -120,7 +121,6 @@ interval const &compute_triviality(property_vect const &hyp, ast_real const *r) 
   return hyp[i].bnd;
 }
 
-/*
 interval compute_bound(property_vect const &hyp, ast_real const *r) {
   { interval const &res = compute_triviality(hyp, r);
     if (is_defined(res)) return res; }
@@ -273,6 +273,54 @@ node *generate_relabs(property_vect const &hyp, property &res) {
   return new node_modus(res, new node_theorem(2, hyps, res, "relabs"), nodes);
 }
 
+node *generate_computation(property_vect const &hyp, property &res) {
+  real_op const *r = boost::get< real_op const >(res.real);
+  assert(r);
+  node_vect nodes;
+  node *n = NULL;
+  switch (r->ops.size()) {
+  case 1: {
+    assert(r->type == UOP_MINUS);
+    property res1(r->ops[0]);
+    node *n1 = handle_proof(hyp, res1);
+    if (!n1) return NULL;
+    res.bnd = - to_real(res1.bnd);
+    nodes.push_back(n1);
+    n = new node_theorem(1, &res1, res, "neg");
+    break; }
+  case 2: {
+    property res1(r->ops[0]);
+    node *n1 = handle_proof(hyp, res1);
+    if (!n1) return NULL;
+    interval_real i1 = to_real(res1.bnd);
+    property res2(r->ops[1]);
+    node *n2 = handle_proof(hyp, res2);
+    interval_real i2 = to_real(res2.bnd);
+    if (!n2) return NULL;
+    char const *s = NULL;
+    switch (r->type) {
+    case BOP_ADD: res.bnd = i1 + i2; s = "add"; break;
+    case BOP_SUB: res.bnd = i1 - i2; s = "sub"; break;
+    case BOP_MUL: res.bnd = i1 * i2; s = "mul"; break;
+    case BOP_DIV:
+      if (contains_zero(i2)) return NULL;
+      res.bnd = i1 / i2;
+      s = "div";
+      break;
+    default:
+      assert(false);
+    }
+    nodes.push_back(n1);
+    nodes.push_back(n2);
+    property hyps[2] = { res1, res2 };
+    n = new node_theorem(2, hyps, res, s);
+    break; }
+  default:
+    assert(false);
+  }
+  return new node_modus(res, n, nodes);
+}
+
 void add_scheme(ast_real *r, node *(*f)(property_vect const &, property &)) {
   for(proof_scheme const *scheme = r->scheme, *prev = NULL; scheme != NULL;
       prev = scheme, scheme = scheme->next)
@@ -305,7 +353,8 @@ void add_basic_scheme(ast_real *r) {
         add_scheme(r, &generate_trans_error);
     if (e->var->real == e->real)
       add_scheme(r, &generate_refl_error);
-  }
+  } else if (boost::get< real_op const >(r))
+    add_scheme(r, &generate_computation);
 }
 
 node *handle_proof(property_vect const &hyp, property &res) {

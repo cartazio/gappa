@@ -32,6 +32,7 @@ interval intersect(interval const &, interval const &);
 
 std::pair< interval, interval > split(interval const &);
 
+interval_real operator-(interval_real const &);
 interval_real operator+(interval_real const &, interval_real const &);
 interval_real operator-(interval_real const &, interval_real const &);
 interval_real operator*(interval_real const &, interval_real const &);
