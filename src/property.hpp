@@ -16,12 +16,12 @@ struct property {
   ast_real const *real; // only used for ABS and REL
   property(): type(property_type(-1)) {}
   property(property_type t): type(t) {}
+  bool implies(property const &) const;
+  bool operator<(property const &) const;
 };
 
-bool operator>(property const &, property const &);
-
 struct property_vect: std::vector< property > {
-  bool operator>(property_vect const &p) const;
+  bool implies(property_vect const &p) const;
   int find_compatible_property(property const &p) const;
 };
 

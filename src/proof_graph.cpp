@@ -51,7 +51,7 @@ void graph_t::erase(node *n) {
 
 node *graph_t::find_compatible_node(property_vect const &hyp, property const &res) const {
   for(node_set::const_iterator i = nodes.begin(), end = nodes.end(); i != end; ++i)
-    if (hyp > (*i)->hyp && (*i)->res > res) return *i;
+    if ((*i)->type != CONCLUSION && hyp.implies((*i)->hyp) && (*i)->res.implies(res)) return *i;
   if (father != NULL) return father->find_compatible_node(hyp, res);
   return NULL;
 }
