@@ -4,6 +4,7 @@
 #include "interval.hpp"
 #include <iostream>
 
+interval hull(interval const &, interval const &);
 interval to_real(interval const &);
 int ulp_exponent(interval const &);
 interval from_exponent(int, mp_rnd_t);

@@ -60,6 +60,16 @@ struct do_mul: boost::static_visitor< interval > {
   }
 };
 
+struct do_hull: boost::static_visitor< interval > {
+  template< typename T, typename U >
+  interval operator()(T const &, U const &) const { throw; /* TODO */ }
+  template< typename T >
+  typename boost::disable_if< boost::is_same< T, interval_not_defined >, interval >::type // interval
+  operator()(T const &lhs, T const &rhs) const {
+    return interval_variant(hull(lhs, rhs));
+  }
+};
+
 struct do_div: boost::static_visitor< interval > {
   template< typename T, typename U >
   interval operator()(T const &, U const &) const { throw; /* TODO */ }
@@ -166,6 +176,7 @@ interval interval::operator-(interval const &v) const { return boost::apply_visi
 interval interval::operator*(interval const &v) const { return boost::apply_visitor(do_mul(), value, v.value); }
 interval interval::operator/(interval const &v) const { return boost::apply_visitor(do_div(), value, v.value); }
 bool interval::operator<=(interval const &v) const { return boost::apply_visitor(do_subset_of(), value, v.value); }
+interval hull(interval const &u, interval const &v) { return boost::apply_visitor(do_hull(), u.value, v.value); }
 interval to_real(interval const &v) { return interval_variant(boost::apply_visitor(do_to_real(), v.value)); }
 int ulp_exponent(interval const &v) { return boost::apply_visitor(do_ulp_exponent(), v.value); }
 int mig_exponent(interval const &v) { return boost::apply_visitor(do_mig_exponent(), v.value); }
