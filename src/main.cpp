@@ -13,6 +13,7 @@ static void initialize_functions() {
 }
 
 extern int yyparse(void);
+extern node *generate_proof(property_vect const &hyp, property const &res);
 
 int main() {
   initialize_functions();
@@ -20,7 +21,8 @@ int main() {
   std::cout << conclusions.size() << " conclusions" << std::endl;
   for(node_set::const_iterator i = conclusions.begin(), end = conclusions.end(); i != end; ++i) {
     graph_layer layer;
-    node *n = generate_basic_proof((*i)->hyp, (*i)->res);
+    // node *n = generate_basic_proof((*i)->hyp, (*i)->res);
+    node *n = generate_proof((*i)->hyp, (*i)->res);
     if (!n) continue;
     if (property_bound *r = boost::get< property_bound >(&n->res))
       std::cout << r->var->name->name << " in " << r->bnd << std::endl;
