@@ -231,12 +231,12 @@ node_vect graph_t::find_useful_axioms(ast_real const *real) {
   for(node_set::const_iterator i = ax.begin(), end = ax.end(); i != end; ++i) {
     node *n = *i;
     property const &p = n->get_result();
-    if (p.real == real)
+    if (p.real == real) {
       if (is_useful(p)) {
         res.push_back(n);
         axioms.insert(n);
       }
-    else axioms.insert(n);
+    } else axioms.insert(n);
   }
   return res;
 }
