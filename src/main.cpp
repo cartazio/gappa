@@ -103,7 +103,7 @@ static disp_node_map displayed_nodes;
 int display(node *n) {
   int n_id = map_finder(displayed_nodes, n);
   if (n_id < 0) return -n_id;
-  static char const *const node_ids[] = { "HYPOTHESIS", "CONCLUSION", "THEOREM", "MODUS", "UNION", "OTHER" };
+  static char const *const node_ids[] = { "HYPOTHESIS", "AXIOM", "THEOREM", "MODUS", "UNION" };
   auto_flush plouf;
   plouf << "Lemma l" << n_id << " : ";
   property_vect const &n_hyp = n->get_hypotheses();
