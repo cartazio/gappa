@@ -109,7 +109,7 @@ bool graph_t::try_real(node *&n) {
       property res(res2.real, i0);
       node *ns[2] = { i->second, n };
       property hyps[2] = { res1, res2 };
-      assert(top_graph == this);
+      graph_loader loader(this);
       n = new modus_node(2, ns, new theorem_node(2, hyps, res, "intersect"));
     }
     i->second = n;
