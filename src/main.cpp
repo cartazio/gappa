@@ -103,12 +103,12 @@ static property_map displayed_properties;
 
 std::string display(property const &p) {
   std::stringstream s;
-  s << display(p.bnd) << " r" << display(p.real);
+  s << display(p.bnd) << ' ' << display(p.real);
   std::string s_ = s.str();
   int p_id = map_finder(displayed_properties, s_);
   std::string name = composite('p', p_id);
   if (p_id >= 0)
-    std::cout << "Definition " << p_id << " := IintF i" << s_ << ".\n";
+    std::cout << "Definition " << name << " := IintF " << s_ << ".\n";
   return name;
 }
 
