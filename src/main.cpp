@@ -106,6 +106,8 @@ int display(ast_real const *r) {
       plouf << '(' << op[o->type] << " r" << display(o->ops[0]) << ")%R";
     else
       plouf << "(r" << display(o->ops[0]) << ' ' << op[o->type] << " r" << display(o->ops[1]) << ")%R";
+  } else if (error_bound const *e = boost::get< error_bound const >(r)) {
+    plouf << "blop";
   } else assert(false);
   plouf << ".\n";
   return r_id;
@@ -207,9 +209,9 @@ int main() {
   yyparse();
   for(node_set::const_iterator i = conclusions.begin(), end = conclusions.end(); i != end; ++i) {
     graph_layer layer;
-    node *n = handle_proof((*i)->hyp, (*i)->res);
-    if (!n) continue;
-    property const &p = n->res;
+    property p = (*i)->res;
+    node *n = handle_proof((*i)->hyp, p);
+    if (!n || n == triviality) continue;
     if (error_bound const *e = boost::get< error_bound const >(p.real))
       std::cout << (e->type == ERROR_ABS ? "ABS(" : "REL(") << e->var->name->name << ", ...)";
     else if (variable const *v = p.real->get_variable())

@@ -53,11 +53,11 @@ static ast_prop_and implicit;
 
 %%
 
-BLOB: PROG REALS '{' PROP '}'
+BLOB: PROG '{' PROP '}'
   {
     link_variables();
-    generate_graph(*$4, implicit);
-    delete $4;
+    generate_graph(*$3, implicit);
+    delete $3;
     set_default_schemes();
   }
 
@@ -123,14 +123,10 @@ OPERATION:
   }
 | IDENT ASSIGN NUMBER ';'
   { implicit = merge_prop_and(implicit, ast_atom_approx(check_prog_variable($1), $3)); }
-
-REALS: | REALS NEWREAL
-
-NEWREAL:
-  IDENT '=' REAL ';'	{ check_real_variable($1, $3); }
+| IDENT '=' REAL ';'	{ check_real_variable($1, $3); }
 
 REAL:
-  NUMBER		{ $$ = new ast_real($1); }
+  NUMBER		{ $$ = normalize(ast_real($1)); }
 | IDENT			{ $$ = check_real($1); }
 | ERROR '(' IDENT ',' REAL ')'
   { $$ = normalize(ast_real(error_bound(error_type($1), check_prog_variable($3), $5))); }

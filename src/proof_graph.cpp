@@ -41,17 +41,17 @@ void node::replace_pred(node *o, node *n) {
 
 void graph_t::insert(node *n) {
   if (n->type == CONCLUSION) { assert(this == &base_graph); conclusions.insert(n); }
-  nodes.insert(n);
+  else nodes.insert(n);
 }
 
 void graph_t::erase(node *n) {
   if (n->type == CONCLUSION) conclusions.erase(n);
-  nodes.erase(n);
+  else nodes.erase(n);
 }
 
 node *graph_t::find_compatible_node(property_vect const &hyp, property const &res) const {
   for(node_set::const_iterator i = nodes.begin(), end = nodes.end(); i != end; ++i)
-    if ((*i)->type != CONCLUSION && hyp.implies((*i)->hyp) && (*i)->res.implies(res)) return *i;
+    if (hyp.implies((*i)->hyp) && (*i)->res.implies(res)) return *i;
   if (father != NULL) return father->find_compatible_node(hyp, res);
   return NULL;
 }

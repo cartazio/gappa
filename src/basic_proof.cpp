@@ -17,7 +17,7 @@ carried through the reference parameter. All the trivialities should be
 destroyed by modus or assignation.
 */
 
-node *triviality = new node(OTHER);
+node *triviality = (node *)1;
 
 struct node_theorem: node {
   char const *name;
@@ -298,18 +298,22 @@ node *generate_computation(property_vect const &hyp, property &res) {
     interval_real i2 = to_real(res2.bnd);
     if (!n2) return NULL;
     char const *s = NULL;
+    interval_real i;
     switch (r->type) {
-    case BOP_ADD: res.bnd = i1 + i2; s = "add"; break;
-    case BOP_SUB: res.bnd = i1 - i2; s = "sub"; break;
-    case BOP_MUL: res.bnd = i1 * i2; s = "mul"; break;
+    case BOP_ADD: i = i1 + i2; s = "add"; break;
+    case BOP_SUB: i = i1 - i2; s = "sub"; break;
+    case BOP_MUL: i = i1 * i2; s = "mul"; break;
     case BOP_DIV:
       if (contains_zero(i2)) return NULL;
-      res.bnd = i1 / i2;
+      i = i1 / i2;
       s = "div";
       break;
     default:
       assert(false);
+      return NULL;
     }
+    if (!(i <= res.bnd)) return NULL;
+    res.bnd = i;
     nodes.push_back(n1);
     nodes.push_back(n2);
     property hyps[2] = { res1, res2 };

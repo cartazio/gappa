@@ -10,14 +10,14 @@ interval create_interval(ast_interval const &, bool widen, type_id);
 
 ast_real *check_real(ast_ident *v) {
   switch (v->id_type) {
-  case PROG_VAR:
-    return v->var->real;
   case UNKNOWN_ID:
     { 
-      v->id_type = REAL_VAR;
-      v->rvar = new real_variable(v, NULL);
+      v->id_type = PROG_VAR;
+      v->var = new variable(v, UNDEFINED);
     }
     // no break
+  case PROG_VAR:
+    return v->var->real;
   case REAL_VAR:
     return v->rvar->real;
   default:

@@ -30,6 +30,7 @@ ast_ident *ast_ident::find(std::string const &s) {
 
 void make_variables_real() {
   for(store_t::const_iterator i = store.begin(), end = store.end(); i != end; ++i) {
+    if ((*i)->id_type != PROG_VAR) continue;
     variable *v = (*i)->var;
     if (v && !v->type) v->type = interval_real_desc;
   }
