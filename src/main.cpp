@@ -34,8 +34,7 @@ std::string composite(char prefix, int num) {
   return s.str();
 }
 
-typedef std::map< std::string, int > float_map; // (not so) bastard way of doing it
-static float_map displayed_floats;
+static std::map< std::string, int > displayed_floats;
 
 std::string display(number const &f) {
   std::stringstream s;
@@ -51,8 +50,7 @@ std::string display(number const &f) {
   return name;
 }
 
-typedef std::map< std::string, int > interval_map; // (not so) bastard way of doing it
-static interval_map displayed_intervals;
+static std::map< std::string, int > displayed_intervals;
 
 std::string display(interval const &i) {
   std::stringstream s;
@@ -65,8 +63,7 @@ std::string display(interval const &i) {
   return name;
 }
 
-typedef std::map< ast_real const *, int > real_map;
-static real_map displayed_reals;
+static std::map< ast_real const *, int > displayed_reals;
 
 std::string display(ast_real const *r) {
   int r_id = map_finder(displayed_reals, r);
@@ -132,8 +129,7 @@ void invoke_lemma(auto_flush &plouf, node *m, property_map const &pmap) {
   plouf << '\n';
 }
 
-typedef std::map< node *, int > disp_node_map;
-static disp_node_map displayed_nodes;
+static std::map< node *, int > displayed_nodes;
 
 std::string display(node *n) {
   int n_id = map_finder(displayed_nodes, n);
