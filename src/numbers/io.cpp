@@ -131,16 +131,18 @@ static void load_float(void const *_mem, mpfr_t &f, interval_float_description c
 static void write_exact(std::ostream &stream, mpfr_t const &f) {
   int sgn = mpfr_sgn(f);
   if (sgn == 0) { stream << '0'; return; }
-  if (sgn < 0) stream << '-'; // avoid an MPFR bug
   mpz_t frac;
   mpz_init(frac);
   int exp = mpfr_get_z_exp(frac, f);
-  mpz_abs(frac, frac); // ditto
+  if (sgn < 0) stream << '-'; // avoid an
+  mpz_abs(frac, frac);        // MPFR bug
+  int d = mpz_scan1(frac, 0);
+  if (d > 0) mpz_fdiv_q_2exp(frac, frac, d);
   char *s = mpz_get_str(NULL, 10, frac);
   stream << s;
   free(s);
   mpz_clear(frac);
-  if (exp != 0) stream << 'b' << exp;
+  if (exp != 0) stream << 'b' << exp + d;
 }
 
 static void write_approx(std::ostream &stream, mpfr_t const &f) {
