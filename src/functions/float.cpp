@@ -31,10 +31,6 @@ struct node_theorem: node {
   }
 };
 
-static void extract_intervals(property_vect const &hyp, interval const **ints) {
-  for(int i = 0, l = hyp.size(); i < l; ++i) ints[i] = &hyp[i].bnd;
-}
-
 #define bop_definition(type, TYPE, PREC)	\
   fun = new function(BOP_##TYPE);		\
   fun->args_type = args##PREC##_b;		\
