@@ -19,7 +19,7 @@ void rnd::shr(int d) {
   if (d == 0) return;
   e += d;
   if (!(g || s || d == 1))
-    g = mpz_divisible_2exp_p(m, d - 1);
+    s = !mpz_divisible_2exp_p(m, d - 1);
   else s |= g;
   g = mpz_tstbit(m, d - 1);
   mpz_tdiv_q_2exp(m, m, d);
