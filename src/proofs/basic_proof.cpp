@@ -6,11 +6,6 @@
 #include "proofs/proof_graph.hpp"
 #include "proofs/schemes.hpp"
 
-#include <algorithm>
-#include <iostream>
-#include <map>
-#include <boost/scoped_array.hpp>
-
 /*
 Trivialities are emitted when the result of a basic proof directly
 matches one of the hypotheses. They all are the same node, and it does
