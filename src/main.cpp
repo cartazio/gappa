@@ -267,7 +267,7 @@ int main() {
     }
     for(int j = 0; j < nb; ++j)
       if (results[j]) {
-        std::cout << "\n\nRequire Import IA_comput.\nRequire Import IA_manip.\n";
+        std::cout << "\n\nRequire Import IA_comput.\nRequire Import IA_manip.\nRequire Import IA_float.\n";
         break;
       }
     for(int j = 0; j < nb; ++j)
