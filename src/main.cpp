@@ -93,8 +93,7 @@ int display(node *n) {
     plouf << "\nQed.\n";
   } else {
     plouf << node_ids[n->type];
-    if (n->type == OTHER)
-      plouf << " (relabs)";
+    assert(n->type != OTHER);
     for(node_vect::const_iterator i = n->pred.begin(), end = n->pred.end(); i != end; ++i)
       plouf << " l" << display(*i);
     plouf << '\n';

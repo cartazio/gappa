@@ -18,11 +18,11 @@ destroyed by modus or assignation.
 
 node *triviality = new node(OTHER);
 
-struct node_relabs: node {
-  node_relabs(property const &b, property const &e, property const &p): node(OTHER) {
+struct node_theorem: node {
+  char const *name;
+  node_theorem(int nb, property const *h, property const &p, char const *n): node(THEOREM), name(n) {
     res = p;
-    hyp.push_back(b);
-    hyp.push_back(e);
+    for(int i = 0; i < nb; ++i) hyp.push_back(h[i]);
   }
 };
 
@@ -290,7 +290,8 @@ node *generate_error(property_vect const &hyp, property &res) {
   node_vect nodes;
   nodes.push_back(nb);
   nodes.push_back(ne);
-  return new node_modus(res, new node_relabs(bnd, err, res), nodes);
+  property hyps[2] = { bnd, err };
+  return new node_modus(res, new node_theorem(2, hyps, res, "relabs"), nodes);
 }
 
 } // namespace basic_proof
