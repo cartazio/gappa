@@ -142,7 +142,8 @@ static void write_exact(std::ostream &stream, mpfr_t const &f) {
   stream << s;
   free(s);
   mpz_clear(frac);
-  if (exp != 0) stream << 'b' << exp + d;
+  exp += d;
+  if (exp != 0) stream << 'b' << exp;
 }
 
 static void write_approx(std::ostream &stream, mpfr_t const &f) {
