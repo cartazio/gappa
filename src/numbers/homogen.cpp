@@ -8,7 +8,6 @@ struct homogen_rounding_class: rounding_class {
   interval he, hb;
   homogen_rounding_class();
   virtual interval round                      (interval const &, std::string &) const;
-  virtual interval absolute_error_from_real   (interval const &, std::string &) const;
   virtual interval absolute_error_from_rounded(interval const &, std::string &) const;
   virtual std::string name() const { return "homogen80x"; }
 };
@@ -26,13 +25,8 @@ interval homogen_rounding_class::round(interval const &i, std::string &name) con
   return i * hb;
 }
 
-interval homogen_rounding_class::absolute_error_from_real(interval const &i, std::string &name) const {
-  name = "homogen80x_error";
-  return i * he;
-}
-
 interval homogen_rounding_class::absolute_error_from_rounded(interval const &i, std::string &name) const {
-  name = "homogen80x_error_inv";
+  name = "homogen80x_error";
   return i * he;
 }
 
