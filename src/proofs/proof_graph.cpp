@@ -17,26 +17,8 @@ node::node(node_id t): type(t) {
   graph->insert(this);
 }
 
-void node::insert_succ(node *n) {
-  succ.insert(n);
-}
-
 void node::insert_pred(node *n) {
   pred.push_back(n);
-  n->insert_succ(this);
-}
-
-void node::remove_succ(node *n) {
-  succ.erase(n);
-}
-
-void node::replace_pred(node *o, node *n) {
-  for(int i = pred.size() - 1; i >= 0; i--)
-    if (pred[i] == o) {
-      o->remove_succ(this);
-      n->insert_succ(this);
-      pred[i] = n;
-    }
 }
 
 void graph_t::insert(node *n) {
@@ -85,10 +67,6 @@ bool graph_t::has_compatible_hypothesis(ast_real const *r) const {
 }
 
 static void delete_top_graph() {
-  // the two loops can't be merged since a successor could then be removed on an already deleted node
-  for(node_set::const_iterator i = graph->nodes.begin(), end = graph->nodes.end(); i != end; ++i)
-    for(node_vect::iterator j = (*i)->pred.begin(), end = (*i)->pred.end(); j != end; ++j)
-      (*j)->remove_succ(*i);
   for(node_set::const_iterator i = graph->nodes.begin(), end = graph->nodes.end(); i != end; ++i)
     delete *i;
   graph_t *old_graph = graph->father;
