@@ -296,6 +296,21 @@ node *generate_absolute_error(property_vect const &hyp, property &res) {
   return new node_modus(res, new node_theorem(1, &res2, res, name), nodes);
 }
 
+node *generate_rounding_bound(property_vect const &hyp, property &res) {
+  rounded_real const *r = boost::get< rounded_real const >(res.real);
+  assert(r);
+  property res2(r->rounded);
+  node *n = handle_proof(hyp, res2);
+  if (!n) return NULL;
+  std::string name;
+  interval bnd = r->rounding->bound(res2.bnd, name);
+  if (!(bnd <= res.bnd)) return NULL;
+  res.bnd = bnd;
+  node_vect nodes;
+  nodes.push_back(n);
+  return new node_modus(res, new node_theorem(1, &res2, res, name), nodes);
+}
+
 node *generate_computation(property_vect const &hyp, property &res) {
   real_op const *r = boost::get< real_op const >(res.real);
   assert(r);
@@ -388,6 +403,8 @@ void add_basic_scheme(ast_real *r) {
       add_scheme(r, &generate_computation);
   } else if (boost::get< ast_number const *const >(r))
     add_scheme(r, &generate_constant);
+  else if (boost::get< rounded_real const >(r))
+    add_scheme(r, &generate_rounding_bound);
 }
 
 node *handle_proof(property_vect const &hyp, property &res) {
