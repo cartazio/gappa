@@ -1,5 +1,5 @@
-#ifndef ROUND_HPP
-#define ROUND_HPP
+#ifndef NUMBERS_ROUND_HPP
+#define NUMBERS_ROUND_HPP
 
 #include <gmp.h>
 #include <mpfr.h>
@@ -33,4 +33,4 @@ class float_format {
   void roundCE(mpfr_t &f) { round(f, &float_format::rndCE, &float_format::rndCE); }
 };
 
-#endif // ROUND_HPP
+#endif // NUMBERS_ROUND_HPP
