@@ -14,7 +14,8 @@ struct hypothesis_constraint {
 };
 
 struct function_match {
-  hypothesis_constraint res, *constraints;
+  hypothesis_constraint res;
+  hypothesis_constraint const *constraints;
   interval (*compute)(interval const **);
   union {
     node *(*generate_bound)(property_vect const &, property_bound &);

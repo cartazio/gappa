@@ -43,9 +43,9 @@ struct function_match;
 
 struct function {
   int real_op;
-  type_id *return_type;
-  type_id *args_type;
-  function_match *matches;
+  type_id const *return_type;
+  type_id const *args_type;
+  function_match const *matches;
   function(int r): real_op(r) {}
 };
 

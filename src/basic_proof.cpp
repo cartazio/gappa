@@ -89,14 +89,14 @@ node *generate_basic_proof_bound(property_vect const &hyp, property_bound &res) 
   }
   node *n = NULL;
   node_vect nodes;
-  for(function_match *m = inst.fun->matches; m->res.var != 0; ++m) {
+  for(function_match const *m = inst.fun->matches; m->res.var != 0; ++m) {
     if (m->res.var != -1) continue; /* TODO */
     if (m->res.type != HYP_BND) continue;
     graph_layer layer;
     bool good = true;
     nodes.clear();
     property_vect props;
-    for(hypothesis_constraint *c = m->constraints; c->var != 0; ++c) {
+    for(hypothesis_constraint const *c = m->constraints; c->var != 0; ++c) {
       variable *v = (c->var < 0) ? inst.out[-1 - c->var] : inst.in[c->var - 1] ;
       node *nn;
       if (c->type == HYP_BND) {
@@ -138,14 +138,14 @@ node *generate_basic_proof_error(property_vect const &hyp, property_error &res) 
   if (res.error != 0) return NULL; // TODO
   node *n = NULL;
   node_vect nodes;
-  for(function_match *m = inst.fun->matches; m->res.var != 0; ++m) {
+  for(function_match const *m = inst.fun->matches; m->res.var != 0; ++m) {
     if (m->res.var != -1) continue; /* TODO */
     if (m->res.type != HYP_ABS) continue;
     graph_layer layer;
     bool good = true;
     nodes.clear();
     property_vect props;
-    for(hypothesis_constraint *c = m->constraints; c->var != 0; ++c) {
+    for(hypothesis_constraint const *c = m->constraints; c->var != 0; ++c) {
       variable *v = (c->var < 0) ? inst.out[-1 - c->var] : inst.in[c->var - 1] ;
       node *nn;
       if (c->type == HYP_BND) {
