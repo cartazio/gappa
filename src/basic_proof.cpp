@@ -101,9 +101,11 @@ node_modus::node_modus(property const &p, node *n, node_vect const &nodes): node
 }
 
 struct node_relabs: node {
-  node_relabs(property_vect const &h, property const &p): node(OTHER) {
+  node_relabs(node *nb, node *ne, property_vect const &h, property const &p): node(OTHER) {
     res = p;
     hyp = h;
+    insert_pred(nb);
+    insert_pred(ne);
   }
 };
 
@@ -259,26 +261,26 @@ node *generate_error(property_vect const &hyp, property &res) {
   }
   property bnd(PROP_BND);
   bnd.var = res2.var;
-  node *n = generate_bound(hyp, bnd);
-  if (!n) return NULL;
+  node *n1 = generate_bound(hyp, bnd);
+  if (!n1) return NULL;
   res.type = res2.type == PROP_ABS ? PROP_REL : PROP_ABS;
   res.var = res2.var;
   res.real = res2.real;
   res.bnd = interval();
-  n = generate_error_forced(hyp, res);
-  if (!n) return NULL;
+  node *n2 = generate_error_forced(hyp, res);
+  if (!n2) return NULL;
   res.type = res2.type;
   if (res2.type == PROP_ABS) {
     res.bnd = res.bnd * to_real(bnd.bnd);
     if (!(res.bnd <= res2.bnd)) return NULL;
-    return new node_relabs(hyp, res);
+    return new node_relabs(n1, n2, hyp, res);
   } else {
     if (!is_zero(res.bnd)) {
       if (contains_zero(bnd.bnd)) return NULL;
       res.bnd = res.bnd / to_real(bnd.bnd);
     }
     if (!(res.bnd <= res2.bnd)) return NULL;
-    return new node_relabs(hyp, res);
+    return new node_relabs(n1, n2, hyp, res);
   }
 }
 
@@ -291,6 +293,6 @@ node *generate_basic_proof(property_vect const &hyp, property const &res) {
     n = basic_proof::generate_bound(hyp, res2);
   else
     n = basic_proof::generate_error(hyp, res2);
-  assert(n != triviality); // TODO
+  if (n == triviality) return new node_trivial(res);
   return n;
 }
