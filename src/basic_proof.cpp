@@ -3,7 +3,7 @@
 #include "proof_graph.hpp"
 #include "program.hpp"
 #include "ast.hpp"
-#include "interval.hpp"
+#include "interval_ext.hpp"
 #include "function.hpp"
 
 node *triviality = new node(OTHER);
@@ -79,7 +79,7 @@ node *generate_basic_proof_bound(property_vect const &hyp, property_bound &res) 
   int idx = res.var->get_definition();
   if (idx == -1) return NULL; /* TODO: unprovable? */
   instruction &inst = program[idx];
-  if (inst.fun == NULL) {
+  if (!inst.fun) {
     variable *v = res.var;
     res.var = inst.in[0];
     node *n = generate_basic_proof_bound(hyp, res);
@@ -110,16 +110,16 @@ node *generate_basic_proof_bound(property_vect const &hyp, property_bound &res) 
     }
     if (!good) continue;
     n = (*m->generate_bound)(props, res);
-    if (n != NULL) { layer.flatten(); break; }
+    if (n) { layer.flatten(); break; }
   }
-  if (n == NULL) return NULL;
+  if (!n) return NULL;
   return new node_modus(res, n, nodes);
 }
 
-node *generate_basic_proof_error(property_vect const &hyp, property_error &res) {
+node *generate_basic_proof_force_error(property_vect const &hyp, property_error &res) {
   if (node *n = generate_triviality(hyp, res)) return n;
   /*{ static char const *type[] = { "ABS", "REL" };
-    std::cout << type[res.error] << '(' << res.var->name->name << ", " << res.real << ") in " << res.err << std::endl; }*/
+    std::cout << type[res.error] << '(' << res.var->name->name << ", ...) in " << res.err << std::endl; }*/
   if (variable *const *v = boost::get< variable *const >(res.real))
     if (res.var == *v) {
       res.err = interval(interval_variant(interval_real()));
@@ -128,7 +128,7 @@ node *generate_basic_proof_error(property_vect const &hyp, property_error &res) 
   int idx = res.var->get_definition();
   if (idx == -1) return NULL; /* TODO: unprovable? */
   instruction &inst = program[idx];
-  if (inst.fun == NULL) {
+  if (!inst.fun) {
     variable *v = res.var;
     res.var = inst.in[0];
     node *n = generate_basic_proof_error(hyp, res);
@@ -138,12 +138,11 @@ node *generate_basic_proof_error(property_vect const &hyp, property_error &res) 
   }
   real_op const *op = boost::get< real_op const >(res.real);
   if (!op || op->type != inst.fun->type) return NULL;
-  if (res.error != 0) return NULL; // TODO
   node *n = NULL;
   node_vect nodes;
   for(function_match const *m = inst.fun->matches; m->res.var != 0; ++m) {
-    if (m->res.var != -1) continue; /* TODO */
-    if (m->res.type != HYP_ABS) continue;
+    if (m->res.var != -1) continue; // TODO
+    if (!(m->res.type == HYP_ABS && res.error == 0 || m->res.type == HYP_REL && res.error == 1)) continue;
     graph_layer layer;
     bool good = true;
     nodes.clear();
@@ -157,10 +156,10 @@ node *generate_basic_proof_error(property_vect const &hyp, property_error &res) 
         if (!(nn = generate_basic_proof_bound(hyp, p))) { good = false; break; }
         if (c->type == HYP_SNG && !is_singleton(p.bnd)) { good = false; break; }
         props.push_back(p);
-      } else if (c->type == HYP_ABS) {
+      } else if (c->type == HYP_ABS || c->type == HYP_REL) {
         property_error p;
         p.var = v;
-        p.error = 0;
+        if (c->type == HYP_ABS) p.error = 0; else p.error = 1;
         assert(c->var >= 1);
         p.real = &op->ops[c->var - 1];
         if (!(nn = generate_basic_proof_error(hyp, p))) { good = false; break; }
@@ -170,10 +169,41 @@ node *generate_basic_proof_error(property_vect const &hyp, property_error &res) 
     }
     if (!good) continue;
     n = (*m->generate_error)(props, res);
-    if (n != NULL) { layer.flatten(); break; }
+    if (n) { layer.flatten(); break; }
   }
-  if (n == NULL) return NULL;
+  if (!n) return NULL;
   return new node_modus(res, n, nodes);
+}
+
+node *generate_basic_proof_error(property_vect const &hyp, property_error &res) {
+  property_error res2 = res;
+  {
+    graph_layer layer;
+    node *n = generate_basic_proof_force_error(hyp, res);
+    if (n) { layer.flatten(); return n; }
+  }
+  property_bound bnd;
+  bnd.var = res2.var;
+  node *n = generate_basic_proof_bound(hyp, bnd);
+  if (!n) return NULL;
+  res.var = res2.var;
+  res.real = res2.real;
+  res.err = interval();
+  res.error = 1 - res2.error;
+  n = generate_basic_proof_force_error(hyp, res);
+  if (!n) return NULL;
+  if (res2.error == 0) {
+    res.error = 0;
+    res.err = res.err * to_real(bnd.bnd);
+    return new node_plouf(hyp, res);
+  } else {
+    res.error = 1;
+    if (!is_zero(res.err)) {
+      if (contains_zero(bnd.bnd)) return NULL;
+      res.err = res.err / to_real(bnd.bnd);
+    }
+    return new node_plouf(hyp, res);
+  }
 }
 
 node *do_generate_basic_proof::operator()(property_bound const &res) const {

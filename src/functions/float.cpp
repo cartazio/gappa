@@ -50,7 +50,8 @@ static void extract_intervals(property_vect const &hyp, interval const **ints) {
 #define do_match(TYPE, name, type)	\
   { { -1, HYP_##TYPE }, const_##name, &compute_##name, { generate_##type: &generate_##name } }
 
-interval const not_defined = interval(interval_variant(interval_not_defined()));
+static interval const not_defined = interval_variant(interval_not_defined());
+static interval const one = interval_variant(interval_real(number_real(1)));
 
 /********** add **********/
 
@@ -95,7 +96,7 @@ static node *generate_add_float_abs_sterbenz(property_vect const &hyp, property_
   interval const *ints[5];
   extract_intervals(hyp, ints);
   res.err = compute_add_float_abs_sterbenz(ints);
-  if (is_not_defined(res.err)) return NULL;
+  if (!is_defined(res.err)) return NULL;
   return new node_theorem(hyp, res, "add_sterbenz");
 }
 
@@ -166,7 +167,7 @@ static node *generate_sub_float_abs_sterbenz(property_vect const &hyp, property_
   interval const *ints[5];
   extract_intervals(hyp, ints);
   res.err = compute_sub_float_abs_sterbenz(ints);
-  if (is_not_defined(res.err)) return NULL;
+  if (!is_defined(res.err)) return NULL;
   return new node_theorem(hyp, res, "sub_sterbenz");
 }
 
@@ -239,11 +240,26 @@ static node *generate_mul_float_abs_singleton(property_vect const &hyp, property
   return new node_theorem(hyp, res, "mul_singleton");
 }
 
+static hypothesis_constraint const const_mul_float_rel[3] =
+  { { 1, HYP_REL }, { 2, HYP_REL }, { 0 } };
+
+static interval compute_mul_float_rel(interval const **ints) {
+  return (one + *ints[0]) * (one + *ints[1]) * (one + from_exponent(-23, GMP_RNDN)) - one; // TODO
+}
+
+static node *generate_mul_float_rel(property_vect const &hyp, property_error &res) {
+  interval const *ints[2];
+  extract_intervals(hyp, ints);
+  res.err = compute_mul_float_rel(ints);
+  return new node_theorem(hyp, res, "mul");
+}
+
 void initialize_mul() {
-  static const function_match match[4] = {
+  static const function_match match[5] = {
     do_match(BND, mul_float_bnd, bound),
     do_match(ABS, mul_float_abs_singleton, error),
     do_match(ABS, mul_float_abs, error),
+    do_match(REL, mul_float_rel, error),
     { { 0 } } };
   bop_definitions(mul, MUL);
 }
