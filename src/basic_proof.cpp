@@ -1,4 +1,5 @@
 #include <iostream>
+#include <boost/scoped_array.hpp>
 #include "basic_proof.hpp"
 #include "proof_graph.hpp"
 #include "program.hpp"
@@ -65,10 +66,42 @@ node *generate_triviality(property_vect const &hyp, T &res) {
   return triviality;
 }
 
+static interval const not_defined = interval_variant(interval_not_defined());
+
+interval const &compute_triviality(property_vect const &hyp, variable *v) {
+  property_bound bnd;
+  bnd.var = v;
+  if (node *n = graph->find_compatible_node(hyp, bnd)) {
+    property_bound *p = boost::get< property_bound >(&n->res);
+    assert(p);
+    return p->bnd;
+  }
+  int i = hyp.find_compatible_property(bnd);
+  if (i < 0) return not_defined;
+  property_bound const *p = boost::get< property_bound const >(&hyp[i]);
+  assert(p);
+  return p->bnd;
+}
+
 node *generate_bound(property_vect const &hyp, property_bound &res);
 node *generate_error(property_vect const &hyp, property_error &res);
 
-interval compute_bound(property_vect const &hyp, variable const *v) {
+interval compute_bound(property_vect const &hyp, variable *v) {
+  { interval const &res = compute_triviality(hyp, v);
+    if (is_defined(res)) return res; }
+  int idx = v->get_definition();
+  if (idx == -1) return not_defined;
+  instruction &inst = program[idx];
+  if (!inst.fun) return compute_bound(hyp, inst.in[0]);
+  int l = inst.in.size();
+  boost::scoped_array< interval > ints_(new interval[l]);
+  boost::scoped_array< interval const * > ints(new interval const *[l]);
+  for(int i = 0; i < l; ++i) {
+    ints_[i] = compute_bound(hyp, inst.in[i]);
+    if (!(is_defined(ints_[i]))) return not_defined;
+    ints[i] = &ints_[i];
+  }
+  return (*inst.fun->bnd_comp->compute)(ints.get());
 }
 
 node *generate_bound(property_vect const &hyp, property_bound &res) {
@@ -87,13 +120,12 @@ node *generate_bound(property_vect const &hyp, property_bound &res) {
   }
   int l = inst.in.size();
   node_vect nodes(l);
-  property_bound *props = new property_bound[l];
+  boost::scoped_array< property_bound > props(new property_bound[l]);
   for(int i = 0; i < l; ++i) {
     props[i].var = inst.in[i];
-    if (!(nodes[i] = generate_bound(hyp, props[i]))) { delete props; return NULL; }
+    if (!(nodes[i] = generate_bound(hyp, props[i]))) return NULL;
   }
-  node *n = (*inst.fun->bnd_comp->generate)(props, res);
-  delete props;
+  node *n = (*inst.fun->bnd_comp->generate)(props.get(), res);
   if (!n) return NULL;
   return new node_modus(res, n, nodes);
 }
