@@ -75,7 +75,7 @@ std::string display(ast_real const *r) {
     return name;
   }
   auto_flush plouf;
-  plouf << "Definition " << name << " := ";
+  plouf << "Notation " << name << " := (";
   if (ast_number const *const *nn = boost::get< ast_number const *const >(r)) {
     ast_number const &n = **nn;
     std::string m = (n.mantissa.size() > 0 && n.mantissa[0] == '+') ? n.mantissa.substr(1) : n.mantissa;
@@ -91,7 +91,7 @@ std::string display(ast_real const *r) {
   } else if (rounded_real const *rr = boost::get< rounded_real const >(r))
     plouf << "rounding_" << rr->rounding->name() << ' ' << display(rr->rounded);
   else assert(false);
-  plouf << ".\n";
+  plouf << ").\n";
   return name;
 }
 
@@ -104,7 +104,7 @@ std::string display(property const &p) {
   int p_id = map_finder(displayed_properties, s_);
   std::string name = composite('p', p_id);
   if (p_id >= 0)
-    std::cout << "Definition " << name << " := IintF " << s_ << ".\n";
+    std::cout << "Notation " << name << " := (IintF " << s_ << ").\n";
   return name;
 }
 
@@ -124,7 +124,7 @@ void invoke_lemma(auto_flush &plouf, node *m, property_map const &pmap) {
     if (j->bnd <= i)
       plouf << " exact h" << h << '.';
     else
-      plouf << " unfold " << display(*j) << ". apply subset with (1 := h" << h << "). reflexivity.";
+      plouf << " apply subset with (1 := h" << h << "). reflexivity.";
   }
   plouf << '\n';
 }
@@ -156,15 +156,15 @@ std::string display(node *n) {
   case THEOREM: {
     theorem_node *t = static_cast< theorem_node * >(n);
     if (!nb_hyps) plouf << '\n';
-    plouf << " unfold " << p_res << ".\n apply ";
-    ast_real_vect subs = t->sub_expressions();
+    /*ast_real_vect subs = t->sub_expressions();
     if (subs.empty()) plouf << t->name;
     else {
       plouf << '(' << t->name;
       for(ast_real_vect::const_iterator i = subs.begin(), i_end = subs.end(); i != i_end; ++i)
         plouf << ' ' << display(*i);
       plouf << ')';
-    }
+    }*/
+    plouf << " apply " << t->name;
     if (nb_hyps) {
       plouf << " with";
       for(int i = 0; i < nb_hyps; ++i) plouf << " (" << i + 1 << " := h" << i << ')';
@@ -189,7 +189,6 @@ std::string display(node *n) {
     plouf << "Qed.\n";
     break; }
   case INTERSECTION: {
-    plouf << " unfold " << p_res << ".\n";
     property_map pmap;
     int num_hyp = 0;
     for(property_vect::const_iterator j = n_hyp.begin(), j_end = n_hyp.end(); j != j_end; ++j, ++num_hyp)
