@@ -129,7 +129,7 @@ node *dichotomy_scheme::generate_proof(interval const &bnd) const {
     hyp2.push_back(varn->get_result());
     property_vect const &hyp = top_graph->get_hypotheses();
     for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
-      if (i->real != real) hyp2.push_back(*i);
+      if (i->real != var) hyp2.push_back(*i);
     graph_layer layer;
     dichotomy_node *n = new dichotomy_node(hyp2, property(real, bnd));
     n->dichotomize();
