@@ -136,6 +136,8 @@ node *generate_basic_proof_error(property_vect const &hyp, property_error &res) 
     res.var = v;
     return new node_assign(n, res);
   }
+  real_op const *op = boost::get< real_op const >(res.real);
+  if (!op || op->type != inst.fun->type) return NULL;
   if (res.error != 0) return NULL; // TODO
   node *n = NULL;
   node_vect nodes;
@@ -159,9 +161,8 @@ node *generate_basic_proof_error(property_vect const &hyp, property_error &res) 
         property_error p;
         p.var = v;
         p.error = 0;
-        binary_op const *o = boost::get< binary_op const >(res.real); // TODO
-        assert(o);
-        p.real = (c->var == 1) ? &o->left : &o->right;
+        assert(c->var >= 1);
+        p.real = &op->ops[c->var - 1];
         if (!(nn = generate_basic_proof_error(hyp, p))) { good = false; break; }
         props.push_back(p);
       } else assert(false);

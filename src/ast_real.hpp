@@ -2,6 +2,7 @@
 #define AST_REAL_HPP
 
 #include <boost/variant.hpp>
+#include <vector>
 
 struct variable;
 
@@ -11,48 +12,33 @@ struct ast_number {
   int base;
 };
 
-enum real_unary_op { UOP_MINUS };
-enum real_binary_op { BOP_ADD, BOP_SUB, BOP_MUL, BOP_DIV };
+enum real_op_type { UOP_MINUS, BOP_ADD, BOP_SUB, BOP_MUL, BOP_DIV };
 
-struct unary_op;
-struct binary_op;
+struct real_op;
 
 typedef boost::variant
   < ast_number *
   , variable *
-  , boost::recursive_wrapper< unary_op >
-  , boost::recursive_wrapper< binary_op >
+  , boost::recursive_wrapper< real_op >
   > ast_real;
 
-struct unary_op
+typedef std::vector< ast_real > ast_real_vect;
+
+struct real_op
 {
-  ast_real left;
-  real_unary_op type;
-  unary_op(real_unary_op t, ast_real const &lhs): left(lhs), type(t) {}
-  bool operator==(unary_op const &v) const { return type == v.type && left == v.left; }
+  ast_real_vect ops;
+  real_op_type type;
+  real_op(real_op_type t, ast_real_vect const &o): ops(o), type(t) {}
+  real_op(real_op_type t, ast_real const &o): type(t) { ops.push_back(o); }
+  real_op(ast_real const &l, real_op_type t, ast_real const &r): type(t) { ops.push_back(l); ops.push_back(r); }
+  bool operator==(real_op const &v) const { return type == v.type && ops == v.ops; }
 };
 
 template< class CharType, class CharTraits >
 std::basic_ostream< CharType, CharTraits > &operator<<
-  (std::basic_ostream< CharType, CharTraits > &stream, unary_op const &value)
+  (std::basic_ostream< CharType, CharTraits > &stream, real_op const &value)
 {
-  stream << "(U" << value.type << ' ' << value.left << ')';
-  return stream;
-}
-
-struct binary_op
-{
-  ast_real left, right;
-  real_binary_op type;
-  binary_op(ast_real const &lhs, real_binary_op t, ast_real const &rhs): left(lhs), right(rhs), type(t) {}
-  bool operator==(binary_op const &v) const { return type == v.type && left == v.left && right == v.right; }
-};
-
-template< class CharType, class CharTraits >
-std::basic_ostream< CharType, CharTraits > &operator<<
-  (std::basic_ostream< CharType, CharTraits > &stream, binary_op const &value)
-{
-  stream << "(B" << value.type << ' ' << value.left << ' ' << value.right << ')';
+  stream << "(" << value.type << /*' ' << value.left << ')'*/" ...)"; // TODO
   return stream;
 }
 
