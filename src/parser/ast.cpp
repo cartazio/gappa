@@ -1,9 +1,11 @@
+#include "numbers/round.hpp"
 #include "parser/ast.hpp"
 #include "proofs/schemes.hpp"
 
 #include <algorithm>
 #include <cassert>
 #include <set>
+#include <sstream>
 
 namespace {
 
@@ -83,9 +85,32 @@ void clear_schemes() {
   }
 }
 
-std::string dump_real(ast_real const *r) {
+std::string dump_real(ast_real const *r, int prio) {
   if (r->name)
     return r->name->name;
-  else
-    return "...";
+  if (ast_number const *const *nn = boost::get< ast_number const *const >(r)) {
+    ast_number const &n = **nn;
+    std::string m = (n.mantissa.size() > 0 && n.mantissa[0] == '+') ? n.mantissa.substr(1) : n.mantissa;
+    if (n.base == 0) return "0";
+    if (n.exponent == 0) return m;
+    std::stringstream s;
+    s << m << (n.base == 2 ? 'b' : 'e') << n.exponent;
+    return s.str();
+  }
+  if (real_op const *o = boost::get< real_op const >(r)) {
+    static char const op[] = "-+-*/";
+    static bool const pr[] = { 2, 0, 0, 1, 1 };
+    std::string s;
+    if (o->ops.size() == 1)
+      s = op[o->type] + dump_real(o->ops[0], pr[o->type]);
+    else
+      s = dump_real(o->ops[0], pr[o->type]) + ' ' + op[o->type] + ' ' + dump_real(o->ops[1], pr[o->type] + 1);
+    if (prio <= pr[o->type]) return s;
+    return '(' + s + ')';
+  }
+  if (rounded_real const *rr = boost::get< rounded_real const >(r))
+    return '<' + rr->rounding->name() + ">(" + dump_real(rr->rounded, 0) + ')';
+  assert(false);
+  return "...";
 }
+
