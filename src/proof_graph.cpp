@@ -15,7 +15,6 @@ graph_t *graph = &base_graph;
 
 node::node(node_id t): type(t) {
   graph->insert(this);
-  owner = graph;
 }
 
 void node::insert_pred(node *n) {
@@ -64,12 +63,12 @@ graph_layer::graph_layer() {
 }
 
 graph_layer::~graph_layer() {
-  for(node_set::const_iterator i = graph->nodes.begin(), end = graph->nodes.end(); i != end; ++i) {
-    node *n = *i;
-    for(node_vect::iterator j = n->pred.begin(), end = n->pred.end(); j != end; ++j)
-      if ((*j)->owner != graph) (*j)->remove_succ(n);
-    delete n;
-  }
+  // the two loops can't be merged since a successor could then be removed on an already deleted node
+  for(node_set::const_iterator i = graph->nodes.begin(), end = graph->nodes.end(); i != end; ++i)
+    for(node_vect::iterator j = (*i)->pred.begin(), end = (*i)->pred.end(); j != end; ++j)
+      (*j)->remove_succ(*i);
+  for(node_set::const_iterator i = graph->nodes.begin(), end = graph->nodes.end(); i != end; ++i)
+    delete *i;
   graph_t *old_graph = graph->father;
   delete graph;
   graph = old_graph;
@@ -78,9 +77,7 @@ graph_layer::~graph_layer() {
 void graph_layer::flatten() const {
   graph_t *old_graph = graph->father;
   assert(graph != NULL);
-  for(node_set::const_iterator i = graph->nodes.begin(), end = graph->nodes.end(); i != end; ++i) {
+  for(node_set::const_iterator i = graph->nodes.begin(), end = graph->nodes.end(); i != end; ++i)
     old_graph->nodes.insert(*i);
-    (*i)->owner = old_graph;
-  }
   graph->nodes.clear();
 }

@@ -15,7 +15,6 @@ typedef std::vector< node * > node_vect;
 typedef std::set< node * > node_set;
 
 struct node {
-  graph_t *owner;
   property_vect hyp;
   property res;
   node_vect pred;
