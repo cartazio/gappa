@@ -68,10 +68,11 @@ int display(ast_real const *r) {
   if (ast_ident const *v = r->get_variable()) {
     std::cout << "Variable _" << v->name << " : R.\n";
     plouf << '_' << v->name;
-  } else if (ast_number const *const *n = boost::get< ast_number const *const >(r)) {
-    if ((*n)->base == 0) plouf << '0';
-    else plouf << "Float" << ((*n)->base == 2 ? " (" : "10 (") << (*n)->mantissa
-               << ") (" << (*n)->exponent << ')';
+  } else if (ast_number const *const *nn = boost::get< ast_number const *const >(r)) {
+    ast_number const &n = **nn;
+    if (n.base == 0) plouf << '0';
+    else if (n.exponent == 0) plouf << '(' << n.mantissa << ")%Z";
+    else plouf << "Float" << (n.base == 2 ? " (" : "10 (") << n.mantissa << ") (" << n.exponent << ')';
   } else if (real_op const *o = boost::get< real_op const >(r)) {
     static char const op[] = "-+-*/";
     if (o->ops.size() == 1)
