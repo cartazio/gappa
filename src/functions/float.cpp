@@ -1,6 +1,7 @@
 #include "ast.hpp"
 #include "program.hpp"
 #include "function.hpp"
+#include "numbers/real.hpp"
 #include "numbers/interval_ext.hpp"
 #include "property.hpp"
 #include "proof_graph.hpp"
@@ -51,8 +52,8 @@ static void extract_intervals(property_vect const &hyp, interval const **ints) {
 #define do_constraint(TYPE, name)	\
   { { -1, HYP_##TYPE }, const_##name, &compute_##name, &generate_##name }
 
-static interval const not_defined = interval_variant(interval_not_defined());
-static interval const one = interval_variant(interval_real(number_real(1)));
+static interval const not_defined;
+static interval const one = interval(&interval_real_desc, new interval_real(number_real(1)));
 
 /********** add **********/
 
@@ -68,7 +69,7 @@ static hypothesis_constraint const const_add_float_abs[4] =
   { { 1, HYP_ABS }, { 2, HYP_ABS }, { -1, HYP_BND }, { 0 } };
 
 static interval compute_add_float_abs(interval const **ints) {
-  return *ints[0] + *ints[1] + from_exponent(ulp_exponent(*ints[2]), GMP_RNDN);
+  return *ints[0] + *ints[1] + from_exponent(ulp_exponent(*ints[2]), 0);
 }
 
 static node *generate_add_float_abs(property_vect const &hyp, property &res) {
@@ -132,7 +133,7 @@ static hypothesis_constraint const const_sub_float_abs[4] =
   { { 1, HYP_ABS }, { 2, HYP_ABS }, { -1, HYP_BND }, { 0 } };
 
 static interval compute_sub_float_abs(interval const **ints) {
-  return *ints[0] - *ints[1] + from_exponent(ulp_exponent(*ints[2]), GMP_RNDN);
+  return *ints[0] - *ints[1] + from_exponent(ulp_exponent(*ints[2]), 0);
 }
 
 static node *generate_sub_float_abs(property_vect const &hyp, property &res) {
@@ -197,7 +198,7 @@ static hypothesis_constraint const const_mul_float_abs[6] =
 
 static interval compute_mul_float_abs(interval const **ints) {
   return *ints[2] * to_real(*ints[1]) + *ints[3] * to_real(*ints[0])
-       + *ints[2] * *ints[3] + from_exponent(ulp_exponent(*ints[4]), GMP_RNDN);
+       + *ints[2] * *ints[3] + from_exponent(ulp_exponent(*ints[4]), 0);
 }
 
 static node *generate_mul_float_abs(property_vect const &hyp, property &res) {
@@ -226,7 +227,7 @@ static hypothesis_constraint const const_mul_float_rel[3] =
   { { 1, HYP_REL }, { 2, HYP_REL }, { 0 } };
 
 static interval compute_mul_float_rel(interval const **ints) {
-  return (one + *ints[0]) * (one + *ints[1]) * (one + from_exponent(-23, GMP_RNDN)) - one; // TODO
+  return (one + *ints[0]) * (one + *ints[1]) * (one + from_exponent(-23, 0)) - one; // TODO
 }
 
 static node *generate_mul_float_rel(property_vect const &hyp, property &res) {

@@ -6,5 +6,5 @@ all: $(OBJS)
 
 include .depend
 
-.depend: *.hpp *.cpp
+.depend: *.cpp
 	g++ -MM -I.. *.cpp > .depend

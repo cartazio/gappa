@@ -7,10 +7,10 @@ OBJS_numbers=numbers/float.o numbers/interval.o numbers/real.o
 main: $(OBJS) $(OBJS_functions) $(OBJS_numbers)
 	$(CXX) -o $@ $^ -lfl -lmpfr -lgmp
 
-$(OBJS_functions):
+$(OBJS_functions)::
 	make -C functions
 
-$(OBJS_numbers):
+$(OBJS_numbers)::
 	make -C numbers
 
 plouf2.exe: $(OBJS)

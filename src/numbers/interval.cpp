@@ -43,7 +43,7 @@ bool is_zero(interval const &v) {
 }
 
 interval to_real(interval const &v) {
-  return interval(interval_real_desc, (*v.desc->to_real)(v.ptr));
+  return interval(&interval_real_desc, (*v.desc->to_real)(v.ptr));
 }
 
 interval operator+(interval const &u, interval const &v) {
@@ -66,7 +66,7 @@ interval operator/(interval const &u, interval const &v) {
   return interval(u.desc, (*u.desc->div)(u.ptr, v.ptr));
 }
 
-bool operator<=(interval const &, interval const &) {
+bool operator<=(interval const &u, interval const &v) {
   if (v.desc == &interval_not_defined) return true;
   if (u.desc != v.desc) return false;
   return (*u.desc->subset)(u.ptr, v.ptr);
