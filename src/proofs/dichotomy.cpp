@@ -133,12 +133,9 @@ node *dichotomy_scheme::generate_proof(property const &res) const {
     layer.flatten();
   } catch (dichotomy_failure e) { // BLI
     property const &h = e.hyp;
-    std::cerr << "failure: when ... is " << h.bnd << ", ";
+    std::cerr << "failure: when " << dump_real(h.real) << " is " << h.bnd << ", ";
     property const &p = e.res;
-    if (ast_ident const *v = p.real->get_variable())
-      std::cerr << v->name;
-    else
-      std::cerr << "...";
+    std::cerr << dump_real(p.real);
     if (is_defined(e.bnd))
       std::cerr << " is in " << e.bnd << " potentially outside of " << p.bnd << '\n';
     else

@@ -28,10 +28,16 @@ int map_finder(std::map< T, int > &m, T const &k) {
   return id;
 }
 
+std::string composite(char prefix, int num) {
+  std::stringstream s;
+  s << prefix << (num < 0 ? -num : num);
+  return s.str();
+}
+
 typedef std::map< std::string, int > float_map; // (not so) bastard way of doing it
 static float_map displayed_floats;
 
-int display(number const &f) {
+std::string display(number const &f) {
   std::stringstream s;
   bool zero;
   int exp;
@@ -39,36 +45,41 @@ int display(number const &f) {
   s << ") (" << (zero ? 0 : exp) << ')';
   std::string const &s_ = s.str();
   int f_id = map_finder(displayed_floats, s_);
-  if (f_id < 0) return -f_id;
-  std::cout << "Definition f" << f_id << " := Float " << s_ << ".\n";
-  return f_id;
+  std::string name = composite('f', f_id);
+  if (f_id >= 0)
+    std::cout << "Definition " << name << " := Float " << s_ << ".\n";
+  return name;
 }
 
 typedef std::map< std::string, int > interval_map; // (not so) bastard way of doing it
 static interval_map displayed_intervals;
 
-int display(interval const &i) {
+std::string display(interval const &i) {
   std::stringstream s;
-  s << 'f' << display(lower(i)) << " f" << display(upper(i));
+  s << display(lower(i)) << ' ' << display(upper(i));
   std::string const &s_ = s.str();
   int i_id = map_finder(displayed_intervals, s_);
-  if (i_id < 0) return -i_id;
-  std::cout << "Definition i" << i_id << " := makepairF " << s_ << ".\n";
-  return i_id;
+  std::string name = composite('i', i_id);
+  if (i_id >= 0)
+    std::cout << "Definition " << name << " := makepairF " << s_ << ".\n";
+  return name;
 }
 
 typedef std::map< ast_real const *, int > real_map;
 static real_map displayed_reals;
 
-int display(ast_real const *r) {
+std::string display(ast_real const *r) {
   int r_id = map_finder(displayed_reals, r);
-  if (r_id < 0) return -r_id;
+  std::string name = r->name ? '_' + r->name->name : composite('r', r_id);
+  if (r_id < 0)
+    return name;
+  if (boost::get< undefined_real const >(r)) {
+    std::cout << "Variable " << name << " : R.\n";
+    return name;
+  }
   auto_flush plouf;
-  plouf << "Definition r" << r_id << " := ";
-  if (ast_ident const *v = r->get_variable()) {
-    std::cout << "Variable _" << v->name << " : R.\n";
-    plouf << '_' << v->name;
-  } else if (ast_number const *const *nn = boost::get< ast_number const *const >(r)) {
+  plouf << "Definition " << name << " := ";
+  if (ast_number const *const *nn = boost::get< ast_number const *const >(r)) {
     ast_number const &n = **nn;
     std::string m = (n.mantissa.size() > 0 && n.mantissa[0] == '+') ? n.mantissa.substr(1) : n.mantissa;
     if (n.base == 0) plouf << "Float1 0";
@@ -77,45 +88,47 @@ int display(ast_real const *r) {
   } else if (real_op const *o = boost::get< real_op const >(r)) {
     static char const op[] = "-+-*/";
     if (o->ops.size() == 1)
-      plouf << '(' << op[o->type] << " r" << display(o->ops[0]) << ")%R";
+      plouf << '(' << op[o->type] << ' ' << display(o->ops[0]) << ")%R";
     else
-      plouf << "(r" << display(o->ops[0]) << ' ' << op[o->type] << " r" << display(o->ops[1]) << ")%R";
+      plouf << '(' << display(o->ops[0]) << ' ' << op[o->type] << ' ' << display(o->ops[1]) << ")%R";
   } else if (rounded_real const *rr = boost::get< rounded_real const >(r))
-    plouf << "rounding_" << rr->rounding->name() << " r" << display(rr->rounded);
+    plouf << "rounding_" << rr->rounding->name() << ' ' << display(rr->rounded);
   else assert(false);
   plouf << ".\n";
-  return r_id;
+  return name;
 }
 
 typedef std::map< std::string, int > property_map; // (not so) bastard way of doing it
 static property_map displayed_properties;
 
-int display(property const &p) {
+std::string display(property const &p) {
   std::stringstream s;
   s << display(p.bnd) << " r" << display(p.real);
   std::string s_ = s.str();
   int p_id = map_finder(displayed_properties, s_);
-  if (p_id < 0) return -p_id;
-  std::cout << "Definition p" << p_id << " := IintF i" << s_ << ".\n";
-  return p_id;
+  std::string name = composite('p', p_id);
+  if (p_id >= 0)
+    std::cout << "Definition " << p_id << " := IintF i" << s_ << ".\n";
+  return name;
 }
 
 typedef std::map< node *, int > disp_node_map;
 static disp_node_map displayed_nodes;
 
-int display(node *n) {
+std::string display(node *n) {
   int n_id = map_finder(displayed_nodes, n);
-  if (n_id < 0) return -n_id;
+  std::string name = composite('l', n_id);
+  if (n_id < 0) return name;
   auto_flush plouf;
-  plouf << (n->type == AXIOM ? "Hypothesis l" : "Lemma l") << n_id << " : ";
+  plouf << (n->type == AXIOM ? "Hypothesis " : "Lemma ") << name << " : ";
   property_vect const &n_hyp = n->get_hypotheses();
   for(property_vect::const_iterator i = n_hyp.begin(), end = n_hyp.end(); i != end; ++i)
-    plouf << 'p' << display(*i) << " -> ";
-  int p_res = display(n->get_result());
-  plouf << 'p' << p_res << '.';
+    plouf << display(*i) << " -> ";
+  std::string p_res = display(n->get_result());
+  plouf << p_res << '.';
   if (n->type == AXIOM) {
     plouf << '\n';
-    return n_id;
+    return name;
   }
   int nb_hyps = n_hyp.size();
   if (nb_hyps) {
@@ -127,7 +140,7 @@ int display(node *n) {
   case THEOREM: {
     theorem_node *t = static_cast< theorem_node * >(n);
     if (!nb_hyps) plouf << '\n';
-    plouf << " unfold p" << p_res << ".\n apply " << t->name;
+    plouf << " unfold " << p_res << ".\n apply " << t->name;
     if (nb_hyps) {
       plouf << " with";
       for(int i = 0; i < nb_hyps; ++i) plouf << " (" << i + 1 << " := h" << i << ')';
@@ -145,7 +158,7 @@ int display(node *n) {
     for(node_vect::const_iterator i = ++pred.begin(), i_end = pred.end(); i != i_end; ++i, ++num_hyp) {
       node *m = *i;
       property const &res = m->get_result();
-      plouf << " assert (h" << num_hyp << " : p" << display(res) << "). apply l" << display(m) << '.';
+      plouf << " assert (h" << num_hyp << " : " << display(res) << "). apply " << display(m) << '.';
       property_vect const &m_hyp = m->get_hypotheses();
       for(property_vect::const_iterator j = m_hyp.begin(), j_end = m_hyp.end(); j != j_end; ++j) {
         property_map::iterator pki = pmap.find(j->real);
@@ -156,7 +169,7 @@ int display(node *n) {
       plouf << '\n';
     }
     node *m = pred[0];
-    plouf << " apply l" << display(m) << '.';
+    plouf << " apply " << display(m) << '.';
     property_vect const &m_hyp = m->get_hypotheses();
     for(property_vect::const_iterator j = m_hyp.begin(), j_end = m_hyp.end(); j != j_end; ++j) {
       property_map::iterator pki = pmap.find(j->real);
@@ -183,7 +196,7 @@ int display(node *n) {
         num[i] = pki->second;
         continue;
       }
-      plouf << " assert (h" << num_hyp << " : p" << display(res) << "). apply l" << display(m) << '.';
+      plouf << " assert (h" << num_hyp << " : " << display(res) << "). apply " << display(m) << '.';
       property_vect const &m_hyp = m->get_hypotheses();
       for(property_vect::const_iterator j = m_hyp.begin(), j_end = m_hyp.end(); j != j_end; ++j) {
         property_map::iterator pki = pmap.find(j->real);
@@ -200,13 +213,13 @@ int display(node *n) {
     plouf << "\n union";
     node_vect const &pred = n->get_subproofs();
     for(node_vect::const_iterator i = pred.begin(), end = pred.end(); i != end; ++i)
-      plouf << " l" << display(*i);
+      plouf << ' ' << display(*i);
     plouf << ".\nQed.\n";
     break; }
   default:
     assert(false);
   }
-  return n_id;
+  return name;
 }
 
 extern std::vector< graph_t * > graphs;
@@ -239,11 +252,7 @@ int main() {
         continue;
       }
       property const &p = n->get_result();
-      if (ast_ident const *v = p.real->get_variable())
-        std::cerr << v->name;
-      else
-        std::cerr << "...";
-      std::cerr << " in " << p.bnd << '\n';
+      std::cerr << dump_real(p.real) << " in " << p.bnd << '\n';
     }
     for(int j = 0; j < nb; ++j)
       if (results[j]) {

@@ -39,6 +39,7 @@ bool match_visitor::operator()(rounded_real const &r1, rounding_placeholder cons
 }
 
 bool match_visitor::visit(ast_real const *src, ast_real const *dst) const {
+  if (src == dst) return true;
   if (placeholder const *p = boost::get< placeholder const >(dst)) {
     int i = *p;
     if (i >= 0) {
@@ -58,8 +59,9 @@ bool match(ast_real const *src, ast_real const *dst, ast_real_vect &holders, rou
 }
 
 struct rewrite_visitor: boost::static_visitor< ast_real const * > {
-  ast_real const *visit(ast_real const *dst) const { return boost::apply_visitor(*this, *dst); }
+  ast_real const *visit(ast_real const *dst) const;
   template< typename T > ast_real const *operator()(T const &r) const { return normalize(ast_real(r)); }
+  ast_real const *operator()(undefined_real const &) const { assert(false); }
   ast_real const *operator()(real_op const &r) const;
   ast_real const *operator()(rounded_real const &r) const;
   ast_real const *operator()(rounding_placeholder const &r) const;
@@ -91,6 +93,11 @@ ast_real const *rewrite_visitor::operator()(rounding_placeholder const &r) const
   int i = r.holder;
   assert(i >= 0 && unsigned(i) < roundings.size() && roundings[i]);
   return normalize(ast_real(rounded_real(visit(r.rounded), roundings[i])));
+}
+
+ast_real const *rewrite_visitor::visit(ast_real const *dst) const {
+  if (boost::get< undefined_real const >(dst)) return dst;
+  return boost::apply_visitor(*this, *dst);
 }
 
 ast_real const *rewrite(ast_real const *dst, ast_real_vect const &holders, rounding_vect const &roundings) {

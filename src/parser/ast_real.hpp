@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <boost/blank.hpp>
 #include <boost/variant/get.hpp>
 #include <boost/variant/recursive_wrapper.hpp>
 #include <boost/variant/variant.hpp>
@@ -49,7 +50,8 @@ struct ast_ident;
 
 typedef int placeholder;
 
-struct rounding_placeholder {
+struct rounding_placeholder
+{
   ast_real const *rounded;
   int holder;
   rounding_placeholder(ast_real const *f, int r): rounded(f), holder(r) {}
@@ -57,9 +59,11 @@ struct rounding_placeholder {
   bool operator<(rounding_placeholder const &v) const { return rounded < v.rounded || (rounded == v.rounded && holder < v.holder); }
 };
 
+typedef boost::blank undefined_real;
+
 typedef boost::variant
-  < ast_number const *
-  , ast_ident const *
+  < undefined_real
+  , ast_number const *
   , real_op
   , rounded_real
   , placeholder
@@ -71,16 +75,15 @@ struct proof_scheme;
 struct ast_real: ast_real_aux
 {
   mutable proof_scheme const *scheme;
-  ast_real(ast_number const *v): ast_real_aux(v), scheme(NULL) {}
-  ast_real(ast_ident const *v): ast_real_aux(v), scheme(NULL) {}
-  ast_real(real_op const &v): ast_real_aux(v), scheme(NULL) {}
-  ast_real(rounded_real const &v): ast_real_aux(v), scheme(NULL) {}
-  ast_real(placeholder v): ast_real_aux(v), scheme(NULL) {}
-  ast_real(rounding_placeholder const &v): ast_real_aux(v), scheme(NULL) {}
-  bool operator==(ast_real const &v) const { return ast_real_aux::operator==(static_cast< ast_real_aux const & >(v)); }
-  bool operator<(ast_real const &v) const { return ast_real_aux::operator<(static_cast< ast_real_aux const & >(v)); }
-  ast_ident const *get_variable() const
-  { ast_ident const *const *v = boost::get< ast_ident const *const >(this); return v ? *v : NULL; }
+  mutable ast_ident const *name;
+  ast_real(ast_ident const *v): ast_real_aux(undefined_real()), scheme(NULL), name(v) {}
+  ast_real(ast_number const *v): ast_real_aux(v), scheme(NULL), name(NULL) {}
+  ast_real(real_op const &v): ast_real_aux(v), scheme(NULL), name(NULL) {}
+  ast_real(rounded_real const &v): ast_real_aux(v), scheme(NULL), name(NULL) {}
+  ast_real(placeholder v): ast_real_aux(v), scheme(NULL), name(NULL) {}
+  ast_real(rounding_placeholder const &v): ast_real_aux(v), scheme(NULL), name(NULL) {}
+  bool operator==(ast_real const &v) const;
+  bool operator<(ast_real const &v) const;
 };
 
 ast_real *normalize(ast_real const &);

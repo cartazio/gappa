@@ -54,6 +54,18 @@ T *cache< T >::find(T const &v) {
   return ptr;
 }
 
+bool ast_real::operator==(ast_real const &v) const {
+  if (boost::get< undefined_real const >(this) && boost::get< undefined_real const >(&v))
+    return name == v.name;
+  return ast_real_aux::operator==(static_cast< ast_real_aux const & >(v));
+}
+
+bool ast_real::operator<(ast_real const &v) const {
+  if (boost::get< undefined_real const >(this) && boost::get< undefined_real const >(&v))
+    return name < v.name;
+  return ast_real_aux::operator<(static_cast< ast_real_aux const & >(v));
+}
+
 static cache< ast_number > ast_number_cache;
 ast_number *normalize(ast_number const &v) { return ast_number_cache.find(v); }
 static cache< ast_real > ast_real_cache;
@@ -69,4 +81,11 @@ void clear_schemes() {
     }
     (*i)->scheme = NULL;
   }
+}
+
+std::string dump_real(ast_real const *r) {
+  if (r->name)
+    return r->name->name;
+  else
+    return "...";
 }

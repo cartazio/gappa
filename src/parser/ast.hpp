@@ -53,5 +53,6 @@ struct function {
 };
 
 void clear_schemes();
+std::string dump_real(ast_real const *);
 
 #endif // PARSER_AST_HPP

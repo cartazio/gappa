@@ -15,16 +15,19 @@ ast_real const *check_real(ast_ident *v) {
   case REAL_VAR:
     return v->var;
   default:
-    { std::cerr << "Error: " << v->name << " is not a variable\n"; exit(1); }
+    { std::cerr << "Error: " << v->name << " is not a variable.\n"; exit(1); }
     return NULL;
   }  
 }
 
 void check_variable(ast_ident *v, ast_real const *r) {
   if (v->id_type != UNKNOWN_ID)
-    { std::cerr << "Error: " << v->name << " is an already defined symbol\n"; exit(1); }
+    { std::cerr << "Error: " << v->name << " is an already defined symbol.\n"; exit(1); }
   v->id_type = REAL_VAR;
   v->var = r;
+  if (r->name)
+    std::cerr << "Warning: " << r->name->name << " is being renamed to " << v->name << ".\n";
+  r->name = v;
 }
 
 ast_prop_and merge_prop_and(ast_prop const &_p1, ast_prop const &_p2) {
