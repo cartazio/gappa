@@ -32,6 +32,7 @@ struct yes_scheme: proof_scheme {
 
 bool generate_scheme_tree(property_vect const &hyp, ast_real const *r) {
   if (r->scheme) return !dynamic_cast< no_scheme const * >(r->scheme);
+  // put a dummy yes_scheme as a marker for the current real
   r->scheme = new yes_scheme;
   std::vector< proof_scheme * > schemes;
   typedef scheme_register all_schemes;
@@ -56,11 +57,17 @@ bool generate_scheme_tree(property_vect const &hyp, ast_real const *r) {
       in_hyp = r == i->real;
       if (in_hyp) break;
     }
-    if (in_hyp) return true;
-    if (graph->has_compatible_hypothesis(r)) return true;
+    if (in_hyp || graph->has_compatible_hypothesis(r)) {
+      // keep the dummy yes_scheme as a marker for an already done real
+      // without any non-trivial scheme
+      return true;
+    }
+    delete r->scheme;
+    // put a dummy no_scheme to mark this real as unusable
     r->scheme = new no_scheme;
     return false;
   }
+  delete r->scheme;
   r->scheme = NULL;
   for(unsigned i = 0; i < s; ++i) {
     proof_scheme *p = schemes[i];
