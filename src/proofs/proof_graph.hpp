@@ -6,7 +6,7 @@
 #include <set>
 #include <vector>
 
-enum node_id { HYPOTHESIS, AXIOM, THEOREM, MODUS, UNION };
+enum node_id { HYPOTHESIS, AXIOM, THEOREM, MODUS, UNION, INTERSECTION };
 
 struct node;
 struct graph_t;

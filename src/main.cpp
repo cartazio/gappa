@@ -141,14 +141,15 @@ int display(node *n) {
     node_vect const &pred = n->get_subproofs();
     for(node_vect::const_iterator i = ++pred.begin(), i_end = pred.end(); i != i_end; ++i, ++num_hyp) {
       node *m = *i;
-      plouf << " assert (h" << num_hyp << " : p" << display(m->get_result()) << "). apply l" << display(m) << '.';
+      property const &res = m->get_result();
+      plouf << " assert (h" << num_hyp << " : p" << display(res) << "). apply l" << display(m) << '.';
       property_vect const &m_hyp = m->get_hypotheses();
       for(property_vect::const_iterator j = m_hyp.begin(), j_end = m_hyp.end(); j != j_end; ++j) {
         property_map::iterator pki = pmap.find(j->real);
         assert(pki != pmap.end());
         plouf << " exact h" << pki->second << '.';
       }
-      pmap.insert(std::make_pair(m->get_result().real, num_hyp));
+      pmap.insert(std::make_pair(res.real, num_hyp));
       plouf << '\n';
     }
     node *m = pred[0];
@@ -160,6 +161,37 @@ int display(node *n) {
       plouf << " exact h" << pki->second << '.';
     }
     plouf << "\nQed.\n";
+    break; }
+  case INTERSECTION: {
+    plouf << '\n';
+    typedef std::map< ast_real const *, int > property_map;
+    property_map pmap;
+    int num_hyp = 0;
+    for(property_vect::const_iterator j = n_hyp.begin(), j_end = n_hyp.end(); j != j_end; ++j, ++num_hyp)
+      pmap.insert(std::make_pair(j->real, num_hyp));
+    node_vect const &pred = n->get_subproofs();
+    int num[2];
+    for(int i = 0; i < 2; ++i) {
+      node *m = pred[i];
+      property const &res = m->get_result();
+      if (m->type == HYPOTHESIS) {
+        property_map::iterator pki = pmap.find(res.real);
+        assert(pki != pmap.end());
+        num[i] = pki->second;
+        continue;
+      }
+      plouf << " assert (h" << num_hyp << " : p" << display(res) << "). apply l" << display(m) << '.';
+      property_vect const &m_hyp = m->get_hypotheses();
+      for(property_vect::const_iterator j = m_hyp.begin(), j_end = m_hyp.end(); j != j_end; ++j) {
+        property_map::iterator pki = pmap.find(j->real);
+        assert(pki != pmap.end());
+        plouf << " exact h" << pki->second << '.';
+      }
+      plouf << '\n';
+      num[i] = num_hyp++;
+    }
+    plouf << " apply intersect with (1 := h" << num[0] << ") (2 := h" << num[1] << ").\n"
+             " compute. trivial.\nQed.\n";
     break; }
   case UNION: {
     plouf << "\n union";
