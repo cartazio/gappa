@@ -128,30 +128,68 @@ void load_float(void const *_mem, mpfr_t &f, interval_float_description const *d
   e = save_e;
 }
 
-static std::string split_exact(mpfr_t const &f, int &exp, bool &zero) {
+static bool split_exact(mpfr_t const &f, mpz_t &frac, int &exp, bool &sign) { // return true if zero
   int sgn = mpfr_sgn(f);
-  zero = (sgn == 0);
-  std::string res;
-  if (zero) { res = '0'; return res; }
-  mpz_t frac;
-  mpz_init(frac);
+  if (sgn == 0) return true;
   exp = mpfr_get_z_exp(frac, f);
-  if (sgn < 0) res = '-'; // avoid an
-  mpz_abs(frac, frac);    // MPFR bug
+  sign = (sgn < 0);
+  mpz_abs(frac, frac); // avoid an MPFR bug
   int d = mpz_scan1(frac, 0);
   if (d > 0) mpz_fdiv_q_2exp(frac, frac, d);
+  exp += d;
+  return false;
+}
+
+static std::string signed_lexical(mpz_t const &frac, bool sgn) {
+  std::string res;
+  if (sgn) res = '-';
   char *s = mpz_get_str(NULL, 10, frac);
   res += s;
   free(s);
-  mpz_clear(frac);
-  exp += d;
   return res;
+}
+
+std::string get_float_split(number_real const &f, int &exp, bool &zero, interval_float_description const *desc) {
+  mpz_t frac;
+  mpz_init(frac);
+  bool sgn;
+  zero = split_exact(f.data->val, frac, exp, sgn);
+  int min_exp = desc->min_exp - desc->prec; // denormal exponent
+  if (zero) {
+    exp = min_exp;
+    return "0";
+  }
+  int d = desc->prec - mpz_sizeinbase(frac, 2) + 1;
+  exp -= d;
+  if (exp < min_exp) {
+    d -= min_exp - exp;
+    exp = min_exp;
+  }
+  assert(d >= 0 && d <= desc->prec);
+  if (d > 0) mpz_mul_2exp(frac, frac, d);
+  std::string res = signed_lexical(frac, sgn);
+  mpz_clear(frac);
+  return res;
+}
+
+static std::string get_real_split(mpfr_t const &f, int &exp, bool &zero) {
+  mpz_t frac;
+  mpz_init(frac);
+  bool sgn;
+  zero = split_exact(f, frac, exp, sgn);
+  std::string res = zero ? "0" : signed_lexical(frac, sgn);
+  mpz_clear(frac);
+  return res;
+}
+
+std::string get_real_split(number_real const &f, int &exp, bool &zero) {
+  return get_real_split(f.data->val, exp, zero);
 }
 
 static void write_exact(std::ostream &stream, mpfr_t const &f) {
   bool zero;
   int exp;
-  stream << split_exact(f, exp, zero);
+  stream << get_real_split(f, exp, zero);
   if (!zero && exp != 0) stream << 'b' << exp;
 }
 

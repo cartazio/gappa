@@ -2,14 +2,20 @@
 #include <map>
 #include <sstream>
 #include "ast.hpp"
+#include "basic_proof.hpp"
 #include "program.hpp"
 #include "proof_graph.hpp"
-#include "basic_proof.hpp"
+#include "numbers/float.hpp"
 #include "numbers/interval_ext.hpp"
+#include "numbers/real.hpp"
 
 extern int yyparse(void);
 extern node *generate_proof(property_vect const &hyp, property const &res);
 extern node *triviality;
+extern number_real lower(interval_real const &v);
+extern number_real upper(interval_real const &v);
+extern std::string get_real_split(number_real const &f, int &exp, bool &zero);
+extern std::string get_float_split(number_real const &f, int &exp, bool &zero, interval_float_description const *desc);
 
 struct node_theorem: node {
   char const *name;
@@ -27,6 +33,58 @@ int map_finder(std::map< T, int > &m, T const &k) {
   int id = m.size() + 1;
   m.insert(std::make_pair(k, id));
   return id;
+}
+
+typedef std::map< std::string, int > float_map; // (not so) bastard way of doing it
+static float_map displayed_floats;
+
+int display(number_real const &f, interval_float_description const *desc = NULL) {
+  std::stringstream s;
+  bool zero;
+  int exp, zero_exp;
+  s << '(';
+  if (desc) {
+    s << get_float_split(f, exp, zero, desc);
+    zero_exp = desc->min_exp - desc->prec;
+  } else {
+    s << get_real_split(f, exp, zero);
+    zero_exp = 0;
+  }
+  s << ") (" << (zero ? zero_exp : exp) << ')';
+  std::string s_ = s.str();
+  s << ' ' << desc;
+  int f_id = map_finder(displayed_floats, s.str());
+  if (f_id < 0) return -f_id;
+  if (desc) {
+    std::cout << // TODO
+      "Definition f" << f_id << "a := Float " << s_ << ".\n"
+      "Lemma f" << f_id << "b : Good_f754s f" << f_id << "a. compute. left. repeat split; discriminate. Qed.\n" // TODO
+      "Definition f" << f_id << " := F754s f" << f_id << "a f" << f_id << "b.\n";
+  } else
+    std::cout << "Definition f" << f_id << " := Float " << s_ << ".\n";
+  return f_id;
+}
+
+typedef std::map< std::string, int > interval_map; // (not so) bastard way of doing it
+static interval_map displayed_intervals;
+
+int display(interval const &i) {
+  std::stringstream s;
+  interval_real const &r = to_real(i);
+  interval_float_description const *desc =
+    i.desc == interval_real_desc ? NULL : reinterpret_cast< interval_float_description const * >(i.desc);
+  s << 'f' << display(lower(r), desc) << " f" << display(upper(r), desc);
+  std::string s_ = s.str();
+  s << ' ' << desc;
+  int i_id = map_finder(displayed_intervals, s.str());
+  if (i_id < 0) return -i_id;
+  std::cout << "Definition i" << i_id << " := ";
+  if (desc)
+    std::cout << "I754s " << s_; // TODO
+  else
+    std::cout << "makepairR " << s_;
+  std::cout << ".\n";
+  return i_id;
 }
 
 typedef std::map< ast_real const *, int > real_map;
@@ -60,15 +118,15 @@ int display(property const &p) {
   std::stringstream s;
   std::string const &name = p.var->name->name;
   if (p.type == PROP_BND)
-    s << name;
+    s << "I754s_BND";
   else if (p.type == PROP_ABS || p.type == PROP_REL)
-    s << (p.type == PROP_ABS ? "ABS" : "REL") << "(_" << name << ", r" << display(p.real) << ')';
+    s << "I754s_" << (p.type == PROP_ABS ? "ABS" : "REL") << " r" << display(p.real);
   else assert(false);
-  s << " in " << p.bnd;
+  s << " i" << display(p.bnd) << " _" << name;
   std::string s_ = s.str();
   int p_id = map_finder(displayed_properties, s_);
   if (p_id < 0) return -p_id;
-  std::cout << "Definition p" << p_id << " := " << s_ << '\n';
+  std::cout << "Definition p" << p_id << " := " << s_ << ".\n";
   return p_id;
 }
 
@@ -105,7 +163,7 @@ int display(node *n) {
   if (n->type == THEOREM) {
     plouf << " apply " << static_cast< node_theorem * >(n)->name << '.';
     for(int i = 0, l = n->hyp.size(); i < l; ++i) plouf << " exact h" << i << '.';
-    plouf << "\nQed.\n";
+    plouf << "\n compute. trivial.\nQed.\n";
   } else if (n->type == MODUS) {
     property_key::map pmap;
     int nb_hyps = 0;
