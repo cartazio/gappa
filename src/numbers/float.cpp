@@ -26,7 +26,7 @@ struct float_rounding_class: rounding_class {
   char const *ident;
   float_rounding_class(float_format const *f, rounding_type t, char const *i);
   virtual interval bound(interval const &, std::string &) const;
-  virtual interval error(interval const &, std::string &) const;
+  virtual interval error_from_real(interval const &, std::string &) const;
   virtual std::string name() const { return std::string("float") + ident; }
 };
 
@@ -94,7 +94,7 @@ static bool influenced(number const &n, int e, int e_infl, bool strict) {
   return cmp < 0 || (!strict && cmp == 0);
 }
 
-interval float_rounding_class::error(interval const &i, std::string &name) const {
+interval float_rounding_class::error_from_real(interval const &i, std::string &name) const {
   rounding_fun f = roundings[type];
   int e1 = exponent(round_number(lower(i), format, f), format),
       e2 = exponent(round_number(upper(i), format, f), format);

@@ -173,9 +173,15 @@ int main() {
     graph_layer layer((*i)->hyp);
     property p = (*i)->res;
     clear_schemes();
-    if (!generate_scheme_tree((*i)->hyp, p.real)) continue;
+    if (!generate_scheme_tree((*i)->hyp, p.real)) {
+      std::cout << "no scheme\n";
+      continue;
+    }
     node *n = handle_proof((*i)->hyp, p);
-    if (!n || n == triviality) continue;
+    if (!n || n == triviality) {
+      std::cout << "no proof\n";
+      continue;
+    }
     if (ast_ident const *v = p.real->get_variable())
       std::cout << v->name;
     else

@@ -43,7 +43,16 @@ pattern_register sub_decomposition(
   (pattern(0) - rounding_p(2, 0)) - (pattern(1) - rounding_p(3, 1)),
   "sub_decomposition");
 
+/*
 pattern_register mul_decomposition(
   pattern(0) * pattern(1) - rounding_p(2, 0) * rounding_p(3, 1),
   pattern(0) * (pattern(1) - rounding_p(3, 1)) + rounding_p(3, 1) * (pattern(0) - rounding_p(2, 0)),
+  "mul_decomposition");
+*/
+
+pattern_register mul_decomposition(
+  pattern(0) * pattern(1) - rounding_p(2, 0) * rounding_p(3, 1),
+  rounding_p(2, 0) * (pattern(1) - rounding_p(3, 1)) +
+  rounding_p(3, 1) * (pattern(0) - rounding_p(2, 0)) +
+  (pattern(0) - rounding_p(2, 0)) * (pattern(1) - rounding_p(3, 1)),
   "mul_decomposition");

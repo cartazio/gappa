@@ -106,14 +106,14 @@ node *generate_triviality(property_vect const &hyp, property &res, bool &optimal
   return n;
 }
 
-// ABSOLUTE_ERROR
-struct absolute_error_scheme: proof_scheme {
+// ABSOLUTE_ERROR_FROM_REAL
+struct absolute_error_from_real_scheme: proof_scheme {
   virtual node *generate_proof(property_vect const &, property &) const;
   virtual ast_real_vect needed_reals(ast_real const *) const;
   static proof_scheme *factory(ast_real const *);
 };
 
-node *absolute_error_scheme::generate_proof(property_vect const &hyp, property &res) const {
+node *absolute_error_from_real_scheme::generate_proof(property_vect const &hyp, property &res) const {
   real_op const *o = boost::get< real_op const >(res.real);
   assert(o && o->type == BOP_SUB);
   rounded_real const *rr = boost::get< rounded_real const >(o->ops[1]);
@@ -122,7 +122,7 @@ node *absolute_error_scheme::generate_proof(property_vect const &hyp, property &
   node *n = handle_proof(hyp, res2);
   if (!n) return NULL;
   std::string name;
-  interval bnd = rr->rounding->error(res2.bnd, name);
+  interval bnd = rr->rounding->error_from_real(res2.bnd, name);
   if (!(bnd <= res.bnd)) return NULL;
   res.bnd = bnd;
   node_vect nodes;
@@ -130,7 +130,7 @@ node *absolute_error_scheme::generate_proof(property_vect const &hyp, property &
   return new node_modus(res, new node_theorem(1, &res2, res, name), nodes);
 }
 
-ast_real_vect absolute_error_scheme::needed_reals(ast_real const *real) const {
+ast_real_vect absolute_error_from_real_scheme::needed_reals(ast_real const *real) const {
   real_op const *o = boost::get< real_op const >(real);
   assert(o && o->type == BOP_SUB);
   rounded_real const *rr = boost::get< rounded_real const >(o->ops[1]);
@@ -138,16 +138,59 @@ ast_real_vect absolute_error_scheme::needed_reals(ast_real const *real) const {
   return ast_real_vect(1, rr->rounded);
 }
 
-proof_scheme *absolute_error_scheme::factory(ast_real const *r) {
+proof_scheme *absolute_error_from_real_scheme::factory(ast_real const *r) {
   real_op const *o = boost::get< real_op const >(r);
   if (!o) return NULL;
   if (o->type != BOP_SUB) return NULL;
   rounded_real const *rr = boost::get< rounded_real const >(o->ops[1]);
   if (!rr || o->ops[0] != rr->rounded) return NULL;
-  return new absolute_error_scheme;
+  return new absolute_error_from_real_scheme;
 }
 
-scheme_register absolute_error_scheme_register(&absolute_error_scheme::factory);
+scheme_register absolute_error_from_real_scheme_register(&absolute_error_from_real_scheme::factory);
+
+// ABSOLUTE_ERROR_FROM_ROUNDED
+struct absolute_error_from_rounded_scheme: proof_scheme {
+  virtual node *generate_proof(property_vect const &, property &) const;
+  virtual ast_real_vect needed_reals(ast_real const *) const;
+  static proof_scheme *factory(ast_real const *);
+};
+
+node *absolute_error_from_rounded_scheme::generate_proof(property_vect const &hyp, property &res) const {
+  real_op const *o = boost::get< real_op const >(res.real);
+  assert(o && o->type == BOP_SUB);
+  rounded_real const *rr = boost::get< rounded_real const >(o->ops[1]);
+  assert(rr && o->ops[0] == rr->rounded);
+  property res2(o->ops[1]);
+  node *n = handle_proof(hyp, res2);
+  if (!n) return NULL;
+  std::string name;
+  interval bnd = rr->rounding->error_from_rounded(res2.bnd, name);
+  if (!(bnd <= res.bnd)) return NULL;
+  res.bnd = bnd;
+  node_vect nodes;
+  nodes.push_back(n);
+  return new node_modus(res, new node_theorem(1, &res2, res, name), nodes);
+}
+
+ast_real_vect absolute_error_from_rounded_scheme::needed_reals(ast_real const *real) const {
+  real_op const *o = boost::get< real_op const >(real);
+  assert(o && o->type == BOP_SUB);
+  rounded_real const *rr = boost::get< rounded_real const >(o->ops[1]);
+  assert(rr && o->ops[0] == rr->rounded);
+  return ast_real_vect(1, o->ops[1]);
+}
+
+proof_scheme *absolute_error_from_rounded_scheme::factory(ast_real const *r) {
+  real_op const *o = boost::get< real_op const >(r);
+  if (!o) return NULL;
+  if (o->type != BOP_SUB) return NULL;
+  rounded_real const *rr = boost::get< rounded_real const >(o->ops[1]);
+  if (!rr || o->ops[0] != rr->rounded) return NULL;
+  return new absolute_error_from_rounded_scheme;
+}
+
+scheme_register absolute_error_from_rounded_scheme_register(&absolute_error_from_rounded_scheme::factory);
 
 // ROUNDING_BOUND
 struct rounding_bound_scheme: proof_scheme {
