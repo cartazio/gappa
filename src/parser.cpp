@@ -6,7 +6,7 @@
 #include "property.hpp"
 #include "numbers/interval_ext.hpp"
 
-interval create_interval(ast_interval const &, bool widen, type_id = UNDEFINED);
+interval create_interval(ast_interval const &, bool widen, type_id);
 
 variable *check_variable(ast_ident *v, type_id t = UNDEFINED) {
   if (v->fun)
@@ -58,7 +58,7 @@ property generate_property(ast_atom_error const &p, bool goal) {
   r.var = p.ident;
   r.real = p.real;
   if (p.interval) {
-    r.bnd = create_interval(*p.interval, goal);
+    r.bnd = create_interval(*p.interval, goal, interval_real);
     delete p.interval;
   }
   return r;
