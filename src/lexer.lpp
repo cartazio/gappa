@@ -4,7 +4,7 @@
 #include <map>
 #include <iostream>
 #include "ast.hpp"
-#include "parser.tab.hpp"
+#include "parser.h"
 
 extern YYSTYPE yylval;
 
@@ -49,6 +49,8 @@ void read_ident() {
 }
 
 %}
+
+%option noyywrap
 
 alpha	[a-zA-Z]
 digit	[0-9]

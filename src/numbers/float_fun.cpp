@@ -1,9 +1,9 @@
 #include "ast.hpp"
 #include "program.hpp"
 #include "function.hpp"
-#include "numbers/real.hpp"
-#include "numbers/float.hpp"
-#include "numbers/interval_ext.hpp"
+#include "real.hpp"
+#include "float.hpp"
+#include "interval_ext.hpp"
 #include "property.hpp"
 #include "proof_graph.hpp"
 #include <boost/preprocessor/cat.hpp>
