@@ -16,6 +16,7 @@ struct interval {
   interval &operator=(interval const &);
   interval_base *unique() const;
   bool operator<=(interval const &) const;
+  bool operator<(interval const &) const;
 };
 
 inline bool is_defined(interval const &u) { return u.base; }

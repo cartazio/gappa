@@ -71,24 +71,16 @@ bool generate_scheme_tree(property_vect const &hyp, ast_real const *r) {
 node *handle_proof(property_vect const &hyp, property &res) {
   typedef std::vector< proof_scheme const * > scheme_stack;
   static scheme_stack st;
-  node *best_node;
-  property best_res;
+  property best_res = res;
+  node *best_node = generate_triviality(hyp, best_res);
   graph_storage storage;
-  {
-    graph_layer layer;
-    property res2 = res;
-    if ((best_node = generate_triviality(hyp, res2))) {
-      best_res = res2;
-      layer.store(storage);
-    }
-  }
   for(proof_scheme const *scheme = res.real->scheme; scheme != NULL; scheme = scheme->next) {
     if (std::count(st.begin(), st.end(), scheme) >= 3) continue; // BLI
     st.push_back(scheme);
     graph_layer layer;
-    property res2 = res;
+    property res2 = best_res;
     node *n = scheme->generate_proof(hyp, res2);
-    if (n && res2.bnd <= best_res.bnd) {
+    if (n && res2.bnd < best_res.bnd) {
       best_node = n;
       best_res = res2;
       layer.store(storage);

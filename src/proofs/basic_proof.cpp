@@ -96,15 +96,16 @@ node_modus::node_modus(property const &p, node *n, node_vect const &nodes): node
   }
 }
 
+// no node should be generated and res should only be modified upon success
 node *generate_triviality(property_vect const &hyp, property &res) {
-  if (node *n = graph->find_compatible_node(hyp, res)) {
-    res = n->res;
-    return n;
-  }
   int i = hyp.find_compatible_property(res);
-  if (i < 0) return NULL;
-  res = hyp[i];
-  return triviality;
+  if (i >= 0) {
+    res = hyp[i];
+    return triviality;
+  }
+  node *n = graph->find_compatible_node(hyp, res);
+  if (n) res = n->res;
+  return n;
 }
 
 // ABSOLUTE_ERROR

@@ -31,6 +31,11 @@ bool number::operator==(number const &v) const {
   //return mpfr_equal_p(data->val, v.data->val);
 }
 
+bool number::operator!=(number const &v) const {
+  if (mpfr_nan_p(data->val) || mpfr_nan_p(v.data->val)) return false;
+  return mpfr_cmp(data->val, v.data->val) != 0;
+}
+
 number_base *number::unique() const {
   if (data->ref_counter.nb != 1) {
     number_base *d = new number_base;

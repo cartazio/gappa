@@ -39,6 +39,7 @@ struct number {
   number_base *unique() const;
   bool operator<=(number const &v) const;
   bool operator==(number const &v) const;
+  bool operator!=(number const &v) const;
   number operator-() const {
     number_base *r = new number_base;
     mpfr_neg(r->val, data->val, GMP_RNDN);

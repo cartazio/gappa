@@ -139,6 +139,12 @@ bool interval::operator<=(interval const &v) const {
   return subset(pltp, plvp);
 }
 
+bool interval::operator<(interval const &v) const {
+  if (!v.base) return true;
+  if (!base) return false;
+  return proper_subset(pltp, plvp);
+}
+
 interval operator-(interval const &u) {
   assert(u.base);
   return plop(-plup);
