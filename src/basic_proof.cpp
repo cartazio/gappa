@@ -18,37 +18,6 @@ destroyed by modus or assignation.
 
 node *triviality = new node(OTHER);
 
-struct node_assign: node {
-  node_assign(node *n, property const &p): node(OTHER) {
-    res = p;
-    if (n == triviality) {
-      int idx = p.var->get_definition();
-      assert(idx != -1);
-      instruction &inst = program[idx];
-      assert(!inst.fun);
-      property h = p;
-      h.var = inst.in[0];
-      hyp.push_back(h);
-    } else {
-      insert_pred(n);
-      hyp = n->hyp;
-    }
-  }
-};
-
-struct node_trivial: node {
-  node_trivial(property const &p): node(OTHER) {
-    res = p;
-    hyp.push_back(p);
-  }
-};
-
-struct node_reflexive: node {
-  node_reflexive(property const &p): node(OTHER) {
-    res = p;
-  }
-};
-
 struct node_relabs: node {
   node_relabs(property const &b, property const &e, property const &p): node(OTHER) {
     res = p;
@@ -74,8 +43,30 @@ struct property_key {
 
 struct node_modus: node {
   std::string name;
+  node_modus(node *n, property const &p);
   node_modus(property const &p, node *n, node_vect const &nodes);
 };
+
+node_modus::node_modus(node *n, property const &p): node(MODUS) {
+  res = p;
+  if (p.type != PROP_BND && p.var->real == p.real) {
+    assert(n == triviality);
+    return;
+  }
+  if (n == triviality) {
+    int idx = res.var->get_definition();
+    assert(idx != -1);
+    instruction &inst = program[idx];
+    assert(!inst.fun);
+    property h = res;
+    h.var = inst.in[0];
+    hyp.push_back(h);
+    return;
+  }
+  insert_pred(n);
+  hyp = n->hyp;
+}
+
 
 node_modus::node_modus(property const &p, node *n, node_vect const &nodes): node(MODUS) {
   res = p;
@@ -118,6 +109,7 @@ node_modus::node_modus(property const &p, node *n, node_vect const &nodes): node
   }
   for(property_key::map::const_iterator pki = pmap.begin(), pki_end = pmap.end(); pki != pki_end; ++pki) {
     property_key const &pk = pki->first;
+    if (pk.type != PROP_BND && pk.var->real == pk.real) continue;
     property p(pk.type);
     p.var = pk.var;
     p.real = pk.real;
@@ -182,7 +174,7 @@ node *generate_bound(property_vect const &hyp, property &res) {
     node *n = generate_bound(hyp, res);
     if (!n) return NULL;
     res.var = v;
-    return new node_assign(n, res);
+    return new node_modus(n, res);
   }
   int l = inst.in.size();
   node_vect nodes(l);
@@ -210,7 +202,7 @@ node *generate_error_forced(property_vect const &hyp, property &res) {
   if (variable *const *v = boost::get< variable *const >(res.real))
     if (res.var == *v) {
       res.bnd = interval(interval_real);
-      return new node_reflexive(res);
+      return triviality;
     }
   int idx = res.var->get_definition();
   if (idx == -1) return NULL; /* TODO: unprovable? */
@@ -221,7 +213,7 @@ node *generate_error_forced(property_vect const &hyp, property &res) {
     node *n = generate_error(hyp, res);
     if (!n) return NULL;
     res.var = v;
-    return new node_assign(n, res);
+    return new node_modus(n, res);
   }
   real_op const *op = boost::get< real_op const >(res.real);
   if (!op || op->type != inst.fun->type) return NULL;
@@ -308,6 +300,5 @@ node *generate_basic_proof(property_vect const &hyp, property const &res) {
     n = basic_proof::generate_bound(hyp, res2);
   else
     n = basic_proof::generate_error(hyp, res2);
-  if (n == triviality) n = new node_trivial(res2);
   return n;
 }
