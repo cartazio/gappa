@@ -65,9 +65,10 @@ int display(ast_real const *r) {
   if (r_id < 0) return -r_id;
   auto_flush plouf;
   plouf << "Definition r" << r_id << " := ";
-  if (ast_ident const *v = r->get_variable())
+  if (ast_ident const *v = r->get_variable()) {
+    std::cout << "Variable _" << v->name << " : R.\n";
     plouf << '_' << v->name;
-  else if (ast_number const *const *n = boost::get< ast_number const *const >(r)) {
+  } else if (ast_number const *const *n = boost::get< ast_number const *const >(r)) {
     if ((*n)->base == 0) plouf << '0';
     else plouf << "Float" << ((*n)->base == 2 ? " (" : "10 (") << (*n)->mantissa
                << ") (" << (*n)->exponent << ')';
@@ -104,7 +105,7 @@ int display(node *n) {
   int n_id = map_finder(displayed_nodes, n);
   if (n_id < 0) return -n_id;
   auto_flush plouf;
-  plouf << (n->type == AXIOM ? "Axiom l" : "Lemma l") << n_id << " : ";
+  plouf << (n->type == AXIOM ? "Hypothesis l" : "Lemma l") << n_id << " : ";
   property_vect const &n_hyp = n->get_hypotheses();
   for(property_vect::const_iterator i = n_hyp.begin(), end = n_hyp.end(); i != end; ++i)
     plouf << 'p' << display(*i) << " -> ";
