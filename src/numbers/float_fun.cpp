@@ -86,7 +86,7 @@ static interval compute_add_float_abs_sterbenz(interval const **ints) {
 }
 
 static node *generate_add_float_abs_sterbenz(property const *hyp, property const &res) {
-  return new node_theorem(5, hyp, res, "asb_add_sterbenz");
+  return new node_theorem(5, hyp, res, "abs_add_sterbenz");
 }
 
 static hypothesis_constraint const const_add_float_abs_singleton[5] =
