@@ -45,11 +45,14 @@ struct rounded_real
 
 struct ast_ident;
 
+typedef int placeholder;
+
 typedef boost::variant
   < ast_number const *
   , ast_ident const *
   , real_op
   , rounded_real
+  , placeholder
   > ast_real_aux;
 
 struct proof_scheme;
@@ -68,5 +71,7 @@ struct ast_real: ast_real_aux
 };
 
 ast_real *normalize(ast_real const &);
+bool match(ast_real const *, ast_real const *, ast_real_vect &);
+ast_real const *rewrite(ast_real const *, ast_real_vect const &);
 
 #endif // AST_REAL_HPP
