@@ -13,6 +13,12 @@ struct node_theorem: node {
   node_theorem(int nb, property const *h, property const &p, std::string n);
 };
 
+struct node_modus: node {
+  std::string name;
+  node_modus(node *n, property const &p);
+  node_modus(property const &p, node *n, node_vect const &nodes);
+};
+
 node *generate_triviality(property_vect const &hyp, property &res);
 
 struct rewrite_scheme: proof_scheme {

@@ -26,12 +26,6 @@ node_theorem::node_theorem(int nb, property const *h, property const &p, std::st
   for(int i = 0; i < nb; ++i) hyp.push_back(h[i]);
 }
 
-struct node_modus: node {
-  std::string name;
-  node_modus(node *n, property const &p);
-  node_modus(property const &p, node *n, node_vect const &nodes);
-};
-
 node_modus::node_modus(node *n, property const &p): node(MODUS) {
   res = p;
   if (n == triviality) {
