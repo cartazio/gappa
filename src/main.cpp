@@ -83,14 +83,22 @@ int display(node *n) {
   plouf << "Lemma l" << n_id << ": ";
   for(property_vect::const_iterator i = n->hyp.begin(), end = n->hyp.end(); i != end; ++i)
     plouf << 'p' << display(*i) << " -> ";
-  plouf << 'p' << display(n->res) << ".\n " << node_ids[n->type];
-  if (n->type == THEOREM)
-    plouf << " (" << static_cast< node_theorem * >(n)->name << ')';
-  else if (n->type == OTHER)
-    plouf << " (relabs)";
-  for(node_vect::const_iterator i = n->pred.begin(), end = n->pred.end(); i != end; ++i)
-    plouf << " l" << display(*i);
-  plouf << '\n';
+  plouf << 'p' << display(n->res) << ".\n";
+  plouf << " intros";
+  for(int i = 0, l = n->hyp.size(); i < l; ++i) plouf << " h" << i;
+  plouf << ".\n";
+  if (n->type == THEOREM) {
+    plouf << " apply " << static_cast< node_theorem * >(n)->name << '.';
+    for(int i = 0, l = n->hyp.size(); i < l; ++i) plouf << " exact h" << i << '.';
+    plouf << "\nQed.\n";
+  } else {
+    plouf << node_ids[n->type];
+    if (n->type == OTHER)
+      plouf << " (relabs)";
+    for(node_vect::const_iterator i = n->pred.begin(), end = n->pred.end(); i != end; ++i)
+      plouf << " l" << display(*i);
+    plouf << '\n';
+  }
   return n_id;
 }
 
