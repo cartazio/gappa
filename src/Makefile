@@ -1,6 +1,6 @@
 CXX=g++-3.4
 CXXFLAGS=-Wall -ansi -g -O2
-OBJS=main.o lexer.yy.o parser.tab.o ast.o program.o parser.o proof_graph.o number.o property.o basic_proof.o softfloat.o
+OBJS=ast.o basic_proof.o interval.o lexer.yy.o main.o number.o number_ext.o parser.o parser.tab.o program.o proof_graph.o property.o softfloat.o
 
 main: $(OBJS)
 	$(CXX) -o $@ $^ -lfl -lmpfr -lgmp

@@ -2,6 +2,7 @@
 #define NUMBER_EXT_HPP
 
 #include "number.hpp"
+#include "types.hpp"
 #include <iostream>
 
 template< class CharType, class CharTraits >
@@ -38,5 +39,8 @@ std::basic_ostream< CharType, CharTraits > &operator<<
   free(buf);
   return stream;
 }
+
+struct ast_number;
+impl_data *read_number(ast_number const &, type_id, mp_rnd_t);
 
 #endif // NUMBER_EXT_HPP
