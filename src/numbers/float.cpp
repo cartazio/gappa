@@ -104,7 +104,7 @@ interval float_rounding_class::absolute_error_from_real(interval const &i, std::
   int e = std::max(e1, e2);
   int e_err = type == ROUND_CE ? e - 1 : e;
   e += format->prec - 1;
-  name = std::string("float") + ident + "_error";
+  name = std::string("float") + ident + "_absolute";
   if (influenced(lower(i), e, e_err, false) && influenced(upper(i), e, e_err, false)) {
     name += "_wide";
     --e_err;
@@ -116,18 +116,18 @@ interval float_rounding_class::absolute_error_from_rounded(interval const &i, st
   int e1 = exponent(lower(i), format), e2 = exponent(upper(i), format);
   int e_err = std::max(e1, e2);
   if (type == ROUND_CE) --e_err;
-  name = std::string("float") + ident + "_error_inv";
+  name = std::string("float") + ident + "_absolute_inv";
   return from_exponent(e_err, type == ROUND_UP ? 1 : (type == ROUND_DN ? -1 : 0));
 }
 
-interval float_rounding_class::relative_error_from_rounded(interval const &i, std::string &name) const {
+interval float_rounding_class::relative_error_from_real(interval const &i, std::string &name) const {
   name = std::string("float") + ident + "_relative";
   return from_exponent(type == ROUND_CE ? -format->prec : 1 - format->prec,
                        type == ROUND_ZR ? -1 : 0);
 }
 
-interval float_rounding_class::relative_error_from_real(interval const &i, std::string &name) const {
-  name = std::string("float") + ident + "_relative";
+interval float_rounding_class::relative_error_from_rounded(interval const &i, std::string &name) const {
+  name = std::string("float") + ident + "_relative_inv";
   return from_exponent(type == ROUND_CE ? -format->prec : 1 - format->prec,
                        type == ROUND_ZR ? -1 : 0);
 }

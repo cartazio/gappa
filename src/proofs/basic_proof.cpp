@@ -6,6 +6,28 @@
 #include "proofs/proof_graph.hpp"
 #include "proofs/schemes.hpp"
 
+static bool absolute_error_decomposition(ast_real const *real, ast_real const **f, rounded_real const **r) {
+  real_op const *o = boost::get< real_op const >(real);
+  if (!o || o->type != BOP_SUB) return false;
+  rounded_real const *rr = boost::get< rounded_real const >(o->ops[0]);
+  if (!rr || o->ops[1] != rr->rounded) return false;
+  if (f) *f = o->ops[0];
+  if (r) *r = rr;
+  return true;
+}
+
+static bool relative_error_decomposition(ast_real const *real, ast_real const **f, rounded_real const **r) {
+  real_op const *o1 = boost::get< real_op const >(real);
+  if (!o1 || o1->type != BOP_DIV) return false;
+  real_op const *o2 = boost::get< real_op const >(o1->ops[0]);
+  if (!o2 || o2->type != BOP_SUB || o1->ops[1] != o2->ops[1]) return false;
+  rounded_real const *rr = boost::get< rounded_real const >(o2->ops[0]);
+  if (!rr || o2->ops[1] != rr->rounded) return false;
+  if (f) *f = o2->ops[0];
+  if (r) *r = rr;
+  return true;
+}
+
 // ABSOLUTE_ERROR_FROM_REAL
 struct absolute_error_from_real_scheme: proof_scheme {
   virtual node *generate_proof(ast_real const *) const;
@@ -14,10 +36,9 @@ struct absolute_error_from_real_scheme: proof_scheme {
 };
 
 node *absolute_error_from_real_scheme::generate_proof(ast_real const *real) const {
-  real_op const *o = boost::get< real_op const >(real);
-  assert(o && o->type == BOP_SUB);
-  rounded_real const *rr = boost::get< rounded_real const >(o->ops[0]);
-  assert(rr && o->ops[1] == rr->rounded);
+  rounded_real const *rr;
+  bool b = absolute_error_decomposition(real, NULL, &rr);
+  assert(b);
   node *n = find_proof(rr->rounded);
   if (!n) return NULL;
   property const &res1 = n->get_result();
@@ -27,18 +48,14 @@ node *absolute_error_from_real_scheme::generate_proof(ast_real const *real) cons
 }
 
 ast_real_vect absolute_error_from_real_scheme::needed_reals(ast_real const *real) const {
-  real_op const *o = boost::get< real_op const >(real);
-  assert(o && o->type == BOP_SUB);
-  rounded_real const *rr = boost::get< rounded_real const >(o->ops[0]);
-  assert(rr && o->ops[1] == rr->rounded);
+  rounded_real const *rr;
+  bool b = absolute_error_decomposition(real, NULL, &rr);
+  assert(b);
   return ast_real_vect(1, rr->rounded);
 }
 
-proof_scheme *absolute_error_from_real_scheme::factory(ast_real const *r) {
-  real_op const *o = boost::get< real_op const >(r);
-  if (!o || o->type != BOP_SUB) return NULL;
-  rounded_real const *rr = boost::get< rounded_real const >(o->ops[0]);
-  if (!rr || o->ops[1] != rr->rounded) return NULL;
+proof_scheme *absolute_error_from_real_scheme::factory(ast_real const *real) {
+  if (!absolute_error_decomposition(real, NULL, NULL)) return NULL;
   return new absolute_error_from_real_scheme;
 }
 
@@ -52,11 +69,10 @@ struct absolute_error_from_rounded_scheme: proof_scheme {
 };
 
 node *absolute_error_from_rounded_scheme::generate_proof(ast_real const *real) const {
-  real_op const *o = boost::get< real_op const >(real);
-  assert(o && o->type == BOP_SUB);
-  rounded_real const *rr = boost::get< rounded_real const >(o->ops[0]);
-  assert(rr && o->ops[1] == rr->rounded);
-  node *n = find_proof(o->ops[0]);
+  ast_real const *r; rounded_real const *rr;
+  bool b = absolute_error_decomposition(real, &r, &rr);
+  assert(b);
+  node *n = find_proof(r);
   if (!n) return NULL;
   property const &res1 = n->get_result();
   std::string name;
@@ -65,18 +81,14 @@ node *absolute_error_from_rounded_scheme::generate_proof(ast_real const *real) c
 }
 
 ast_real_vect absolute_error_from_rounded_scheme::needed_reals(ast_real const *real) const {
-  real_op const *o = boost::get< real_op const >(real);
-  assert(o && o->type == BOP_SUB);
-  rounded_real const *rr = boost::get< rounded_real const >(o->ops[0]);
-  assert(rr && o->ops[1] == rr->rounded);
-  return ast_real_vect(1, o->ops[0]);
+  ast_real const *r;
+  bool b = absolute_error_decomposition(real, &r, NULL);
+  assert(b);
+  return ast_real_vect(1, r);
 }
 
-proof_scheme *absolute_error_from_rounded_scheme::factory(ast_real const *r) {
-  real_op const *o = boost::get< real_op const >(r);
-  if (!o || o->type != BOP_SUB) return NULL;
-  rounded_real const *rr = boost::get< rounded_real const >(o->ops[0]);
-  if (!rr || o->ops[1] != rr->rounded) return NULL;
+proof_scheme *absolute_error_from_rounded_scheme::factory(ast_real const *real) {
+  if (!absolute_error_decomposition(real, NULL, NULL)) return NULL;
   return new absolute_error_from_rounded_scheme;
 }
 
@@ -90,12 +102,9 @@ struct relative_error_from_real_scheme: proof_scheme {
 };
 
 node *relative_error_from_real_scheme::generate_proof(ast_real const *real) const {
-  real_op const *o1 = boost::get< real_op const >(real);
-  assert(o1 && o1->type == BOP_DIV);
-  real_op const *o2 = boost::get< real_op const >(o1->ops[0]);
-  assert(o2 && o2->type == BOP_SUB && o1->ops[1] == o2->ops[1]);
-  rounded_real const *rr = boost::get< rounded_real const >(o2->ops[0]);
-  assert(rr && o2->ops[1] == rr->rounded);
+  rounded_real const *rr;
+  bool b = relative_error_decomposition(real, NULL, &rr);
+  assert(b);
   node *n = find_proof(rr->rounded);
   if (!n) return NULL;
   property const &res1 = n->get_result();
@@ -105,26 +114,51 @@ node *relative_error_from_real_scheme::generate_proof(ast_real const *real) cons
 }
 
 ast_real_vect relative_error_from_real_scheme::needed_reals(ast_real const *real) const {
-  real_op const *o1 = boost::get< real_op const >(real);
-  assert(o1 && o1->type == BOP_DIV);
-  real_op const *o2 = boost::get< real_op const >(o1->ops[0]);
-  assert(o2 && o2->type == BOP_SUB && o1->ops[1] == o2->ops[1]);
-  rounded_real const *rr = boost::get< rounded_real const >(o2->ops[0]);
-  assert(rr && o2->ops[1] == rr->rounded);
+  rounded_real const *rr;
+  bool b = relative_error_decomposition(real, NULL, &rr);
+  assert(b);
   return ast_real_vect(1, rr->rounded);
 }
 
-proof_scheme *relative_error_from_real_scheme::factory(ast_real const *r) {
-  real_op const *o1 = boost::get< real_op const >(r);
-  if (!o1 || o1->type != BOP_DIV) return NULL;
-  real_op const *o2 = boost::get< real_op const >(o1->ops[0]);
-  if (!o2 || o2->type != BOP_SUB || o1->ops[1] != o2->ops[1]) return NULL;
-  rounded_real const *rr = boost::get< rounded_real const >(o2->ops[0]);
-  if (!rr || o2->ops[1] != rr->rounded) return NULL;
+proof_scheme *relative_error_from_real_scheme::factory(ast_real const *real) {
+  if (!relative_error_decomposition(real, NULL, NULL)) return NULL;
   return new relative_error_from_real_scheme;
 }
 
 scheme_register relative_error_from_real_scheme_register(&relative_error_from_real_scheme::factory);
+
+// RELATIVE_ERROR_FROM_ROUNDED
+struct relative_error_from_rounded_scheme: proof_scheme {
+  virtual node *generate_proof(ast_real const *) const;
+  virtual ast_real_vect needed_reals(ast_real const *) const;
+  static proof_scheme *factory(ast_real const *);
+};
+
+node *relative_error_from_rounded_scheme::generate_proof(ast_real const *real) const {
+  ast_real const *r; rounded_real const *rr;
+  bool b = relative_error_decomposition(real, &r, &rr);
+  assert(b);
+  node *n = find_proof(r);
+  if (!n) return NULL;
+  property const &res1 = n->get_result();
+  std::string name;
+  property res(real, rr->rounding->relative_error_from_rounded(res1.bnd, name));
+  return new modus_node(1, &n, new theorem_node(1, &res1, res, name));
+}
+
+ast_real_vect relative_error_from_rounded_scheme::needed_reals(ast_real const *real) const {
+  ast_real const *r;
+  bool b = relative_error_decomposition(real, &r, NULL);
+  assert(b);
+  return ast_real_vect(1, r);
+}
+
+proof_scheme *relative_error_from_rounded_scheme::factory(ast_real const *real) {
+  if (!relative_error_decomposition(real, NULL, NULL)) return NULL;
+  return new relative_error_from_rounded_scheme;
+}
+
+scheme_register relative_error_from_rounded_scheme_register(&relative_error_from_rounded_scheme::factory);
 
 // ROUNDING_BOUND
 struct rounding_bound_scheme: proof_scheme {
