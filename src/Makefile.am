@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = subdir-objects
-BUILT_SOURCES = parser.h
+BUILT_SOURCES = parser/parser.h
 AM_YFLAGS = -d
 
 bin_PROGRAMS = gappa
