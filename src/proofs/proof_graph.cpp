@@ -126,6 +126,14 @@ void graph_layer::store(graph_storage &s) const {
   graph->father = old_graph;
 }
 
+void graph_storage::clear() {
+  if (!stored_graph) return;
+  stored_graph->father = graph;
+  graph = stored_graph;
+  delete_top_graph();
+  stored_graph = NULL;
+}
+
 graph_storage::~graph_storage() {
   if (!stored_graph) return;
   graph = stored_graph;

@@ -44,6 +44,7 @@ struct graph_storage
 {
   graph_storage(): stored_graph(NULL) {}
   ~graph_storage();
+  void clear();
   graph_t *stored_graph;
 };
 
