@@ -1,5 +1,4 @@
-#include "real.hpp"
-#include "types.hpp"
+#include "numbers/real.hpp"
 #include <cassert>
 #include <ostream>
 
@@ -45,13 +44,10 @@ number const &min(number const &x, number const &y)
 number const &max(number const &x, number const &y)
 { return (x <= y) ? y : x; }
 
-number_type real_type;
-
 struct real_loader { real_loader(); };
-real_loader real_loader_;
+static real_loader real_loader_;
 
 real_loader::real_loader() {
-  real_type.format = NULL;
   number_base *r = new number_base;
   mpfr_set_inf(r->val, +1);
   number::pos_inf = number(r);

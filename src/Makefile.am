@@ -19,7 +19,6 @@ gappa_SOURCES = \
 	numbers/real.hpp \
 	numbers/round.cpp \
 	numbers/round.hpp \
-	numbers/types.hpp \
 	parser/ast_real.hpp \
 	parser/ast.hpp \
 	parser/lexer.lpp \

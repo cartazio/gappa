@@ -1,7 +1,6 @@
 #include "numbers/interval.hpp"
 #include "numbers/real.hpp"
 #include "numbers/round.hpp"
-#include "numbers/types.hpp"
 #include <algorithm>
 #include <cassert>
 
@@ -74,14 +73,6 @@ number round_number(number const &f, float_format const *t, rounding_fun r) {
   number_base *d = res.unique();
   (t->*r)(d->val);
   return res;
-}
-
-number number_type::rounded_up(number const &f) const {
-  return round_number(f, format, &float_format::roundU);
-}
-
-number number_type::rounded_dn(number const &f) const {
-  return round_number(f, format, &float_format::roundD);
 }
 
 interval rounding_class::bound(interval const &, std::string &) const				{ return interval(); }

@@ -1,8 +1,7 @@
+#include "numbers/interval_utility.hpp"
+#include "numbers/real.hpp"
+#include "numbers/round.hpp"
 #include "parser/ast.hpp"
-#include "interval_utility.hpp"
-#include "real.hpp"
-#include "round.hpp"
-#include "types.hpp"
 #include <sstream>
 
 static number read_number(ast_number const &n, mp_rnd_t rnd) {
