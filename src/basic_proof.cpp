@@ -12,7 +12,7 @@
 Trivialities are emitted when the result of a basic proof directly
 matches one of the hypotheses. They all are the same node, and it does
 not convey any interesting information. Consequently the result is
-carried through the reference argument. All the trivialities should be
+carried through the reference parameter. All the trivialities should be
 destroyed by modus or assignation.
 */
 
@@ -20,10 +20,19 @@ node *triviality = new node(OTHER);
 
 struct node_assign: node {
   node_assign(node *n, property const &p): node(OTHER) {
-    if (n != triviality) // TODO
-      insert_pred(n);
     res = p;
-    hyp = n->hyp;
+    if (n == triviality) {
+      int idx = p.var->get_definition();
+      assert(idx != -1);
+      instruction &inst = program[idx];
+      assert(!inst.fun);
+      property h = p;
+      h.var = inst.in[0];
+      hyp.push_back(h);
+    } else {
+      insert_pred(n);
+      hyp = n->hyp;
+    }
   }
 };
 
