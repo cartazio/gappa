@@ -22,7 +22,7 @@ interval compute_bound(property_vect const &hyp, variable *v);
 
 namespace {
 
-std::vector< variable * > multiple_definition(variable *v) {
+std::vector< variable * > multiple_definition(variable *) {
   std::vector< variable * > res;
   res.push_back(ast_ident::find("x")->var);
   return res;
@@ -40,7 +40,7 @@ void dichotomize(property_vect &hyp, property &res, int idx) {
   assert(res.type == PROP_BND && h.type == PROP_BND);
   interval bnd = basic_proof::compute_bound(hyp, res.var);
   if (is_defined(bnd) && bnd <= res.bnd) {
-    //std::cout << "  " << p->bnd << " -> " << bnd << std::endl;
+    //std::cout << "  " << h.bnd << " -> " << bnd << std::endl;
     res.bnd = bnd;
     return;
   }

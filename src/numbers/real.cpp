@@ -1,4 +1,5 @@
 #include "real.hpp"
+#include <ostream>
 
 number_real::number_real(int v) {
   impl_data *d = new impl_data;
@@ -43,6 +44,20 @@ interval from_exponent(int exp, int rnd) {
   return interval(interval_real, new _interval_real(number_real(l), number_real(u)));
 }
 
+std::ostream &operator<<(std::ostream &, number_real const &);
+
+template<class T, class Policies>
+std::ostream &operator<<(std::ostream &stream, const boost::numeric::interval<T, Policies> &value) {
+  if (empty(value)) {
+    return stream << "[]";
+  } else if (singleton(value)) {
+    return stream << '[' << lower(value) << ']';
+  } else {
+    return stream << '[' << lower(value) << ',' << upper(value) << ']';
+  }
+}
+
+
 #define pcast(p) static_cast< _interval_real * >(p)
 #define cast(p) *static_cast< _interval_real * >(p)
 #define gen(p) new _interval_real(p)
@@ -56,10 +71,13 @@ static void *mul(void *u, void *v) { return gen(cast(u) * cast(v)); }
 static void *div(void *u, void *v) { return gen(cast(u) / cast(v)); }
 static bool subset(void *u, void *v) { return subset(cast(u), cast(v)); }
 static bool singleton(void *v) { return singleton(cast(v)); }
+static bool zero(void *v) { return in_zero(cast(v)); }
+static void output(std::ostream &s, void *v) { s << cast(v); }
 
 interval_description interval_real_desc =
   { create: &create, destroy: &destroy, clone: &clone,
     add: &add, sub: &sub, mul: &mul, div: &div,
-    subset: &subset, singleton: &singleton };
+    subset: &subset, singleton: &singleton, in_zero: &zero,
+    to_real: 0, hull: 0, split: 0, output: &output };
 
 interval_description *interval_real = &interval_real_desc;

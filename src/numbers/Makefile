@@ -1,5 +1,4 @@
-CXX=g++-3.4
-CXXFLAGS=-Wall -ansi -I.. -g -O2
+CXXFLAGS:=$(CXXFLAGS) -I..
 OBJS=float.o io.o interval.o real.o softfloat.o
 
 all: $(OBJS)

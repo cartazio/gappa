@@ -64,7 +64,7 @@ node *generate_triviality(property_vect const &hyp, property &res) {
 interval const &compute_triviality(property_vect const &hyp, variable *v) {
   property bnd(PROP_BND);
   bnd.var = v;
-  if (node *n = graph->find_compatible_node(hyp, bnd)) return n->res.bnd;
+  //if (node *n = graph->find_compatible_node(hyp, bnd)) return n->res.bnd;
   int i = hyp.find_compatible_property(bnd);
   if (i < 0) { static interval const not_defined; return not_defined; }
   return hyp[i].bnd;

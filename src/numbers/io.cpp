@@ -93,3 +93,12 @@ std::ostream &operator<<(std::ostream &stream, number_float64 const &value) {
 
 std::ostream &operator<<(std::ostream &, number_floatx80 const &) { throw; }
 std::ostream &operator<<(std::ostream &, number_float128 const &) { throw; }
+
+std::ostream &operator<<(std::ostream &stream, number_real const &value) {
+  mp_exp_t exp;
+  char *buf = mpfr_get_str(NULL, &exp, 2, 5, value.data->val, GMP_RNDN);
+  if (buf[0] == '-') stream << "-0." << buf + 1 << 'B' << exp;
+  else stream << "0." << buf << 'B' << exp;
+  free(buf);
+  return stream;
+}
