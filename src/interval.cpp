@@ -1,8 +1,8 @@
-#include <iostream>
-#include <boost/numeric/interval/utility.hpp>
-#include "interval.hpp"
+#include "interval_ext.hpp"
 #include "number_ext.hpp"
-#include "interval.hpp"
+#include <boost/numeric/interval/arith.hpp>
+#include <boost/numeric/interval/utility.hpp>
+#include <boost/numeric/interval/io.hpp>
 #include "ast.hpp"
 
 interval::interval(ast_interval const &i, bool widen, type_id type) {
@@ -14,7 +14,7 @@ interval::interval(ast_interval const &i, bool widen, type_id type) {
     value = interval_real(number_real(n1), number_real(n2));
   else {
     if (type == FLOAT32) {
-      float32_and_float tmp1, tmp2; /* TODO: underflow and overflow, mort a mpfr */
+      float32_and_float tmp1, tmp2;
       tmp1.hard = mpfr_get_d(n1->val, d1);
       tmp2.hard = mpfr_get_d(n2->val, d2);
       value = interval_float32(number_float32(tmp1.soft), number_float32(tmp2.soft));

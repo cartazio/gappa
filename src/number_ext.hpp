@@ -43,4 +43,13 @@ std::basic_ostream< CharType, CharTraits > &operator<<
 struct ast_number;
 impl_data *read_number(ast_number const &, type_id, mp_rnd_t);
 
+number_real to_real(number_float32 const &);
+number_real to_real(number_float64 const &);
+number_real to_real(number_floatx80 const &);
+number_real to_real(number_float128 const &);
+int ulp_exponent(number_float32 const &);
+int ulp_exponent(number_float64 const &);
+int ulp_exponent(number_floatx80 const &);
+int ulp_exponent(number_float128 const &);
+
 #endif // NUMBER_EXT_HPP

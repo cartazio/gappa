@@ -3,8 +3,7 @@
 #include "program.hpp"
 #include "proof_graph.hpp"
 #include "basic_proof.hpp"
-#include "interval.hpp"
-#include "function.hpp"
+#include "interval_ext.hpp"
 #include "functions/float.hpp"
 
 static void initialize_functions() {

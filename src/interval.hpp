@@ -4,12 +4,10 @@
 #include "number.hpp"
 #include "types.hpp"
 #include <boost/variant.hpp>
-#include <boost/numeric/interval/interval.hpp>      // base class
-#include <boost/numeric/interval/rounded_arith.hpp> // default arithmetic rounding policy
-#include <boost/numeric/interval/checking.hpp>      // default checking policy
-#include <boost/numeric/interval/arith.hpp>         // += *= -= etc
-#include <boost/numeric/interval/policies.hpp>      // default policy
-#include <boost/numeric/interval/io.hpp>
+#include <boost/numeric/interval/interval.hpp>
+#include <boost/numeric/interval/rounded_arith.hpp>
+#include <boost/numeric/interval/checking.hpp>
+#include <boost/numeric/interval/policies.hpp>
 
 namespace _bn = boost::numeric;
 
@@ -84,14 +82,5 @@ struct interval {
   interval operator*(interval const &) const;
   bool operator<=(interval const &) const;
 };
-
-template< class CharType, class CharTraits >
-std::basic_ostream< CharType, CharTraits > &operator<<
-  (std::basic_ostream< CharType, CharTraits > &stream,
-   interval const &value);
-
-interval to_real(interval const &);
-int ulp_exponent(interval const &);
-interval from_exponent(int, mp_rnd_t);
 
 #endif // INTERVAL_HPP

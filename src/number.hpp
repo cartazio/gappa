@@ -91,13 +91,4 @@ inline bool is_pos(::number_real const &v)  { return mpfr_sgn(v.data->val) > 0; 
 
 } } } }
 
-number_real to_real(number_float32 const &);
-number_real to_real(number_float64 const &);
-number_real to_real(number_floatx80 const &);
-number_real to_real(number_float128 const &);
-int ulp_exponent(number_float32 const &);
-int ulp_exponent(number_float64 const &);
-int ulp_exponent(number_floatx80 const &);
-int ulp_exponent(number_float128 const &);
-
 #endif // NUMBER_HPP
