@@ -25,10 +25,6 @@ static type_id ret128[2] = { interval_float128, 0 };
 
 struct node_theorem: node {
   char const *name;
-  node_theorem(property_vect const &h, property const &p, char const *n): node(THEOREM), name(n) {
-    res = p;
-    hyp = h;
-  }
   node_theorem(int nb, property const *h, property const &p, char const *n): node(THEOREM), name(n) {
     res = p;
     for(int i = 0; i < nb; ++i) hyp.push_back(h[i]);
@@ -77,11 +73,8 @@ static interval compute_add_float_abs(interval const **ints) {
   return *ints[0] + *ints[1] + from_exponent(ulp_exponent(*ints[2]), 0);
 }
 
-static node *generate_add_float_abs(property_vect const &hyp, property &res) {
-  interval const *ints[3];
-  extract_intervals(hyp, ints);
-  res.bnd = compute_add_float_abs(ints);
-  return new node_theorem(hyp, res, "add");
+static node *generate_add_float_abs(property const *hyp, property const &res) {
+  return new node_theorem(3, hyp, res, "add");
 }
 
 static hypothesis_constraint const const_add_float_abs_sterbenz[6] =
@@ -93,12 +86,8 @@ static interval compute_add_float_abs_sterbenz(interval const **ints) {
   return *ints[2] + *ints[3];
 }
 
-static node *generate_add_float_abs_sterbenz(property_vect const &hyp, property &res) {
-  interval const *ints[5];
-  extract_intervals(hyp, ints);
-  res.bnd = compute_add_float_abs_sterbenz(ints);
-  if (!is_defined(res.bnd)) return NULL;
-  return new node_theorem(hyp, res, "add_sterbenz");
+static node *generate_add_float_abs_sterbenz(property const *hyp, property const &res) {
+  return new node_theorem(5, hyp, res, "add_sterbenz");
 }
 
 static hypothesis_constraint const const_add_float_abs_singleton[5] =
@@ -108,11 +97,8 @@ static interval compute_add_float_abs_singleton(interval const **ints) {
   return to_real(*ints[0]) + to_real(*ints[1]) - to_real(*ints[0] + *ints[1]) + *ints[2] + *ints[3];
 }
 
-static node *generate_add_float_abs_singleton(property_vect const &hyp, property &res) {
-  interval const *ints[4];
-  extract_intervals(hyp, ints);
-  res.bnd = compute_add_float_abs_singleton(ints);
-  return new node_theorem(hyp, res, "add_singleton");
+static node *generate_add_float_abs_singleton(property const *hyp, property const &res) {
+  return new node_theorem(4, hyp, res, "add_singleton");
 }
 
 void initialize_add() {
@@ -141,11 +127,8 @@ static interval compute_sub_float_abs(interval const **ints) {
   return *ints[0] - *ints[1] + from_exponent(ulp_exponent(*ints[2]), 0);
 }
 
-static node *generate_sub_float_abs(property_vect const &hyp, property &res) {
-  interval const *ints[3];
-  extract_intervals(hyp, ints);
-  res.bnd = compute_sub_float_abs(ints);
-  return new node_theorem(hyp, res, "sub");
+static node *generate_sub_float_abs(property const *hyp, property const &res) {
+  return new node_theorem(3, hyp, res, "sub");
 }
 
 static hypothesis_constraint const const_sub_float_abs_sterbenz[6] =
@@ -157,12 +140,8 @@ static interval compute_sub_float_abs_sterbenz(interval const **ints) {
   return *ints[2] - *ints[3];
 }
 
-static node *generate_sub_float_abs_sterbenz(property_vect const &hyp, property &res) {
-  interval const *ints[5];
-  extract_intervals(hyp, ints);
-  res.bnd = compute_sub_float_abs_sterbenz(ints);
-  if (!is_defined(res.bnd)) return NULL;
-  return new node_theorem(hyp, res, "sub_sterbenz");
+static node *generate_sub_float_abs_sterbenz(property const *hyp, property const &res) {
+  return new node_theorem(5, hyp, res, "sub_sterbenz");
 }
 
 static hypothesis_constraint const const_sub_float_abs_singleton[5] =
@@ -172,11 +151,8 @@ static interval compute_sub_float_abs_singleton(interval const **ints) {
   return to_real(*ints[0]) - to_real(*ints[1]) - to_real(*ints[0] - *ints[1]) + *ints[2] - *ints[3];
 }
 
-static node *generate_sub_float_abs_singleton(property_vect const &hyp, property &res) {
-  interval const *ints[4];
-  extract_intervals(hyp, ints);
-  res.bnd = compute_sub_float_abs_singleton(ints);
-  return new node_theorem(hyp, res, "sub_singleton");
+static node *generate_sub_float_abs_singleton(property const *hyp, property const &res) {
+  return new node_theorem(4, hyp, res, "sub_singleton");
 }
 
 void initialize_sub() {
@@ -206,11 +182,8 @@ static interval compute_mul_float_abs(interval const **ints) {
        + *ints[2] * *ints[3] + from_exponent(ulp_exponent(*ints[4]), 0);
 }
 
-static node *generate_mul_float_abs(property_vect const &hyp, property &res) {
-  interval const *ints[5];
-  extract_intervals(hyp, ints);
-  res.bnd = compute_mul_float_abs(ints);
-  return new node_theorem(hyp, res, "mul");
+static node *generate_mul_float_abs(property const *hyp, property const &res) {
+  return new node_theorem(5, hyp, res, "mul");
 }
 
 static hypothesis_constraint const const_mul_float_abs_singleton[5] =
@@ -221,11 +194,8 @@ static interval compute_mul_float_abs_singleton(interval const **ints) {
   return i0 * i1 - to_real(*ints[0] * *ints[1]) + *ints[2] * i1 + *ints[3] * i0 + *ints[2] * *ints[3];
 }
 
-static node *generate_mul_float_abs_singleton(property_vect const &hyp, property &res) {
-  interval const *ints[4];
-  extract_intervals(hyp, ints);
-  res.bnd = compute_mul_float_abs_singleton(ints);
-  return new node_theorem(hyp, res, "mul_singleton");
+static node *generate_mul_float_abs_singleton(property const *hyp, property const &res) {
+  return new node_theorem(4, hyp, res, "mul_singleton");
 }
 
 static hypothesis_constraint const const_mul_float_rel[3] =
@@ -235,11 +205,8 @@ static interval compute_mul_float_rel(interval const **ints) {
   return (one + *ints[0]) * (one + *ints[1]) * (one + from_exponent(-23, 0)) - one; // TODO
 }
 
-static node *generate_mul_float_rel(property_vect const &hyp, property &res) {
-  interval const *ints[2];
-  extract_intervals(hyp, ints);
-  res.bnd = compute_mul_float_rel(ints);
-  return new node_theorem(hyp, res, "mul");
+static node *generate_mul_float_rel(property const *hyp, property const &res) {
+  return new node_theorem(2, hyp, res, "mul");
 }
 
 void initialize_mul() {

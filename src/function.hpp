@@ -22,7 +22,7 @@ struct error_computation {
   hypothesis_constraint res;
   hypothesis_constraint const *constraints;
   interval (*compute)(interval const **);
-  node *(*generate)(property_vect const &, property &);
+  node *(*generate)(property const *, property const &);
 };
 
 #endif // FUNCTION_HPP

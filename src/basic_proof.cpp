@@ -154,12 +154,16 @@ node *generate_error_forced(property_vect const &hyp, property &res) {
     if (!(m->res.type == HYP_ABS && res.type == PROP_ABS || m->res.type == HYP_REL && res.type == PROP_REL)) continue;
     graph_layer layer;
     bool good = true;
+    int l = 0;
+    for(hypothesis_constraint const *c = m->constraints; c->var != 0; ++c) ++l;
     nodes.clear();
-    property_vect props;
-    for(hypothesis_constraint const *c = m->constraints; c->var != 0; ++c) {
+    boost::scoped_array< property > props(new property[l]);
+    boost::scoped_array< interval const * > ints(new interval const *[l]);
+    for(int i = 0; i < l; ++i) {
+      hypothesis_constraint const *c = &m->constraints[i];
       variable *v = (c->var < 0) ? inst.out[-1 - c->var] : inst.in[c->var - 1] ;
       node *nn;
-      property p;
+      property &p = props[i];
       p.var = v;
       if (c->type == HYP_BND || c->type == HYP_SNG) {
         p.type = PROP_BND;
@@ -171,12 +175,16 @@ node *generate_error_forced(property_vect const &hyp, property &res) {
         p.real = &op->ops[c->var - 1];
         if (!(nn = generate_error(hyp, p))) { good = false; break; }
       } else assert(false);
-      props.push_back(p);
+      ints[i] = &p.bnd;
       nodes.push_back(nn);
     }
     if (!good) continue;
-    n = (*m->generate)(props, res);
-    if (n) { layer.flatten(); break; }
+    interval bnd = (*m->compute)(ints.get());
+    if (!is_defined(bnd) || !(bnd <= res.bnd)) continue;
+    res.bnd = bnd;
+    n = (*m->generate)(&props[0], res);
+    layer.flatten();
+    break;
   }
   if (!n) return NULL;
   return new node_modus(res, n, nodes);
