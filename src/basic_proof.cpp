@@ -5,6 +5,8 @@
 #include "interval.hpp"
 #include <iostream>
 
+node *triviality = new node(OTHER);
+
 struct node_assign: node {
   node_assign(node *n, property const &p): node(OTHER) {
     insert_pred(n);
@@ -21,12 +23,7 @@ struct node_trivial: node {
 };
 
 struct node_reflexive: node {
-  node_reflexive(variable *v, int e): node(OTHER) {
-    property_error p;
-    p.var = v;
-    p.real = v->real;
-    p.err = interval(interval_variant(interval_real()));
-    p.error = e;
+  node_reflexive(property_error const &p): node(OTHER) {
     res = p;
   }
 };
@@ -46,7 +43,7 @@ struct node_modus: node {
     res = p;
     insert_pred(n);
     for(node_vect::const_iterator i = nodes.begin(), end = nodes.end(); i != end; ++i)
-      insert_pred(*i);
+      if (*i != triviality) insert_pred(*i);
     /* TODO: hypotheses */
   }
 };
@@ -58,6 +55,22 @@ struct node_plouf: node {
   }
 };
 
+template< class T >
+node *generate_triviality(property_vect const &hyp, T &res) {
+  if (node *n = graph->find_compatible_node(hyp, res)) {
+    T *p = boost::get< T >(&n->res);
+    assert(p);
+    res = *p;
+    return n;
+  }
+  int i = hyp.find_compatible_property(res);
+  if (i < 0) return NULL;
+  T const *p = boost::get< T const >(&hyp[i]);
+  assert(p);
+  res = *p;
+  return triviality;
+}
+
 struct do_generate_basic_proof: boost::static_visitor< node * > {
   property_vect const &hyp;
   do_generate_basic_proof(property_vect const &h): hyp(h) {}
@@ -65,67 +78,65 @@ struct do_generate_basic_proof: boost::static_visitor< node * > {
   node *operator()(property_error const &res) const;
 };
 
-node *do_generate_basic_proof::operator()(property_bound const &res) const {
-  //std::cout << resb->var->name->name << " in " << resb->bnd << std::endl;
+node *generate_basic_proof_bound(property_vect const &hyp, property_bound &res) {
+  if (node *n = generate_triviality(hyp, res)) return n;
+  // std::cout << res.var->name->name << " in " << res.bnd << std::endl;
   int idx = res.var->get_definition();
   if (idx == -1) return NULL; /* TODO: unprovable? */
   instruction &inst = program[idx];
   if (inst.fun == NULL) {
-    property_bound p = res;
-    p.var = inst.in[0];
-    node *n = generate_basic_proof(hyp, p);
+    variable *v = res.var;
+    res.var = inst.in[0];
+    node *n = generate_basic_proof_bound(hyp, res);
     if (!n) return NULL;
-    property_bound *r = boost::get< property_bound >(&n->res);
-    assert(r);
-    p = *r;
-    p.var = res.var;
-    return new node_assign(n, p);
+    res.var = v;
+    return new node_assign(n, res);
   }
   int l = inst.in.size();
-  node_vect nodes;
+  std::vector< node * > nodes(l);
+  std::vector< property > props(l);
   for(int i = 0; i < l; i++) {
     property_bound p;
     p.var = inst.in[i];
-    node *n = generate_basic_proof(hyp, p);
-    if (!n) return NULL;
-    nodes.push_back(n);
+    if (!(nodes[i] = generate_basic_proof_bound(hyp, p))) return NULL;
+    props[i] = p;
   }
   assert(l == 2);
-  property_bound *lhs = boost::get< property_bound >(&nodes[0]->res);
-  property_bound *rhs = boost::get< property_bound >(&nodes[1]->res);
+  property_bound *lhs = boost::get< property_bound >(&props[0]);
+  property_bound *rhs = boost::get< property_bound >(&props[1]);
   assert(lhs && rhs);
-  property_bound p = res;
-  if (inst.fun->name->name == "add32") p.bnd = lhs->bnd + rhs->bnd;
-  else if (inst.fun->name->name == "mul32") p.bnd = lhs->bnd * rhs->bnd;
+  if (inst.fun->name->name == "add32") res.bnd = lhs->bnd + rhs->bnd;
+  else if (inst.fun->name->name == "mul32") res.bnd = lhs->bnd * rhs->bnd;
   else assert(false);
   //if (!(p > res)) return NULL;
   property_vect hyp2;
   hyp2.push_back(*lhs);
   hyp2.push_back(*rhs);
-  node *n = new node_theorem(hyp2, p, inst.fun->name->name);
-  return new node_modus(p, n, nodes);
+  node *n = new node_theorem(hyp2, res, inst.fun->name->name);
+  return new node_modus(res, n, nodes);
 }
 
-node *do_generate_basic_proof::operator()(property_error const &res) const {
-  //static char const *type[] = { "ABS", "REL" };
-  //std::cout << type[rese->error] << '(' << rese->var->name->name << ", " << *rese->real << ") in " << rese->err << std::endl;
+node *generate_basic_proof_error(property_vect const &hyp, property_error &res) {
+  if (node *n = generate_triviality(hyp, res)) return n;
+  /*{ static char const *type[] = { "ABS", "REL" };
+    std::cout << type[res.error] << '(' << res.var->name->name << ", " << res.real << ") in " << res.err << std::endl; }*/
   if (variable *const *v = boost::get< variable *const >(res.real))
-    if (res.var == *v) return new node_reflexive(res.var, res.error);
+    if (res.var == *v) {
+      res.err = interval(interval_variant(interval_real()));
+      return new node_reflexive(res);
+    }
   int idx = res.var->get_definition();
   if (idx == -1) return NULL; /* TODO: unprovable? */
   instruction &inst = program[idx];
   if (inst.fun == NULL) {
-    property_error p = res;
-    p.var = inst.in[0];
-    node *n = generate_basic_proof(hyp, p);
+    variable *v = res.var;
+    res.var = inst.in[0];
+    node *n = generate_basic_proof_error(hyp, res);
     if (!n) return NULL;
-    property_error *r = boost::get< property_error >(&n->res);
-    assert(r);
-    p = *r;
-    p.var = res.var;
-    return new node_assign(n, p);
+    res.var = v;
+    return new node_assign(n, res);
   }
-  if (res.error != 0) return NULL;
+  if (res.error != 0) return NULL; /* TODO */
   int l = inst.in.size();
   if (unary_op const *o = boost::get< unary_op const >(res.real)) {
     if (l != 1 || o->type != inst.fun->real_op) return NULL;
@@ -134,60 +145,48 @@ node *do_generate_basic_proof::operator()(property_error const &res) const {
   }
   if (binary_op const *o = boost::get< binary_op const >(res.real)) {
     if (l != 2 || o->type != inst.fun->real_op) return NULL;
-    property_bound pb;
-    property_error pe;
-    pe.error = 0;
+    property_error pe_lhs, pe_rhs;
+    pe_lhs.error = 0;
+    pe_lhs.var = inst.in[0];
+    pe_lhs.real = &o->left;
+    pe_rhs.error = 0;
+    pe_rhs.var = inst.in[1];
+    pe_rhs.real = &o->right;
+    property_bound pb_lhs, pb_rhs, pb_res;
+    pb_lhs.var = inst.in[0];
+    pb_rhs.var = inst.in[1];
+    pb_res.var = inst.out[0];
+    node *nb_lhs, *nb_rhs, *nb_res, *ne_lhs, *ne_rhs;
+    if (!(ne_lhs = generate_basic_proof_error(hyp, pe_lhs))) return NULL;
+    if (!(ne_rhs = generate_basic_proof_error(hyp, pe_rhs))) return NULL;
+    if (!(nb_res = generate_basic_proof_bound(hyp, pb_res))) return NULL;
+    assert(pe_lhs.error == 0 && pe_rhs.error == 0);
     if (inst.fun->name->name == "add32") {
-      node *n_lhs, *n_rhs, *nb_res;
-      pe.var = inst.in[0];
-      pe.real = &o->left;
-      if (!(n_lhs = generate_basic_proof(hyp, pe))) return NULL;
-      property_error *p_lhs = boost::get< property_error >(&n_lhs->res);
-      pe.var = inst.in[1];
-      pe.real = &o->right;
-      if (!(n_rhs = generate_basic_proof(hyp, pe))) return NULL;
-      property_error *p_rhs = boost::get< property_error >(&n_rhs->res);
-      pb.var = inst.out[0];
-      if (!(nb_res = generate_basic_proof(hyp, pb))) return NULL;
-      property_bound *pb_res = boost::get< property_bound >(&nb_res->res);
-      assert(p_lhs && p_rhs && p_lhs->error == 0 && p_rhs->error == 0 && pb_res);
-      property_error p = res;
-      p.err = p_lhs->err + p_rhs->err + from_exponent(ulp_exponent(pb_res->bnd), GMP_RNDN);
-      return new node_plouf(hyp, p);
+      res.err = pe_lhs.err + pe_rhs.err + from_exponent(ulp_exponent(pb_res.bnd), GMP_RNDN);
+      return new node_plouf(hyp, res);
     }
     if (inst.fun->name->name == "mul32") {
-      node *nb_lhs, *nb_rhs, *nb_res, *ne_lhs, *ne_rhs;
-      pe.var = inst.in[0];
-      pe.real = &o->left;
-      if (!(ne_lhs = generate_basic_proof(hyp, pe))) return NULL;
-      property_error *pe_lhs = boost::get< property_error >(&ne_lhs->res);
-      pe.var = inst.in[1];
-      pe.real = &o->right;
-      if (!(ne_rhs = generate_basic_proof(hyp, pe))) return NULL;
-      property_error *pe_rhs = boost::get< property_error >(&ne_rhs->res);
-      pb.var = inst.in[0];
-      if (!(nb_lhs = generate_basic_proof(hyp, pb))) return NULL;
-      property_bound *pb_lhs = boost::get< property_bound >(&nb_lhs->res);
-      pb.var = inst.in[1];
-      if (!(nb_rhs = generate_basic_proof(hyp, pb))) return NULL;
-      property_bound *pb_rhs = boost::get< property_bound >(&nb_rhs->res);
-      pb.var = inst.out[0];
-      if (!(nb_res = generate_basic_proof(hyp, pb))) return NULL;
-      property_bound *pb_res = boost::get< property_bound >(&nb_res->res);
-      assert(pe_lhs && pe_rhs && pe_lhs->error == 0 && pe_rhs->error == 0 && pb_lhs && pb_rhs && pb_res);
-      property_error p = res;
-      p.err = pe_lhs->err * to_real(pb_rhs->bnd) + pe_rhs->err * to_real(pb_lhs->bnd)
-            + pe_lhs->err * pe_rhs->err + from_exponent(ulp_exponent(pb_res->bnd), GMP_RNDN);
-      return new node_plouf(hyp, p);
+      if (!(nb_lhs = generate_basic_proof_bound(hyp, pb_lhs))) return NULL;
+      if (!(nb_rhs = generate_basic_proof_bound(hyp, pb_rhs))) return NULL;
+      res.err = pe_lhs.err * to_real(pb_rhs.bnd) + pe_rhs.err * to_real(pb_lhs.bnd)
+              + pe_lhs.err * pe_rhs.err + from_exponent(ulp_exponent(pb_res.bnd), GMP_RNDN);
+      return new node_plouf(hyp, res);
     }
   }
   assert(false);
   return NULL;
 }
 
+node *do_generate_basic_proof::operator()(property_bound const &res) const {
+  property_bound res2 = res;
+  return generate_basic_proof_bound(hyp, res2);
+}
+
+node *do_generate_basic_proof::operator()(property_error const &res) const {
+  property_error res2 = res;
+  return generate_basic_proof_error(hyp, res2);
+}
+
 node *generate_basic_proof(property_vect const &hyp, property const &res) {
-  if (node *n = graph->find_compatible_node(hyp, res)) return n;
-  int i = hyp.find_compatible_property(res);
-  if (i >= 0) return new node_trivial(hyp[i]);
   return boost::apply_visitor(do_generate_basic_proof(hyp), res);
 }
