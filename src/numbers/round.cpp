@@ -67,18 +67,18 @@ void float_format::round(mpfr_t &f, rnd_fun g1, rnd_fun g2) const {
   if (s) mpfr_neg(f, f, GMP_RNDN);
 }
 
-number number_type::rounded_up(number const &f) const {
-  if (!format) return f;
+number round_number(number const &f, number_type const &t, rounding_fun r) {
+  if (!t.format) return f;
   number res = f;
   number_base *d = res.unique();
-  format->roundU(d->val);
+  (t.format->*r)(d->val);
   return res;
 }
 
+number number_type::rounded_up(number const &f) const {
+  return round_number(f, *this, &float_format::roundU);
+}
+
 number number_type::rounded_dn(number const &f) const {
-  if (!format) return f;
-  number res = f;
-  number_base *d = res.unique();
-  format->roundD(d->val);
-  return number(d);
+  return round_number(f, *this, &float_format::roundD);
 }

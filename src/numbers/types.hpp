@@ -8,8 +8,6 @@ struct number_type {
   float_format const *format;
   number rounded_up(number const &) const;
   number rounded_dn(number const &) const;
-  //typedef void (float_format::*rounding_fun)(mpfr_t &) const;
-  //number rounded(number const &, rounding_fun);
 };
 
 extern number_type real_type;

@@ -33,4 +33,9 @@ class float_format {
   void roundCE(mpfr_t &f) const { round(f, &float_format::rndCE, &float_format::rndCE); }
 };
 
+struct number_type;
+
+typedef void (float_format::*rounding_fun)(mpfr_t &) const;
+number round_number(number const &, number_type const &, rounding_fun);
+
 #endif // NUMBERS_ROUND_HPP
