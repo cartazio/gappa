@@ -46,8 +46,8 @@ public:
     static bool is_nan(T const &v) { return mpfr_nan_p(v.data->val); }
     static T empty_lower() { return T(); }
     static T empty_upper() { return T(); }
-    static T pos_inf() { RES(w); mpfr_set_inf(w->val, +1); return T(w); }
-    static T neg_inf() { RES(w); mpfr_set_inf(w->val, -1); return T(w); }
+    static T pos_inf() { return T::pos_inf; }
+    static T neg_inf() { return T::neg_inf; }
     static T nan() { RES(w); return T(w); }
     static bool is_empty(T const &x, T const &y) { return !(x <= y); }
   };

@@ -11,10 +11,8 @@ struct ref_counter_t {
   bool decr() { return --nb == 0; }
 };
 
-namespace {
-int const real_prec = 150;
-
 struct number_base {
+  static int const real_prec = 150;
   mutable ref_counter_t ref_counter;
   mpfr_t val;
   number_base() { mpfr_init2(val, real_prec); }
@@ -23,8 +21,7 @@ struct number_base {
   void destroy() const { if (ref_counter.decr()) delete this; }
 };
 
-number_base *empty_mpfr = new number_base();
-} // anonymous namespace
+extern number_base *empty_mpfr;
 
 struct number {
   mutable number_base const *data;
@@ -43,11 +40,8 @@ struct number {
   bool operator>(number const &v) const { return mpfr_greater_p(data->val, v.data->val); }
   bool operator==(number const &v) const { return mpfr_equal_p(data->val, v.data->val); }
   bool operator!=(number const &v) const { return mpfr_lessgreater_p(data->val, v.data->val); }
-  number operator-() const {
-    number_base *r = new number_base;
-    mpfr_neg(r->val, data->val, GMP_RNDN);
-    return number(r);
-  }
+  number operator-() const;
+  static number pos_inf, neg_inf;
 };
 
 number const &min(number const &x, number const &y);
