@@ -97,7 +97,7 @@ interval create_interval(ast_interval const &i, bool widen, type_id _type) {
   return res;
 }
 
-static void load_float(void const *_mem, mpfr_t &f, interval_float_description const *desc) { // TODO: little-endian centric
+void load_float(void const *_mem, mpfr_t &f, interval_float_description const *desc) { // TODO: little-endian centric
   void *mem = const_cast< void * >(_mem);
   int fmt = desc->format_size;
   int min_exp = desc->min_exp;
