@@ -130,7 +130,7 @@ static void split(number_float128 &u, number_float128 &v) {
 #define TO_REAL(sz)	\
   number_real to_real(number_float##sz const &value) {	\
     impl_data *d = new impl_data;	\
-    load_float(&value.value, d->val, reinterpret_cast< interval_float_description const * >(interval_float##sz));	\
+    load_float(&value.value, d->val, reinterpret_cast< interval_float_description const * >(interval_float##sz##_desc));	\
     return d;	\
   }
 
@@ -166,15 +166,15 @@ TO_REAL(128)
   static void output_##sz(std::ostream &s, void *v) { s << cast(sz,v); }	\
   static int mig_exp_##sz(void *v) { return exponent(mig(cast(sz,v))); }	\
   static int mag_exp_##sz(void *v) { return exponent(norm(cast(sz,v))); }	\
-  interval_float_description interval_float##sz##_desc =	\
+  interval_float_description interval_float##sz##_desc_ =	\
     { { create: &create_##sz, destroy: &destroy_##sz, clone: &clone_##sz,	\
-        add: &add_##sz, sub: &sub_##sz, mul: &mul_##sz, div: &div_##sz,		\
         subset: &subset_##sz, singleton: &singleton_##sz, in_zero: &zero_##sz,	\
         to_real: &real_##sz, hull: &hull_##sz, intersect: &intersect_##sz,	\
         split: split_##sz, output: &output_##sz },	\
+      add: &add_##sz, sub: &sub_##sz, mul: &mul_##sz, div: &div_##sz,		\
       mig_exp: &mig_exp_##sz, mag_exp: &mag_exp_##sz, prec: _prec, min_exp: _min,	\
       format_size: _fmt_sz };	\
-  interval_description *interval_float##sz = &interval_float##sz##_desc.desc;
+  interval_description *interval_float##sz##_desc = &interval_float##sz##_desc_.desc;
 
 INTERVAL_FLOAT(32, 23, -126, 32)
 INTERVAL_FLOAT(64, 52, -1022, 64)
@@ -183,6 +183,33 @@ INTERVAL_FLOAT(128, 112, -16382, 128)
 
 #define fdesc(p) reinterpret_cast< interval_float_description const * >(p)
 
-int mig_exponent(interval const &v) { return (*fdesc(v.desc)->mig_exp)(v.ptr); }
-int mag_exponent(interval const &v) { return (*fdesc(v.desc)->mag_exp)(v.ptr); }
-int ulp_exponent(interval const &v) { return mag_exponent(v) - fdesc(v.desc)->prec; }
+int mig_exponent(interval_float const &v) { return (*fdesc(v.desc)->mig_exp)(v.ptr); }
+int mag_exponent(interval_float const &v) { return (*fdesc(v.desc)->mag_exp)(v.ptr); }
+int ulp_exponent(interval_float const &v) { return mag_exponent(v) - fdesc(v.desc)->prec; }
+
+interval_float::interval_float(interval_float_description const *d, void *p): interval(&d->desc, p) {}
+interval_float::interval_float(interval_float const &v): interval(v) {}
+
+interval_float operator+(interval_float const &u, interval_float const &v) {
+  assert(u.desc == v.desc);
+  interval_float_description const *d = fdesc(u.desc);
+  return interval_float(d, (*d->add)(u.ptr, v.ptr));
+}
+
+interval_float operator-(interval_float const &u, interval_float const &v) {
+  assert(u.desc == v.desc);
+  interval_float_description const *d = fdesc(u.desc);
+  return interval_float(d, (*d->sub)(u.ptr, v.ptr));
+}
+
+interval_float operator*(interval_float const &u, interval_float const &v) {
+  assert(u.desc == v.desc);
+  interval_float_description const *d = fdesc(u.desc);
+  return interval_float(d, (*d->mul)(u.ptr, v.ptr));
+}
+
+interval_float operator/(interval_float const &u, interval_float const &v) {
+  assert(u.desc == v.desc);
+  interval_float_description const *d = fdesc(u.desc);
+  return interval_float(d, (*d->div)(u.ptr, v.ptr));
+}

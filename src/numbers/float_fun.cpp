@@ -9,19 +9,19 @@
 #include <boost/preprocessor/cat.hpp>
 #include <boost/preprocessor/stringize.hpp>
 
-int ulp_exponent(interval const &);
-int mig_exponent(interval const &);
-int mag_exponent(interval const &);
-interval from_exponent(int, int);
+int ulp_exponent(interval_float const &);
+int mig_exponent(interval_float const &);
+int mag_exponent(interval_float const &);
+interval_real from_exponent(int, int);
 
-static type_id args32_b[3] = { interval_float32, interval_float32, 0 };
-static type_id args64_b[3] = { interval_float64, interval_float64, 0 };
-static type_id args80_b[3] = { interval_floatx80, interval_floatx80, 0 };
-static type_id args128_b[3] = { interval_float128, interval_float128, 0 };
-static type_id ret32[2] = { interval_float32, 0 };
-static type_id ret64[2] = { interval_float64, 0 };
-static type_id ret80[2] = { interval_floatx80, 0 };
-static type_id ret128[2] = { interval_float128, 0 };
+static type_id args32_b[3] = { interval_float32_desc, interval_float32_desc, 0 };
+static type_id args64_b[3] = { interval_float64_desc, interval_float64_desc, 0 };
+static type_id args80_b[3] = { interval_floatx80_desc, interval_floatx80_desc, 0 };
+static type_id args128_b[3] = { interval_float128_desc, interval_float128_desc, 0 };
+static type_id ret32[2] = { interval_float32_desc, 0 };
+static type_id ret64[2] = { interval_float64_desc, 0 };
+static type_id ret80[2] = { interval_floatx80_desc, 0 };
+static type_id ret128[2] = { interval_float128_desc, 0 };
 
 struct node_theorem: node {
   char const *name;
@@ -50,12 +50,15 @@ struct node_theorem: node {
 #define do_constraint(TYPE, name)	\
   { { -1, HYP_##TYPE }, const_##name, &compute_##name, &generate_##name }
 
-static interval const one = interval(interval_real, new _interval_real(number_real(1)));
+static interval_real const one = interval_real(new _interval_real(number_real(1)));
+
+#define f_ints(i) static_cast< interval_float const & >(*ints[i])
+#define r_ints(i) static_cast< interval_real const & >(*ints[i])
 
 /********** add **********/
 
 static interval bound_compute_add_float(interval const **ints) {
-  return *ints[0] + *ints[1];
+  return f_ints(0) + f_ints(1);
 }
 
 static node *bound_generate_add_float(property const *hyp, property const &res) {
@@ -66,7 +69,7 @@ static hypothesis_constraint const const_add_float_abs[4] =
   { { 1, HYP_ABS }, { 2, HYP_ABS }, { -1, HYP_BND }, { 0 } };
 
 static interval compute_add_float_abs(interval const **ints) {
-  return *ints[0] + *ints[1] + from_exponent(ulp_exponent(*ints[2]), 0);
+  return r_ints(0) + r_ints(1) + from_exponent(ulp_exponent(f_ints(2)), 0);
 }
 
 static node *generate_add_float_abs(property const *hyp, property const &res) {
@@ -77,9 +80,9 @@ static hypothesis_constraint const const_add_float_abs_sterbenz[6] =
   { { 1, HYP_BND }, { 2, HYP_BND }, { 1, HYP_ABS }, { 2, HYP_ABS }, { -1, HYP_BND }, { 0 } };
 
 static interval compute_add_float_abs_sterbenz(interval const **ints) {
-  int e = mag_exponent(*ints[4]);
-  if (e > mig_exponent(*ints[0]) || e > mig_exponent(*ints[1])) return interval();
-  return *ints[2] + *ints[3];
+  int e = mag_exponent(f_ints(4));
+  if (e > mig_exponent(f_ints(0)) || e > mig_exponent(f_ints(1))) return interval();
+  return r_ints(2) + r_ints(3);
 }
 
 static node *generate_add_float_abs_sterbenz(property const *hyp, property const &res) {
@@ -90,7 +93,7 @@ static hypothesis_constraint const const_add_float_abs_singleton[5] =
   { { 1, HYP_SNG }, { 2, HYP_SNG }, { 1, HYP_ABS }, { 2, HYP_ABS }, { 0 } };
 
 static interval compute_add_float_abs_singleton(interval const **ints) {
-  return to_real(*ints[0]) + to_real(*ints[1]) - to_real(*ints[0] + *ints[1]) + *ints[2] + *ints[3];
+  return to_real(f_ints(0)) + to_real(f_ints(1)) - to_real(f_ints(0) + f_ints(1)) + r_ints(2) + r_ints(3);
 }
 
 static node *generate_add_float_abs_singleton(property const *hyp, property const &res) {
@@ -109,7 +112,7 @@ void initialize_add() {
 /********** sub **********/
 
 static interval bound_compute_sub_float(interval const **ints) {
-  return *ints[0] - *ints[1];
+  return f_ints(0) - f_ints(1);
 }
 
 static node *bound_generate_sub_float(property const *hyp, property const &res) {
@@ -120,7 +123,7 @@ static hypothesis_constraint const const_sub_float_abs[4] =
   { { 1, HYP_ABS }, { 2, HYP_ABS }, { -1, HYP_BND }, { 0 } };
 
 static interval compute_sub_float_abs(interval const **ints) {
-  return *ints[0] - *ints[1] + from_exponent(ulp_exponent(*ints[2]), 0);
+  return r_ints(0) - r_ints(1) + from_exponent(ulp_exponent(f_ints(2)), 0);
 }
 
 static node *generate_sub_float_abs(property const *hyp, property const &res) {
@@ -131,9 +134,9 @@ static hypothesis_constraint const const_sub_float_abs_sterbenz[6] =
   { { 1, HYP_BND }, { 2, HYP_BND }, { 1, HYP_ABS }, { 2, HYP_ABS }, { -1, HYP_BND }, { 0 } };
 
 static interval compute_sub_float_abs_sterbenz(interval const **ints) {
-  int e = mag_exponent(*ints[4]);
-  if (e > mig_exponent(*ints[0]) || e > mig_exponent(*ints[1])) return interval();
-  return *ints[2] - *ints[3];
+  int e = mag_exponent(f_ints(4));
+  if (e > mig_exponent(f_ints(0)) || e > mig_exponent(f_ints(1))) return interval();
+  return r_ints(2) - r_ints(3);
 }
 
 static node *generate_sub_float_abs_sterbenz(property const *hyp, property const &res) {
@@ -144,7 +147,7 @@ static hypothesis_constraint const const_sub_float_abs_singleton[5] =
   { { 1, HYP_SNG }, { 2, HYP_SNG }, { 1, HYP_ABS }, { 2, HYP_ABS }, { 0 } };
 
 static interval compute_sub_float_abs_singleton(interval const **ints) {
-  return to_real(*ints[0]) - to_real(*ints[1]) - to_real(*ints[0] - *ints[1]) + *ints[2] - *ints[3];
+  return to_real(f_ints(0)) - to_real(f_ints(1)) - to_real(f_ints(0) - f_ints(1)) + r_ints(2) - r_ints(3);
 }
 
 static node *generate_sub_float_abs_singleton(property const *hyp, property const &res) {
@@ -163,7 +166,7 @@ void initialize_sub() {
 /********** mul **********/
 
 static interval bound_compute_mul_float(interval const **ints) {
-  return *ints[0] * *ints[1];
+  return f_ints(0) * f_ints(1);
 }
 
 static node *bound_generate_mul_float(property const *hyp, property const &res) {
@@ -174,8 +177,8 @@ static hypothesis_constraint const const_mul_float_abs[6] =
   { { 1, HYP_BND }, { 2, HYP_BND }, { 1, HYP_ABS }, { 2, HYP_ABS }, { -1, HYP_BND }, { 0 } };
 
 static interval compute_mul_float_abs(interval const **ints) {
-  return *ints[2] * to_real(*ints[1]) + *ints[3] * to_real(*ints[0])
-       + *ints[2] * *ints[3] + from_exponent(ulp_exponent(*ints[4]), 0);
+  return r_ints(2) * to_real(f_ints(1)) + r_ints(3) * to_real(f_ints(0))
+       + r_ints(2) * r_ints(3) + from_exponent(ulp_exponent(f_ints(4)), 0);
 }
 
 static node *generate_mul_float_abs(property const *hyp, property const &res) {
@@ -186,8 +189,8 @@ static hypothesis_constraint const const_mul_float_abs_singleton[5] =
   { { 1, HYP_SNG }, { 2, HYP_SNG }, { 1, HYP_ABS }, { 2, HYP_ABS }, { 0 } };
 
 static interval compute_mul_float_abs_singleton(interval const **ints) {
-  interval i0 = to_real(*ints[0]), i1 = to_real(*ints[1]);
-  return i0 * i1 - to_real(*ints[0] * *ints[1]) + *ints[2] * i1 + *ints[3] * i0 + *ints[2] * *ints[3];
+  interval_real i0 = to_real(f_ints(0)), i1 = to_real(f_ints(1));
+  return i0 * i1 - to_real(f_ints(0) * f_ints(1)) + r_ints(2) * i1 + r_ints(3) * i0 + r_ints(2) * r_ints(3);
 }
 
 static node *generate_mul_float_abs_singleton(property const *hyp, property const &res) {
@@ -199,8 +202,8 @@ static hypothesis_constraint const const_mul_float_rel[4] =
 
 static interval compute_mul_float_rel(interval const **ints) {
   interval_float_description const *desc = reinterpret_cast< interval_float_description const * >(ints[2]->desc);
-  if (mig_exponent(*ints[2]) <= desc->min_exp) return interval(); // TODO
-  return (one + *ints[0]) * (one + *ints[1]) * (one + from_exponent(-desc->prec, 0)) - one;
+  if (mig_exponent(f_ints(2)) <= desc->min_exp) return interval(); // TODO
+  return (one + r_ints(0)) * (one + r_ints(1)) * (one + from_exponent(-desc->prec, 0)) - one;
 }
 
 static node *generate_mul_float_rel(property const *hyp, property const &res) {

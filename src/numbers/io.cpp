@@ -69,26 +69,26 @@ static void store_float(void *mem, mpfr_t const &f, interval_float_description c
 
 interval create_interval(ast_interval const &i, bool widen, type_id _type) {
   interval_float_description const *type =
-    _type == interval_real ? 0 :
+    _type == interval_real_desc ? 0 :
     reinterpret_cast< interval_float_description const * >(_type);
   mp_rnd_t d1 = widen ? GMP_RNDD : GMP_RNDU;
   mp_rnd_t d2 = widen ? GMP_RNDU : GMP_RNDD;
   impl_data *n1 = read_number(i.lower, type, d1);
   impl_data *n2 = read_number(i.upper, type, d2);
   interval res(_type, 0);
-  if (_type == interval_real)
+  if (_type == interval_real_desc)
     res.ptr = new _interval_real(number_real(n1), number_real(n2));
   else {
     char tmp1[16], tmp2[16];
     store_float(&tmp1, n1->val, type);
     store_float(&tmp2, n2->val, type);
-    if (_type == interval_float32)
+    if (_type == interval_float32_desc)
       res.ptr = new _interval_float32(number_float32(*(float32 *)tmp1), number_float32(*(float32 *)tmp2));
-    else if (_type == interval_float64)
+    else if (_type == interval_float64_desc)
       res.ptr = new _interval_float64(number_float64(*(float64 *)tmp1), number_float64(*(float64 *)tmp2));
-    else if (_type == interval_floatx80)
+    else if (_type == interval_floatx80_desc)
       res.ptr = new _interval_floatx80(number_floatx80(*(floatx80 *)tmp1), number_floatx80(*(floatx80 *)tmp2));
-    else if (_type == interval_float128)
+    else if (_type == interval_float128_desc)
       res.ptr = new _interval_float128(number_float128(*(float128 *)tmp1), number_float128(*(float128 *)tmp2));
     else assert(false);
     n1->destroy();
@@ -160,7 +160,7 @@ static void write_real(std::ostream &stream, impl_data const *data) {
 #define OUTPUT(sz)	\
   std::ostream &operator<<(std::ostream &stream, number_float##sz const &value) {	\
     impl_data *d = new impl_data;	\
-    load_float(&value.value, d->val, reinterpret_cast< interval_float_description const * >(interval_float##sz));	\
+    load_float(&value.value, d->val, reinterpret_cast< interval_float_description const * >(interval_float##sz##_desc));	\
     write_real(stream, d);	\
     d->destroy();	\
     return stream;	\

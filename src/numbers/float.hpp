@@ -30,7 +30,7 @@ extern "C" {
   }; \
   inline number_float##size sqrt(number_float##size const &v)	\
   { return number_float##size(float##size##_sqrt(v.value)); }	\
-  extern interval_description *interval_float##size;		\
+  extern interval_description *interval_float##size##_desc;		\
   typedef boost::numeric::interval< number_float##size > _interval_float##size;
 
 NUMBER_FLOAT(32)
@@ -40,11 +40,25 @@ NUMBER_FLOAT(128)
 
 struct interval_float_description {
   interval_description desc;
+  void *(*add)(void *, void *);
+  void *(*sub)(void *, void *);
+  void *(*mul)(void *, void *);
+  void *(*div)(void *, void *);
   int (*mig_exp)(void *);
   int (*mag_exp)(void *);
   int prec;
   int min_exp;
   int format_size;
 };
+
+struct interval_float: interval {
+  interval_float(interval_float_description const *, void *);
+  interval_float(interval_float const &);
+};
+
+interval_float operator+(interval_float const &, interval_float const &);
+interval_float operator-(interval_float const &, interval_float const &);
+interval_float operator*(interval_float const &, interval_float const &);
+interval_float operator/(interval_float const &, interval_float const &);
 
 #endif // NUMBERS_FLOAT_HPP

@@ -17,6 +17,12 @@ interval &interval::operator=(interval const &v) {
   return *this;
 }
 
+interval_real::interval_real(): interval(interval_real_desc) {}
+interval_real::interval_real(void *p): interval(interval_real_desc, p) {}
+interval_real::interval_real(interval_real const &v): interval(v) {}
+interval_real &interval_real::operator=(interval_real const &v)
+{ interval::operator=(v); return *this; }
+
 bool is_singleton(interval const &v) {
   return (*v.desc->singleton)(v.ptr);
 }
@@ -30,8 +36,8 @@ bool is_zero(interval const &v) {
   return is_singleton(v) && contains_zero(v);
 }
 
-interval to_real(interval const &v) {
-  return interval(interval_real, (*v.desc->to_real)(v.ptr));
+interval_real to_real(interval const &v) {
+  return interval_real((*v.desc->to_real)(v.ptr));
 }
 
 interval hull(interval const &u, interval const &v) {
@@ -52,26 +58,6 @@ std::pair< interval, interval > split(interval const &v) {
 std::ostream &operator<<(std::ostream &s, interval const &v) {
   (*v.desc->output)(s, v.ptr);
   return s;
-}
-
-interval operator+(interval const &u, interval const &v) {
-  assert(u.desc == v.desc);
-  return interval(u.desc, (*u.desc->add)(u.ptr, v.ptr));
-}
-
-interval operator-(interval const &u, interval const &v) {
-  assert(u.desc == v.desc);
-  return interval(u.desc, (*u.desc->sub)(u.ptr, v.ptr));
-}
-
-interval operator*(interval const &u, interval const &v) {
-  assert(u.desc == v.desc);
-  return interval(u.desc, (*u.desc->mul)(u.ptr, v.ptr));
-}
-
-interval operator/(interval const &u, interval const &v) {
-  assert(u.desc == v.desc);
-  return interval(u.desc, (*u.desc->div)(u.ptr, v.ptr));
 }
 
 bool operator<=(interval const &u, interval const &v) {

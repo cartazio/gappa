@@ -203,7 +203,7 @@ node *generate_error_forced(property_vect const &hyp, property &res) {
     std::cout << type[res.error] << '(' << res.var->name->name << ", ...) in " << res.err << std::endl; }*/
   if (res.var->real == res.real) {
     if (!contains_zero(res.bnd)) return NULL;
-    res.bnd = interval(interval_real);
+    res.bnd = interval_real();
     return triviality;
   }
   int idx = res.var->get_definition();
@@ -281,10 +281,10 @@ node *generate_error(property_vect const &hyp, property &res) {
   if (!ne) return NULL;
   res = res2;
   if (res2.type == PROP_ABS)
-    res.bnd = err.bnd * to_real(bnd.bnd);
+    res.bnd = static_cast< interval_real const & >(err.bnd) * to_real(bnd.bnd);
   else if (!is_zero(err.bnd)) {
     if (contains_zero(bnd.bnd)) return NULL;
-    res.bnd = err.bnd / to_real(bnd.bnd);
+    res.bnd = static_cast< interval_real const & >(err.bnd) / to_real(bnd.bnd);
   }
   if (!(res.bnd <= res2.bnd)) return NULL;
   node_vect nodes;

@@ -26,7 +26,7 @@ number_real const &min(number_real const &x, number_real const &y)
 number_real const &max(number_real const &x, number_real const &y)
 { return (x <= y) ? y : x; }
 
-interval from_exponent(int exp, int rnd) {
+interval_real from_exponent(int exp, int rnd) {
   impl_data *l = new impl_data, *u = new impl_data;
   if (rnd == 0) {
     mpfr_set_ui(u->val, 1, GMP_RNDN);
@@ -41,7 +41,7 @@ interval from_exponent(int exp, int rnd) {
     mpfr_set_ui(u->val, 1, GMP_RNDN);
     mpfr_mul_2si(u->val, u->val, exp, GMP_RNDN);
   }
-  return interval(interval_real, new _interval_real(number_real(l), number_real(u)));
+  return interval_real(new _interval_real(number_real(l), number_real(u)));
 }
 
 std::ostream &operator<<(std::ostream &, number_real const &);
@@ -65,10 +65,6 @@ std::ostream &operator<<(std::ostream &stream, boost::numeric::interval<T, Polic
 static void *create() { return new _interval_real; }
 static void destroy(void *v) { delete pcast(v); }
 static void *clone(void *v) { return gen(cast(v)); }
-static void *add(void *u, void *v) { return gen(cast(u) + cast(v)); }
-static void *sub(void *u, void *v) { return gen(cast(u) - cast(v)); }
-static void *mul(void *u, void *v) { return gen(cast(u) * cast(v)); }
-static void *div(void *u, void *v) { return gen(cast(u) / cast(v)); }
 static bool subset(void *u, void *v) { return subset(cast(u), cast(v)); }
 static bool singleton(void *v) { return singleton(cast(v)); }
 static bool zero(void *v) { return in_zero(cast(v)); }
@@ -76,10 +72,18 @@ static void *hull(void *u, void *v) { return gen(hull(cast(u), cast(v))); }
 static void *intersect(void *u, void *v) { return gen(intersect(cast(u), cast(v))); }
 static void output(std::ostream &s, void *v) { s << cast(v); }
 
-interval_description interval_real_desc =
+interval_description interval_real_desc_ =
   { create: &create, destroy: &destroy, clone: &clone,
-    add: &add, sub: &sub, mul: &mul, div: &div,
     subset: &subset, singleton: &singleton, in_zero: &zero,
     to_real: 0, hull: &hull, intersect: &intersect, split: 0, output: &output };
 
-interval_description *interval_real = &interval_real_desc;
+interval_description *interval_real_desc = &interval_real_desc_;
+
+interval_real operator+(interval_real const &u, interval_real const &v)
+{ return interval_real(gen(cast(u.ptr) + cast(v.ptr))); }
+interval_real operator-(interval_real const &u, interval_real const &v)
+{ return interval_real(gen(cast(u.ptr) - cast(v.ptr))); }
+interval_real operator*(interval_real const &u, interval_real const &v)
+{ return interval_real(gen(cast(u.ptr) * cast(v.ptr))); }
+interval_real operator/(interval_real const &u, interval_real const &v)
+{ return interval_real(gen(cast(u.ptr) / cast(v.ptr))); }

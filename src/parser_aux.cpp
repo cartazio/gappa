@@ -59,7 +59,7 @@ property generate_property(ast_atom_error const &p, bool goal) {
   r.real = p.real;
   if (p.interval.lower) {
     assert(p.interval.upper);
-    r.bnd = create_interval(p.interval, goal, interval_real);
+    r.bnd = create_interval(p.interval, goal, interval_real_desc);
   } else assert(!p.interval.upper);
   return r;
 }
