@@ -47,10 +47,8 @@ number const &max(number const &x, number const &y)
 
 number_type real_type;
 
-struct real_loader {
-  real_loader();
-  static real_loader loader;
-};
+struct real_loader { real_loader(); };
+real_loader real_loader_;
 
 real_loader::real_loader() {
   real_type.format = NULL;
