@@ -1,3 +1,4 @@
+AUTOMAKE_OPTIONS = subdir-objects
 BUILT_SOURCES = parser.h
 AM_YFLAGS = -d
 
