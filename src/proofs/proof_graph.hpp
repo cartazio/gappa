@@ -64,7 +64,7 @@ struct modus_node: public dependent_node {
 };
 
 struct proof_handler {
-  ast_real_vect *ordered_reals;
+  proof_scheme_list *ordered_schemes;
   property_vect goals;
   void operator()() const;
 };

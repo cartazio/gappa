@@ -13,7 +13,7 @@ proof_scheme *pattern_factory::operator()(ast_real const *r) const {
   ast_real_vect holders;
   rounding_vect roundings;
   if (!match(r, p1, holders, roundings)) return NULL;
-  return new rewrite_scheme(rewrite(p2, holders, roundings), name);
+  return new rewrite_scheme(r, rewrite(p2, holders, roundings), name);
 }
 
 struct pattern_register {

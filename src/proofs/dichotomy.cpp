@@ -103,18 +103,25 @@ void dichotomy_node::dichotomize() {
 }
 
 struct dichotomy_scheme: proof_scheme {
-  ast_real const *real;
+  ast_real const *var;
   mutable node *dich;
   mutable bool already_here;
-  dichotomy_scheme(ast_real const *r): real(r), dich(NULL), already_here(false) {}
-  virtual node *generate_proof(property const &) const;
-  virtual node *generate_proof(ast_real const *) const { return dich; }
-  virtual ast_real_vect needed_reals(ast_real const *r) const { return ast_real_vect(1, r); }
+  dichotomy_scheme(ast_real const *v, ast_real const *r): proof_scheme(r), var(v), dich(NULL), already_here(false) {}
+  virtual node *generate_proof(interval const &) const;
+  virtual node *generate_proof() const { return dich; }
+  virtual ast_real_vect needed_reals() const;
 };
 
-node *dichotomy_scheme::generate_proof(property const &res) const {
+ast_real_vect dichotomy_scheme::needed_reals() const {
+  ast_real_vect res;
+  res.push_back(real);
+  res.push_back(var);
+  return res;
+}
+
+node *dichotomy_scheme::generate_proof(interval const &bnd) const {
   if (dich || already_here) return dich;
-  node *varn = find_proof(real);
+  node *varn = find_proof(var);
   if (!varn) return NULL;
   already_here = true;
   try {
@@ -124,7 +131,7 @@ node *dichotomy_scheme::generate_proof(property const &res) const {
     for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
       if (i->real != real) hyp2.push_back(*i);
     graph_layer layer;
-    dichotomy_node *n = new dichotomy_node(hyp2, res);
+    dichotomy_node *n = new dichotomy_node(hyp2, property(real, bnd));
     n->dichotomize();
     n->add_graph(n->last_graph);
     if (varn->type != HYPOTHESIS)
@@ -147,14 +154,14 @@ node *dichotomy_scheme::generate_proof(property const &res) const {
 }
 
 struct dichotomy_factory: scheme_factory {
-  ast_real const *r1, *r2;
-  dichotomy_factory(ast_real const *q1, ast_real const *q2): r1(q1), r2(q2) {}
+  ast_real const *dst, *var;
+  dichotomy_factory(ast_real const *q1, ast_real const *q2): dst(q1), var(q2) {}
   virtual proof_scheme *operator()(ast_real const *) const;
 };
 
 proof_scheme *dichotomy_factory::operator()(ast_real const *r) const {
-  if (r != r1) return NULL;
-  return new dichotomy_scheme(r2);
+  if (r != dst) return NULL;
+  return new dichotomy_scheme(var, dst);
 }
 
 void register_user_dichotomy(ast_real const *r1, ast_real const *r2) {

@@ -7,11 +7,12 @@
 #include <string>
 
 struct rewrite_scheme: proof_scheme {
-  ast_real const *real;
+  ast_real const *rewritten;
   std::string name;
-  rewrite_scheme(ast_real const *r, std::string const &n): real(r), name(n) {}
-  virtual node *generate_proof(ast_real const *) const;
-  virtual ast_real_vect needed_reals(ast_real const *) const { return ast_real_vect(1, real); }
+  rewrite_scheme(ast_real const *src, ast_real const *dst, std::string const &n)
+  	: proof_scheme(src), rewritten(dst), name(n) {}
+  virtual node *generate_proof() const;
+  virtual ast_real_vect needed_reals() const { return ast_real_vect(1, rewritten); }
 };
 
 void register_user_rewrite(ast_real const *, ast_real const *);

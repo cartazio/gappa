@@ -72,14 +72,14 @@ static cache< ast_real > ast_real_cache;
 ast_real *normalize(ast_real const &v) { return ast_real_cache.find(v); }
 
 void clear_schemes() {
-  for(cache< ast_real >::iterator i = ast_real_cache.begin(), end = ast_real_cache.end(); i != end; ++i) {
-    proof_scheme const *s = (*i)->scheme;
-    while (s) {
-      proof_scheme const *p = s;
-      s = s->next;
-      delete p;
+  for(cache< ast_real >::iterator i = ast_real_cache.begin(), i_end = ast_real_cache.end(); i != i_end; ++i) {
+    proof_scheme_list *&s = (*i)->schemes;
+    if (s) {
+      for(proof_scheme_list::const_iterator j = s->begin(), j_end = s->end(); j != j_end; ++j)
+        delete *j;
+      delete s;
+      s = NULL;
     }
-    (*i)->scheme = NULL;
   }
 }
 

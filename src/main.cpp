@@ -231,17 +231,20 @@ int main() {
     graph_loader loader(g);
     property_vect const &goals = g->prover.goals;
     int nb = goals.size();
-    g->prover.ordered_reals = new ast_real_vect;
-    ast_real_vect &all_reals = *g->prover.ordered_reals;
     std::vector< bool > scheme_results(nb);
     {
+      proof_scheme_list *schemes = new proof_scheme_list;
+      g->prover.ordered_schemes = schemes;
       ast_real_vect dummy;
       for(int j = 0; j < nb; ++j) 
-        scheme_results[j] = generate_scheme_tree(goals[j].real, all_reals, dummy);
+        scheme_results[j] = generate_scheme_tree(goals[j].real, *schemes, dummy);
+      g->prover();
+      for(proof_scheme_list::const_iterator j = schemes->begin(), j_end = schemes->end(); j != j_end; ++j)
+        delete *j;
+      delete schemes;
+      g->prover.ordered_schemes = NULL;
+      clear_schemes();
     }
-    g->prover();
-    delete g->prover.ordered_reals;
-    clear_schemes();
     node_vect results(nb);
     std::cerr << "\n\n";
     for(int j = 0; j < nb; ++j) {

@@ -144,8 +144,9 @@ interval float_rounding_class::relative_error_from_rounded(interval const &i, st
 }
 
 struct sterbenz_scheme: proof_scheme {
-  virtual node *generate_proof(ast_real const *) const;
-  virtual ast_real_vect needed_reals(ast_real const *) const;
+  sterbenz_scheme(ast_real const *r): proof_scheme(r) {}
+  virtual node *generate_proof() const;
+  virtual ast_real_vect needed_reals() const;
   static proof_scheme *factory(ast_real const *);
 };
 
@@ -189,7 +190,7 @@ static node *sterbenz_exponent(ast_real const *r, int &e) {
   return n;
 }
 
-node *sterbenz_scheme::generate_proof(ast_real const *real) const {
+node *sterbenz_scheme::generate_proof() const {
   ast_real const *r1, *r2, *ra, *rb; float_format const *f;
   bool b = sterbenz_decomposition(real, &r1, &r2, &ra, &rb, &f);
   assert(b);
@@ -205,7 +206,7 @@ node *sterbenz_scheme::generate_proof(ast_real const *real) const {
   return new modus_node(4, ns, new theorem_node(4, res, property(real, res2.bnd), "sterbenz"));
 }
 
-ast_real_vect sterbenz_scheme::needed_reals(ast_real const *real) const {
+ast_real_vect sterbenz_scheme::needed_reals() const {
   ast_real_vect res(4);
   bool b = sterbenz_decomposition(real, &res[0], &res[1], &res[2], &res[3], NULL);
   assert(b);
@@ -215,7 +216,7 @@ ast_real_vect sterbenz_scheme::needed_reals(ast_real const *real) const {
 proof_scheme *sterbenz_scheme::factory(ast_real const *real) {
   bool b = sterbenz_decomposition(real, NULL, NULL, NULL, NULL, NULL);
   if (!b) return NULL;
-  return new sterbenz_scheme;
+  return new sterbenz_scheme(real);
 }
 
 static scheme_register sterbenz_scheme_register(&sterbenz_scheme::factory);
