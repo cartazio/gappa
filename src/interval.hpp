@@ -83,4 +83,7 @@ struct interval {
   bool operator<=(interval const &) const;
 };
 
+bool is_singleton(interval const &);
+bool is_not_defined(interval const &);
+
 #endif // INTERVAL_HPP

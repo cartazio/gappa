@@ -6,7 +6,7 @@
 #include "program.hpp"
 #include "proof_graph.hpp"
 
-enum hypothesis_type { HYP_BND, HYP_ABS };
+enum hypothesis_type { HYP_BND, HYP_SNG, HYP_ABS };
 
 struct hypothesis_constraint {
   int var;

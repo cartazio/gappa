@@ -99,10 +99,11 @@ node *generate_basic_proof_bound(property_vect const &hyp, property_bound &res) 
     for(hypothesis_constraint const *c = m->constraints; c->var != 0; ++c) {
       variable *v = (c->var < 0) ? inst.out[-1 - c->var] : inst.in[c->var - 1] ;
       node *nn;
-      if (c->type == HYP_BND) {
+      if (c->type == HYP_BND || c->type == HYP_SNG) {
         property_bound p;
         p.var = v;
         if (!(nn = generate_basic_proof_bound(hyp, p))) { good = false; break; }
+        if (c->type == HYP_SNG && !is_singleton(p.bnd)) { good = false; break; }
         props.push_back(p);
       } else assert(false);
       nodes.push_back(nn);
@@ -148,10 +149,11 @@ node *generate_basic_proof_error(property_vect const &hyp, property_error &res) 
     for(hypothesis_constraint const *c = m->constraints; c->var != 0; ++c) {
       variable *v = (c->var < 0) ? inst.out[-1 - c->var] : inst.in[c->var - 1] ;
       node *nn;
-      if (c->type == HYP_BND) {
+      if (c->type == HYP_BND || c->type == HYP_SNG) {
         property_bound p;
         p.var = v;
         if (!(nn = generate_basic_proof_bound(hyp, p))) { good = false; break; }
+        if (c->type == HYP_SNG && !is_singleton(p.bnd)) { good = false; break; }
         props.push_back(p);
       } else if (c->type == HYP_ABS) {
         property_error p;
