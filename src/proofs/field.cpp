@@ -6,8 +6,9 @@
 struct pattern_factory: scheme_factory {
   pattern lhs, rhs;
   std::string name;
-  pattern_factory(pattern const &q1, pattern const &q2, std::string const &n)
-  	: lhs(q1), rhs(q2), name(n) {}
+  pattern_cond_vect cond;
+  pattern_factory(pattern const &q1, pattern const &q2, std::string const &n, pattern_cond_vect const &c)
+  	: lhs(q1), rhs(q2), name(n), cond(c) {}
   virtual proof_scheme *operator()(ast_real const *) const;
 };
 
@@ -16,15 +17,18 @@ proof_scheme *pattern_factory::operator()(ast_real const *src) const {
   rounding_vect roundings;
   if (!match(src, lhs, holders, roundings)) return NULL;
   ast_real const *dst = rewrite(rhs, holders, roundings);
-  return new rewrite_scheme(src, dst, name);
+  pattern_cond_vect c(cond);
+  rewrite(c, holders, roundings);
+  return new rewrite_scheme(src, dst, name, c);
 }
 
 struct pattern_register {
-  pattern_register(pattern const &, pattern const &, std::string const &n);
+  pattern_register(pattern const &, pattern const &, std::string const &n, pattern_cond_vect const &c);
 };
 
-pattern_register::pattern_register(pattern const &p1, pattern const &p2, std::string const &n) {
-  scheme_register dummy(new pattern_factory(p1, p2, n));
+pattern_register::pattern_register(pattern const &p1, pattern const &p2,
+                                   std::string const &n, pattern_cond_vect const &c) {
+  scheme_register dummy(new pattern_factory(p1, p2, n, c));
 }
 
 static pattern rnd(pattern const &a, int b) {
@@ -34,8 +38,8 @@ static pattern rnd(pattern const &a, int b) {
 static pattern a(0), b(1), c(2), d(3);
 
 #define REWRITE_NAME BOOST_PP_CAT(rewrite_, __LINE__)
-#define REWRITE(name,lhs,rhs) static pattern_register REWRITE_NAME(lhs, rhs, #name)
-#define REWRIT3(name,lhs,rhs,cond) static pattern_register REWRITE_NAME(lhs, rhs, #name)
+#define REWRITE(name,lhs,rhs) static pattern_register REWRITE_NAME(lhs, rhs, #name, pattern_cond_vect())
+#define REWRIT3(name,lhs,rhs,cond) static pattern_register REWRITE_NAME(lhs, rhs, #name, pattern_cond_vect() && cond)
 
 REWRITE(add_decomposition_rounded_left,
 	rnd(a, 0) + b,
@@ -96,12 +100,14 @@ REWRITE(mul_decomposition_full_right,
 REWRIT3(relative_transitivity, //relative_error_trans,
 	(rnd(a, 0) - b) / b,
 	(rnd(a, 0) - a) / a + (a - b) / b + ((rnd(a, 0) - a) / a) * ((a - b) / b),
-	(a - c) / c + (c - b) / b + ((a - c) / c) * ((c - b) / b));
+	b != 0 && a != 0);
 
-REWRITE(relative_to_absolute,
+REWRIT3(relative_to_absolute,
 	a - b,
-	((a - b) / b) * b);
+	((a - b) / b) * b,
+	b != 0);
 
-REWRITE(mul_rel_decomposition,
+REWRIT3(mul_rel_decomposition,
 	(a * b - c * d) / (c * d),
-	(a - c) / c + (b - d) / d + ((a - c) / c) * ((b - d) / d));
+	(a - c) / c + (b - d) / d + ((a - c) / c) * ((b - d) / d),
+	c != 0 && d != 0);

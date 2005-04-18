@@ -1,10 +1,10 @@
 #include "numbers/interval_arith.hpp"
 #include "numbers/interval_utility.hpp"
+#include "numbers/real.hpp"
 #include "numbers/round.hpp"
 #include "parser/ast.hpp"
 #include "proofs/basic_proof.hpp"
 #include "proofs/proof_graph.hpp"
-#include "proofs/schemes.hpp"
 
 struct rewrite_node: public theorem_node {
   rewrite_node(int nb, property const h[], property const &p, std::string const &n)
@@ -353,11 +353,40 @@ proof_scheme *number_scheme::factory(ast_real const *real) {
 static scheme_register number_scheme_register(&number_scheme::factory);
 
 // REWRITE
+ast_real_vect rewrite_scheme::needed_reals() const {
+  ast_real_vect res(1, rewritten);
+  for(pattern_cond_vect::const_iterator i = conditions.begin(), end = conditions.end();
+      i != end; ++i)
+    res.push_back(i->real);
+  return res;
+}
+
 node *rewrite_scheme::generate_proof() const {
   node *n = find_proof(rewritten);
   if (!n) return NULL;
+  std::vector< property > hyps;
+  for(pattern_cond_vect::const_iterator i = conditions.begin(), end = conditions.end();
+      i != end; ++i) {
+    node *m = find_proof(i->real);
+    if (!m) return NULL;
+    property const &res = m->get_result();
+    interval const &b = res.bnd;
+    number n(i->value);
+    bool good;
+    switch (i->type) {
+    case COND_LE: good = n >= upper(b); break;
+    case COND_GE: good = n <= lower(b); break;
+    case COND_LT: good = n > upper(b); break;
+    case COND_GT: good = n < lower(b); break;
+    case COND_NE: good = n > upper(b) || n < lower(b); break;
+    default: assert(false);
+    }
+    if (!good) return NULL;
+    hyps.push_back(res);
+  }
   property const &res = n->get_result();
-  return create_modus(new rewrite_node(1, &res, property(real, res.bnd), name));
+  hyps.push_back(res);
+  return create_modus(new rewrite_node(hyps.size(), &*hyps.begin(), property(real, res.bnd), name));
 }
 
 struct rewrite_factory: scheme_factory {
