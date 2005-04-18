@@ -105,11 +105,39 @@ ast_real const *rewrite(ast_real const *dst, ast_real_vect const &holders, round
 }
 
 pattern pattern::operator-() const { return pattern(real_op(UOP_MINUS, real)); }
-pattern pattern::operator+(pattern const &p) const { return pattern(real_op(real, BOP_ADD, p.real)); }
-pattern pattern::operator-(pattern const &p) const { return pattern(real_op(real, BOP_SUB, p.real)); }
-pattern pattern::operator*(pattern const &p) const { return pattern(real_op(real, BOP_MUL, p.real)); }
-pattern pattern::operator/(pattern const &p) const { return pattern(real_op(real, BOP_DIV, p.real)); }
+
+#define PATTERN_OP(symb, op) \
+  pattern pattern::operator symb(pattern const &p) const { return pattern(real_op(real, BOP_##op, p.real)); }
+PATTERN_OP(+, ADD)
+PATTERN_OP(-, SUB)
+PATTERN_OP(*, MUL)
+PATTERN_OP(/, DIV)
+
+#define PATTERN_COND(symb, op)	\
+  pattern_cond pattern::operator symb(int v) const { \
+    pattern_cond res;		\
+    res.real = real;		\
+    res.value = v;		\
+    res.type = COND_##op;	\
+    return res;			\
+  }
+PATTERN_COND(<, LT)
+PATTERN_COND(>, GT)
+PATTERN_COND(<=, LE)
+PATTERN_COND(>=, GE)
+PATTERN_COND(!=, NE)
 
 pattern pattern::round(pattern const &p, rounding_class const *r) {
   return pattern(rounded_real(p.real, r));
+}
+
+void rewrite(pattern_cond_vect &dst, ast_real_vect const &holders, rounding_vect const &roundings) {
+  for(pattern_cond_vect::iterator i = dst.begin(), end = dst.end(); i != end; ++i)
+    i->real = rewrite(i->real, holders, roundings);
+}
+
+pattern_cond_vect operator&&(pattern_cond_vect const &v, pattern_cond const &c) {
+  pattern_cond_vect res(v);
+  res.push_back(c);
+  return res;
 }
