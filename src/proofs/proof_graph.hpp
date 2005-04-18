@@ -53,7 +53,6 @@ struct axiom_node: public result_node {
 struct theorem_node: public result_node {
   std::string name;
   theorem_node(int nb, property const h[], property const &p, std::string const &n);
-  virtual ast_real_vect sub_expressions() const { return ast_real_vect(); }
 };
 
 class dependent_node: public result_node {
