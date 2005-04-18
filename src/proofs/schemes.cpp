@@ -229,16 +229,14 @@ void graph_t::populate() {
       for(node_vect::const_iterator j = axioms.begin(), j_end = axioms.end(); j != j_end; ++j) {
         node *n = *j;
         property_vect const &hyp = n->get_hypotheses();
-        node_vect nodes;
         bool good = true;
         for(property_vect::const_iterator k = hyp.begin(), k_end = hyp.end(); k != k_end; ++k)
-          if (node *m = find_proof(*k)) nodes.push_back(m);
-          else { good = false; break; }
+          if (!find_proof(*k)) { good = false; break; }
         if (!good) {
           helper->axiom_reals.insert(real);
           continue;
         }
-        node *m = new modus_node(nodes.size(), &nodes.front(), n);
+        node *m = create_modus(n);
         bool b = try_real(m);
         assert(b);
         remove_axiom(n);

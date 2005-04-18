@@ -1,11 +1,8 @@
 #include "numbers/interval_utility.hpp"
 #include "numbers/round.hpp"
-#include "parser/ast.hpp"
 #include "proofs/dichotomy.hpp"
 #include "proofs/proof_graph.hpp"
 #include "proofs/schemes.hpp"
-
-#include <iostream>
 
 typedef std::vector< graph_t * > graph_vect;
 
@@ -159,12 +156,11 @@ node *dichotomy_scheme::generate_proof(interval const &bnd) const {
   try {
     n->dichotomize();
     n->add_graph(n->last_graph);
-    if (varn->type != HYPOTHESIS)
-      dich = new modus_node(1, &varn, n);
-    else dich = n;
+    dich = create_modus(n);
     g->purge(dich);
     g->flatten();
   } catch (dichotomy_failure e) { // BLI
+    /*
     property const &h = e.hyp;
     std::cerr << "failure: when " << dump_real(h.real) << " is " << h.bnd << ", ";
     property const &p = e.res;
@@ -173,6 +169,7 @@ node *dichotomy_scheme::generate_proof(interval const &bnd) const {
       std::cerr << " is in " << e.bnd << " potentially outside of " << p.bnd << '\n';
     else
       std::cerr << " is nowhere (?!)\n";
+    */
     dich = NULL;
   }
   delete g;

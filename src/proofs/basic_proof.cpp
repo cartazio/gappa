@@ -53,7 +53,7 @@ node *absolute_error_from_real_scheme::generate_proof() const {
   std::string name;
   property res(real, rr->rounding->absolute_error_from_real(res1.bnd, name));
   if (!is_defined(res.bnd)) return NULL;
-  return new modus_node(1, &n, new theorem_node(1, &res1, res, name));
+  return create_theorem(1, &res1, res, name);
 }
 
 ast_real_vect absolute_error_from_real_scheme::needed_reals() const {
@@ -88,7 +88,7 @@ node *absolute_error_from_rounded_scheme::generate_proof() const {
   std::string name;
   property res(real, rr->rounding->absolute_error_from_rounded(res1.bnd, name));
   if (!is_defined(res.bnd)) return NULL;
-  return new modus_node(1, &n, new theorem_node(1, &res1, res, name));
+  return create_theorem(1, &res1, res, name);
 }
 
 ast_real_vect absolute_error_from_rounded_scheme::needed_reals() const {
@@ -123,7 +123,7 @@ node *relative_error_from_real_scheme::generate_proof() const {
   std::string name;
   property res(real, rr->rounding->relative_error_from_real(res1.bnd, name));
   if (!is_defined(res.bnd)) return NULL;
-  return new modus_node(1, &n, new theorem_node(1, &res1, res, name));
+  return create_theorem(1, &res1, res, name);
 }
 
 ast_real_vect relative_error_from_real_scheme::needed_reals() const {
@@ -158,7 +158,7 @@ node *relative_error_from_rounded_scheme::generate_proof() const {
   std::string name;
   property res(real, rr->rounding->relative_error_from_rounded(res1.bnd, name));
   if (!is_defined(res.bnd)) return NULL;
-  return new modus_node(1, &n, new theorem_node(1, &res1, res, name));
+  return create_theorem(1, &res1, res, name);
 }
 
 ast_real_vect relative_error_from_rounded_scheme::needed_reals() const {
@@ -192,7 +192,7 @@ node *rounding_bound_scheme::generate_proof() const {
   std::string name;
   property res(real, r->rounding->round(res1.bnd, name));
   if (!is_defined(res.bnd)) return NULL;
-  return new modus_node(1, &n, new theorem_node(1, &res1, res, name));
+  return create_theorem(1, &res1, res, name);
 }
 
 ast_real_vect rounding_bound_scheme::needed_reals() const {
@@ -225,7 +225,7 @@ node *enforce_bound_scheme::generate_proof() const {
   std::string name;
   property res(real, r->rounding->enforce(res1.bnd, name));
   if (!is_defined(res.bnd)) return NULL;
-  return new modus_node(1, &n, new theorem_node(1, &res1, res, name));
+  return create_theorem(1, &res1, res, name);
 }
 
 ast_real_vect enforce_bound_scheme::needed_reals() const {
@@ -252,7 +252,6 @@ struct computation_scheme: proof_scheme {
 node *computation_scheme::generate_proof() const {
   real_op const *r = boost::get< real_op const >(real);
   assert(r);
-  node_vect nodes;
   node *n = NULL;
   switch (r->ops.size()) {
   case 1: {
@@ -260,7 +259,6 @@ node *computation_scheme::generate_proof() const {
     node *n1 = find_proof(r->ops[0]);
     if (!n1) return NULL;
     property const &res = n1->get_result();
-    nodes.push_back(n1);
     n = new theorem_node(1, &res, property(real, -res.bnd), "neg");
     break; }
   case 2: {
@@ -273,7 +271,6 @@ node *computation_scheme::generate_proof() const {
     property const &res1 = n1->get_result();
     interval const &i1 = res1.bnd;
     if (same_ops && r->type == BOP_MUL) {
-      nodes.push_back(n1);
       s = "square_";
       s += 'o' + sign(i1);
       n = new theorem_node(1, &res1, property(real, square(i1)), s);
@@ -297,7 +294,7 @@ node *computation_scheme::generate_proof() const {
     case BOP_DIV:
       if (contains_zero(i2)) return NULL;
       i = i1 / i2;
-      s = "div";
+      s = "div_";
       s += 'o' + sign(i1);
       s += 'o' + sign(i2);
       break;
@@ -305,15 +302,13 @@ node *computation_scheme::generate_proof() const {
       assert(false);
       return NULL;
     }
-    nodes.push_back(n1);
-    nodes.push_back(n2);
     property hyps[2] = { res1, res2 };
     n = new theorem_node(2, hyps, res, s);
     break; }
   default:
     assert(false);
   }
-  return new modus_node(nodes.size(), &nodes.front(), n);
+  return create_modus(n);
 }
 
 ast_real_vect computation_scheme::needed_reals() const {
@@ -364,7 +359,7 @@ node *rewrite_scheme::generate_proof() const {
   node *n = find_proof(rewritten);
   if (!n) return NULL;
   property const &res = n->get_result();
-  return new modus_node(1, &n, new rewrite_node(1, &res, property(real, res.bnd), name, subs));
+  return create_modus(new rewrite_node(1, &res, property(real, res.bnd), name, subs));
 }
 
 struct rewrite_factory: scheme_factory {

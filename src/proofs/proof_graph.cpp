@@ -95,27 +95,56 @@ static void fill_property_vect(property_vect &v, property_map const &m) {
     v.push_back(property(i->first, i->second));
 }
 
-modus_node::modus_node(int nb, node *nodes[], node *n)
+struct modus_node: public dependent_node {
+  modus_node(property_vect const &h, node_vect const &nodes, node *n);
+};
+
+modus_node::modus_node(property_vect const &h, node_vect const &nodes, node *n)
     : dependent_node(MODUS, n->get_result()) {
   assert(dominates(n, this) && n->type != INTERSECTION);
   insert_pred(n);
-  property_map pmap, rmap;
-  for(int i = 0; i < nb; ++i) {
-    node *m = nodes[i];
-    assert(dominates(m, this));
-    fill_property_map(rmap, m->get_result());
-    fill_property_map(pmap, m);
-    if (m->type == HYPOTHESIS) continue;
+  for(node_vect::const_iterator i = nodes.begin(), i_end = nodes.end();
+      i != i_end; ++i) {
+    node *m = *i;
+    assert(dominates(m, this) && m->type != HYPOTHESIS);
     insert_pred(m);
   }
+  hyp = h;
+}
+
+node *create_modus(node *n) {
+  typedef std::set< ast_real const * > real_set;
+  node_vect nodes;
+  real_set reals;
   property_vect const &n_hyp = n->get_hypotheses();
-  for(property_vect::const_iterator j = n_hyp.begin(), j_end = n_hyp.end(); j != j_end; ++j) {
-    property const &p = *j;
-    property_map::iterator pki = rmap.find(p.real); // is the hypothesis a result?
-    if (pki != rmap.end() && pki->second <= p.bnd) continue;
-    fill_property_map(pmap, p);
+  for(property_vect::const_iterator i = n_hyp.begin(), i_end = n_hyp.end();
+      i != i_end; ++i) {
+    node *m = find_proof(*i);
+    assert(m);
+    if (m->type == HYPOTHESIS)
+      reals.insert(i->real);
+    else {
+      property_vect const &m_hyp = m->get_hypotheses();
+      for(property_vect::const_iterator j = m_hyp.begin(), j_end = m_hyp.end();
+          j != j_end; ++j)
+        reals.insert(j->real);
+      nodes.push_back(m);
+    }
   }
-  fill_property_vect(hyp, pmap);
+  if (n->type != THEOREM && n->type != AXIOM && nodes.empty())
+    return n;
+  property_vect hyp;
+  for(real_set::const_iterator i = reals.begin(), i_end = reals.end();
+      i != i_end; ++i) {
+    node *m = find_proof(*i);
+    assert(m);
+    hyp.push_back(m->get_result());
+  }
+  return new modus_node(hyp, nodes, n);
+}
+
+node *create_theorem(int nb, property const h[], property const &p, std::string const &n) {
+  return create_modus(new theorem_node(nb, h, p, n));
 }
 
 class intersection_node: public dependent_node {
@@ -252,8 +281,7 @@ void graph_t::insert_axiom(node *n) {
   assert(n && n->type == AXIOM && !n->graph);
   if (hyp.implies(n->get_hypotheses())) {
     graph_loader loader(this);
-    node *m = new modus_node(0, NULL, n);
-    try_real(m);
+    try_real(create_modus(n));
   } else axioms.insert(n);
 }
 

@@ -206,8 +206,7 @@ node *sterbenz_scheme::generate_proof() const {
   int e = std::max(exponent(lower(res1.bnd), f), exponent(upper(res1.bnd), f));
   if (ea < e || eb < e) return NULL;
   property res[] = { resa, resb, res1, res2 };
-  node *ns[] = { na, nb, n1, n2 };
-  return new modus_node(4, ns, new theorem_node(4, res, property(real, res2.bnd), "sterbenz"));
+  return create_theorem(4, res, property(real, res2.bnd), "sterbenz");
 }
 
 ast_real_vect sterbenz_scheme::needed_reals() const {

@@ -67,9 +67,8 @@ class dependent_node: public result_node {
   virtual ~dependent_node();
 };
 
-struct modus_node: public dependent_node {
-  modus_node(int nb, node *nodes[], node *n);
-};
+node *create_modus(node *n);
+node *create_theorem(int nb, property const h[], property const &p, std::string const &n);
 
 struct proof_helper;
 
