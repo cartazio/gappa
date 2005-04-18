@@ -1,0 +1,4 @@
+* 0.4.5 :
+
+- implement Coq union
+- split homogen roundings between initialization and computation
