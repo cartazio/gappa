@@ -1,4 +1,9 @@
-* 0.4.5 :
-
-- implement Coq union
-- split homogen roundings between initialization and computation
+Version 0.4.5:
+ * proof graph
+   - reworked modus ponens creation to fix an assertion failure in lemma invokation
+ * fact database
+   - added conditional rules (potentially disruptive)
+ * homogen numbers
+   - split roundings between initialization and computation
+ * Coq backend
+   - implemented union
