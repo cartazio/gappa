@@ -5,6 +5,12 @@
 <book>
 
 <chapter>
+<title>Introduction</title>
+
+<para></para>
+</chapter>
+
+<chapter>
 <title>Examples</title>
 &example1;
 </chapter>
