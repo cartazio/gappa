@@ -17,5 +17,5 @@ AC_TRY_COMPILE([#include <boost/version.hpp>], [
 AC_MSG_ERROR([Boost not found, bailing out])])
 
 AC_CONFIG_HEADER(config.h)
-AC_CONFIG_FILES([Makefile src/Makefile])
+AC_CONFIG_FILES([Makefile doc/Makefile src/Makefile])
 AC_OUTPUT
