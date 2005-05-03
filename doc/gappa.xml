@@ -1,5 +1,7 @@
-<?xml version="1.0"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN" [
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+  "file:///usr/share/xml/docbook/schema/dtd/4.3/docbookx.dtd"
+[
   <!ENTITY example1 SYSTEM "examples/x1mx.xml">
 ]>
 <book>
@@ -13,8 +15,7 @@ verifying and formally proving properties on numerical programs dealing with
 floating-point arithmetic.</para>
 
 <para>This tool manipulates logical formulas involving the inclusion of
-expressions in intervals. For example,
-<informalequation>$x$</informalequation>
+expressions in intervals. For example, .
 </para>
 </chapter>
 
