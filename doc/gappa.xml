@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN" [
+  <!ENTITY example1 SYSTEM "examples/x1mx.xml">
+]>
+<book>
+
+<chapter>
+<title>Examples</title>
+&example1;
+</chapter>
+
+</book>
