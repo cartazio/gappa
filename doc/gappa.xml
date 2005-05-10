@@ -2,7 +2,8 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
   "file:///usr/share/xml/docbook/schema/dtd/4.3/docbookx.dtd"
 [
-  <!ENTITY example1 SYSTEM "examples/x1mx.xml">
+  <!ENTITY gappa-grammar SYSTEM "manual/grammar.xml">
+  <!ENTITY gappa-x1mx    SYSTEM "examples/x1mx.xml">
 ]>
 <book>
 
@@ -15,13 +16,41 @@ verifying and formally proving properties on numerical programs dealing with
 floating-point arithmetic.</para>
 
 <para>This tool manipulates logical formulas involving the inclusion of
-expressions in intervals. For example, .
-</para>
+expressions in intervals. For example, a formal proof of the property
+<informalequation>
+<alt role="tex">c \in [-0.3,-0.1]\ \land\ (2a \in [3,4] \rightarrow b+c \in [1,2])
+\ \land\ a-c \in [1.9,2.05] \quad \rightarrow \quad b+1 \in [2,3.5]</alt>
+<graphic fileref="a2b2c2.png"/>
+</informalequation>
+can be generated thanks to the following Gappa script.</para>
+
+<programlisting><![CDATA[{
+  c in [-0.3,-0.1] /\
+  (2 * a in [3,4] -> b + c in [1,2]) /\
+  a - c in [1.9,2.05]
+
+  -> b + 1 in [2,3.5]
+}
+
+a -> a - c + c;
+b -> b + c - c;]]>
+</programlisting>
+
+<para>Through the use of rounding operators as part of the expressions, Gappa
+is specially designed to deal with formulas that could appear when certifying
+numerical codes. In particular, Gappa makes it simple to bound computational
+errors due to floating-point arithmetic.</para>
+
 </chapter>
 
 <chapter>
 <title>Examples</title>
-&example1;
+&gappa-x1mx;
 </chapter>
+
+<appendix>
+<title>Gappa language</title>
+&gappa-grammar;
+</appendix>
 
 </book>

@@ -1,0 +1,70 @@
+<para>Comments begin with a sharp sign <code>#</code> and go till the end of
+the line. Space, tabulation, and line-break characters are not significant.</para>
+
+<section>
+<title>Tokens</title>
+
+<para>There are two composite operators <code>/\</code> (<code>AND</code>) and
+<code>-&gt;</code> (<code>IMPL</code>), and one keyword <code>in</code>
+(<code>IN</code>).</para>
+
+<para>Numbers are either written with a binary representation
+<code>{integer}([bB][-+]?{integer})?</code>, or with a decimal representation
+<code>(({integer}(\.{integer}?)?)|(\.{integer}))([eE][-+]?{integer})?</code>.
+In both representations, the <code>{integer}</code> parts are radix-10 natural
+numbers.</para>
+
+<para>Identifiers (<code>IDENT</code>) are written either</para>
+
+</section>
+
+<section>
+<title>Grammar</title>
+
+<programlisting><![CDATA[
+$accept: BLOB $end
+
+BLOB: PROG '{' PROP '}' REWRITE
+
+PROP: ATOM
+    | '(' PROP ')'
+    | PROP AND PROP
+    | PROP IMPL PROP
+
+SNUMBER: NUMBER
+       | '+' NUMBER
+       | '-' NUMBER
+
+INTERVAL: '[' SNUMBER ',' SNUMBER ']'
+        | '?'
+
+ATOM: REAL IN INTERVAL
+
+ROUNDING: '<' IDENT '>'
+
+EQUAL: '='
+     | ROUNDING '='
+
+PROG: /* empty */
+    | PROG IDENT EQUAL REAL ';'
+
+REAL: NUMBER
+    | IDENT
+    | IDENT '(' OPERANDS ')'
+    | ROUNDING '(' REAL ')'
+    | REAL '+' REAL
+    | REAL '-' REAL
+    | REAL '*' REAL
+    | REAL '/' REAL
+    | '(' REAL ')'
+    | '+' REAL
+    | '-' REAL
+
+OPERANDS: REAL
+        | OPERANDS ',' REAL
+
+REWRITE: /* empty */
+       | REWRITE REAL IMPL REAL ';'
+       | REWRITE REAL '$' REAL ';']]>
+</programlisting>
+</section>
