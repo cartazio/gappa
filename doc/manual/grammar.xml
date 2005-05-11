@@ -8,13 +8,15 @@ the line. Space, tabulation, and line-break characters are not significant.</par
 <code>-&gt;</code> (<code>IMPL</code>), and one keyword <code>in</code>
 (<code>IN</code>).</para>
 
-<para>Numbers are either written with a binary representation
-<code>{integer}([bB][-+]?{integer})?</code>, or with a decimal representation
-<code>(({integer}(\.{integer}?)?)|(\.{integer}))([eE][-+]?{integer})?</code>.
-In both representations, the <code>{integer}</code> parts are radix-10 natural
-numbers.</para>
+<para>Numbers are either written with a binary representation, or with a
+decimal representation. In both representations, the <code>{integer}</code>
+parts are radix-10 natural numbers.</para>
+<programlisting><![CDATA[{binary}   {integer}([bB][-+]?{integer})?
+{decimal}  (({integer}(\.{integer}?)?)|(\.{integer}))([eE][-+]?{integer})?]]>
+</programlisting>
 
-<para>Identifiers (<code>IDENT</code>) are written either</para>
+<para>Identifiers (<code>IDENT</code>) are described by
+<code>{alpha}({alpha}|{digit}|_)*</code>.</para>
 
 </section>
 
