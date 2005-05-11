@@ -20,7 +20,7 @@ expressions in intervals. For example, a formal proof of the property
 <informalequation>
 <alt role="tex">c \in [-0.3,-0.1]\ \land\ (2a \in [3,4] \rightarrow b+c \in [1,2])
 \ \land\ a-c \in [1.9,2.05] \quad \rightarrow \quad b+1 \in [2,3.5]</alt>
-<graphic fileref="a2b2c2.png"/>
+<graphic fileref="intro-implication.png"/>
 </informalequation>
 can be generated thanks to the following Gappa script.</para>
 

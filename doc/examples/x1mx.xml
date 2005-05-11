@@ -12,17 +12,20 @@
 }]]>
 </programlisting>
 
-<para>This function computes the value $x \cdot (1 - x)$ for an argument $x$
-between $0$ and $1$. The <type>float</type> type is meant to force the compiler
+<para>This function computes the value <code>x * (1 - x)</code> for an argument
+<code>x</code> between 0 and 1. The <type>float</type> type is meant to force the compiler
 to use IEEE-754 single precision floating-point numbers. We will also assume
 that the default rounding mode is used: rounding to nearest number, break to
 even on tie.</para>
 
-<para>The function returns the value $x \otimes (1 \ominus x)$ instead of the
-ideal value $x \cdot (1 - x)$ due to the limited precision of the
+<para>The function returns the value <inlineequation><alt role="tex">x \otimes
+(1 \ominus x)</alt><graphic fileref="x1mx-rounded.png"/></inlineequation>
+instead of the ideal value <inlineequation><alt role="tex">x \cdot (1 - x)</alt>
+<graphic fileref="x1mx-exact.png"/></inlineequation> due to the limited precision of the
 computations. If we rule out the overflow possibility (floating-point numbers
 are limited, not only in precision, but also in range), the returned value is
-also $\circ(x \cdot \circ(1 - x))$. $\circ$ is a unary operator related to
+also <inlineequation><alt role="tex">\circ(x \cdot \circ(1 - x))</alt><graphic
+fileref="x1mx-expanded.png"/></inlineequation>. This o function is a unary operator related to
 the floating-point format and the rounding mode used for the computations.
 This is the form Gappa works on.</para>
 </section>
@@ -30,9 +33,10 @@ This is the form Gappa works on.</para>
 <section>
 <title>First Gappa version</title>
 
-<para>We will first try to bound the result of the function. Knowing that $x$
-is in the interval $[0,1]$, what is the enclosing interval of the function
-result? It can be expressed as an implication: if $x \in [0,1]$, then the
+<para>We will first try to bound the result of the function. Knowing that
+<code>x</code> is in the interval <code>[0,1]</code>, what is the enclosing
+interval of the function result? It can be expressed as an implication: if
+<code>x</code> is in <code>[0,1]</code>, then the
 result is in ... something. Since we do not want to enforce some specific
 bounds yet, we will just note this interval <code>?</code> for now.</para>
 
