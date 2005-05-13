@@ -116,7 +116,8 @@ not equivalent to <code>a = &lt;..&gt;(b)</code>; it is equivalent to
 
 <para>Numbers and bounds can be written either in the usual scientific decimal
 notation or by using a power-of-two exponent: <code>3b-27</code> means
-$3 \cdot 2^{-27}$.</para>
+<inlineequation><alt role="tex">3 \cdot 2^{-27}</alt>
+<graphic fileref="x1mx-binaryformat.png"/></inlineequation>.</para>
 </section>
 
 <section>
