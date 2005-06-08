@@ -20,6 +20,7 @@ struct interval {
 };
 
 inline bool is_defined(interval const &u) { return u.base; }
+bool is_empty(interval const &);
 bool is_singleton(interval const &);
 bool contains_zero(interval const &);
 bool is_zero(interval const &);

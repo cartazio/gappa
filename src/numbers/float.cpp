@@ -136,12 +136,16 @@ interval float_rounding_class::absolute_error_from_rounded(interval const &i, st
 }
 
 interval float_rounding_class::relative_error_from_real(interval const &i, std::string &name) const {
+  if (!is_empty(intersect(i, from_exponent(format->min_exp + format->prec - 1, 0))))
+    return interval();
   name = std::string("float") + ident + "_relative";
   return from_exponent(type == ROUND_NE ? -format->prec : 1 - format->prec,
                        type == ROUND_ZR ? -1 : 0);
 }
 
 interval float_rounding_class::relative_error_from_rounded(interval const &i, std::string &name) const {
+  if (!is_empty(intersect(i, from_exponent(format->min_exp + format->prec - 1, 0))))
+    return interval();
   name = std::string("float") + ident + "_relative_inv";
   return from_exponent(type == ROUND_NE ? -format->prec : 1 - format->prec,
                        type == ROUND_ZR ? -1 : 0);

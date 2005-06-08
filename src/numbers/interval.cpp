@@ -102,6 +102,11 @@ interval zero() {
   return plop(_interval_base());
 }
 
+bool is_empty(interval const &u) {
+  assert(u.base);
+  return empty(plup);
+}
+
 bool is_singleton(interval const &u) {
   assert(u.base);
   return singleton(plup);
