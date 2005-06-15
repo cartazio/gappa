@@ -5,7 +5,7 @@
 #include "numbers/round.hpp"
 
 struct homogen_rounding_class: rounding_class {
-  interval he, hb;
+  interval he;
   homogen_rounding_class();
   virtual interval absolute_error_from_real(interval const &, std::string &) const;
   virtual std::string name() const { return "homogen80x"; }
@@ -13,7 +13,6 @@ struct homogen_rounding_class: rounding_class {
 
 homogen_rounding_class::homogen_rounding_class() {
   he = from_exponent(-53, 0) + from_exponent(-64, 0);
-  hb = from_exponent(0, 0) + he;
   ast_ident *n = ast_ident::find("homogen80x");
   n->id_type = REAL_RND;
   n->rnd = this;
@@ -46,3 +45,25 @@ interval homogen_init_rounding_class::absolute_error_from_rounded(interval const
 }
 
 static homogen_init_rounding_class dummy_init;
+
+struct floatx_rounding_class: rounding_class {
+  floatx_rounding_class();
+  virtual interval round(interval const &, std::string &) const;
+  virtual std::string name() const { return "float80x"; }
+};
+
+floatx_rounding_class::floatx_rounding_class() {
+  ast_ident *n = ast_ident::find("float80x");
+  n->id_type = REAL_RND;
+  n->rnd = this;
+}
+
+interval floatx_rounding_class::round(interval const &i, std::string &name) const {
+  static float_format format = { min_exp: -1074, prec: 53 };
+  number a = round_number(lower(i), &format, &float_format::roundD);
+  number b = round_number(upper(i), &format, &float_format::roundU);
+  name = "float80x_round";
+  return interval(a, b);
+}
+
+static floatx_rounding_class dummy2;
