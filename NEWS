@@ -8,6 +8,8 @@ Version CVS:
    - added pseudo-support for quotient in hint
  * parser
    - added support for C99 hexadecimal floating-point format
+ * proof graph
+   - replaced useless empty intersections by contradiction proofs
 
 Version 0.4.5:
  * proof graph

@@ -202,7 +202,7 @@ node *find_proof(property const &res) {
   return (n && n->get_result().bnd <= res.bnd) ? n : NULL;
 }
 
-void graph_t::populate() {
+bool graph_t::populate() {
   graph_loader loader(this);
   typedef proof_helper::real_set real_set;
   typedef std::map< ast_real const *, interval const * > bound_map;
@@ -223,8 +223,10 @@ void graph_t::populate() {
     node *n;
     if (i != bounds_end) n = s->generate_proof(*i->second);
     else n = s->generate_proof();
-    if (n && try_real(n))
+    if (n && try_real(n)) {
+      if (top_graph->get_contradiction()) break;
       helper->insert_dependent(missing_schemes, s->real);
+    }
     real_set v;
     v.swap(helper->axiom_reals);
     for(real_set::iterator i = v.begin(), i_end = v.end(); i != i_end; ++i) {
@@ -251,4 +253,5 @@ void graph_t::populate() {
   if (owned_helper)
     delete helper;
   helper = NULL;
+  return get_contradiction();
 }

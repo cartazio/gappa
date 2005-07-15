@@ -36,7 +36,8 @@ dichotomy_node::~dichotomy_node() {
 
 bool dichotomy_node::add_graph(graph_t *g) {
   graphs.push_back(g);
-  node *n = g->find_already_known(get_result().real);
+  node *n = g->get_contradiction();
+  if (!n) n = g->find_already_known(get_result().real);
   insert_pred(n);
   g->purge();
   return g->migrate();
@@ -53,14 +54,17 @@ void dichotomy_node::try_graph(graph_t *g2) {
   tmp_hyp.replace_front(p);
   property const &res = get_result();
   graph_t *g0 = new graph_t(top_graph, tmp_hyp, g1->get_goals(), top_graph->helper, true);
-  g0->populate();
-  if (node *n = g0->find_already_known(res.real))
-    if (n->get_result().bnd <= res.bnd) {
-      last_graph = g0;
-      delete g1;
-      delete g2;
-      return;
-    }
+  bool b = g0->populate();
+  if (!b)
+    if (node *n = g0->find_already_known(res.real))
+      if (n->get_result().bnd <= res.bnd)
+        b = true;
+  if (b) {
+    last_graph = g0;
+    delete g1;
+    delete g2;
+    return;
+  }
   delete g0;
   bool recompute = add_graph(g1);
   if (recompute) {
@@ -68,9 +72,10 @@ void dichotomy_node::try_graph(graph_t *g2) {
     tmp_hyp.replace_front(g2->get_hypotheses()[0]);
     delete g2;
     g2 = new graph_t(top_graph, tmp_hyp, g1->get_goals(), top_graph->helper, true);
-    g2->populate();
-    node *n = g2->find_already_known(res.real);
-    assert(n->get_result().bnd <= res.bnd);
+    if (!g2->populate()) {
+      node *n = g2->find_already_known(res.real);
+      assert(n->get_result().bnd <= res.bnd);
+    }
   }
   last_graph = g2;
 }
@@ -86,11 +91,12 @@ void dichotomy_node::dichotomize() {
   property const &res = get_result();
   interval bnd;
   graph_t *g = new graph_t(top_graph, tmp_hyp, top_graph->get_goals(), top_graph->helper, true);
-  g->populate();
-  if (node *n = g->find_already_known(res.real)) {
-    bnd = n->get_result().bnd;
-    if (!(bnd <= res.bnd)) { delete g; g = NULL; }
-  } else { delete g; g = NULL; }
+  if (!g->populate()) {
+    if (node *n = g->find_already_known(res.real)) {
+      bnd = n->get_result().bnd;
+      if (!(bnd <= res.bnd)) { delete g; g = NULL; }
+    } else { delete g; g = NULL; }
+  }
   if (g) {
     try_graph(g);
     return;

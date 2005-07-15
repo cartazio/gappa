@@ -82,6 +82,8 @@ class graph_t {
   property_vect hyp;		// hypotheses of the graph (they imply the hypotheses from the super-graph)
   property_vect goals;		// goals of the graph (they keep nodes alive)
   bool owned_helper;
+  node *contradiction;
+  friend class intersection_node;
  public:
   proof_helper *helper;
   void insert(node *n) { nodes.insert(n); }
@@ -97,10 +99,11 @@ class graph_t {
   property_vect const &get_goals() const { return goals; }
   ast_real_vect get_known_reals() const;
   bool dominates(graph_t const *) const;
-  void populate();		// fill the proof graph
+  bool populate();		// fill the proof graph, return true in case of contradiction
   void purge(node * = NULL);	// remove all the unused nodes, except for this one
   void flatten();		// move all the nodes in the upper graph
   bool migrate();		// move the free nodes in the upper graph, return true if any
+  node *get_contradiction() const { return contradiction; }
 };
 
 struct graph_loader {

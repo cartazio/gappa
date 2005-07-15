@@ -25,21 +25,26 @@ int main() {
       for(int j = 0; j < nb; ++j)
         scheme_results[j] = reals[j];
     }
-    g->populate();
-    node_vect results(nb);
     std::cerr << "\n\n";
-    for(int j = 0; j < nb; ++j) {
-      node *n = find_proof(goals[j]);
-      results[j] = n;
-      if (!n) {
-        std::cerr << "no " << (scheme_results[j] ? "proof" : "path")
-                  << " for " << dump_real(goals[j].real) << '\n';
-        continue;
+    if (g->populate()) {
+      node_vect results(nb);
+      std::cerr << "Hypotheses are in contradiction, any result is true.\n";
+      coq_display(std::cout, node_vect(1, g->get_contradiction()));
+    } else {
+      node_vect results(nb);
+      for(int j = 0; j < nb; ++j) {
+        node *n = find_proof(goals[j]);
+        results[j] = n;
+        if (!n) {
+          std::cerr << "No " << (scheme_results[j] ? "proof" : "path")
+                    << " for " << dump_real(goals[j].real) << '\n';
+          continue;
+        }
+        property const &p = n->get_result();
+        std::cerr << dump_real(p.real) << " in " << p.bnd << '\n';
       }
-      property const &p = n->get_result();
-      std::cerr << dump_real(p.real) << " in " << p.bnd << '\n';
+      coq_display(std::cout, results);
     }
-    coq_display(std::cout, results);
     delete g;
   }
   return 0;

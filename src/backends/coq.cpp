@@ -138,7 +138,7 @@ static std::string display(node *n) {
   for(property_vect::const_iterator i = n_hyp.begin(), end = n_hyp.end(); i != end; ++i)
     plouf << display(*i) << " -> ";
   property const &n_res = n->get_result();
-  std::string p_res = display(n_res);
+  std::string p_res = is_empty(n_res.bnd) ? "(forall P, P)" : display(n_res);
   plouf << p_res << '.';
   if (n->type == AXIOM) {
     plouf << " trivial. Qed.\n";
@@ -201,7 +201,10 @@ static std::string display(node *n) {
       invoke_lemma(plouf, m, pmap);
       num[i] = num_hyp++;
     }
-    plouf << " apply intersect with (1 := h" << num[0] << ") (2 := h" << num[1] << ").\n"
+    std::string prefix;
+    if (is_empty(n_res.bnd)) prefix = "absurd_";
+    plouf << " apply " << prefix << "intersect with"
+                 " (1 := h" << num[0] << ") (2 := h" << num[1] << ").\n"
              " reflexivity.\nQed.\n";
     break; }
   case UNION: {
@@ -217,12 +220,14 @@ static std::string display(node *n) {
         i != i_end; ++i) {
       node *m = *i;
       property_vect const &m_hyp = m->get_hypotheses();
-      property const &res = m->get_result();
       hcase = &m_hyp[0].bnd;
       plouf << " assert (u : " << display(m_hyp[0]) << " -> " << p_res << "). intro h0.\n";
-      assert(res.bnd <= n_res.bnd);
-      if (!(n_res.bnd <= res.bnd))
-        plouf << " apply subset with " << display(res.bnd) << ". 2: reflexivity.\n";
+      property const &res = m->get_result();
+      if (!is_empty(res.bnd)) { // not a contradictory result
+        assert(res.bnd <= n_res.bnd);
+        if (!(n_res.bnd <= res.bnd))
+          plouf << " apply subset with " << display(res.bnd) << ". 2: reflexivity.\n";
+      }
       invoke_lemma(plouf, m, pmap);
       if (i + 1 != i_end)
         plouf << " apply union with (1 := u). reflexivity. clear u.\n";

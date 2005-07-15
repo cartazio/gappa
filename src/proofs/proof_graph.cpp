@@ -156,9 +156,7 @@ class intersection_node: public dependent_node {
 property intersection_node::helper(node *n1, node *n2) {
   property const &res1 = n1->get_result(), &res2 = n2->get_result();
   assert(res1.real == res2.real);
-  interval i = intersect(res1.bnd, res2.bnd);
-  assert(!is_empty(i));
-  return property(res1.real, i);
+  return property(res1.real, intersect(res1.bnd, res2.bnd));
 }
 
 intersection_node::intersection_node(node *n1, node *n2)
@@ -178,6 +176,8 @@ intersection_node::intersection_node(node *n1, node *n2)
   fill_property_map(pmap, n1);
   fill_property_map(pmap, n2);
   fill_property_vect(hyp, pmap);
+  if (is_empty(get_result().bnd))
+    top_graph->contradiction = this;
 }
 
 class graph_node: public node {
@@ -209,7 +209,8 @@ static void delete_tree(node *n) {
 }
 
 graph_t::graph_t(graph_t *f, property_vect const &h, property_vect const &g, proof_helper *p, bool o)
-  : father(f), known_node(new graph_node(this)), hyp(h), goals(g), owned_helper(o) {
+  : father(f), known_node(new graph_node(this)), hyp(h), goals(g),
+    owned_helper(o), contradiction(NULL) {
   graph_loader loader(this);
   if (f) {
     assert(hyp.implies(f->hyp));
