@@ -1,3 +1,12 @@
+Version CVS:
+ * homogen numbers
+   - cleaned up
+   - added non-homogen double rounded format
+ * hint parser
+   - added pseudo-support for quotient in hint
+ * parser
+   - added support for C99 hexadecimal floating-point format
+
 Version 0.4.5:
  * proof graph
    - reworked modus ponens creation to fix an assertion failure in lemma invokation
