@@ -156,7 +156,9 @@ class intersection_node: public dependent_node {
 property intersection_node::helper(node *n1, node *n2) {
   property const &res1 = n1->get_result(), &res2 = n2->get_result();
   assert(res1.real == res2.real);
-  return property(res1.real, intersect(res1.bnd, res2.bnd));
+  interval i = intersect(res1.bnd, res2.bnd);
+  assert(!is_empty(i));
+  return property(res1.real, i);
 }
 
 intersection_node::intersection_node(node *n1, node *n2)

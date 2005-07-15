@@ -111,6 +111,10 @@ void proof_helper::delete_scheme(proof_scheme const *s, ast_real const *restrict
 proof_helper::proof_helper(ast_real_vect &targets) {
   for(ast_real_vect::const_iterator i = targets.begin(), i_end = targets.end(); i != i_end; ++i)
     initialize_real(*i, NULL);
+  assert(top_graph);
+  property_vect const &hyp = top_graph->get_hypotheses();
+  for(property_vect::const_iterator i = hyp.begin(), i_end = hyp.end(); i != i_end; ++i)
+    initialize_real(i->real, NULL); // initialize hypothesis reals to handle contradictions
   while (!missing_reals.empty()) {
     ast_real const *real = *missing_reals.begin();
     real_dependency &r = reals[real];
