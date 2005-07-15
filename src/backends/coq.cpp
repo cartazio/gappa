@@ -1,10 +1,11 @@
+#include <iostream>
+#include <ostream>
+#include <sstream>
+
 #include "numbers/interval_utility.hpp"
 #include "numbers/round.hpp"
 #include "parser/ast.hpp"
 #include "proofs/proof_graph.hpp"
-
-#include <ostream>
-#include <sstream>
 
 extern std::string get_real_split(number const &f, int &exp, bool &zero);
 
@@ -140,7 +141,7 @@ static std::string display(node *n) {
   std::string p_res = display(n_res);
   plouf << p_res << '.';
   if (n->type == AXIOM) {
-    plouf << '\n';
+    plouf << " trivial. Qed.\n";
     return name;
   }
   int nb_hyps = n_hyp.size();
@@ -244,6 +245,10 @@ void coq_display(std::ostream &stream, node_vect const &nodes) {
             "Section Gappa_generated.\n";
   for(node_vect::const_iterator i = nodes.begin(), end = nodes.end();
       i != end; ++i)
-    if (*i) display(*i);
+    if (*i)
+      if ((*i)->type == HYPOTHESIS)
+        std::cerr << "Warning: proof of triviality will not be generated.\n";
+      else
+        display(*i);
   stream << "End Gappa_generated.\n";
 }
