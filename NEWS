@@ -1,4 +1,6 @@
 Version CVS:
+ * floating-point numbers
+   - disabled relative error for subnormal numbers
  * homogen numbers
    - cleaned up
    - added non-homogen double rounded format
