@@ -1,3 +1,7 @@
+Version CVS:
+ * hint parser
+   - sped up verification
+
 Version 0.4.6:
  * floating-point numbers
    - disabled relative error for subnormal numbers

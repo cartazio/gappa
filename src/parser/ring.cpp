@@ -61,6 +61,14 @@ static product mul(product const &p1, product const &p2) {
   return weighted_union(p1, p2);
 }
 
+static void add_factor(sum &res, product const &factor, int coef) {
+  sum::iterator i = res.find(factor);
+  if (i == res.end())
+    res.insert(std::make_pair(factor, coef));
+  else if ((i->second += coef) == 0)
+    res.erase(i);
+}
+
 static sum neg(sum const &s) {
   sum res;
   for(sum::const_iterator i = s.begin(), end = s.end(); i != end; ++i)
@@ -68,19 +76,16 @@ static sum neg(sum const &s) {
   return res;
 }
 
-static sum add(sum const &s1, sum const &s2) {
-  return weighted_union(s1, s2);
+static void fma(sum &res, sum const &s1, sum const &s2) {
+  for(sum::const_iterator i = s1.begin(), i_end = s1.end(); i != i_end; ++i)
+    for(sum::const_iterator j = s2.begin(), j_end = s2.end(); j != j_end; ++j)
+      add_factor(res, mul(i->first, j->first), i->second * j->second);
 }
 
-static sum mul(sum const &s1, sum const &s2) {
-  sum res;
+static void fnma(sum &res, sum const &s1, sum const &s2) {
   for(sum::const_iterator i = s1.begin(), i_end = s1.end(); i != i_end; ++i)
-    for(sum::const_iterator j = s2.begin(), j_end = s2.end(); j != j_end; ++j) {
-      sum tmp;
-      tmp.insert(std::make_pair(mul(i->first, j->first), i->second * j->second));
-      res = add(res, tmp);
-    }
-  return res;
+    for(sum::const_iterator j = s2.begin(), j_end = s2.end(); j != j_end; ++j)
+      add_factor(res, mul(i->first, j->first), - i->second * j->second);
 }
 
 static quotient neg(quotient const &q) {
@@ -88,18 +93,42 @@ static quotient neg(quotient const &q) {
 }
 
 static quotient add(quotient const &q1, quotient const &q2) {
-  return quotient(add(mul(q1.first, q2.second), mul(q1.second, q2.first)),
-                  mul(q1.second, q2.second));
+  quotient res;
+  fma(res.first, q1.first, q2.second);
+  fma(res.first, q1.second, q2.first);
+  fma(res.second, q1.second, q2.second);
+  return res;
+}
+
+static sum sub_num(quotient const &q1, quotient const &q2) {
+  sum res;
+  fma(res, q1.first, q2.second);
+  fnma(res, q1.second, q2.first);
+  return res;
+}
+
+static quotient sub(quotient const &q1, quotient const &q2) {
+  quotient res;
+  fma(res.first, q1.first, q2.second);
+  fnma(res.first, q1.second, q2.first);
+  fma(res.second, q1.second, q2.second);
+  return res;
 }
 
 static quotient mul(quotient const &q1, quotient const &q2) {
-  return quotient(mul(q1.first, q2.first), mul(q1.second, q2.second));
+  quotient res;
+  fma(res.first, q1.first, q2.first);
+  fma(res.second, q1.second, q2.second);
+  return res;
 }
 
 static quotient div(quotient const &q1, quotient const &q2) {
   std::cerr << "Warning: although present in a quotient, the expression "
             << dump_sum(q2.first) << " may have not been tested for non-zeroness.\n";
-  return quotient(mul(q1.first, q2.second), mul(q1.second, q2.first));
+  quotient res;
+  fma(res.first, q1.first, q2.second);
+  fma(res.second, q1.second, q2.first);
+  return res;
 }
 
 typedef std::map< ast_real const *, quotient > quotient_cache;
@@ -112,7 +141,7 @@ static quotient fieldalize_aux(ast_real const *r) {
     switch (o->type) {
     case UOP_MINUS:	return neg(ringalize(o->ops[0]));
     case BOP_ADD:	return add(ringalize(o->ops[0]), ringalize(o->ops[1]));
-    case BOP_SUB:	return add(ringalize(o->ops[0]), neg(ringalize(o->ops[1])));
+    case BOP_SUB:	return sub(ringalize(o->ops[0]), ringalize(o->ops[1]));
     case BOP_MUL:	return mul(ringalize(o->ops[0]), ringalize(o->ops[1]));
     case BOP_DIV:    	return div(ringalize(o->ops[0]), ringalize(o->ops[1]));
     default: ;
@@ -145,7 +174,8 @@ static quotient const &ringalize(ast_real const *r) {
 }
 
 void test_ringularity(ast_real const *r1, ast_real const *r2) {
-  sum const &diff = add(ringalize(r1), neg(ringalize(r2))).first;
+  // std::cerr << "Testing " << dump_real(r1) << " -> " << dump_real(r2) << '\n';
+  sum const &diff = sub_num(ringalize(r1), ringalize(r2));
   if (diff.empty()) return;
   std::cerr << "Warning: " << dump_real(r1) << " and " << dump_real(r2)
             << " are not trivially equal.\n";
