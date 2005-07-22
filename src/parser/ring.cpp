@@ -23,7 +23,8 @@ static std::string dump_sum(sum const &s) {
       if (first_term) first_term = false;
       else res << " + ";
     }
-    if (coef != 1) res << coef << " * ";
+    if (i->first.empty()) res << coef;
+    else if (coef != 1) res << coef << " * ";
     bool first_factor = true;
     for(product::const_iterator j = i->first.begin(), j_end = i->first.end(); j != j_end; ++j) {
       if (first_factor) first_factor = false;
@@ -35,19 +36,17 @@ static std::string dump_sum(sum const &s) {
   return res.str();
 }
 
-template< class T > std::map< T, int >
-static weighted_union(std::map< T, int > const &m1, std::map< T, int > const &m2) {
-  std::map< T, int > res;
-  typename std::map< T, int >::const_iterator
-  	i1 = m1.begin(), e1 = m1.end(),
-  	i2 = m2.begin(), e2 = m2.end();
+static product mul(product const &p1, product const &p2) {
+  product res;
+  product::const_iterator i1 = p1.begin(), e1 = p1.end(), i2 = p2.begin(), e2 = p2.end();
   while (i1 != e1 && i2 != e2) {
-    if (i1->first < i2->first) res.insert(*i1++); else
-    if (i2->first < i1->first) res.insert(*i2++); else
+    ast_real const *r1 = i1->first, *r2 = i2->first;
+    if (r1 < r2) res.insert(*i1++); else
+    if (r2 < r1) res.insert(*i2++); else
     {
-      assert(i1->first == i2->first);
       int k = i1->second + i2->second;
-      if (k != 0) res.insert(std::make_pair(i1->first, k));
+      assert(r1 == r2 && k != 0);
+      res.insert(std::make_pair(r1, k));
       ++i1;
       ++i2;
     }
@@ -55,10 +54,6 @@ static weighted_union(std::map< T, int > const &m1, std::map< T, int > const &m2
   res.insert(i1, e1);
   res.insert(i2, e2);
   return res;
-}
-
-static product mul(product const &p1, product const &p2) {
-  return weighted_union(p1, p2);
 }
 
 static void add_factor(sum &res, product const &factor, int coef) {
