@@ -5,9 +5,20 @@
 #include <iostream>
 #include <map>
 #include <sstream>
+#include <ext/hash_map>
 
 typedef std::map< ast_real const *, int > product;
-typedef std::map< product, int > sum;
+
+struct product_hash {
+  std::size_t operator()(product const &p) const {
+    unsigned long h = 0x12345678;
+    for(product::const_iterator i = p.begin(), end = p.end(); i != end; ++i)
+      h = h * 5 + (unsigned long)i->first + (unsigned long)i->second;
+    return h;
+  }
+};
+
+typedef __gnu_cxx::hash_map< product, int, product_hash > sum;
 typedef std::pair< sum, sum > quotient;
 
 static std::string dump_sum(sum const &s) {
