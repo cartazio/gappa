@@ -2,8 +2,9 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
   "file:///usr/share/xml/docbook/schema/dtd/4.3/docbookx.dtd"
 [
-  <!ENTITY gappa-grammar SYSTEM "manual/grammar.xml">
-  <!ENTITY gappa-x1mx    SYSTEM "examples/x1mx.xml">
+  <!ENTITY gappa-expressions SYSTEM "manual/expressions.xml">
+  <!ENTITY gappa-grammar     SYSTEM "manual/grammar.xml">
+  <!ENTITY gappa-x1mx        SYSTEM "examples/x1mx.xml">
 ]>
 <book>
 
@@ -41,6 +42,11 @@ is specially designed to deal with formulas that could appear when certifying
 numerical codes. In particular, Gappa makes it simple to bound computational
 errors due to floating-point arithmetic.</para>
 
+</chapter>
+
+<chapter>
+<title>Formalizing a problem</title>
+&gappa-expressions;
 </chapter>
 
 <chapter>

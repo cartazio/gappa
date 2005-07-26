@@ -1,0 +1,68 @@
+<section>
+<title>Preferred expressions and rewriting</title>
+
+<para>Gappa rewrites expressions by matching them with well-known pattern. The
+The enclosure of an unmatchable expression will necessarily have to be computed
+through interval arithmetic. As a consequence, to ensure that the expressions
+will benefit from as much rewriting as possible, special care needs to be taken
+when expressing the computational errors.</para>
+
+<section>
+<title>Absolute and relative errors</title>
+
+<para>Let <code>exact</code> be an arithmetic expression and <code>approx</code>
+an approximation of <code>exact</code>. The approximation usually contains
+rounding operators while the exact expression does not. The absolute error
+between these two expressions is their difference: <code>approx - exact</code>.
+The relative error is the quotient between the absolute error and the exact
+value: <code>(approx - exact) / exact</code>.</para>
+
+<para>Writing the errors differently will prevent Gappa from applying theorems
+on rounding errors: <code>-(x - &lt;float64ne&gt;(x))</code> may lead to a
+worse enclosure than <code>&lt;float64ne&gt;(x) - x</code>.</para>
+</section>
+
+<section>
+<title>Global errors</title>
+
+<para>The <code>approx</code> and <code>exact</code> expressions needs to have
+a similar structure in order for the rewriting rules to kick in. E.g. if
+<code>exact</code> is a sum of two terms <code>a</code> and <code>b</code>,
+then <code>approx</code> has to be the sum of two terms <code>c</code> and
+<code>d</code> such that <code>c</code> and <code>d</code> are approximations
+of <code>a</code> and <code>b</code> respectively.</para>
+
+<para>Indeed the rewriting rule for the absolute error of the addition is:
+<code>(a + b) - (c + d) -&gt; (a - c) + (b - d)</code>. Similarly, the
+rewriting rules for the multiplication keep the same ordering of the subterms.
+For example, one of the rules is:
+<code>a * b - c * d -&gt; (a - c) * b + c * (b - d)</code>.</para>
+
+<para>If the two sides of an error expression do not have a similar structure,
+a user rewriting rule will have to be added in order to put them in a suitable
+state.</para>
+</section>
+
+</section>
+
+<section>
+<title>Common user rewriting rules</title>
+
+<para>User rewriting rules are mainly needed to decompose errors between
+truncation errors and rounding errors. Let us now consider that <code>exact</code>
+was itself a mathematical approximation of the <code>real</code> expression.
+For example, <code>exact</code> may be the usable truncation of an infinite
+series <code>real</code>. The total error between the computed value and the
+real value is <code>approx - real</code>.</para>
+
+<para>A rewriting rule is needed to indicate how to decompose the error. For an
+absolute error, it will be:
+<code>approx - real -&gt; (approx - exact) + (exact - real)</code>. In the case
+of the relative error, it may be preferable to explicitly name the errors:</para>
+<programlisting><![CDATA[eps = (approx - real) / real;
+eps1 = (approx - exact) / exact;
+eps2 = (exact - real) / real;
+{...}
+eps -> eps1 + eps2 + eps1 * eps2;]]>
+</programlisting>
+</section>
