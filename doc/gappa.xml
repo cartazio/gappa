@@ -4,6 +4,7 @@
 [
   <!ENTITY gappa-expressions SYSTEM "manual/expressions.xml">
   <!ENTITY gappa-grammar     SYSTEM "manual/grammar.xml">
+  <!ENTITY gappa-warnings    SYSTEM "manual/warnings.xml">
   <!ENTITY gappa-x1mx        SYSTEM "examples/x1mx.xml">
 ]>
 <book>
@@ -57,6 +58,11 @@ errors due to floating-point arithmetic.</para>
 <appendix>
 <title>Gappa language</title>
 &gappa-grammar;
+</appendix>
+
+<appendix>
+<title>Warning and error messages</title>
+&gappa-warnings;
 </appendix>
 
 </book>

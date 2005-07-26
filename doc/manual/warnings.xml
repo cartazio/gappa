@@ -1,0 +1,79 @@
+<section>
+<title>Error messages</title>
+
+<section>
+<title>Error: undefined intervals are reserved for conclusions.</title>
+<para>You are not allowed to use an interrogation mark for an interval that
+appears as an hypothesis in the logical formula.</para>
+</section>
+
+<section>
+<title>Error: bison-msg at line 17 column 42.</title>
+<para>The Bison front-end has detected a syntax error at the given location.
+The error message is usually unusable, so let us hope the location will be
+enough for you to find what the problem is.</para>
+</section>
+
+<section>
+<title>Error: toto is an already defined symbol.</title>
+<para>A symbol cannot be defined more than once, even if the right hand sides
+of every definitions are equivalent. E.g. <code>a = 1; a = 1;</code></para>
+</section>
+
+<section>
+<title>Error: toto is not a rounding.</title>
+<para>A bracketed word does not denote the name of a rounding operator. E.g.
+<code>&lt;allyourbases&gt;(b)</code></para>
+</section>
+
+<section>
+<title>Error: too complex a logical proposition.</title>
+<para>Gappa was not able to transform the logical proposition to a suitable
+form. It may happen when too much implications are nested on their left hand
+sides.</para>
+</section>
+
+<section>
+<title>Error: you don't want to have multiple hypotheses concerning the same real.</title>
+<para>Multiple enclosures of the same real confuse Gappa. For example, the
+script <code>{ x in [0,2] /\ x in [1,3] -&gt; y in ? }</code> will not be
+handled.</para>
+</section>
+
+</section>
+
+<section>
+<title>Warning messages</title>
+
+<section>
+<title>Warning: proof of triviality will not be generated.</title>
+<para>One of the goals Gappa has to prove is a trivial consequence of an
+hypothesis. No proof will be generated for this goal. For example, the script
+<code>{ x in [0,1] -&gt; x in ? }</code> will lead to an empty proof.</para>
+</section>
+
+<section>
+<title>Warning: toto is being renamed to titi.</title>
+<para>When an equality <code>a = b</code> is written, the name <code>a</code>
+is associated to the expression <code>b</code>. This name will then be used
+whenever Gappa would have needed to output <code>b</code>. If a new equality
+is written, the new name will supersede the name previously defined.</para>
+</section>
+
+<section>
+<title>Warning: although present in a quotient, the expression toto may not have been tested for non-zeroness.</title>
+<para>When Gappa verifies that both sides of a user rewriting rule are
+equivalent, it does not generate additional constraints to verify that the
+denominator is not zero. E.g. the rule <code>1 / (1 / x) -&gt; x</code> only
+applies when <code>x</code> is not zero, but Gappa will not test for it.</para>
+</section>
+
+<section>
+<title>Warning: toto and titi are not trivially equal.</title>
+<para>When Gappa verifies the rule <code>toto -&gt; titi</code>, it will
+normalize the difference of both sides. If this difference does not normalize
+to zero, Gappa will warn of it and display the difference. It may happen when
+numerical computations are required; e.g. <code>1b-2 -&gt; 0.2 + 0.05</code>.</para>
+</section>
+
+</section>
