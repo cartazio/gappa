@@ -221,30 +221,3 @@ interval compose_relative(interval const &u, interval const &v) {
   return interval(rnd::add_down(rnd::add_down(ul, vl), rnd::mul_down(ul, vl)),
                   rnd::add_up  (rnd::add_up  (uu, vu), rnd::mul_up  (uu, vu)));
 }
-
-interval add_rev(interval const &u, interval const &r) {
-  assert(u.base);
-  if (!(r.base)) return interval();
-  typedef real_policies::rounding rnd;
-  number a = rnd::sub_down(lower(r), lower(u)), b = rnd::sub_up(upper(r), upper(u));
-  if (!(a <= b)) return interval();
-  return interval(a, b);
-}
-
-interval sub_rev(interval const &u, interval const &r) {
-  assert(u.base);
-  if (!(r.base)) return interval();
-  typedef real_policies::rounding rnd;
-  number a = rnd::sub_down(upper(u), upper(r)), b = rnd::sub_up(lower(u), lower(r));
-  if (!(a <= b)) return interval();
-  return interval(a, b);
-}
-
-interval square_rev(interval const &r) {
-  if (!(r.base)) return interval();
-  typedef real_policies::rounding rnd;
-  number const &u = upper(r);
-  if (boost::numeric::interval_lib::user::is_neg(u)) return interval();
-  number a = rnd::sqrt_up(u);
-  return interval(-a, a);
-}
