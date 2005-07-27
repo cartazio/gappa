@@ -324,6 +324,53 @@ proof_scheme *computation_scheme::factory(ast_real const *real) {
 
 static scheme_register computation_scheme_register(&computation_scheme::factory);
 
+// COMPOSE RELATIVE
+struct compose_relative_scheme: proof_scheme {
+  compose_relative_scheme(ast_real const *r): proof_scheme(r) {}
+  virtual node *generate_proof() const;
+  virtual ast_real_vect needed_reals() const;
+  static proof_scheme *factory(ast_real const *);
+};
+
+node *compose_relative_scheme::generate_proof() const {
+  real_op const *r = boost::get< real_op const >(real);
+  assert(r && r->type == BOP_ADD);
+  real_op const *r1 = boost::get< real_op const >(r->ops[0]),
+                *r2 = boost::get< real_op const >(r->ops[1]);
+  assert(r1 && r2 && r1->type == BOP_ADD && r2->type == BOP_MUL
+         && r1->ops[0] == r2->ops[0] && r1->ops[1] == r2->ops[1]);
+  node *n1 = find_proof(r1->ops[0]), *n2 = find_proof(r1->ops[1]);
+  if (!n1 || !n2) return NULL;
+  property const &res1 = n1->get_result(), &res2 = n2->get_result();
+  property res(real, compose_relative(res1.bnd, res2.bnd));
+  if (!is_defined(res.bnd)) return NULL;
+  property hyps[2] = { res1, res2 };
+  return create_modus(new theorem_node(2, hyps, res, "compose"));
+}
+
+ast_real_vect compose_relative_scheme::needed_reals() const {
+  real_op const *r = boost::get< real_op const >(real);
+  assert(r && r->type == BOP_ADD);
+  real_op const *r1 = boost::get< real_op const >(r->ops[0]),
+                *r2 = boost::get< real_op const >(r->ops[1]);
+  assert(r1 && r2 && r1->type == BOP_ADD && r2->type == BOP_MUL
+         && r1->ops[0] == r2->ops[0] && r1->ops[1] == r2->ops[1]);
+  return r1->ops;
+}
+
+proof_scheme *compose_relative_scheme::factory(ast_real const *real) {
+  real_op const *r = boost::get< real_op const >(real);
+  if (!r || r->type != BOP_ADD) return NULL;
+  real_op const *r1 = boost::get< real_op const >(r->ops[0]),
+                *r2 = boost::get< real_op const >(r->ops[1]);
+  if (!r1 || !r2 || r1->type != BOP_ADD || r2->type != BOP_MUL
+      || r1->ops[0] != r2->ops[0] || r1->ops[1] != r2->ops[1])
+    return NULL;
+  return new compose_relative_scheme(real);
+}
+
+static scheme_register compose_relative_scheme_register(&compose_relative_scheme::factory);
+
 // NUMBER
 struct number_scheme: proof_scheme {
   number_scheme(ast_real const *r): proof_scheme(r) {}
