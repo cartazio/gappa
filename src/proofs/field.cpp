@@ -16,6 +16,8 @@ proof_scheme *pattern_factory::operator()(ast_real const *src) const {
   ast_real_vect holders;
   rounding_vect roundings;
   if (!match(src, lhs, holders, roundings)) return NULL;
+  std::set< ast_real const * > hold(holders.begin(), holders.end());
+  if (hold.size() != holders.size()) return NULL;
   ast_real const *dst = rewrite(rhs, holders, roundings);
   pattern_cond_vect c(cond);
   rewrite(c, holders, roundings);
@@ -69,9 +71,25 @@ REWRITE(add_decomposition,
 	(a + b) - (c + d),
 	(a - c) + (b - d));
 
+REWRITE(add_decomposition_left,
+	(a + b) - (a + c),
+	b - c);
+
+REWRITE(add_decomposition_right,
+	(a + b) - (c + b),
+	a - c);
+
 REWRITE(sub_decomposition,
 	(a - b) - (c - d),
 	(a - c) - (b - d));
+
+REWRITE(sub_decomposition_left,
+	(a - b) - (a - c),
+	-(b - c));
+
+REWRITE(sub_decomposition_right,
+	(a - b) - (c - b),
+	a - c);
 
 REWRITE(mul_decomposition_factor_left,
 	a * b - a * c,
@@ -111,3 +129,13 @@ REWRIT3(mul_rel_decomposition,
 	(a * b - c * d) / (c * d),
 	(a - c) / c + (b - d) / d + ((a - c) / c) * ((b - d) / d),
 	c != 0 && d != 0);
+
+REWRIT3(mul_rel_decomposition_left,
+	(a * b - a * c) / (a * c),
+	(b - c) / c,
+	a != 0 && c != 0);
+
+REWRIT3(mul_rel_decomposition_right,
+	(a * b - c * b) / (c * b),
+	(a - c) / c,
+	b != 0 && c != 0);
