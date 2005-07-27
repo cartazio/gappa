@@ -212,6 +212,16 @@ int sign(interval const &u) {
   return is_neg(plup.upper()) ? -1 : is_pos(plup.lower()) ? 1 : 0;
 }
 
+interval compose_relative(interval const &u, interval const &v) {
+  assert(u.base && v.base);
+  typedef real_policies::rounding rnd;
+  number const &ul = plup.lower(), &uu = plup.upper(),
+               &vl = plvp.lower(), &vu = plvp.upper();
+  if (ul < -1 || vl < -1) return interval();
+  return interval(rnd::add_down(rnd::add_down(ul, vl), rnd::mul_down(ul, vl)),
+                  rnd::add_up  (rnd::add_up  (uu, vu), rnd::mul_up  (uu, vu)));
+}
+
 interval add_rev(interval const &u, interval const &r) {
   assert(u.base);
   if (!(r.base)) return interval();
