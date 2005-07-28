@@ -57,7 +57,7 @@ REWRITE(sub_decomposition_rounded_left,
 
 REWRITE(sub_decomposition_rounded_right,
 	a - rnd(b, 0),
-	(a - b) - (rnd(b, 0) - b));
+	(a - b) + -(rnd(b, 0) - b));
 
 REWRITE(mul_decomposition_rounded_left,
 	rnd(a, 0) * b,
@@ -81,7 +81,7 @@ REWRITE(add_decomposition_right,
 
 REWRITE(sub_decomposition,
 	(a - b) - (c - d),
-	(a - c) - (b - d));
+	(a - c) + -(b - d));
 
 REWRITE(sub_decomposition_left,
 	(a - b) - (a - c),
