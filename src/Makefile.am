@@ -10,6 +10,7 @@ bin_PROGRAMS = gappa
 gappa_SOURCES = \
 	arithmetic/float.cpp \
 	arithmetic/homogen.cpp \
+	arithmetic/relative.cpp \
 	backends/coq.cpp \
 	numbers/interval.cpp \
 	numbers/interval.hpp \
