@@ -1,4 +1,4 @@
-AC_INIT([Gappa], [0.4.7],
+AC_INIT([Gappa], [0.4.8],
         [Guillaume Melquiond <guillaume.melquiond@ens-lyon.fr>],
         [gappa])
 AM_INIT_AUTOMAKE
