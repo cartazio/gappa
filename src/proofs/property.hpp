@@ -1,9 +1,9 @@
 #ifndef PROOFS_PROPERTY_HPP
 #define PROOFS_PROPERTY_HPP
 
+#include <vector>
 #include "numbers/interval.hpp"
 #include "parser/ast_real.hpp"
-#include <vector>
 
 struct property {
   ast_real const *real;

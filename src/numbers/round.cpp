@@ -1,8 +1,8 @@
+#include <algorithm>
+#include <cassert>
 #include "numbers/interval.hpp"
 #include "numbers/real.hpp"
 #include "numbers/round.hpp"
-#include <algorithm>
-#include <cassert>
 
 void split_exact(mpfr_t const &f, mpz_t &frac, int &exp, int &sign) {
   sign = mpfr_sgn(f);

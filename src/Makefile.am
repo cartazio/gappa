@@ -8,10 +8,9 @@ bin_PROGRAMS = gappa
 # parser/ast.cpp initialization requires proofs/field.cpp initialization
 
 gappa_SOURCES = \
+	arithmetic/float.cpp \
+	arithmetic/homogen.cpp \
 	backends/coq.cpp \
-	numbers/double.cpp \
-	numbers/float.cpp \
-	numbers/homogen.cpp \
 	numbers/interval.cpp \
 	numbers/interval.hpp \
 	numbers/interval_arith.hpp \

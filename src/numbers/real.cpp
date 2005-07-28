@@ -1,6 +1,6 @@
-#include "numbers/real.hpp"
 #include <cassert>
 #include <ostream>
+#include "numbers/real.hpp"
 
 number_base *empty_mpfr = new number_base();
 number number::pos_inf, number::neg_inf;

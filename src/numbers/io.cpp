@@ -1,8 +1,8 @@
+#include <sstream>
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
 #include "numbers/round.hpp"
 #include "parser/ast.hpp"
-#include <sstream>
 
 static number read_number(ast_number const &n, mp_rnd_t rnd) {
   number_base *res = new number_base;
