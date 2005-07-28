@@ -1,10 +1,16 @@
+Version 0.4.8:
+ * fact database
+   - tightened intervals for "a + b + a * b"
+   - discarded multiple occurrences of the same term in the rewriting rules
+   - cleaned up rewriting rules
+
 Version 0.4.7:
  * hint parser
    - sped up verification
 
 Version 0.4.6:
  * floating-point numbers
-   - disabled relative error for subnormal numbers
+   - disabled relative error for subnormal numbers (potentially disruptive)
  * homogen numbers
    - cleaned up
    - added non-homogen double rounded format
