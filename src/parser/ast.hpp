@@ -32,6 +32,19 @@ struct ast_prop_impl {
 
 struct function;
 
+typedef std::vector< int > rounding_params;
+
+struct rounding_generator {
+  virtual rounding_class const *operator()() const { return NULL; }
+  virtual rounding_class const *operator()(rounding_params const &) const { return NULL; }
+};
+
+struct default_rounding_generator: rounding_generator {
+  rounding_class const *rnd;
+  default_rounding_generator(std::string const &, rounding_class const *);
+  virtual rounding_class const *operator()() const { return rnd; }
+};
+
 enum ident_type { UNKNOWN_ID, REAL_FUN, REAL_VAR, REAL_RND };
 
 struct ast_ident {
@@ -39,7 +52,7 @@ struct ast_ident {
   union {
     function const *fun;
     ast_real const *var;
-    rounding_class const *rnd;
+    rounding_generator const *rnd;
   };
   ident_type id_type;
   ast_ident(std::string const &s): name(s), id_type(UNKNOWN_ID) {}

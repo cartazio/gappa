@@ -16,9 +16,7 @@ struct double_rounding_class: rounding_class {
 double_rounding_class::double_rounding_class() {
   he = from_exponent(-100, 0);
   hb = from_exponent(0, 0) + he;
-  ast_ident *n = ast_ident::find("ddouble");
-  n->id_type = REAL_RND;
-  n->rnd = this;
+  new default_rounding_generator("ddouble", this);
 }
 
 interval double_rounding_class::round(interval const &i, std::string &name) const {

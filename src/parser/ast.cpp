@@ -102,3 +102,10 @@ std::string dump_real(ast_real const *r, int prio) {
   return "...";
 }
 
+default_rounding_generator::default_rounding_generator(std::string const &name, rounding_class const *r)
+  : rnd(r)
+{
+  ast_ident *id = ast_ident::find(name);
+  id->id_type = REAL_RND;
+  id->rnd = this;
+}

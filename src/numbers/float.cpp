@@ -39,9 +39,7 @@ struct float_rounding_class: rounding_class {
 float_rounding_class::float_rounding_class(float_format const *f, rounding_type t, char const *i)
   : format(f), type(t), ident(i)
 {
-  ast_ident *n = ast_ident::find(std::string("float") + i);
-  n->id_type = REAL_RND;
-  n->rnd = this;
+  new default_rounding_generator(std::string("float") + i, this);
 }
 
 

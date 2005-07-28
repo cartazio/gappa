@@ -13,9 +13,7 @@ struct homogen_rounding_class: rounding_class {
 
 homogen_rounding_class::homogen_rounding_class() {
   he = from_exponent(-53, 0) + from_exponent(-64, 0);
-  ast_ident *n = ast_ident::find("homogen80x");
-  n->id_type = REAL_RND;
-  n->rnd = this;
+  new default_rounding_generator("homogen80x", this);
 }
 
 interval homogen_rounding_class::absolute_error_from_real(interval const &i, std::string &name) const {
@@ -34,9 +32,7 @@ struct homogen_init_rounding_class: rounding_class {
 
 homogen_init_rounding_class::homogen_init_rounding_class() {
   he = from_exponent(-53, 0) + from_exponent(-64, 0);
-  ast_ident *n = ast_ident::find("homogen80x_init");
-  n->id_type = REAL_RND;
-  n->rnd = this;
+  new default_rounding_generator("homogen80x_init", this);
 }
 
 interval homogen_init_rounding_class::absolute_error_from_rounded(interval const &i, std::string &name) const {
@@ -53,9 +49,7 @@ struct floatx_rounding_class: rounding_class {
 };
 
 floatx_rounding_class::floatx_rounding_class() {
-  ast_ident *n = ast_ident::find("float80x");
-  n->id_type = REAL_RND;
-  n->rnd = this;
+  new default_rounding_generator("float80x", this);
 }
 
 interval floatx_rounding_class::round(interval const &i, std::string &name) const {
