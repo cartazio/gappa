@@ -65,6 +65,6 @@ struct function {
   function(real_op_type t): type(t) {}
 };
 
-std::string dump_real(ast_real const *, int = 0);
+std::string dump_real(ast_real const *, unsigned = 0);
 
 #endif // PARSER_AST_HPP

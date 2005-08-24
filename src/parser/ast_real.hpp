@@ -20,7 +20,7 @@ ast_number *normalize(ast_number const &);
 
 struct ast_real;
 
-enum real_op_type { UOP_MINUS, BOP_ADD, BOP_SUB, BOP_MUL, BOP_DIV, ROP_UNK };
+enum real_op_type { UOP_MINUS, UOP_ABS, BOP_ADD, BOP_SUB, BOP_MUL, BOP_DIV, ROP_UNK };
 
 typedef std::vector< ast_real const * > ast_real_vect;
 

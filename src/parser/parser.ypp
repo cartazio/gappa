@@ -169,6 +169,7 @@ REAL:
 | REAL '-' REAL		{ $$ = rnd_normalize(ast_real(real_op($1, BOP_SUB, $3))); }
 | REAL '*' REAL		{ $$ = rnd_normalize(ast_real(real_op($1, BOP_MUL, $3))); }
 | REAL '/' REAL		{ $$ = rnd_normalize(ast_real(real_op($1, BOP_DIV, $3))); }
+| '|' REAL '|'		{ $$ = rnd_normalize(ast_real(real_op(UOP_ABS, $2))); }
 | '(' REAL ')'		{ $$ = $2; }
 | '+' REAL %prec NEG	{ $$ = $2; }
 | '-' REAL %prec NEG
