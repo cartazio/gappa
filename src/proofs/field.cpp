@@ -39,6 +39,8 @@ static pattern rnd(pattern const &a, int b) {
 
 static pattern a(0), b(1), c(2), d(3);
 
+#define abs pattern::abs
+
 #define REWRITE_NAME BOOST_PP_CAT(rewrite_, __LINE__)
 #define REWRITE(name,lhs,rhs) static pattern_register REWRITE_NAME(lhs, rhs, #name, pattern_cond_vect())
 #define REWRIT3(name,lhs,rhs,cond) static pattern_register REWRITE_NAME(lhs, rhs, #name, pattern_cond_vect() && cond)
@@ -139,3 +141,7 @@ REWRIT3(mul_rel_decomposition_right,
 	(a * b - c * b) / (c * b),
 	(a - c) / c,
 	b != 0 && c != 0);
+
+REWRITE(abs_mul_expand,
+	abs(a * b),
+	abs(a) * abs(b));

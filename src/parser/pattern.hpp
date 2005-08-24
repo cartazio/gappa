@@ -31,6 +31,7 @@ class pattern {
   pattern_cond operator>=(int) const;
   pattern_cond operator!=(int) const;
   static pattern round(pattern const &, rounding_class const * = NULL);
+  static pattern abs(pattern const &);
 };
 
 typedef std::vector< pattern_cond > pattern_cond_vect;
