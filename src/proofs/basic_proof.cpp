@@ -105,70 +105,69 @@ static scheme_register absolute_error_from_rounded_scheme_register(&absolute_err
 
 // RELATIVE_ERROR_FROM_REAL
 struct relative_error_from_real_scheme: proof_scheme {
-  relative_error_from_real_scheme(ast_real const *r): proof_scheme(r) {}
+  rounded_real const *approx;
+  ast_real const *absval;
+  relative_error_from_real_scheme(ast_real const *r, rounded_real const *rr, ast_real const *av):
+    proof_scheme(r), approx(rr), absval(av) {}
   virtual node *generate_proof() const;
   virtual ast_real_vect needed_reals() const;
   static proof_scheme *factory(ast_real const *);
 };
 
 node *relative_error_from_real_scheme::generate_proof() const {
-  rounded_real const *rr;
-  bool b = relative_error_decomposition(real, NULL, &rr);
-  assert(b);
-  node *n = find_proof(rr->rounded);
+  node *n = find_proof(absval);
   if (!n) return NULL;
   property const &res1 = n->get_result();
   std::string name;
-  property res(real, rr->rounding->relative_error_from_real(res1.bnd, name));
+  property res(real, approx->rounding->relative_error_from_real(res1.bnd, name));
   if (!is_defined(res.bnd)) return NULL;
   return create_theorem(1, &res1, res, name);
 }
 
 ast_real_vect relative_error_from_real_scheme::needed_reals() const {
-  rounded_real const *rr;
-  bool b = relative_error_decomposition(real, NULL, &rr);
-  assert(b);
-  return ast_real_vect(1, rr->rounded);
+  return ast_real_vect(1, absval);
 }
 
 proof_scheme *relative_error_from_real_scheme::factory(ast_real const *real) {
-  if (!relative_error_decomposition(real, NULL, NULL)) return NULL;
-  return new relative_error_from_real_scheme(real);
+  rounded_real const *rr;
+  if (!relative_error_decomposition(real, NULL, &rr)) return NULL;
+  ast_real const *av = normalize(ast_real(real_op(UOP_ABS, rr->rounded)));
+  return new relative_error_from_real_scheme(real, rr, av);
 }
 
 static scheme_register relative_error_from_real_scheme_register(&relative_error_from_real_scheme::factory);
 
 // RELATIVE_ERROR_FROM_ROUNDED
 struct relative_error_from_rounded_scheme: proof_scheme {
-  relative_error_from_rounded_scheme(ast_real const *r): proof_scheme(r) {}
+  rounded_real const *approx;
+  ast_real const *absval;
+  relative_error_from_rounded_scheme(ast_real const *r, rounded_real const *rr, ast_real const *av):
+    proof_scheme(r), approx(rr), absval(av) {}
   virtual node *generate_proof() const;
   virtual ast_real_vect needed_reals() const;
   static proof_scheme *factory(ast_real const *);
 };
 
 node *relative_error_from_rounded_scheme::generate_proof() const {
-  ast_real const *r; rounded_real const *rr;
-  bool b = relative_error_decomposition(real, &r, &rr);
-  assert(b);
-  node *n = find_proof(r);
+  node *n = find_proof(absval);
   if (!n) return NULL;
   property const &res1 = n->get_result();
   std::string name;
-  property res(real, rr->rounding->relative_error_from_rounded(res1.bnd, name));
+  property res(real, approx->rounding->relative_error_from_rounded(res1.bnd, name));
   if (!is_defined(res.bnd)) return NULL;
   return create_theorem(1, &res1, res, name);
 }
 
 ast_real_vect relative_error_from_rounded_scheme::needed_reals() const {
-  ast_real const *r;
-  bool b = relative_error_decomposition(real, &r, NULL);
-  assert(b);
-  return ast_real_vect(1, r);
+  return ast_real_vect(1, absval);
 }
 
 proof_scheme *relative_error_from_rounded_scheme::factory(ast_real const *real) {
-  if (!relative_error_decomposition(real, NULL, NULL)) return NULL;
-  return new relative_error_from_rounded_scheme(real);
+  ast_real const *r;
+  rounded_real const *rr;
+  if (!relative_error_decomposition(real, &r, &rr)) return NULL;
+  ast_real const *av = normalize(ast_real(real_op(UOP_ABS, r)));
+  return new relative_error_from_rounded_scheme(real, rr, av);
 }
 
 static scheme_register relative_error_from_rounded_scheme_register(&relative_error_from_rounded_scheme::factory);
