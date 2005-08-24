@@ -176,6 +176,11 @@ interval operator/(interval const &u, interval const &v) {
   return plop(plup / plvp);
 }
 
+interval abs(interval const &u) {
+  assert(u.base);
+  return plop(abs(plup));
+}
+
 interval square(interval const &u) {
   assert(u.base);
   return plop(square(plup));

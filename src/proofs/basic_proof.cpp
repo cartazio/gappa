@@ -253,11 +253,20 @@ node *computation_scheme::generate_proof() const {
   node *n = NULL;
   switch (r->ops.size()) {
   case 1: {
-    assert(r->type == UOP_MINUS);
     node *n1 = find_proof(r->ops[0]);
     if (!n1) return NULL;
     property const &res = n1->get_result();
-    n = new theorem_node(1, &res, property(real, -res.bnd), "neg");
+    interval const &i = res.bnd;
+    switch (r->type) {
+    case UOP_MINUS:
+      n = new theorem_node(1, &res, property(real, -i), "neg");
+      break;
+    case UOP_ABS:
+      n = new theorem_node(1, &res, property(real, abs(i)), std::string("abs_") += ('o' + sign(i)));
+      break;
+    default:
+      assert(false);
+    }
     break; }
   case 2: {
     bool same_ops = r->ops[0] == r->ops[1];
