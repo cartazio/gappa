@@ -79,10 +79,12 @@ static std::string display(ast_real const *r) {
     else if (n.exponent == 0) plouf << "Float1 (" << m << ')';
     else plouf << "Float" << n.base << " (" << m << ") (" << n.exponent << ')';
   } else if (real_op const *o = boost::get< real_op const >(r)) {
-    static char const op[] = "-+-*/";
-    if (o->ops.size() == 1)
-      plouf << '(' << op[o->type] << ' ' << display(o->ops[0]) << ")%R";
-    else
+    static char const op[] = "-X+-*/";
+    if (o->ops.size() == 1) {
+      std::string s(1, op[o->type]);
+      if (o->type == UOP_ABS) s = "Rabs";
+      plouf << '(' << s << ' ' << display(o->ops[0]) << ")%R";
+    } else
       plouf << '(' << display(o->ops[0]) << ' ' << op[o->type] << ' ' << display(o->ops[1]) << ")%R";
   } else if (rounded_real const *rr = boost::get< rounded_real const >(r))
     plouf << "rounding_" << rr->rounding->name() << ' ' << display(rr->rounded);
