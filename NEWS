@@ -2,6 +2,10 @@ Version 0.4.9:
  * numbers and arithmetic
    - separated number handling from special arithmetic
    - added "relative", a format for handling varying precision rounding
+ * formulas
+   - implemented absolute value
+ * fact database
+   - made relative error depends on absolute value of the range
 
 Version 0.4.8:
  * fact database
