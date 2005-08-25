@@ -6,11 +6,6 @@
 #include "proofs/basic_proof.hpp"
 #include "proofs/proof_graph.hpp"
 
-struct rewrite_node: public theorem_node {
-  rewrite_node(int nb, property const h[], property const &p, std::string const &n)
-    : theorem_node(nb, h, p, n) {}
-};
-
 static bool absolute_error_decomposition(ast_real const *real, ast_real const **f, rounded_real const **r) {
   real_op const *o = boost::get< real_op const >(real);
   if (!o || o->type != BOP_SUB) return false;
@@ -270,7 +265,7 @@ node *computation_scheme::generate_proof() const {
   case 2: {
     bool same_ops = r->ops[0] == r->ops[1];
     if (same_ops && r->type == BOP_SUB)
-      return new rewrite_node(0, NULL, property(real, zero()), "sub_refl");
+      return new theorem_node(0, NULL, property(real, zero()), "sub_refl");
     std::string s;
     node *n1 = find_proof(r->ops[0]);
     if (!n1) return NULL;
@@ -441,7 +436,7 @@ node *rewrite_scheme::generate_proof() const {
   }
   property const &res = n->get_result();
   hyps.push_back(res);
-  return create_modus(new rewrite_node(hyps.size(), &*hyps.begin(), property(real, res.bnd), name));
+  return create_modus(new theorem_node(hyps.size(), &*hyps.begin(), property(real, res.bnd), name));
 }
 
 struct rewrite_factory: scheme_factory {
