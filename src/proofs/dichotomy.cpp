@@ -1,5 +1,6 @@
 #include "numbers/interval_utility.hpp"
 #include "numbers/round.hpp"
+#include "parser/ast.hpp"
 #include "proofs/dichotomy.hpp"
 #include "proofs/proof_graph.hpp"
 #include "proofs/schemes.hpp"
@@ -28,6 +29,8 @@ void dichotomy_node::clean_dependencies() {
   for(graph_vect::iterator i = graphs.begin(), end = graphs.end(); i != end; ++i)
     delete *i;
   graphs.clear();
+  delete last_graph;
+  last_graph = NULL;
 }
 
 dichotomy_node::~dichotomy_node() {
@@ -162,6 +165,7 @@ node *dichotomy_scheme::generate_proof(interval const &bnd) const {
   try {
     n->dichotomize();
     n->add_graph(n->last_graph);
+    n->last_graph = NULL;
     dich = create_modus(n);
     g->purge(dich);
     g->flatten();
