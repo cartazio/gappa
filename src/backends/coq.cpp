@@ -171,7 +171,7 @@ static std::string display(node *n) {
         j != j_end; ++j, ++num_hyp)
       pmap.insert(std::make_pair(j->real, std::make_pair(num_hyp, &j->bnd)));
     node_vect const &pred = n->get_subproofs();
-    for(node_vect::const_iterator i = ++pred.begin(), i_end = pred.end();
+    for(node_vect::const_iterator i = pred.begin(), i_end = pred.end();
         i != i_end; ++i, ++num_hyp) {
       node *m = *i;
       property const &res = m->get_result();
@@ -179,7 +179,9 @@ static std::string display(node *n) {
       invoke_lemma(plouf, m, pmap);
       pmap.insert(std::make_pair(res.real, std::make_pair(num_hyp, &res.bnd)));
     }
-    invoke_lemma(plouf, pred[0], pmap);
+    modus_node *mn = dynamic_cast< modus_node * >(n);
+    assert(mn);
+    invoke_lemma(plouf, mn->target, pmap);
     plouf << "Qed.\n";
     break; }
   case INTERSECTION: {

@@ -69,6 +69,14 @@ class dependent_node: public result_node {
 node *create_modus(node *n);
 node *create_theorem(int nb, property const h[], property const &p, std::string const &n);
 
+class modus_node: public dependent_node {
+  modus_node(property_vect const &h, node_vect const &nodes, node *n);
+  friend node *create_modus(node *n); // only way to create a modus node
+ public:
+  node *target;
+  virtual ~modus_node() { delete target; }
+};
+
 struct proof_helper;
 
 class graph_node;

@@ -22,7 +22,8 @@ node::node(node_id t, graph_t *g): type(t), graph(g) {
 
 node::~node() {
   assert(succ.empty());
-  graph->remove(this);
+  if (graph)
+    graph->remove(this);
 }
 
 bool graph_t::dominates(graph_t const *g) const {
@@ -95,14 +96,9 @@ static void fill_property_vect(property_vect &v, property_map const &m) {
     v.push_back(property(i->first, i->second));
 }
 
-struct modus_node: public dependent_node {
-  modus_node(property_vect const &h, node_vect const &nodes, node *n);
-};
-
 modus_node::modus_node(property_vect const &h, node_vect const &nodes, node *n)
     : dependent_node(MODUS, n->get_result()) {
-  assert(dominates(n, this) && n->type != INTERSECTION);
-  insert_pred(n);
+  target = n;
   for(node_vect::const_iterator i = nodes.begin(), i_end = nodes.end();
       i != i_end; ++i) {
     node *m = *i;
@@ -112,7 +108,12 @@ modus_node::modus_node(property_vect const &h, node_vect const &nodes, node *n)
   hyp = h;
 }
 
+// a modus can only target an axiom, a theorem, or an union; unless it is an
+// axiom, the target will be strictly owned by the modus
+
 node *create_modus(node *n) {
+  assert(n->type == THEOREM || n->type == AXIOM || n->type == UNION);
+  assert(n->type == AXIOM || n->succ.empty());
   typedef std::set< ast_real const * > real_set;
   node_vect nodes;
   real_set reals;
@@ -131,7 +132,7 @@ node *create_modus(node *n) {
       nodes.push_back(m);
     }
   }
-  if (n->type != THEOREM && n->type != AXIOM && nodes.empty())
+  if (n->type == UNION && nodes.empty())
     return n;
   property_vect hyp;
   for(real_set::const_iterator i = reals.begin(), i_end = reals.end();
@@ -140,7 +141,14 @@ node *create_modus(node *n) {
     assert(m);
     hyp.push_back(m->get_result());
   }
-  return new modus_node(hyp, nodes, n);
+  if (n->type != AXIOM) {
+    n->graph->remove(n);
+    n->graph = NULL;
+  }
+  node *res = new modus_node(hyp, nodes, n);
+  if (n->type == AXIOM)
+    n->succ.insert(res);
+  return res;
 }
 
 node *create_theorem(int nb, property const h[], property const &p, std::string const &n) {
@@ -350,7 +358,7 @@ bool graph_t::migrate() {
     node_vect const &v = n->get_subproofs();
     bool good = true;
     for(node_vect::const_iterator i = v.begin(), i_end = v.end(); i != i_end; ++i)
-      if (::dominates(n, *i)) {
+      if (!(*i)->graph->dominates(father)) {
         good = false;
         break;
       }
