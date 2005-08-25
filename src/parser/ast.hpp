@@ -37,6 +37,7 @@ typedef std::vector< int > rounding_params;
 struct rounding_generator {
   virtual rounding_class const *operator()() const { return NULL; }
   virtual rounding_class const *operator()(rounding_params const &) const { return NULL; }
+  virtual ~rounding_generator() {}
 };
 
 struct default_rounding_generator: rounding_generator {
