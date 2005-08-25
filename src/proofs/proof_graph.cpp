@@ -108,6 +108,11 @@ modus_node::modus_node(property_vect const &h, node_vect const &nodes, node *n)
   hyp = h;
 }
 
+modus_node::~modus_node() {
+  if (target->type != AXIOM)
+    delete target;
+}
+
 // a modus can only target an axiom, a theorem, or an union; unless it is an
 // axiom, the target will be strictly owned by the modus
 
