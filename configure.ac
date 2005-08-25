@@ -1,4 +1,4 @@
-AC_INIT([Gappa], [0.4.8],
+AC_INIT([Gappa], [0.4.9],
         [Guillaume Melquiond <guillaume.melquiond@ens-lyon.fr>],
         [gappa])
 AM_INIT_AUTOMAKE
@@ -6,8 +6,10 @@ AC_PROG_CXX
 AC_PROG_LEX
 AC_PROG_YACC
 AC_PROG_INSTALL
+
 AC_CHECK_LIB(gmp, __gmpz_init)
 AC_CHECK_LIB(mpfr, mpfr_greater_p)
+
 AC_MSG_CHECKING([for Boost (>=1.32)])
 AC_TRY_COMPILE([#include <boost/version.hpp>], [
 #if BOOST_VERSION >= 103200
