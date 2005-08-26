@@ -327,6 +327,34 @@ proof_scheme *computation_scheme::factory(ast_real const *real) {
 
 static scheme_register computation_scheme_register(&computation_scheme::factory);
 
+// INVERT_ABS
+
+struct invert_abs_scheme: proof_scheme {
+  ast_real const *absval;
+  invert_abs_scheme(ast_real const *r, ast_real const *a): proof_scheme(r), absval(a) {}
+  virtual node *generate_proof() const;
+  virtual ast_real_vect needed_reals() const { return ast_real_vect(1, absval); }
+  static proof_scheme *factory(ast_real const *);
+};
+
+node *invert_abs_scheme::generate_proof() const {
+  node *n = find_proof(absval);
+  if (!n) return NULL;
+  property const &res1 = n->get_result();
+  number const &num = upper(res1.bnd);
+  property res(real, interval(-num, num));
+  return create_theorem(1, &res1, res, "invert_abs");
+}
+
+proof_scheme *invert_abs_scheme::factory(ast_real const *real) {
+  if (real_op const *r = boost::get< real_op const >(real))
+    if (r->type == UOP_ABS) return NULL;
+  ast_real const *av = normalize(ast_real(real_op(UOP_ABS, real)));
+  return new invert_abs_scheme(real, av);
+}
+
+static scheme_register invert_abs_scheme_register(&invert_abs_scheme::factory);
+
 // COMPOSE RELATIVE
 struct compose_relative_scheme: proof_scheme {
   compose_relative_scheme(ast_real const *r): proof_scheme(r) {}
