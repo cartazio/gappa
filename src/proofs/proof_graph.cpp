@@ -123,34 +123,23 @@ node *create_modus(node *n) {
   node_vect nodes;
   real_set reals;
   property_vect const &n_hyp = n->get_hypotheses();
+  property_map pmap;
   for(property_vect::const_iterator i = n_hyp.begin(), i_end = n_hyp.end();
       i != i_end; ++i) {
     node *m = find_proof(*i);
     assert(m);
-    if (m->type == HYPOTHESIS)
-      reals.insert(i->real);
-    else {
-      property_vect const &m_hyp = m->get_hypotheses();
-      for(property_vect::const_iterator j = m_hyp.begin(), j_end = m_hyp.end();
-          j != j_end; ++j)
-        reals.insert(j->real);
+    fill_property_map(pmap, m);
+    if (m->type != HYPOTHESIS)
       nodes.push_back(m);
-    }
   }
   if (n->type == UNION && nodes.empty())
     return n;
-  property_vect hyp;
-  for(real_set::const_iterator i = reals.begin(), i_end = reals.end();
-      i != i_end; ++i) {
-    property_vect const &h = top_graph->get_hypotheses();
-    int m = h.find_compatible_property(property(*i));
-    assert(m >= 0);
-    hyp.push_back(h[m]);
-  }
   if (n->type != AXIOM) {
     n->graph->remove(n);
     n->graph = NULL;
   }
+  property_vect hyp;
+  fill_property_vect(hyp, pmap);
   node *res = new modus_node(hyp, nodes, n);
   if (n->type == AXIOM)
     n->succ.insert(res);
