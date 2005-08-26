@@ -1,6 +1,9 @@
 Version 0.4.10:
  * proof graph
    - changed the node hypotheses to be graph hypotheses
+ * fact database
+   - switched some other facts to the absolute value of the denominators
+   - added an explicit exclusion pattern for the rewriting rules (e.g. "x * x" is no more excluded)
 
 Version 0.4.9:
  * numbers and arithmetic

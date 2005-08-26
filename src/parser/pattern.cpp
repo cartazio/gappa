@@ -134,14 +134,3 @@ pattern pattern::round(pattern const &p, rounding_class const *r) {
 pattern pattern::abs(pattern const &p) {
   return pattern(real_op(UOP_ABS, p.real));
 }
-
-void rewrite(pattern_cond_vect &dst, ast_real_vect const &holders, rounding_vect const &roundings) {
-  for(pattern_cond_vect::iterator i = dst.begin(), end = dst.end(); i != end; ++i)
-    i->real = rewrite(i->real, holders, roundings);
-}
-
-pattern_cond_vect operator&&(pattern_cond_vect const &v, pattern_cond const &c) {
-  pattern_cond_vect res(v);
-  res.push_back(c);
-  return res;
-}

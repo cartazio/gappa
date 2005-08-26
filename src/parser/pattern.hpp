@@ -35,7 +35,5 @@ class pattern {
 };
 
 typedef std::vector< pattern_cond > pattern_cond_vect;
-void rewrite(pattern_cond_vect &, ast_real_vect const &, rounding_vect const &);
-pattern_cond_vect operator&&(pattern_cond_vect const &, pattern_cond const &);
 
 #endif // PROOFS_PATTERN_HPP
