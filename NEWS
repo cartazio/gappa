@@ -6,6 +6,9 @@ Version 0.4.9:
    - implemented absolute value
  * fact database
    - made relative error depends on absolute value of the range
+ * proof graph
+   - fixed a bug related to the clean-up of the last graph of a dichotomy
+   - strenghtened the role of modus nodes
 
 Version 0.4.8:
  * fact database
