@@ -328,7 +328,6 @@ proof_scheme *computation_scheme::factory(ast_real const *real) {
 static scheme_register computation_scheme_register(&computation_scheme::factory);
 
 // INVERT_ABS
-
 struct invert_abs_scheme: proof_scheme {
   ast_real const *absval;
   invert_abs_scheme(ast_real const *r, ast_real const *a): proof_scheme(r), absval(a) {}
@@ -354,6 +353,32 @@ proof_scheme *invert_abs_scheme::factory(ast_real const *real) {
 }
 
 static scheme_register invert_abs_scheme_register(&invert_abs_scheme::factory);
+
+// ABS_MUL
+static proof_scheme *abs_mul_scheme_factory(ast_real const *real) {
+  std::string s = "abs_mul_";
+  real_op const *r = boost::get< real_op const >(real);
+  if (!r || r->type != UOP_ABS) return NULL;
+  real_op const *rr = boost::get< real_op const >(r->ops[0]);
+  if (!rr || rr->type != BOP_MUL) return NULL;
+  ast_real const *r1 = rr->ops[0], *r2 = rr->ops[1], *r3 = NULL, *r4 = NULL;
+  if (real_op const *r = boost::get< real_op const >(r1))
+    if (r->type == UOP_ABS) r3 = r1;
+  if (real_op const *r = boost::get< real_op const >(r2))
+    if (r->type == UOP_ABS) r4 = r2;
+  if (!r3) {
+    r3 = normalize(ast_real(real_op(UOP_ABS, r1)));
+    s += 'x';
+  } else s += 'a';
+  if (!r4) {
+    r4 = normalize(ast_real(real_op(UOP_ABS, r2)));
+    s += 'x';
+  } else s += 'a';
+  ast_real const *res = normalize(ast_real(real_op(r3, BOP_MUL, r4)));
+  return new rewrite_scheme(real, res, s);
+}
+
+static scheme_register abs_mul_scheme_register(&abs_mul_scheme_factory);
 
 // COMPOSE RELATIVE
 struct compose_relative_scheme: proof_scheme {

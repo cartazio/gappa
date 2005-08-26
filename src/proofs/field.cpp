@@ -141,7 +141,3 @@ REWRIT3(mul_rel_decomposition_right,
 	(a * b - c * b) / (c * b),
 	(a - c) / c,
 	b != 0 && c != 0);
-
-REWRITE(abs_mul_expand,
-	abs(a * b),
-	abs(a) * abs(b));
