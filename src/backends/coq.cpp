@@ -177,7 +177,7 @@ static std::string display(node *n) {
       property const &res = m->get_result();
       plouf << " assert (h" << num_hyp << " : " << display(res) << ").";
       invoke_lemma(plouf, m, pmap);
-      pmap.insert(std::make_pair(res.real, std::make_pair(num_hyp, &res.bnd)));
+      pmap[res.real] = std::make_pair(num_hyp, &res.bnd);
     }
     modus_node *mn = dynamic_cast< modus_node * >(n);
     assert(mn);
