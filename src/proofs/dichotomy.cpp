@@ -159,7 +159,7 @@ node *dichotomy_scheme::generate_proof(interval const &bnd) const {
     if (i->real != var) hyp2.push_back(*i);
   property_vect goals;
   goals.push_back(property(real, bnd));
-  graph_t *g = new graph_t(top_graph, hyp2, goals, helper, false);
+  graph_t *g = new graph_t(top_graph, hyp, goals, helper, false);
   graph_loader loader(g);
   dichotomy_node *n = new dichotomy_node(hyp2, property(real, bnd));
   try {
