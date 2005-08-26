@@ -142,9 +142,10 @@ node *create_modus(node *n) {
   property_vect hyp;
   for(real_set::const_iterator i = reals.begin(), i_end = reals.end();
       i != i_end; ++i) {
-    node *m = find_proof(*i);
-    assert(m);
-    hyp.push_back(m->get_result());
+    property_vect const &h = top_graph->get_hypotheses();
+    int m = h.find_compatible_property(property(*i));
+    assert(m >= 0);
+    hyp.push_back(h[m]);
   }
   if (n->type != AXIOM) {
     n->graph->remove(n);

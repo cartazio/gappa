@@ -1,3 +1,7 @@
+Version 0.4.10:
+ * proof graph
+   - changed the node hypotheses to be graph hypotheses
+
 Version 0.4.9:
  * numbers and arithmetic
    - separated number handling from special arithmetic
@@ -8,7 +12,7 @@ Version 0.4.9:
    - made relative error depends on absolute value of the range
  * proof graph
    - fixed a bug related to the clean-up of the last graph of a dichotomy
-   - strenghtened the role of modus nodes
+   - strengthened the role of modus nodes
 
 Version 0.4.8:
  * fact database
@@ -35,7 +39,7 @@ Version 0.4.6:
 
 Version 0.4.5:
  * proof graph
-   - reworked modus ponens creation to fix an assertion failure in lemma invokation
+   - reworked modus ponens creation to fix an assertion failure in lemma invocation
  * fact database
    - added conditional rules (potentially disruptive)
  * homogen numbers
