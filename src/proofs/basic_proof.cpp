@@ -244,7 +244,6 @@ struct computation_scheme: proof_scheme {
 node *computation_scheme::generate_proof() const {
   real_op const *r = boost::get< real_op const >(real);
   assert(r);
-  node *n = NULL;
   switch (r->ops.size()) {
   case 1: {
     node *n1 = find_proof(r->ops[0]);
@@ -253,11 +252,9 @@ node *computation_scheme::generate_proof() const {
     interval const &i = res.bnd;
     switch (r->type) {
     case UOP_MINUS:
-      n = new theorem_node(1, &res, property(real, -i), "neg");
-      break;
+      return create_theorem(1, &res, property(real, -i), "neg");
     case UOP_ABS:
-      n = new theorem_node(1, &res, property(real, abs(i)), std::string("abs_") += ('o' + sign(i)));
-      break;
+      return create_theorem(1, &res, property(real, abs(i)), std::string("abs_") += ('o' + sign(i)));
     default:
       assert(false);
     }
@@ -274,8 +271,7 @@ node *computation_scheme::generate_proof() const {
     if (same_ops && r->type == BOP_MUL) {
       s = "square_";
       s += 'o' + sign(i1);
-      n = new theorem_node(1, &res1, property(real, square(i1)), s);
-      break;
+      return create_theorem(1, &res1, property(real, square(i1)), s);
     }
     node *n2 = find_proof(r->ops[1]);
     if (!n2) return NULL;
@@ -304,12 +300,11 @@ node *computation_scheme::generate_proof() const {
       return NULL;
     }
     property hyps[2] = { res1, res2 };
-    n = new theorem_node(2, hyps, res, s);
-    break; }
+    return create_theorem(2, hyps, res, s); }
   default:
     assert(false);
   }
-  return create_modus(n);
+  return NULL;
 }
 
 ast_real_vect computation_scheme::needed_reals() const {
@@ -401,7 +396,7 @@ node *compose_relative_scheme::generate_proof() const {
   property res(real, compose_relative(res1.bnd, res2.bnd));
   if (!is_defined(res.bnd)) return NULL;
   property hyps[2] = { res1, res2 };
-  return create_modus(new theorem_node(2, hyps, res, "compose"));
+  return create_theorem(2, hyps, res, "compose");
 }
 
 ast_real_vect compose_relative_scheme::needed_reals() const {
@@ -489,7 +484,7 @@ node *rewrite_scheme::generate_proof() const {
   }
   property const &res = n->get_result();
   hyps.push_back(res);
-  return create_modus(new theorem_node(hyps.size(), &*hyps.begin(), property(real, res.bnd), name));
+  return create_theorem(hyps.size(), &*hyps.begin(), property(real, res.bnd), name);
 }
 
 struct rewrite_factory: scheme_factory {
