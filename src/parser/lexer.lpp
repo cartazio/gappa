@@ -7,7 +7,7 @@
 #include "parser/ast.hpp"
 #include "parser/parser.h"
 
-void read_number(YYSTYPE *yylval) {
+static void read_number(YYSTYPE *yylval) {
   int dec = -1;
   char const *ptr = yytext;
   bool hexa = ptr[1] == 'x'; // valid offset
@@ -39,15 +39,29 @@ void read_number(YYSTYPE *yylval) {
   yylval->number = normalize(num);
 }
 
-void read_zero(YYSTYPE *yylval) {
+static void read_zero(YYSTYPE *yylval) {
   ast_number num;
   num.base = 0;
   num.exponent = 0;
   yylval->number = normalize(num);
 }
 
-void read_ident(YYSTYPE *yylval) {
+static void read_ident(YYSTYPE *yylval) {
   yylval->ident = ast_ident::find(yytext);
+}
+
+extern bool parse_option(std::string const &, bool);
+
+static void read_options() {
+  std::string s = yytext;
+  std::string::size_type begin, end = 2;
+  while ((begin = s.find_first_not_of(" \t", end)) != std::string::npos) {
+    end = s.find_first_of(" \t", begin);
+    if (end == std::string::npos) end = s.size();
+    std::string o = s.substr(begin, end - begin);
+    if (!parse_option(o, true))
+      std::cerr << "Error: unrecognized option '" << o << "' on standard input\n";
+  }
 }
 
 #define YY_USER_INIT	{ yylloc->first_line = 1; yylloc->first_column = 0; }
@@ -74,6 +88,7 @@ zero		((((0+(\.0*)?)|(\.0+))([eE][-+]?{integer})?)|0x(((0+(\.0*)?)|(\.0+))([pP][
 
 [ \t]
 \n		{ ++yylloc->first_line; yylloc->first_column = 0; }
+#@[^\n]*	read_options();
 #[^\n]*
 "/\\"		return AND;
 "->"		return IMPL;
@@ -81,4 +96,4 @@ zero		((((0+(\.0*)?)|(\.0+))([eE][-+]?{integer})?)|0x(((0+(\.0*)?)|(\.0+))([pP][
 {zero}		{ read_zero(yylval);	return NUMBER; }
 {number}	{ read_number(yylval);	return NUMBER; }
 {ident}		{ read_ident(yylval);	return IDENT;  }
-.		{ return yytext[0]; }
+.		return yytext[0];
