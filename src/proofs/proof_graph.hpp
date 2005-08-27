@@ -74,6 +74,7 @@ class modus_node: public dependent_node {
   friend node *create_modus(node *n); // only way to create a modus node
  public:
   node *target;
+  virtual void clean_dependencies();
   virtual ~modus_node();
 };
 

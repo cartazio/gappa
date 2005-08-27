@@ -108,6 +108,12 @@ modus_node::modus_node(property_vect const &h, node_vect const &nodes, node *n)
   hyp = h;
 }
 
+void modus_node::clean_dependencies() {
+  if (target->type != AXIOM)
+    target->clean_dependencies();
+  dependent_node::clean_dependencies();
+}
+
 modus_node::~modus_node() {
   if (target->type != AXIOM)
     delete target;

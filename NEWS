@@ -1,3 +1,7 @@
+Version 0.4.11:
+ * proof graph
+   - fixed a missing dependency cleanup for an owned union node
+
 Version 0.4.10:
  * proof graph
    - changed the node hypotheses to be graph hypotheses
