@@ -8,8 +8,11 @@
 extern int yyparse(void);
 extern std::vector< graph_t * > graphs;
 extern void coq_display(std::ostream &stream, node_vect const &nodes);
+extern bool parse_args(int argc, char **argv);
+extern std::string proof_generator;
 
-int main() {
+int main(int argc, char **argv) {
+  if (!parse_args(argc, argv)) return 0;
   yyparse();
   for(std::vector< graph_t * >::const_iterator i = graphs.begin(), i_end = graphs.end(); i != i_end; ++i) {
     graph_t *g = *i;
@@ -43,7 +46,8 @@ int main() {
         property const &p = n->get_result();
         std::cerr << dump_real(p.real) << " in " << p.bnd << '\n';
       }
-      coq_display(std::cout, results);
+      if (proof_generator == "coq")
+        coq_display(std::cout, results);
     }
     delete g;
   }

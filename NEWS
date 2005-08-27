@@ -4,6 +4,8 @@ Version 0.4.10:
  * fact database
    - switched some other facts to the absolute value of the denominators
    - added an explicit exclusion pattern for the rewriting rules (e.g. "x * x" is no more excluded)
+ * main interface
+   - added basic command-line parsing for warnings and parameters
 
 Version 0.4.9:
  * numbers and arithmetic

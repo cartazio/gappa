@@ -1,9 +1,14 @@
+#include <iostream>
+
 #include "numbers/interval_utility.hpp"
 #include "numbers/round.hpp"
 #include "parser/ast.hpp"
 #include "proofs/dichotomy.hpp"
 #include "proofs/proof_graph.hpp"
 #include "proofs/schemes.hpp"
+
+extern int parameter_dichotomy_depth;
+extern bool warning_dichotomy_failure;
 
 typedef std::vector< graph_t * > graph_vect;
 
@@ -111,7 +116,7 @@ void dichotomy_node::dichotomize() {
     if (!is_defined(i) || is_singleton(i)) throw dichotomy_failure(h, res, bnd);
   }
   std::pair< interval, interval > ii = split(h.bnd);
-  if (++depth > 100) throw dichotomy_failure(h, res, bnd);
+  if (++depth > parameter_dichotomy_depth) throw dichotomy_failure(h, res, bnd);
   tmp_hyp.replace_front(property(h.real, ii.first));
   dichotomize();
   tmp_hyp.replace_front(property(h.real, ii.second));
@@ -169,17 +174,17 @@ node *dichotomy_scheme::generate_proof(interval const &bnd) const {
     dich = create_modus(n);
     g->purge(dich);
     g->flatten();
-  } catch (dichotomy_failure e) { // BLI
-    /*
-    property const &h = e.hyp;
-    std::cerr << "failure: when " << dump_real(h.real) << " is " << h.bnd << ", ";
-    property const &p = e.res;
-    std::cerr << dump_real(p.real);
-    if (is_defined(e.bnd))
-      std::cerr << " is in " << e.bnd << " potentially outside of " << p.bnd << '\n';
-    else
-      std::cerr << " is nowhere (?!)\n";
-    */
+  } catch (dichotomy_failure e) {
+    if (warning_dichotomy_failure) {
+      property const &h = e.hyp;
+      std::cerr << "Warning: when " << dump_real(h.real) << " is in " << h.bnd << ", ";
+      property const &p = e.res;
+      std::cerr << dump_real(p.real);
+      if (is_defined(e.bnd))
+        std::cerr << " is in " << e.bnd << " potentially outside of " << p.bnd << '\n';
+      else
+        std::cerr << " is not computable\n";
+    }
     dich = NULL;
   }
   delete g;

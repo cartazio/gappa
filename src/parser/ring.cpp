@@ -1,11 +1,13 @@
-#include "parser/ast.hpp"
-
 #include <algorithm>
 #include <cassert>
 #include <iostream>
 #include <map>
 #include <sstream>
 #include <ext/hash_map>
+
+#include "parser/ast.hpp"
+
+extern bool warning_hint_difference, warning_null_denominator;
 
 typedef std::map< ast_real const *, int > product;
 
@@ -180,10 +182,10 @@ static quotient const &ringalize(ast_real const *r) {
 }
 
 void test_ringularity(ast_real const *r1, ast_real const *r2) {
-  // std::cerr << "Testing " << dump_real(r1) << " -> " << dump_real(r2) << '\n';
+  if (!warning_hint_difference && !warning_null_denominator) return;
   sum const &diff = sub_num(ringalize(r1), ringalize(r2));
-  if (diff.empty()) return;
-  std::cerr << "Warning: " << dump_real(r1) << " and " << dump_real(r2)
-            << " are not trivially equal.\n";
-  std::cerr << "         Difference: " << dump_sum(diff) << '\n';
+  if (!diff.empty() && warning_hint_difference)
+    std::cerr <<
+      "Warning: " << dump_real(r1) << " and " << dump_real(r2) << " are not trivially equal.\n"
+      "         Difference: " << dump_sum(diff) << '\n';
 }

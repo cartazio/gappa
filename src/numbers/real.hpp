@@ -11,11 +11,12 @@ struct ref_counter_t {
   bool decr() { return --nb == 0; }
 };
 
+extern int parameter_internal_precision;
+
 struct number_base {
-  static int const real_prec = 150;
   mutable ref_counter_t ref_counter;
   mpfr_t val;
-  number_base() { mpfr_init2(val, real_prec); }
+  number_base() { mpfr_init2(val, parameter_internal_precision); }
   ~number_base() { mpfr_clear(val); }
   number_base const *clone() const { ref_counter.incr(); return this; }
   void destroy() const { if (ref_counter.decr()) delete this; }
