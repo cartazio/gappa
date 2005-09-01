@@ -22,21 +22,21 @@ relative_rounding_class::relative_rounding_class(int p): prec(p) {
 
 interval relative_rounding_class::round(interval const &i, std::string &name) const {
   std::ostringstream s;
-  s << "relative_bound " << prec;
+  s << "(relative_round " << prec << ')';
   name = s.str();
   return i * (interval(number(1), number(1)) + he);
 }
 
 interval relative_rounding_class::relative_error_from_real(interval const &, std::string &name) const {
   std::ostringstream s;
-  s << "relative_error " << prec;
+  s << "(relative_error " << prec << ')';
   name = s.str();
   return he;
 }
 
 interval relative_rounding_class::relative_error_from_rounded(interval const &, std::string &name) const {
   std::ostringstream s;
-  s << "relative_error_inv " << prec;
+  s << "(relative_error_inv " << prec << ')';
   name = s.str();
   return he;
 }
