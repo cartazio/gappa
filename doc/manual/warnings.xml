@@ -8,20 +8,20 @@ appears as an hypothesis in the logical formula.</para>
 </section>
 
 <section>
-<title>Error: bison-msg at line 17 column 42.</title>
+<title>Error: $bison-msg at line $17 column $42.</title>
 <para>The Bison front-end has detected a syntax error at the given location.
 The error message is usually unusable, so let us hope the location will be
 enough for you to find what the problem is.</para>
 </section>
 
 <section>
-<title>Error: toto is an already defined symbol.</title>
+<title>Error: $toto is an already defined symbol.</title>
 <para>A symbol cannot be defined more than once, even if the right hand sides
 of every definitions are equivalent. E.g. <code>a = 1; a = 1;</code></para>
 </section>
 
 <section>
-<title>Error: toto is not a rounding.</title>
+<title>Error: $toto is not a rounding.</title>
 <para>A bracketed word does not denote the name of a rounding operator. E.g.
 <code>&lt;allyourbases&gt;(b)</code></para>
 </section>
@@ -53,7 +53,7 @@ hypothesis. No proof will be generated for this goal. For example, the script
 </section>
 
 <section>
-<title>Warning: toto is being renamed to titi.</title>
+<title>Warning: $toto is being renamed to titi.</title>
 <para>When an equality <code>a = b</code> is written, the name <code>a</code>
 is associated to the expression <code>b</code>. This name will then be used
 whenever Gappa would have needed to output <code>b</code>. If a new equality
@@ -61,19 +61,33 @@ is written, the new name will supersede the name previously defined.</para>
 </section>
 
 <section>
-<title>Warning: although present in a quotient, the expression toto may not have been tested for non-zeroness.</title>
+<title>Warning: although present in a quotient, the expression $toto may not have been tested for non-zeroness.</title>
 <para>When Gappa verifies that both sides of a user rewriting rule are
 equivalent, it does not generate additional constraints to verify that the
 denominator is not zero. E.g. the rule <code>1 / (1 / x) -&gt; x</code> only
 applies when <code>x</code> is not zero, but Gappa will not test for it.</para>
+<para>Option switch: <code>-W[no-]null-denominator</code>.</para>
 </section>
 
 <section>
-<title>Warning: toto and titi are not trivially equal.</title>
+<title>Warning: $toto and $titi are not trivially equal.</title>
 <para>When Gappa verifies the rule <code>toto -&gt; titi</code>, it will
 normalize the difference of both sides. If this difference does not normalize
 to zero, Gappa will warn of it and display the difference. It may happen when
 numerical computations are required; e.g. <code>1b-2 -&gt; 0.2 + 0.05</code>.</para>
+<para>Option switch: <code>-W[no-]hint-difference</code>.</para>
+</section>
+
+<section>
+<title>Warning: when $toto is in $i1, $titi is in $i2 potentially outside of $i3.</title>
+<para>When Gappa applies a dichotomy <code>titi $ toto</code>, it will split
+the interval of <code>toto</code> until the goal containing <code>titi</code>
+holds true for any sub-interval. If the maximal dichotomy depth has been
+reached and the property still does not hold true, this warning will display
+the first failing sub-interval and the relevant ranges.</para>
+<para>Variant: when $toto is in $i1, $titi is not computable. This warning will
+be displayed if <code>titi</code> cannot even be bounded.</para>
+<para>Option switch: <code>-W[no-]dichotomy-failure</code>.</para>
 </section>
 
 </section>

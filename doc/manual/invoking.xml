@@ -1,0 +1,45 @@
+<section>
+<title>Input and ouput</title>
+
+<para></para>
+</section>
+
+<section>
+<title>Options</title>
+
+<section>
+<title>Selecting a back-end</title>
+</section>
+
+<section>
+<title>Setting internal parameters</title>
+
+<section>
+<title>Internal precision</title>
+<para>Option: <code>-Eprecision=</code><emphasis>integer</emphasis></para>
+<para>This option sets the internal MPFR precision used by the bounds of the
+intervals. The default value is 60. This is already a high value, any use of
+a higher setting would probably be dubious.</para>
+</section>
+
+<section>
+<title>Dichotomy depth</title>
+<para>Option: <code>-Edichotomy=</code><emphasis>integer</emphasis></para>
+<para>This option limits the depth of a dichotomy split. The default value is
+100. It means that an interval of width 1 will potentially be split in
+2^100 intervals of width 2^-100.</para>
+</section>
+
+</section>
+
+<section>
+<title>Disabling and enabling warning messages</title>
+<para>By default, all the warning messages are activated. See annex for the
+detail of the warning types.</para>
+</section>
+
+</section>
+
+<section>
+<title>Embedded options</title>
+</section>

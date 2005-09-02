@@ -1,4 +1,4 @@
-EXTRA_DISTS = gappa examples/*.xml
+EXTRA_DISTS = gappa.xml gappa.xsl manual/*.xml examples/*.xml
 
 html-doc:
 	xsltproc -o html/ gappa.xsl gappa.xml

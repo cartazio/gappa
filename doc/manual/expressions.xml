@@ -1,8 +1,8 @@
 <section>
 <title>Preferred expressions and rewriting</title>
 
-<para>Gappa rewrites expressions by matching them with well-known pattern. The
-The enclosure of an unmatchable expression will necessarily have to be computed
+<para>Gappa rewrites expressions by matching them with well-known patterns. The
+enclosure of an unmatchable expression will necessarily have to be computed
 through interval arithmetic. As a consequence, to ensure that the expressions
 will benefit from as much rewriting as possible, special care needs to be taken
 when expressing the computational errors.</para>
@@ -25,7 +25,7 @@ worse enclosure than <code>&lt;float64ne&gt;(x) - x</code>.</para>
 <section>
 <title>Global errors</title>
 
-<para>The <code>approx</code> and <code>exact</code> expressions needs to have
+<para>The <code>approx</code> and <code>exact</code> expressions need to have
 a similar structure in order for the rewriting rules to kick in. E.g. if
 <code>exact</code> is a sum of two terms <code>a</code> and <code>b</code>,
 then <code>approx</code> has to be the sum of two terms <code>c</code> and
@@ -34,7 +34,7 @@ of <code>a</code> and <code>b</code> respectively.</para>
 
 <para>Indeed the rewriting rule for the absolute error of the addition is:
 <code>(a + b) - (c + d) -&gt; (a - c) + (b - d)</code>. Similarly, the
-rewriting rules for the multiplication keep the same ordering of the subterms.
+rewriting rules for the multiplication keep the same ordering of the sub-terms.
 For example, one of the rules is:
 <code>a * b - c * d -&gt; (a - c) * b + c * (b - d)</code>.</para>
 

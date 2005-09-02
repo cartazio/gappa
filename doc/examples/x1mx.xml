@@ -53,7 +53,7 @@ function is true.</para>
 <para>Gappa will answer that the result is between 0 and 1. Without any help
 from the user, they are the best bounds Gappa will be able to reach.</para>
 
-<programlisting><![CDATA[$ echo "{ x in [0,1] -> <float32ne>(x * <float32ne>(1 - x)) in ? }" | src/gappa > /dev/null
+<programlisting><![CDATA[$ echo "{ x in [0,1] -> <float32ne>(x * <float32ne>(1 - x)) in ? }" | src/gappa
 
 <float32ne>(x * <float32ne>(1 - x)) in [0 {-0}, 1 {1}]]]>
 </programlisting>
