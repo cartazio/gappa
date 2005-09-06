@@ -21,12 +21,12 @@ extern ast_prop_and merge_prop_and(ast_prop const &p1, ast_prop const &p2);
 extern void generate_graph(ast_prop const &p);
 extern void test_ringularity(ast_real const *, ast_real const *);
 
-ast_number *toggle_sign(ast_number const *nn) {
+ast_number *negative_number(ast_number *nn) {
+  if (nn->base == 0) return nn;
   ast_number n = *nn;
-  if (n.base) {
-    char &c = n.mantissa[0];
-    c = c == '+' ? '-' : '+';
-  }
+  char &c = n.mantissa[0];
+  assert(c == '+');
+  c = '-';
   return normalize(n);
 }
 
@@ -103,7 +103,7 @@ PROP:
 SNUMBER:
   NUMBER	{ $$ = $1; }
 | '+' NUMBER	{ $$ = $2; }
-| '-' NUMBER	{ $$ = toggle_sign($2); }
+| '-' NUMBER	{ $$ = negative_number($2); }
 
 INTERVAL:
   '[' SNUMBER ',' SNUMBER ']'	{ ast_interval i = { $2, $4 }; $$ = i; }
@@ -152,7 +152,7 @@ PROG: | PROG IDENT EQUAL REAL ';'
   }
 
 REAL:
-  NUMBER		{ $$ = normalize(ast_real($1)); }
+  SNUMBER		{ $$ = normalize(ast_real($1)); }
 | IDENT			{ $$ = check_real($1); }
 | IDENT '(' OPERANDS ')'
   {
@@ -172,13 +172,7 @@ REAL:
 | '|' REAL '|'		{ $$ = rnd_normalize(ast_real(real_op(UOP_ABS, $2))); }
 | '(' REAL ')'		{ $$ = $2; }
 | '+' REAL %prec NEG	{ $$ = $2; }
-| '-' REAL %prec NEG
-  {
-    if (ast_number const *const *n = boost::get< ast_number const *const >($2))
-      $$ = normalize(ast_real(toggle_sign(*n)));
-    else
-      $$ = rnd_normalize(ast_real(real_op(UOP_MINUS, $2)));
-  }
+| '-' REAL %prec NEG	{ $$ = rnd_normalize(ast_real(real_op(UOP_MINUS, $2))); }
 
 OPERANDS:
   REAL
