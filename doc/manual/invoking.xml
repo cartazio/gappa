@@ -1,11 +1,16 @@
 <section>
-<title>Input and ouput</title>
-
-<para></para>
+<title>Input and output</title>
+<para>Gappa reads a script on its standard input. Such a script is made of
+three parts: the definitions, the logical property, and the hints. Warning
+messages, error messages, and results are displayed on the standard error
+output. Gappa send to the standard output a formal proof of the logical
+property; its format depends on the selected back-end.</para>
 </section>
 
+<!-- ###### -->
+
 <section>
-<title>Options</title>
+<title>Command-line options</title>
 
 <section>
 <title>Selecting a back-end</title>
@@ -33,13 +38,19 @@ a higher setting would probably be dubious.</para>
 </section>
 
 <section>
-<title>Disabling and enabling warning messages</title>
-<para>By default, all the warning messages are activated. See annex for the
+<title>Enabling and disabling warning messages</title>
+<para>By default, all the warning messages are enabled. See annex for the
 detail of the warning types.</para>
 </section>
 
 </section>
 
+<!-- ###### -->
+
 <section>
 <title>Embedded options</title>
+<para>Options setting internal parameters or enabling warning messages can be
+embedded in a Gappa proof script. It is especially important when the logical
+property cannot be proved with the default parameters. These options are passed
+through a special comment syntax: <code>#@ -Edichotomy=200</code>.</para>
 </section>
