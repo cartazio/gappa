@@ -217,10 +217,10 @@ bool graph_t::populate() {
   proof_helper::scheme_set missing_schemes = helper->source_schemes;
   for(node_map::const_iterator i = known_reals.begin(), i_end = known_reals.end(); i != i_end; ++i)
     helper->insert_dependent(missing_schemes, i->first);
-  int iter = 0;
+  unsigned iter = 0;
   while (iter != 1000000 && !missing_schemes.empty()) {
     ++iter;
-    proof_scheme const *s = *missing_schemes.begin();
+    proof_scheme const *s = iter % 16 ? *missing_schemes.begin() : *missing_schemes.rbegin();
     missing_schemes.erase(s);
     bound_map::const_iterator i = bounds.find(s->real);
     node *n;
@@ -235,6 +235,7 @@ bool graph_t::populate() {
       if (bounds.empty()) break;
       bounds_end = bounds.end();
     }
+    if (helper->axiom_reals.empty() || (iter % 256 && !missing_schemes.empty())) continue;
     real_set v;
     v.swap(helper->axiom_reals);
     for(real_set::iterator i = v.begin(), i_end = v.end(); i != i_end; ++i) {
