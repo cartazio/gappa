@@ -185,7 +185,6 @@ node *dichotomy_scheme::generate_proof(interval const &bnd) const {
       else
         std::cerr << " is not computable\n";
     }
-    dich = NULL;
   }
   delete g;
   return dich;
