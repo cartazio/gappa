@@ -207,9 +207,12 @@ bool graph_t::populate() {
   typedef proof_helper::real_set real_set;
   typedef std::map< ast_real const *, interval const * > bound_map;
   bound_map bounds;
+  bool completely_bounded = true;
   for(property_vect::const_iterator i = goals.begin(), i_end = goals.end(); i != i_end; ++i)
     if (is_defined(i->bnd))
       bounds[i->real] = &i->bnd;
+    else
+      completely_bounded = false;
   bound_map::const_iterator bounds_end = bounds.end();
   proof_helper::scheme_set missing_schemes = helper->source_schemes;
   for(node_map::const_iterator i = known_reals.begin(), i_end = known_reals.end(); i != i_end; ++i)
@@ -226,6 +229,11 @@ bool graph_t::populate() {
     if (n && try_real(n)) {
       if (top_graph->get_contradiction()) break;
       helper->insert_dependent(missing_schemes, s->real);
+    }
+    if (completely_bounded && n && i != bounds_end && n->get_result().bnd <= *i->second) {
+      bounds.erase(s->real);
+      if (bounds.empty()) break;
+      bounds_end = bounds.end();
     }
     real_set v;
     v.swap(helper->axiom_reals);
