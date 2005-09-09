@@ -30,6 +30,13 @@ void check_variable(ast_ident *v, ast_real const *r) {
   r->name = v;
 }
 
+void check_rounding(ast_ident *v, rounding_class const *r) {
+  if (v->id_type != UNKNOWN_ID)
+    { std::cerr << "Error: " << v->name << " is an already defined symbol.\n"; exit(1); }
+  v->id_type = REAL_RND;
+  v->rnd = new default_rounding_generator(r);
+}
+
 ast_prop_and merge_prop_and(ast_prop const &_p1, ast_prop const &_p2) {
   ast_prop_and p;
   if (ast_prop_and const *p1 = boost::get< ast_prop_and const >(&_p1))

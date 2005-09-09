@@ -42,6 +42,7 @@ struct rounding_generator {
 
 struct default_rounding_generator: rounding_generator {
   rounding_class const *rnd;
+  default_rounding_generator(rounding_class const *r): rnd(r) {}
   default_rounding_generator(std::string const &, rounding_class const *);
   virtual rounding_class const *operator()() const { return rnd; }
 };

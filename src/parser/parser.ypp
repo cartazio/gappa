@@ -17,6 +17,7 @@ int my_yyerror(YYLTYPE &yylloc, char const *errstr) {
 
 extern ast_real const *check_real(ast_ident *v);
 extern void check_variable(ast_ident *v, ast_real const *r);
+extern void check_rounding(ast_ident *v, rounding_class const *r);
 extern ast_prop_and merge_prop_and(ast_prop const &p1, ast_prop const &p2);
 extern void generate_graph(ast_prop const &p);
 extern void test_ringularity(ast_real const *, ast_real const *);
@@ -145,10 +146,15 @@ EQUAL:
   '='
 | ROUNDING '='	{ rounding_mode = $1; }
 
-PROG: | PROG IDENT EQUAL REAL ';'
+PROG:
+| PROG IDENT EQUAL REAL ';'
   {
     check_variable($2, $4);
     rounding_mode = NULL;
+  }
+| PROG '<' IDENT '>' '=' ROUNDING ';'
+  {
+    check_rounding($3, $6);
   }
 
 REAL:
