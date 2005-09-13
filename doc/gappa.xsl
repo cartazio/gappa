@@ -5,5 +5,6 @@
   <xsl:import href="file:///usr/share/xml/docbook/stylesheet/nwalsh/xhtml/chunk.xsl"/>
 
   <xsl:param name="tex.math.in.alt" select="'latex'"/>
+  <xsl:param name="html.stylesheet" select="'gappa.css'"/>
 
 </xsl:stylesheet>
