@@ -1,8 +1,10 @@
 EXTRA_DISTS = gappa.xml gappa.xsl manual/*.xml examples/*.xml
 
 html-doc:
-	xsltproc -o html/ gappa.xsl gappa.xml
-	mkdir -p html/tmp
+	xsltproc -o gappa-preprocessed.xml gappa-preprocess.xsl gappa.xml
+	xsltproc -o html/ gappa.xsl gappa-preprocessed.xml
+	rm gappa-preprocessed.xml
+	mkdir html/tmp
 	cd html/tmp ; \
 	mv ../tex-math-equations.tex . ; \
 	latex tex-math-equations.tex ; \

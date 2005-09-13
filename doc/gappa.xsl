@@ -4,6 +4,6 @@
   <!-- import the real stylesheet -->
   <xsl:import href="file:///usr/share/xml/docbook/stylesheet/nwalsh/xhtml/chunk.xsl"/>
 
-  <xsl:param name="tex.math.in.alt" select="'latex'" />
+  <xsl:param name="tex.math.in.alt" select="'latex'"/>
 
 </xsl:stylesheet>

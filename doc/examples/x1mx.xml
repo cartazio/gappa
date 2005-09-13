@@ -1,5 +1,5 @@
 <section>
-<title>A simple example to start from</title>
+<title>A simple example to start from: x * (1 - x)</title>
 
 <section>
 <title>The C program</title>
@@ -18,14 +18,11 @@ to use IEEE-754 single precision floating-point numbers. We will also assume
 that the default rounding mode is used: rounding to nearest number, break to
 even on tie.</para>
 
-<para>The function returns the value <inlineequation><alt role="tex">x \otimes
-(1 \ominus x)</alt><graphic fileref="x1mx-rounded.png"/></inlineequation>
-instead of the ideal value <inlineequation><alt role="tex">x \cdot (1 - x)</alt>
-<graphic fileref="x1mx-exact.png"/></inlineequation> due to the limited precision of the
+<para>The function returns the value <texinline>x \otimes (1 \ominus x)</texinline>
+instead of the ideal value <texinline>x \cdot (1 - x)</texinline> due to the limited precision of the
 computations. If we rule out the overflow possibility (floating-point numbers
 are limited, not only in precision, but also in range), the returned value is
-also <inlineequation><alt role="tex">\circ(x \cdot \circ(1 - x))</alt><graphic
-fileref="x1mx-expanded.png"/></inlineequation>. This o function is a unary operator related to
+also <texinline>\circ(x \cdot \circ(1 - x))</texinline>. This o function is a unary operator related to
 the floating-point format and the rounding mode used for the computations.
 This is the form Gappa works on.</para>
 </section>
@@ -116,8 +113,7 @@ not equivalent to <code>a = &lt;..&gt;(b)</code>; it is equivalent to
 
 <para>Numbers and bounds can be written either in the usual scientific decimal
 notation or by using a power-of-two exponent: <code>3b-27</code> means
-<inlineequation><alt role="tex">3 \cdot 2^{-27}</alt>
-<graphic fileref="x1mx-binaryformat.png"/></inlineequation>.</para>
+<texinline>3 \cdot 2^{-27}</texinline>.</para>
 </section>
 
 <section>
