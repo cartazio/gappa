@@ -7,6 +7,7 @@
   <!ENTITY gappa-grammar     SYSTEM "manual/grammar.xml">
   <!ENTITY gappa-warnings    SYSTEM "manual/warnings.xml">
   <!ENTITY gappa-x1mx        SYSTEM "examples/x1mx.xml">
+  <!ENTITY gappa-tang        SYSTEM "examples/tang.xml">
 ]>
 <book>
 
@@ -20,11 +21,8 @@ floating-point arithmetic.</para>
 
 <para>This tool manipulates logical formulas involving the inclusion of
 expressions in intervals. For example, a formal proof of the property
-<informalequation>
-<alt role="tex">c \in [-0.3,-0.1]\ \land\ (2a \in [3,4] \Rightarrow b+c \in [1,2])
-\ \land\ a-c \in [1.9,2.05] \quad \Rightarrow \quad b+1 \in [2,3.5]</alt>
-<graphic fileref="intro-implication.png"/>
-</informalequation>
+<texinformal>c \in [-0.3,-0.1]\ \land\ (2a \in [3,4] \Rightarrow b+c \in [1,2])
+\ \land\ a-c \in [1.9,2.05] \quad \Rightarrow \quad b+1 \in [2,3.5]</texinformal>
 can be generated thanks to the following Gappa script.</para>
 
 <programlisting><![CDATA[{
@@ -59,6 +57,7 @@ errors due to floating-point arithmetic.</para>
 <chapter>
 <title>Examples</title>
 &gappa-x1mx;
+&gappa-tang;
 </chapter>
 
 <appendix>
