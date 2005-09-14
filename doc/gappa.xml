@@ -11,6 +11,11 @@
 ]>
 <book>
 
+<title>User's Guide for Gappa</title>
+<bookinfo>
+<author><firstname>Guillaume</firstname><surname>Melquiond</surname></author>
+</bookinfo>
+
 <chapter>
 <title>Introduction</title>
 
