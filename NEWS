@@ -1,6 +1,9 @@
 Version 0.4.12:
  * syntax
    - added a way to define new names for rounding operators
+   - simplified the handling of negative numbers
+ * Coq backend
+   - fixed representation of relative rounding
 
 Version 0.4.11:
  * proof graph
