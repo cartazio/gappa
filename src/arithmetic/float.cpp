@@ -1,10 +1,10 @@
+#include <algorithm>
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
 #include "numbers/round.hpp"
 #include "parser/ast.hpp"
 #include "proofs/proof_graph.hpp"
 #include "proofs/schemes.hpp"
-#include <algorithm>
 
 enum rounding_type { ROUND_UP, ROUND_DN, ROUND_ZR, ROUND_NE };
 
@@ -22,7 +22,7 @@ static float_format formats[4] = {
   { min_exp: -16494, prec: 113 }
 };
 
-struct float_rounding_class: rounding_class {
+struct float_rounding_class: function_class {
   float_format const *format;
   rounding_type type;
   char const *ident;
@@ -33,13 +33,13 @@ struct float_rounding_class: rounding_class {
   virtual interval relative_error_from_real   (interval const &, std::string &) const;
   virtual interval absolute_error_from_rounded(interval const &, std::string &) const;
   virtual interval relative_error_from_rounded(interval const &, std::string &) const;
-  virtual std::string name() const { return std::string("float") + ident; }
+  virtual std::string name() const { return std::string("rounding_float") + ident; }
 };
 
 float_rounding_class::float_rounding_class(float_format const *f, rounding_type t, char const *i)
   : format(f), type(t), ident(i)
 {
-  new default_rounding_generator(std::string("float") + i, this);
+  new default_function_generator(std::string("float") + i, this);
 }
 
 
@@ -160,14 +160,14 @@ static bool sterbenz_decomposition(ast_real const *real, ast_real const **r1, as
                                    ast_real const **a, ast_real const **b, float_format const **ff) {
   real_op const *o1 = boost::get< real_op const >(real);
   if (!o1 || o1->type != BOP_SUB) return false;
-  rounded_real const *rr = boost::get< rounded_real const >(o1->ops[0]);
+  real_op const *rr = boost::get< real_op const >(o1->ops[0]);
   if (!rr) return false;
-  float_rounding_class const *fr = dynamic_cast< float_rounding_class const * >(rr->rounding);
+  float_rounding_class const *fr = dynamic_cast< float_rounding_class const * >(rr->fun);
   if (!fr) return false;
-  real_op const *o2 = boost::get< real_op const >(rr->rounded);
+  real_op const *o2 = boost::get< real_op const >(rr->ops[0]);
   if (!o2 || !(o2->type == BOP_ADD || o2->type == BOP_SUB)) return false;
   if (r1) *r1 = o1->ops[0];
-  if (r2) *r2 = normalize(ast_real(real_op(rr->rounded, BOP_SUB, o1->ops[1])));
+  if (r2) *r2 = normalize(ast_real(real_op(rr->ops[0], BOP_SUB, o1->ops[1])));
   if (a) *a = o2->ops[0];
   if (b) *b = o2->ops[1];
   if (ff) *ff = fr->format;
@@ -187,9 +187,9 @@ static node *sterbenz_exponent(ast_real const *r, int &e) {
     mpz_clear(m);
     return n;
   }
-  rounded_real const *rr = boost::get< rounded_real const >(r);
+  real_op const *rr = boost::get< real_op const >(r);
   if (!rr) return NULL;
-  float_rounding_class const *fr = dynamic_cast< float_rounding_class const * >(rr->rounding);
+  float_rounding_class const *fr = dynamic_cast< float_rounding_class const * >(rr->fun);
   if (!fr) return NULL;
   if (contains_zero(bnd)) e = fr->format->min_exp;
   else e = std::min(exponent(l, fr->format), exponent(u, fr->format));

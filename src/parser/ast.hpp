@@ -1,9 +1,9 @@
 #ifndef PARSER_AST_HPP
 #define PARSER_AST_HPP
 
-#include "parser/ast_real.hpp"
 #include <string>
 #include <vector>
+#include "parser/ast_real.hpp"
 
 struct ast_interval {
   ast_number const *lower, *upper;
@@ -30,41 +30,29 @@ struct ast_prop_impl {
   ast_prop left, right;
 };
 
+typedef std::vector< unsigned long > function_params;
+
+struct function_generator {
+  virtual function_class const *operator()(function_params const &) const { return NULL; }
+  virtual ~function_generator() {}
+};
+
+struct default_function_generator: function_generator {
+  function_class const *fun;
+  default_function_generator(function_class const *f): fun(f) {}
+  default_function_generator(std::string const &, function_class const *);
+  virtual function_class const *operator()(function_params const &) const;
+};
+
 struct function;
-
-typedef std::vector< int > rounding_params;
-
-struct rounding_generator {
-  virtual rounding_class const *operator()() const { return NULL; }
-  virtual rounding_class const *operator()(rounding_params const &) const { return NULL; }
-  virtual ~rounding_generator() {}
-};
-
-struct default_rounding_generator: rounding_generator {
-  rounding_class const *rnd;
-  default_rounding_generator(rounding_class const *r): rnd(r) {}
-  default_rounding_generator(std::string const &, rounding_class const *);
-  virtual rounding_class const *operator()() const { return rnd; }
-};
-
-enum ident_type { UNKNOWN_ID, REAL_FUN, REAL_VAR, REAL_RND };
 
 struct ast_ident {
   std::string name;
-  union {
-    function const *fun;
-    ast_real const *var;
-    rounding_generator const *rnd;
-  };
-  ident_type id_type;
-  ast_ident(std::string const &s): name(s), id_type(UNKNOWN_ID) {}
+  function_generator const *fun;
+  ast_real const *var;
+  ast_ident(std::string const &s): name(s), fun(NULL), var(NULL) {}
   static ast_ident *find(std::string const &s);
   static ast_ident *temp();
-};
-
-struct function {
-  real_op_type type;
-  function(real_op_type t): type(t) {}
 };
 
 std::string dump_real(ast_real const *, unsigned = 0);

@@ -1,7 +1,7 @@
+#include <boost/preprocessor/cat.hpp>
 #include "parser/pattern.hpp"
 #include "proofs/basic_proof.hpp"
 #include "proofs/schemes.hpp"
-#include <boost/preprocessor/cat.hpp>
 
 pattern_cond_vect operator&&(pattern_cond_vect const &v, pattern_cond const &c) {
   pattern_cond_vect res(v);
@@ -35,16 +35,15 @@ struct pattern_factory: scheme_factory {
 
 proof_scheme *pattern_factory::operator()(ast_real const *src) const {
   ast_real_vect holders;
-  rounding_vect roundings;
-  if (!match(src, lhs, holders, roundings)) return NULL;
+  if (!match(src, lhs, holders)) return NULL;
   std::set< ast_real const * > hold(holders.begin(), holders.end());
-  ast_real const *dst = rewrite(rhs, holders, roundings);
+  ast_real const *dst = rewrite(rhs, holders);
   for(pattern_excl_vect::const_iterator i = excl.begin(), end = excl.end(); i != end; ++i)
-    if (rewrite(i->first, holders, roundings) == rewrite(i->second, holders, roundings))
+    if (rewrite(i->first, holders) == rewrite(i->second, holders))
       return NULL;
   pattern_cond_vect c(cond);
   for(pattern_cond_vect::iterator i = c.begin(), end = c.end(); i != end; ++i)
-    i->real = rewrite(i->real, holders, roundings);
+    i->real = rewrite(i->real, holders);
   return new rewrite_scheme(src, dst, name, c);
 }
 
@@ -58,11 +57,10 @@ pattern_register::pattern_register(pattern const &p1, pattern const &p2, std::st
   scheme_register dummy(new pattern_factory(p1, p2, n, c, e));
 }
 
-static pattern rnd(pattern const &a, int b) {
-  return pattern(rounding_placeholder(a, b));
-}
+static pattern a(0), b(1), c(2), d(3), b_a(-1);
 
-static pattern a(0), b(1), c(2), d(3);
+// exported patterns
+pattern absolute_error_pattern(b_a - a), relative_error_pattern((b_a - a) / a);
 
 #define abs pattern::abs
 
@@ -81,29 +79,29 @@ static pattern a(0), b(1), c(2), d(3);
   (lhs, rhs, #name, pattern_cond_vect() && cond, pattern_excl_vect() && excl)
 
 REWRITE(add_decomposition_rounded_left,
-	rnd(a, 0) + b,
-	(rnd(a, 0) - a) + (a + b));
+	b_a + c,
+	(b - a) + (a + c));
 
 REWRITE(add_decomposition_rounded_right,
-	a + rnd(b, 0),
-	(a + b) + (rnd(b, 0) - b));
+	c + b_a,
+	(c + a) + (b - a));
 
 REWRITe(sub_decomposition_rounded_left,
-	rnd(a, 0) - b,
-	(rnd(a, 0) - a) + (a - b),
-	a ^ b);
+	b_a - c,
+	(b - a) + (a - c),
+	a ^ c);
 
 REWRITE(sub_decomposition_rounded_right,
-	a - rnd(b, 0),
-	(a - b) + -(rnd(b, 0) - b));
+	c - b_a,
+	(c - a) + -(b - a));
 
 REWRITE(mul_decomposition_rounded_left,
-	rnd(a, 0) * b,
-	(rnd(a, 0) - a) * b + a * b);
+	b_a * c,
+	(b - a) * c + a * c);
 
 REWRITE(mul_decomposition_rounded_right,
-	a * rnd(b, 0),
-	a * (rnd(b, 0) - b) + a * b);
+	c * b_a,
+	c * (b - a) + c * a);
 
 REWRITe(add_decomposition,
 	(a + b) - (c + d),
@@ -166,10 +164,10 @@ REWRITe(mul_decomposition_full_right,
 	a ^ c && b ^ d);
 
 REWRIT9(relative_transitivity, //relative_error_trans,
-	(rnd(a, 0) - b) / b,
-	(rnd(a, 0) - a) / a + (a - b) / b + ((rnd(a, 0) - a) / a) * ((a - b) / b),
-	abs(b) > 0 && abs(a) > 0,
-	a ^ b);
+	(b_a - c) / c,
+	(b - a) / a + (a - c) / c + ((b - a) / a) * ((a - c) / c),
+	abs(c) > 0 && abs(a) > 0,
+	a ^ c);
 
 REWRIT9(relative_to_absolute,
 	a - b,

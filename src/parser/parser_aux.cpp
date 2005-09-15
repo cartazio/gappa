@@ -7,34 +7,24 @@
 interval create_interval(ast_interval const &, bool widen);
 
 ast_real const *check_real(ast_ident *v) {
-  switch (v->id_type) {
-  case UNKNOWN_ID:
-    v->id_type = REAL_VAR;
+  if (!v->var)
     v->var = normalize(ast_real(v));
-    // no break
-  case REAL_VAR:
-    return v->var;
-  default:
-    { std::cerr << "Error: " << v->name << " is not a variable.\n"; exit(1); }
-    return NULL;
-  }  
+  return v->var;
 }
 
 void check_variable(ast_ident *v, ast_real const *r) {
-  if (v->id_type != UNKNOWN_ID)
+  if (v->var)
     { std::cerr << "Error: " << v->name << " is an already defined symbol.\n"; exit(1); }
-  v->id_type = REAL_VAR;
   v->var = r;
   if (r->name)
     std::cerr << "Warning: " << r->name->name << " is being renamed to " << v->name << ".\n";
   r->name = v;
 }
 
-void check_rounding(ast_ident *v, rounding_class const *r) {
-  if (v->id_type != UNKNOWN_ID)
-    { std::cerr << "Error: " << v->name << " is an already defined symbol.\n"; exit(1); }
-  v->id_type = REAL_RND;
-  v->rnd = new default_rounding_generator(r);
+void check_function(ast_ident *v, function_class const *r) {
+  if (v->fun)
+    { std::cerr << "Error: " << v->name << " is an already defined function.\n"; exit(1); }
+  v->fun = new default_function_generator(r);
 }
 
 ast_prop_and merge_prop_and(ast_prop const &_p1, ast_prop const &_p2) {

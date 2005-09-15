@@ -99,22 +99,23 @@ void dichotomy_node::dichotomize() {
   property const &res = get_result();
   interval bnd;
   graph_t *g = new graph_t(top_graph, tmp_hyp, top_graph->get_goals(), top_graph->helper, true);
+  bool good = true;
   if (!g->populate()) {
     if (node *n = g->find_already_known(res.real)) {
       bnd = n->get_result().bnd;
-      if (!(bnd <= res.bnd)) { delete g; g = NULL; }
-    } else { delete g; g = NULL; }
+      if (!(bnd <= res.bnd)) good = false;
+    } else good = false;
   }
-  if (g) {
+  if (good) {
     try_graph(g);
     return;
   }
   property const &h = tmp_hyp[0];
-  if (rounded_real const *rr = boost::get< rounded_real const >(res.real)) {
-    std::string dummy;
-    interval i = rr->rounding->enforce(h.bnd, dummy);
-    if (!is_defined(i) || is_singleton(i)) throw dichotomy_failure(h, res, bnd);
-  }
+  node *n = g->find_already_known(h.real);
+  assert(n);
+  interval i = n->get_result().bnd;
+  delete g;
+  if (!is_defined(i) || is_singleton(i)) throw dichotomy_failure(h, res, bnd);
   std::pair< interval, interval > ii = split(h.bnd);
   if (++depth > parameter_dichotomy_depth) throw dichotomy_failure(h, res, bnd);
   tmp_hyp.replace_front(property(h.real, ii.first));

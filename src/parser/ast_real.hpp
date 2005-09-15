@@ -18,46 +18,45 @@ struct ast_number {
 
 ast_number *normalize(ast_number const &);
 
-struct ast_real;
+enum real_op_type { UOP_ID, UOP_NEG, UOP_ABS, BOP_ADD, BOP_SUB, BOP_MUL, BOP_DIV, ROP_FUN, ROP_UNK };
 
-enum real_op_type { UOP_MINUS, UOP_ABS, BOP_ADD, BOP_SUB, BOP_MUL, BOP_DIV, ROP_UNK };
+struct interval;
+
+struct function_class {
+  real_op_type type;
+  virtual interval round(interval const &, std::string &) const;
+  virtual interval enforce(interval const &, std::string &) const;
+  virtual interval absolute_error_from_real(interval const &, std::string &) const;
+  virtual interval absolute_error_from_rounded(interval const &, std::string &) const;
+  virtual interval relative_error_from_real(interval const &, std::string &) const;
+  virtual interval relative_error_from_rounded(interval const &, std::string &) const;
+  virtual std::string name() const = 0;
+  virtual ~function_class() {}
+};
+
+struct ast_real;
 
 typedef std::vector< ast_real const * > ast_real_vect;
 
 struct real_op
 {
   ast_real_vect ops;
+  function_class const *fun;
   real_op_type type;
-  real_op(real_op_type t, ast_real_vect const &o): ops(o), type(t) {}
-  real_op(real_op_type t, ast_real const *o): type(t) { ops.push_back(o); }
-  real_op(ast_real const *l, real_op_type t, ast_real const *r): type(t) { ops.push_back(l); ops.push_back(r); }
-  bool operator==(real_op const &v) const { return type == v.type && ops == v.ops; }
-  bool operator<(real_op const &v) const { return type < v.type || (type == v.type && ops < v.ops); }
-};
-
-struct rounding_class;
-
-struct rounded_real
-{
-  ast_real const *rounded;
-  rounding_class const *rounding;
-  rounded_real(ast_real const *f, rounding_class const *r): rounded(f), rounding(r) {}
-  bool operator==(rounded_real const &v) const { return rounded == v.rounded && rounding == v.rounding; }
-  bool operator<(rounded_real const &v) const { return rounded < v.rounded || (rounded == v.rounded && rounding < v.rounding); }
+  real_op(real_op_type t, ast_real_vect const &o): ops(o), fun(NULL), type(t) {}
+  real_op(real_op_type t, function_class const *f, ast_real_vect const &o): ops(o), fun(f), type(t) {}
+  real_op(function_class const *f, ast_real_vect const &o): ops(o), fun(f), type(ROP_FUN) {}
+  real_op(function_class const *f, ast_real const *o): ops(1, o), fun(f), type(ROP_FUN) {}
+  real_op(real_op_type t, ast_real const *o): ops(1, o), fun(NULL), type(t) {}
+  real_op(ast_real const *l, real_op_type t, ast_real const *r): fun(NULL), type(t) { ops.push_back(l); ops.push_back(r); }
+  bool operator==(real_op const &v) const { return type == v.type && fun == v.fun && ops == v.ops; }
+  bool operator<(real_op const &v) const
+  { return type < v.type || (type == v.type && (fun < v.fun || (fun == v.fun && ops < v.ops))); }
 };
 
 struct ast_ident;
 
 typedef int placeholder;
-
-struct rounding_placeholder
-{
-  ast_real const *rounded;
-  int holder;
-  rounding_placeholder(ast_real const *f, int r): rounded(f), holder(r) {}
-  bool operator==(rounding_placeholder const &v) const { return rounded == v.rounded && holder == v.holder; }
-  bool operator<(rounding_placeholder const &v) const { return rounded < v.rounded || (rounded == v.rounded && holder < v.holder); }
-};
 
 typedef boost::blank undefined_real;
 
@@ -65,9 +64,7 @@ typedef boost::variant
   < undefined_real
   , ast_number const *
   , real_op
-  , rounded_real
   , placeholder
-  , rounding_placeholder
   > ast_real_aux;
 
 struct ast_real: ast_real_aux
@@ -76,9 +73,7 @@ struct ast_real: ast_real_aux
   ast_real(ast_ident const *v): ast_real_aux(undefined_real()), name(v) {}
   ast_real(ast_number const *v): ast_real_aux(v), name(NULL) {}
   ast_real(real_op const &v): ast_real_aux(v), name(NULL) {}
-  ast_real(rounded_real const &v): ast_real_aux(v), name(NULL) {}
   ast_real(placeholder v): ast_real_aux(v), name(NULL) {}
-  ast_real(rounding_placeholder const &v): ast_real_aux(v), name(NULL) {}
   bool operator==(ast_real const &v) const;
   bool operator<(ast_real const &v) const;
 };

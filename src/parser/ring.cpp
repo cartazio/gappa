@@ -147,7 +147,7 @@ static quotient const &ringalize(ast_real const *r);
 static quotient fieldalize_aux(ast_real const *r) {
   if (real_op const *o = boost::get< real_op const >(r))
     switch (o->type) {
-    case UOP_MINUS:	return neg(ringalize(o->ops[0]));
+    case UOP_NEG:	return neg(ringalize(o->ops[0]));
     case BOP_ADD:	return add(ringalize(o->ops[0]), ringalize(o->ops[1]));
     case BOP_SUB:	return sub(ringalize(o->ops[0]), ringalize(o->ops[1]));
     case BOP_MUL:	return mul(ringalize(o->ops[0]), ringalize(o->ops[1]));

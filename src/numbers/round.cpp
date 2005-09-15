@@ -77,10 +77,3 @@ number round_number(number const &f, float_format const *t, rounding_fun r) {
   (t->*r)(d->val);
   return res;
 }
-
-interval rounding_class::round                      (interval const &, std::string &) const { return interval(); }
-interval rounding_class::enforce                    (interval const &, std::string &) const { return interval(); }
-interval rounding_class::absolute_error_from_real   (interval const &, std::string &) const { return interval(); }
-interval rounding_class::relative_error_from_real   (interval const &, std::string &) const { return interval(); }
-interval rounding_class::absolute_error_from_rounded(interval const &, std::string &) const { return interval(); }
-interval rounding_class::relative_error_from_rounded(interval const &, std::string &) const { return interval(); }

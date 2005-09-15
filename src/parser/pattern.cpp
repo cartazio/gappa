@@ -1,20 +1,25 @@
-#include "parser/pattern.hpp"
 #include <boost/variant.hpp>
+#include "parser/pattern.hpp"
+
+ast_real const *morph(ast_real const *r, function_class const **f) {
+  real_op const *p = boost::get < real_op const >(r);
+  if (!p || !p->fun || p->fun->type == ROP_UNK) return NULL;
+  if (f) *f = p->fun;
+  if (p->fun->type == UOP_ID) return p->ops[0];
+  return normalize(ast_real(real_op(p->fun->type, p->ops)));
+}
 
 struct match_visitor: boost::static_visitor< bool > {
   bool visit(ast_real const *src, ast_real const *dst) const;
   template< typename T, typename U > bool operator()(T const &, U const &) const { return false; }
   template< typename T > bool operator()(T const &r1, T const &r2) const { return r1 == r2; }
   bool operator()(real_op const &r1, real_op const &r2) const;
-  bool operator()(rounded_real const &r1, rounded_real const &r2) const;
-  bool operator()(rounded_real const &r1, rounding_placeholder const &r2) const;
   ast_real_vect &holders;
-  rounding_vect &roundings;
-  match_visitor(ast_real_vect &h, rounding_vect &r): holders(h), roundings(r) {}
+  match_visitor(ast_real_vect &h): holders(h) {}
 };
 
 bool match_visitor::operator()(real_op const &r1, real_op const &r2) const {
-  if (r1.type != r2.type) return false;
+  if (r1.type != r2.type || r1.fun != r2.fun) return false;
   unsigned s = r1.ops.size();
   if (s != r2.ops.size()) return false;
   for(unsigned i = 0; i < s; ++i)
@@ -22,40 +27,30 @@ bool match_visitor::operator()(real_op const &r1, real_op const &r2) const {
   return true;
 }
 
-bool match_visitor::operator()(rounded_real const &r1, rounded_real const &r2) const {
-  return (!r2.rounding || r1.rounding == r2.rounding) && visit(r1.rounded, r2.rounded);
-}
-
-bool match_visitor::operator()(rounded_real const &r1, rounding_placeholder const &r2) const {
-  int i = r2.holder;
-  if (i >= 0) {
-    if (unsigned(i + 1) >= roundings.size())
-      roundings.resize(i + 1, NULL);
-    rounding_class const *r = roundings[i];
-    if (r) { if (r1.rounding != r) return false; }
-    else roundings[i] = r1.rounding;
-  }
-  return visit(r1.rounded, r2.rounded);
-}
-
 bool match_visitor::visit(ast_real const *src, ast_real const *dst) const {
   if (src == dst) return true;
   if (placeholder const *p = boost::get< placeholder const >(dst)) {
     int i = *p;
-    if (i >= 0) {
-      if (unsigned(i + 1) >= holders.size())
-        holders.resize(i + 1, NULL);
-      ast_real const *r = holders[i];
-      if (r) { if (src != r) return false; }
-      else holders[i] = src;
-    }
+    if (i < -16) return true;
+    unsigned j = (i < 0) ? 1 - i : 1 + i;
+    if (j > holders.size())
+      holders.resize(j, NULL);
+    ast_real const *&r1 = holders[j - 1];
+    if (!r1) r1 = src;
+    else if (r1 != src) return false;
+    if (i >= 0) return true;
+    ast_real const *src2 = morph(src);
+    if (!src2) return false;
+    ast_real const *&r2 = holders[j - 2];
+    if (!r2) r2 = src2;
+    else if (r2 != src2) return false;
     return true;
   }
   return boost::apply_visitor(*this, *src, *dst);
 }
 
-bool match(ast_real const *src, ast_real const *dst, ast_real_vect &holders, rounding_vect &roundings) {
-  return match_visitor(holders, roundings).visit(src, dst);
+bool match(ast_real const *src, ast_real const *dst, ast_real_vect &holders) {
+  return match_visitor(holders).visit(src, dst);
 }
 
 struct rewrite_visitor: boost::static_visitor< ast_real const * > {
@@ -63,16 +58,13 @@ struct rewrite_visitor: boost::static_visitor< ast_real const * > {
   template< typename T > ast_real const *operator()(T const &r) const { return normalize(ast_real(r)); }
   ast_real const *operator()(undefined_real const &) const { assert(false); }
   ast_real const *operator()(real_op const &r) const;
-  ast_real const *operator()(rounded_real const &r) const;
-  ast_real const *operator()(rounding_placeholder const &r) const;
   ast_real const *operator()(placeholder i) const;
   ast_real_vect const &holders;
-  rounding_vect const &roundings;
-  rewrite_visitor(ast_real_vect const &h, rounding_vect const &r): holders(h), roundings(r) {}
+  rewrite_visitor(ast_real_vect const &h): holders(h) {}
 };
 
 ast_real const *rewrite_visitor::operator()(placeholder i) const {
-  assert(i >= 0 && unsigned(i) < holders.size() && holders[i]);
+  assert(unsigned(i) < holders.size() && holders[i]);
   return holders[i];
 }
 
@@ -82,17 +74,7 @@ ast_real const *rewrite_visitor::operator()(real_op const &r) const {
   ops.reserve(s);
   for(unsigned i = 0; i < s; ++i)
     ops.push_back(visit(r.ops[i]));
-  return normalize(ast_real(real_op(r.type, ops)));
-}
-
-ast_real const *rewrite_visitor::operator()(rounded_real const &r) const {
-  return normalize(ast_real(rounded_real(visit(r.rounded), r.rounding)));
-}
-
-ast_real const *rewrite_visitor::operator()(rounding_placeholder const &r) const {
-  int i = r.holder;
-  assert(i >= 0 && unsigned(i) < roundings.size() && roundings[i]);
-  return normalize(ast_real(rounded_real(visit(r.rounded), roundings[i])));
+  return normalize(ast_real(real_op(r.type, r.fun, ops)));
 }
 
 ast_real const *rewrite_visitor::visit(ast_real const *dst) const {
@@ -100,14 +82,13 @@ ast_real const *rewrite_visitor::visit(ast_real const *dst) const {
   return boost::apply_visitor(*this, *dst);
 }
 
-ast_real const *rewrite(ast_real const *dst, ast_real_vect const &holders, rounding_vect const &roundings) {
-  return rewrite_visitor(holders, roundings).visit(dst);
+ast_real const *rewrite(ast_real const *dst, ast_real_vect const &holders) {
+  return rewrite_visitor(holders).visit(dst);
 }
 
-pattern pattern::operator-() const { return pattern(real_op(UOP_MINUS, real)); }
-
 #define PATTERN_OP(symb, op) \
-  pattern pattern::operator symb(pattern const &p) const { return pattern(real_op(real, BOP_##op, p.real)); }
+  pattern pattern::operator symb(pattern const &p) const \
+  { return pattern(real_op(real, BOP_##op, p.real)); }
 PATTERN_OP(+, ADD)
 PATTERN_OP(-, SUB)
 PATTERN_OP(*, MUL)
@@ -127,8 +108,8 @@ PATTERN_COND(<=, LE)
 PATTERN_COND(>=, GE)
 PATTERN_COND(!=, NE)
 
-pattern pattern::round(pattern const &p, rounding_class const *r) {
-  return pattern(rounded_real(p.real, r));
+pattern pattern::operator-() const {
+  return pattern(real_op(UOP_NEG, real));
 }
 
 pattern pattern::abs(pattern const &p) {

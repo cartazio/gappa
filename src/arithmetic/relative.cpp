@@ -6,7 +6,7 @@
 #include "numbers/real.hpp"
 #include "numbers/round.hpp"
 
-struct relative_rounding_class: rounding_class {
+struct relative_rounding_class: function_class {
   interval he;
   int prec;
   relative_rounding_class(int);
@@ -47,26 +47,26 @@ std::string relative_rounding_class::name() const {
   return s.str();
 }
 
-typedef std::map< int, rounding_class const * > relative_cache;
+typedef std::map< int, function_class const * > relative_cache;
 static relative_cache cache;
 
-struct relative_rounding_generator: rounding_generator {
+struct relative_rounding_generator: function_generator {
   relative_rounding_generator();
-  virtual rounding_class const *operator()(rounding_params const &) const;
+  virtual function_class const *operator()(function_params const &) const;
 };
 
 relative_rounding_generator::relative_rounding_generator() {
   ast_ident *id = ast_ident::find("relative");
-  id->id_type = REAL_RND;
-  id->rnd = this;
+  id->fun = this;
 }
 
-rounding_class const *relative_rounding_generator::operator()(rounding_params const &p) const {
-  if (p.size() != 1) return NULL;
-  int prec = p[0];
+function_class const *relative_rounding_generator::operator()(function_params const &p) const {
+  if (p.size() != 1 || (p[0] & 1) == 0) return NULL;
+  int prec = ((long)p[0]) >> 1;
+  if (prec <= 0) return NULL;
   relative_cache::const_iterator i = cache.find(prec);
   if (i != cache.end()) return i->second;
-  rounding_class const *rnd = new relative_rounding_class(prec);
+  function_class const *rnd = new relative_rounding_class(prec);
   cache.insert(std::make_pair(prec, rnd));
   return rnd;
 }

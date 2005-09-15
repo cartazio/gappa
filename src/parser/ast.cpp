@@ -1,11 +1,11 @@
-#include "numbers/round.hpp"
-#include "parser/ast.hpp"
-#include "proofs/schemes.hpp"
-
 #include <algorithm>
 #include <cassert>
 #include <set>
 #include <sstream>
+
+#include "numbers/round.hpp"
+#include "parser/ast.hpp"
+#include "proofs/schemes.hpp"
 
 namespace {
 
@@ -86,8 +86,14 @@ std::string dump_real(ast_real const *r, unsigned prio) {
     return s.str();
   }
   if (real_op const *o = boost::get< real_op const >(r)) {
-    static char const op[] = "-X+-*/";
-    static unsigned const pr[] = { 2, 0, 0, 0, 1, 1 };
+    if (o->type == ROP_FUN) {
+      std::string s = o->fun->name() + '(' + dump_real(o->ops[0], 0);
+      for(ast_real_vect::const_iterator i = ++(o->ops.begin()), end = o->ops.end(); i != end; ++i)
+        s += ", " + dump_real(*i, 0);
+      return s + ')';
+    }
+    static char const op[] = "X-X+-*/XX";
+    static unsigned const pr[] = { 0, 2, 0, 0, 0, 1, 1, 0, 0 };
     std::string s = dump_real(o->ops[0], pr[o->type]);
     if (o->ops.size() == 1)
       if (o->type == UOP_ABS) {
@@ -100,16 +106,23 @@ std::string dump_real(ast_real const *r, unsigned prio) {
     if (prio <= pr[o->type]) return s;
     return '(' + s + ')';
   }
-  if (rounded_real const *rr = boost::get< rounded_real const >(r))
-    return '<' + rr->rounding->name() + ">(" + dump_real(rr->rounded, 0) + ')';
   assert(false);
   return "...";
 }
 
-default_rounding_generator::default_rounding_generator(std::string const &name, rounding_class const *r)
-  : rnd(r)
+default_function_generator::default_function_generator(std::string const &name, function_class const *f)
+  : fun(f)
 {
-  ast_ident *id = ast_ident::find(name);
-  id->id_type = REAL_RND;
-  id->rnd = this;
+  ast_ident::find(name)->fun = this;
 }
+
+function_class const *default_function_generator::operator()(function_params const &p) const {
+  return p.empty() ? fun : NULL;
+}
+
+interval function_class::round                      (interval const &, std::string &) const { return interval(); }
+interval function_class::enforce                    (interval const &, std::string &) const { return interval(); }
+interval function_class::absolute_error_from_real   (interval const &, std::string &) const { return interval(); }
+interval function_class::relative_error_from_real   (interval const &, std::string &) const { return interval(); }
+interval function_class::absolute_error_from_rounded(interval const &, std::string &) const { return interval(); }
+interval function_class::relative_error_from_rounded(interval const &, std::string &) const { return interval(); }

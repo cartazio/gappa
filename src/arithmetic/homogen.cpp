@@ -4,7 +4,7 @@
 #include "numbers/real.hpp"
 #include "numbers/round.hpp"
 
-struct homogen_rounding_class: rounding_class {
+struct homogen_rounding_class: function_class {
   interval he;
   homogen_rounding_class();
   virtual interval absolute_error_from_real(interval const &, std::string &) const;
@@ -13,7 +13,7 @@ struct homogen_rounding_class: rounding_class {
 
 homogen_rounding_class::homogen_rounding_class() {
   he = from_exponent(-53, 0) + from_exponent(-64, 0);
-  new default_rounding_generator("homogen80x", this);
+  new default_function_generator("homogen80x", this);
 }
 
 interval homogen_rounding_class::absolute_error_from_real(interval const &i, std::string &name) const {
@@ -23,7 +23,7 @@ interval homogen_rounding_class::absolute_error_from_real(interval const &i, std
 
 static homogen_rounding_class dummy;
 
-struct homogen_init_rounding_class: rounding_class {
+struct homogen_init_rounding_class: function_class {
   interval he;
   homogen_init_rounding_class();
   virtual interval absolute_error_from_rounded(interval const &, std::string &) const;
@@ -32,7 +32,7 @@ struct homogen_init_rounding_class: rounding_class {
 
 homogen_init_rounding_class::homogen_init_rounding_class() {
   he = from_exponent(-53, 0) + from_exponent(-64, 0);
-  new default_rounding_generator("homogen80x_init", this);
+  new default_function_generator("homogen80x_init", this);
 }
 
 interval homogen_init_rounding_class::absolute_error_from_rounded(interval const &i, std::string &name) const {
@@ -42,14 +42,14 @@ interval homogen_init_rounding_class::absolute_error_from_rounded(interval const
 
 static homogen_init_rounding_class dummy_init;
 
-struct floatx_rounding_class: rounding_class {
+struct floatx_rounding_class: function_class {
   floatx_rounding_class();
   virtual interval round(interval const &, std::string &) const;
   virtual std::string name() const { return "float80x"; }
 };
 
 floatx_rounding_class::floatx_rounding_class() {
-  new default_rounding_generator("float80x", this);
+  new default_function_generator("float80x", this);
 }
 
 interval floatx_rounding_class::round(interval const &i, std::string &name) const {
