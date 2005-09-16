@@ -6,12 +6,6 @@
 
 interval create_interval(ast_interval const &, bool widen);
 
-ast_real const *check_real(ast_ident *v) {
-  if (!v->var)
-    v->var = normalize(ast_real(v));
-  return v->var;
-}
-
 ast_prop_and merge_prop_and(ast_prop const &_p1, ast_prop const &_p2) {
   ast_prop_and p;
   if (ast_prop_and const *p1 = boost::get< ast_prop_and const >(&_p1))

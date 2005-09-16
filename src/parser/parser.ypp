@@ -25,7 +25,6 @@ int my_yyerror(YYLTYPE &yylloc, char const *errstr) {
   YYERROR; \
 } while (0)
 
-extern ast_real const *check_real(ast_ident *v);
 extern ast_prop_and merge_prop_and(ast_prop const &p1, ast_prop const &p2);
 extern void generate_graph(ast_prop const &p);
 extern void test_ringularity(ast_real const *, ast_real const *);
@@ -178,8 +177,14 @@ PROG:
   }
 
 REAL:
-  SNUMBER		{ $$ = normalize(ast_real($1)); }
-| IDENT			{ $$ = check_real($1); }
+  SNUMBER	{ $$ = normalize(ast_real($1)); }
+| IDENT
+  {
+    ast_ident *v = $1;
+    if (!v->var)
+      v->var = normalize(ast_real(v));
+    $$ = v->var;
+  }
 | IDENT FUNCTION_PARAMS '(' OPERANDS ')'
   {
     ast_ident *r = $1;
