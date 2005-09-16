@@ -12,21 +12,6 @@ ast_real const *check_real(ast_ident *v) {
   return v->var;
 }
 
-void check_variable(ast_ident *v, ast_real const *r) {
-  if (v->var)
-    { std::cerr << "Error: " << v->name << " is an already defined symbol.\n"; exit(1); }
-  v->var = r;
-  if (r->name)
-    std::cerr << "Warning: " << r->name->name << " is being renamed to " << v->name << ".\n";
-  r->name = v;
-}
-
-void check_function(ast_ident *v, function_class const *r) {
-  if (v->fun)
-    { std::cerr << "Error: " << v->name << " is an already defined function.\n"; exit(1); }
-  v->fun = new default_function_generator(r);
-}
-
 ast_prop_and merge_prop_and(ast_prop const &_p1, ast_prop const &_p2) {
   ast_prop_and p;
   if (ast_prop_and const *p1 = boost::get< ast_prop_and const >(&_p1))

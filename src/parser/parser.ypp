@@ -1,23 +1,31 @@
 %{
-#define yyerror(msg) my_yyerror(yylloc, msg)
+#include <iostream>
 
 #include "parser/ast.hpp"
 #include "parser/parser.h"
 #include "proofs/basic_proof.hpp"
 #include "proofs/dichotomy.hpp"
 
-#include <iostream>
+#define yyerror(msg) my_yyerror(yylloc, msg)
 
 int yylex(YYSTYPE *yylval_param, YYLTYPE *yylloc_param);
 
+#define error(msg) \
+  std::cerr << "Error: " << msg << " at line " << yylloc.first_line << " column " << yylloc.first_column << '\n'
+#define warning(msg) \
+  std::cerr << "Warning: " << msg << " at line " << yylloc.first_line << " column " << yylloc.first_column << '\n'
+
 int my_yyerror(YYLTYPE &yylloc, char const *errstr) {
-    std::cerr << "Error: " << errstr << " at line " << yylloc.first_line << " column " << yylloc.first_column << '\n';
+    error(errstr);
     return EXIT_FAILURE;
 }
 
+#define failure(msg) do {\
+  error(msg); \
+  YYERROR; \
+} while (0)
+
 extern ast_real const *check_real(ast_ident *v);
-extern void check_variable(ast_ident *v, ast_real const *r);
-extern void check_function(ast_ident *v, function_class const *r);
 extern ast_prop_and merge_prop_and(ast_prop const &p1, ast_prop const &p2);
 extern void generate_graph(ast_prop const &p);
 extern void test_ringularity(ast_real const *, ast_real const *);
@@ -136,18 +144,14 @@ ROUNDING: '<' FUNCTION_PARAMS_AUX '>'
   {
     function_params *p = $2;
     unsigned long l = (*p)[0];
-    if (l & 1)
-      { yyerror("first rounding parameter is not an identifier"); YYERROR; }
+    if (l & 1) failure("first rounding parameter is not an identifier");
     ast_ident *r = (ast_ident *)(l);
     function_generator const *fun = r->fun;
-    if (!fun)
-      { std::cerr << "Error: " << r->name << " is not a rounding\n"; exit(1); }
+    if (!fun) failure(r->name << " is not a rounding");
     function_class const *f = (*fun)(function_params(++(p->begin()), p->end()));
     delete p;
-    if (!f)
-      { yyerror("invalid parameters"); YYERROR; }
-    else if (f->type != UOP_ID)
-      { std::cerr << "Error: " << r->name << " is not a rounding\n"; exit(1); }
+    if (!f) failure("invalid parameters for " << r->name);
+    else if (f->type != UOP_ID) failure(r->name << " is not a rounding");
     $$ = f;
   }
 
@@ -158,12 +162,19 @@ EQUAL:
 PROG:
 | PROG IDENT EQUAL REAL ';'
   {
-    check_variable($2, $4);
+    ast_ident *v = $2;
+    if (v->var) failure("the symbol " << v->name << " is already defined");
+    ast_real const *r = $4;
+    v->var = r;
+    if (r->name) warning(r->name->name << " is being renamed to " << v->name);
+    r->name = v;
     rounding_mode = NULL;
   }
 | PROG '<' IDENT '>' '=' ROUNDING ';'
   {
-    check_function($3, $6);
+    ast_ident *v = $3;
+    if (v->fun) failure("the function " << v->name << " is already defined");
+    v->fun = new default_function_generator($6);
   }
 
 REAL:
@@ -173,16 +184,16 @@ REAL:
   {
     ast_ident *r = $1;
     function_generator const *fun = r->fun;
-    if (!fun)
-      { std::cerr << "Error: " << r->name << " is not a function\n"; exit(1); }
+    if (!fun) failure(r->name << " is not a function");
     function_class const *f;
     if (function_params *p = $2) {
       f = (*fun)(*p);
       delete p;
     } else f = (*fun)(function_params());
+    if (!f) failure("invalid parameters for " << r->name);
     ast_real_vect *ops = $4;
     if (f->type == UOP_ID && ops->size() != 1 || f->type != UOP_ID && ops->size() != 2)
-      { yyerror("invalid arguments"); YYERROR; }
+      failure("incorrect number of arguments when calling " << r->name);
     $$ = rnd_normalize(ast_real(real_op(f, *ops)));
     delete ops;
   }
