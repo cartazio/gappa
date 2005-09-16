@@ -4,6 +4,8 @@ Version 0.5.0:
    - generalized functions with rounding theorems
  * syntax
    - splitted variables and functions
+ * arithmetic
+   - replaced by relative rounding by double-double functions
 
 Version 0.4.12:
  * syntax
