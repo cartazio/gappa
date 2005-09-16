@@ -44,8 +44,6 @@ struct default_function_generator: function_generator {
   virtual function_class const *operator()(function_params const &) const;
 };
 
-struct function;
-
 struct ast_ident {
   std::string name;
   function_generator const *fun;
@@ -56,5 +54,14 @@ struct ast_ident {
 };
 
 std::string dump_real(ast_real const *, unsigned = 0);
+
+inline ast_ident const *param_ident(unsigned long l) {
+  return (l & 1) ? NULL : reinterpret_cast< ast_ident const * >(l);
+}
+
+inline bool param_int(unsigned long l, int &i) {
+  i = static_cast< long >(l) >> 1;
+  return (l & 1);
+}
 
 #endif // PARSER_AST_HPP
