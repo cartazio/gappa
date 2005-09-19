@@ -9,6 +9,7 @@ bin_PROGRAMS = gappa
 
 gappa_SOURCES = \
 	arithmetic/double.cpp \
+	arithmetic/fixed.cpp \
 	arithmetic/float.cpp \
 	arithmetic/homogen.cpp \
 	backends/coq.cpp \
