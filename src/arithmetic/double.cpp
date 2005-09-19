@@ -14,7 +14,7 @@ struct dbldbl_function_class: function_class {
   virtual interval round                      (interval const &, std::string &) const;
   virtual interval relative_error_from_real   (interval const &, std::string &) const;
   virtual interval relative_error_from_rounded(interval const &, std::string &) const;
-  virtual std::string name() const;
+  virtual std::string name() const { return nm; }
 };
 
 dbldbl_function_class::dbldbl_function_class(real_op_type t, int p, std::string const &n)
@@ -23,30 +23,18 @@ dbldbl_function_class::dbldbl_function_class(real_op_type t, int p, std::string 
 }
 
 interval dbldbl_function_class::round(interval const &i, std::string &name) const {
-  std::ostringstream s;
-  s << '(' << nm << "_round " << prec << ')';
-  name = s.str();
+  name = nm + "_round";
   return i * (interval(number(1), number(1)) + he);
 }
 
 interval dbldbl_function_class::relative_error_from_real(interval const &, std::string &name) const {
-  std::ostringstream s;
-  s << '(' << nm << "_error " << prec << ')';
-  name = s.str();
+  name = nm + "_error";
   return he;
 }
 
 interval dbldbl_function_class::relative_error_from_rounded(interval const &, std::string &name) const {
-  std::ostringstream s;
-  s << '(' << nm << "_error_inv " << prec << ')';
-  name = s.str();
+  name = nm + "_error_inv";
   return he;
-}
-
-std::string dbldbl_function_class::name() const {
-  std::ostringstream s;
-  s << nm << "_function " << prec;
-  return s.str();
 }
 
 struct dbldbl_function_generator: function_generator {
@@ -60,7 +48,7 @@ dbldbl_function_generator::dbldbl_function_generator(std::string const &n, real_
   : rnd(r) {
   ast_ident *id = ast_ident::find(n);
   id->fun = this;
-  fun = new dbldbl_function_class(t, p, n);
+  fun = new dbldbl_function_class(t, p, n + '_' + r);
 }
 
 function_class const *dbldbl_function_generator::operator()(function_params const &p) const {
@@ -69,4 +57,4 @@ function_class const *dbldbl_function_generator::operator()(function_params cons
   return (i && i->name == rnd) ? fun : NULL;
 }
 
-static dbldbl_function_generator dummy("add22", BOP_ADD, "float64ne", 103);
+static dbldbl_function_generator dummy("add22", BOP_ADD, "float64", 103);
