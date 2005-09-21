@@ -52,15 +52,17 @@ static void read_ident(YYSTYPE *yylval) {
 
 extern bool parse_option(std::string const &, bool);
 
-static void read_options() {
+static void read_options(YYLTYPE &yylloc) {
   std::string s = yytext;
   std::string::size_type begin, end = 2;
   while ((begin = s.find_first_not_of(" \t", end)) != std::string::npos) {
     end = s.find_first_of(" \t", begin);
     if (end == std::string::npos) end = s.size();
     std::string o = s.substr(begin, end - begin);
-    if (!parse_option(o, true))
-      std::cerr << "Error: unrecognized option '" << o << "' on standard input\n";
+    if (!parse_option(o, true)) {
+      std::cerr << "Error: unrecognized option '" << o << "' at line " << yylloc.first_line << '\n';
+      exit(EXIT_FAILURE);
+    }
   }
 }
 
@@ -88,7 +90,7 @@ zero		((((0+(\.0*)?)|(\.0+))([eE][-+]?{integer})?)|0x(((0+(\.0*)?)|(\.0+))([pP][
 
 [ \t]
 \n		{ ++yylloc->first_line; yylloc->first_column = 0; }
-#@[^\n]*	read_options();
+#@[^\n]*	read_options(*yylloc);
 #[^\n]*
 "/\\"		return AND;
 "->"		return IMPL;
