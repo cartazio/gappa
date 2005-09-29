@@ -145,7 +145,7 @@ static std::string display(node *n) {
   std::string p_res = is_empty(n_res.bnd) ? "(forall P, P)" : display(n_res);
   plouf << p_res << '.';
   if (n->type == AXIOM) {
-    plouf << " trivial. Qed.\n";
+    plouf << '\n';
     return name;
   }
   int nb_hyps = n_hyp.size();
