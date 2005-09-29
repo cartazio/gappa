@@ -1,11 +1,11 @@
 #ifndef PROOFS_BASIC_PROOF_HPP
 #define PROOFS_BASIC_PROOF_HPP
 
+#include <string>
 #include "parser/pattern.hpp"
 #include "proofs/proof_graph.hpp"
 #include "proofs/property.hpp"
 #include "proofs/schemes.hpp"
-#include <string>
 
 struct rewrite_scheme: proof_scheme {
   ast_real const *rewritten;
