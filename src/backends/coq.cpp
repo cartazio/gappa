@@ -1,7 +1,6 @@
 #include <iostream>
 #include <ostream>
 #include <sstream>
-
 #include "backends/backend.hpp"
 #include "numbers/interval_utility.hpp"
 #include "numbers/round.hpp"
@@ -261,6 +260,7 @@ struct coq_backend: backend {
     out << "End Gappa_generated.\n";
   }
   virtual void axiom() {}
+  virtual std::string rewrite(ast_real const *, ast_real const *);
   virtual void theorem(node *n) {
     assert(n);
     if (n->type == HYPOTHESIS)
@@ -270,3 +270,12 @@ struct coq_backend: backend {
 };
 
 REGISTER_BACKEND(coq);
+
+std::string coq_backend::rewrite(ast_real const *src, ast_real const *dst) {
+  static int a_id = 0;
+  std::string name = composite('a', ++a_id);
+  auto_flush plouf;
+  plouf << "Hypothesis " << name << " : forall zi : FF, IintF zi "
+        << display(dst) << " -> true = true -> IintF zi " << display(src) << ".\n";
+  return name;
+}

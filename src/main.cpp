@@ -9,12 +9,20 @@ extern int yyparse(void);
 extern std::vector< graph_t * > graphs;
 extern bool parse_args(int argc, char **argv);
 extern backend_register const *proof_generator;
+backend *display = NULL;
+
+struct null_backend: backend {
+  null_backend(): backend(std::cout) {}
+  virtual void axiom() {}
+  virtual std::string rewrite(ast_real const *, ast_real const *) { return std::string(); }
+  virtual void theorem(node *) {}
+};
 
 int main(int argc, char **argv) {
   if (!parse_args(argc, argv)) return 0;
-  yyparse();
-  backend *display = NULL;
   if (proof_generator) display = proof_generator->create(std::cout);
+  else display = new null_backend;
+  yyparse();
   for(std::vector< graph_t * >::const_iterator i = graphs.begin(), i_end = graphs.end(); i != i_end; ++i) {
     graph_t *g = *i;
     graph_loader loader(g);
@@ -33,8 +41,7 @@ int main(int argc, char **argv) {
     if (g->populate()) {
       node_vect results(nb);
       std::cerr << "Warning: Hypotheses are in contradiction, any result is true.\n";
-      if (display)
-        display->theorem(g->get_contradiction());
+      display->theorem(g->get_contradiction());
     } else {
       node_vect results(nb);
       for(int j = 0; j < nb; ++j) {
@@ -48,9 +55,8 @@ int main(int argc, char **argv) {
         property const &p = n->get_result();
         std::cerr << dump_real(p.real) << " in " << p.bnd << '\n';
       }
-      if (display)
-        for(node_vect::const_iterator i = results.begin(), end = results.end(); i != end; ++i)
-          if (*i) display->theorem(*i);
+      for(node_vect::const_iterator i = results.begin(), end = results.end(); i != end; ++i)
+        if (*i) display->theorem(*i);
     }
     delete g;
   }

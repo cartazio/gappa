@@ -1,4 +1,4 @@
-#include <sstream>
+#include "backends/backend.hpp"
 #include "numbers/interval_arith.hpp"
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
@@ -9,6 +9,7 @@
 #include "proofs/proof_graph.hpp"
 
 extern pattern absolute_error_pattern, relative_error_pattern;
+extern backend *display;
 
 // ABSOLUTE_ERROR_FROM_REAL
 REGISTER_SCHEME_BEGIN(absolute_error_from_real);
@@ -434,12 +435,8 @@ node *rewrite_scheme::generate_proof() const {
 struct rewrite_factory: scheme_factory {
   ast_real const *src, *dst;
   std::string name;
-  rewrite_factory(ast_real const *q1, ast_real const *q2): src(q1), dst(q2) {
-    static int r_id = 0;
-    std::ostringstream s;
-    s << "user_defined_rewrite_" << r_id;
-    name = s.str();
-  }
+  rewrite_factory(ast_real const *q1, ast_real const *q2)
+    : src(q1), dst(q2), name(display->rewrite(src, dst)) {}
   virtual proof_scheme *operator()(ast_real const *) const;
 };
 
