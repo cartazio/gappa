@@ -1,3 +1,4 @@
+#include <sstream>
 #include "numbers/interval_arith.hpp"
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
@@ -433,13 +434,18 @@ node *rewrite_scheme::generate_proof() const {
 struct rewrite_factory: scheme_factory {
   ast_real const *src, *dst;
   std::string name;
-  rewrite_factory(ast_real const *q1, ast_real const *q2): src(q1), dst(q2) {}
+  rewrite_factory(ast_real const *q1, ast_real const *q2): src(q1), dst(q2) {
+    static int r_id = 0;
+    std::ostringstream s;
+    s << "user_defined_rewrite_" << r_id;
+    name = s.str();
+  }
   virtual proof_scheme *operator()(ast_real const *) const;
 };
 
 proof_scheme *rewrite_factory::operator()(ast_real const *r) const {
   if (r != src) return NULL;
-  return new rewrite_scheme(src, dst, "user_defined");
+  return new rewrite_scheme(src, dst, name);
 }
 
 void register_user_rewrite(ast_real const *r1, ast_real const *r2) {
