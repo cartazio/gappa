@@ -1,3 +1,6 @@
+#ifndef BACKENDS_BACKEND_HPP
+#define BACKENDS_BACKEND_HPP
+
 #include <ostream>
 #include <string>
 
@@ -26,3 +29,5 @@ class backend_register {
     virtual backend *create(std::ostream &out) const { return new name##_backend(out); } \
   }; \
   static name##_backend_register dummy;
+
+#endif // BACKENDS_BACKEND_HPP
