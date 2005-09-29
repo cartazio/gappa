@@ -30,6 +30,16 @@ struct scheme_register {
   static iterator end  () { return factories.end  (); }
 };
 
+#define REGISTER_SCHEME_BEGIN(name) \
+  struct name##_scheme: proof_scheme { \
+    virtual node *generate_proof() const; \
+    virtual ast_real_vect needed_reals() const; \
+    static proof_scheme *factory(ast_real const *)
+
+#define REGISTER_SCHEME_END(name) \
+  }; \
+  static scheme_register name##_scheme_register(&name##_scheme::factory)
+
 struct proof_helper;
 
 node *find_proof(ast_real const *);

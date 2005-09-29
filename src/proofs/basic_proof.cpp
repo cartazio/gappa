@@ -10,15 +10,12 @@
 extern pattern absolute_error_pattern, relative_error_pattern;
 
 // ABSOLUTE_ERROR_FROM_REAL
-struct absolute_error_from_real_scheme: proof_scheme {
+REGISTER_SCHEME_BEGIN(absolute_error_from_real);
   ast_real const *rounded;
   function_class const *function;
   absolute_error_from_real_scheme(ast_real const *r, ast_real const *rr, function_class const *f)
     : proof_scheme(r), rounded(rr), function(f) {}
-  virtual node *generate_proof() const;
-  virtual ast_real_vect needed_reals() const;
-  static proof_scheme *factory(ast_real const *);
-};
+REGISTER_SCHEME_END(absolute_error_from_real);
 
 node *absolute_error_from_real_scheme::generate_proof() const {
   node *n = find_proof(rounded);
@@ -42,18 +39,13 @@ proof_scheme *absolute_error_from_real_scheme::factory(ast_real const *real) {
   return new absolute_error_from_real_scheme(real, holders[0], p->fun);
 }
 
-static scheme_register absolute_error_from_real_scheme_register(&absolute_error_from_real_scheme::factory);
-
 // ABSOLUTE_ERROR_FROM_ROUNDED
-struct absolute_error_from_rounded_scheme: proof_scheme {
+REGISTER_SCHEME_BEGIN(absolute_error_from_rounded);
   ast_real const *approx;
   function_class const *function;
   absolute_error_from_rounded_scheme(ast_real const *r, ast_real const *a, function_class const *f)
     : proof_scheme(r), approx(a), function(f) {}
-  virtual node *generate_proof() const;
-  virtual ast_real_vect needed_reals() const;
-  static proof_scheme *factory(ast_real const *);
-};
+REGISTER_SCHEME_END(absolute_error_from_rounded);
 
 node *absolute_error_from_rounded_scheme::generate_proof() const {
   node *n = find_proof(approx);
@@ -77,18 +69,13 @@ proof_scheme *absolute_error_from_rounded_scheme::factory(ast_real const *real) 
   return new absolute_error_from_rounded_scheme(real, holders[1], p->fun);
 }
 
-static scheme_register absolute_error_from_rounded_scheme_register(&absolute_error_from_rounded_scheme::factory);
-
 // RELATIVE_ERROR_FROM_REAL
-struct relative_error_from_real_scheme: proof_scheme {
+REGISTER_SCHEME_BEGIN(relative_error_from_real);
   ast_real const *absval;
   function_class const *function;
   relative_error_from_real_scheme(ast_real const *r, ast_real const *a, function_class const *f)
     : proof_scheme(r), absval(a), function(f) {}
-  virtual node *generate_proof() const;
-  virtual ast_real_vect needed_reals() const;
-  static proof_scheme *factory(ast_real const *);
-};
+REGISTER_SCHEME_END(relative_error_from_real);
 
 node *relative_error_from_real_scheme::generate_proof() const {
   node *n = find_proof(absval);
@@ -113,18 +100,13 @@ proof_scheme *relative_error_from_real_scheme::factory(ast_real const *real) {
   return new relative_error_from_real_scheme(real, av, p->fun);
 }
 
-static scheme_register relative_error_from_real_scheme_register(&relative_error_from_real_scheme::factory);
-
 // RELATIVE_ERROR_FROM_ROUNDED
-struct relative_error_from_rounded_scheme: proof_scheme {
+REGISTER_SCHEME_BEGIN(relative_error_from_rounded);
   ast_real const *absval;
   function_class const *function;
   relative_error_from_rounded_scheme(ast_real const *r, ast_real const *a, function_class const *f)
     : proof_scheme(r), absval(a), function(f) {}
-  virtual node *generate_proof() const;
-  virtual ast_real_vect needed_reals() const;
-  static proof_scheme *factory(ast_real const *);
-};
+REGISTER_SCHEME_END(relative_error_from_rounded);
 
 node *relative_error_from_rounded_scheme::generate_proof() const {
   node *n = find_proof(absval);
@@ -149,18 +131,13 @@ proof_scheme *relative_error_from_rounded_scheme::factory(ast_real const *real) 
   return new relative_error_from_rounded_scheme(real, av, p->fun);
 }
 
-static scheme_register relative_error_from_rounded_scheme_register(&relative_error_from_rounded_scheme::factory);
-
 // ROUNDING_BOUND
-struct rounding_bound_scheme: proof_scheme {
+REGISTER_SCHEME_BEGIN(rounding_bound);
   ast_real const *rounded;
   function_class const *function;
   rounding_bound_scheme(ast_real const *r, ast_real const *rr, function_class const *f)
     : proof_scheme(r), rounded(rr), function(f) {}
-  virtual node *generate_proof() const;
-  virtual ast_real_vect needed_reals() const;
-  static proof_scheme *factory(ast_real const *);
-};
+REGISTER_SCHEME_END(rounding_bound);
 
 node *rounding_bound_scheme::generate_proof() const {
   node *n = find_proof(rounded);
@@ -183,17 +160,12 @@ proof_scheme *rounding_bound_scheme::factory(ast_real const *real) {
   return new rounding_bound_scheme(real, r, f);
 }
 
-static scheme_register rounding_bound_scheme_register(&rounding_bound_scheme::factory);
-
 // ENFORCE_BOUND
-struct enforce_bound_scheme: proof_scheme {
+REGISTER_SCHEME_BEGIN(enforce_bound);
   function_class const *function;
   enforce_bound_scheme(ast_real const *r, function_class const *f)
     : proof_scheme(r), function(f) {}
-  virtual node *generate_proof() const;
-  virtual ast_real_vect needed_reals() const;
-  static proof_scheme *factory(ast_real const *);
-};
+REGISTER_SCHEME_END(enforce_bound);
 
 node *enforce_bound_scheme::generate_proof() const {
   node *n = find_proof(real);
@@ -215,15 +187,10 @@ proof_scheme *enforce_bound_scheme::factory(ast_real const *real) {
   return new enforce_bound_scheme(real, f);
 }
 
-static scheme_register enforce_bound_scheme_register(&enforce_bound_scheme::factory);
-
 // COMPUTATION
-struct computation_scheme: proof_scheme {
+REGISTER_SCHEME_BEGIN(computation);
   computation_scheme(ast_real const *r): proof_scheme(r) {}
-  virtual node *generate_proof() const;
-  virtual ast_real_vect needed_reals() const;
-  static proof_scheme *factory(ast_real const *);
-};
+REGISTER_SCHEME_END(computation);
 
 node *computation_scheme::generate_proof() const {
   real_op const *r = boost::get< real_op const >(real);
@@ -305,16 +272,11 @@ proof_scheme *computation_scheme::factory(ast_real const *real) {
   return new computation_scheme(real);
 }
 
-static scheme_register computation_scheme_register(&computation_scheme::factory);
-
 // INVERT_ABS
-struct invert_abs_scheme: proof_scheme {
+REGISTER_SCHEME_BEGIN(invert_abs);
   ast_real const *absval;
   invert_abs_scheme(ast_real const *r, ast_real const *a): proof_scheme(r), absval(a) {}
-  virtual node *generate_proof() const;
-  virtual ast_real_vect needed_reals() const { return ast_real_vect(1, absval); }
-  static proof_scheme *factory(ast_real const *);
-};
+REGISTER_SCHEME_END(invert_abs);
 
 node *invert_abs_scheme::generate_proof() const {
   node *n = find_proof(absval);
@@ -325,14 +287,16 @@ node *invert_abs_scheme::generate_proof() const {
   return create_theorem(1, &res1, res, "invert_abs");
 }
 
+ast_real_vect invert_abs_scheme::needed_reals() const {
+  return ast_real_vect(1, absval);
+}
+
 proof_scheme *invert_abs_scheme::factory(ast_real const *real) {
   if (real_op const *r = boost::get< real_op const >(real))
     if (r->type == UOP_ABS) return NULL;
   ast_real const *av = normalize(ast_real(real_op(UOP_ABS, real)));
   return new invert_abs_scheme(real, av);
 }
-
-static scheme_register invert_abs_scheme_register(&invert_abs_scheme::factory);
 
 // ABS_MUL
 static proof_scheme *abs_mul_scheme_factory(ast_real const *real) {
@@ -361,12 +325,9 @@ static proof_scheme *abs_mul_scheme_factory(ast_real const *real) {
 static scheme_register abs_mul_scheme_register(&abs_mul_scheme_factory);
 
 // COMPOSE RELATIVE
-struct compose_relative_scheme: proof_scheme {
+REGISTER_SCHEME_BEGIN(compose_relative);
   compose_relative_scheme(ast_real const *r): proof_scheme(r) {}
-  virtual node *generate_proof() const;
-  virtual ast_real_vect needed_reals() const;
-  static proof_scheme *factory(ast_real const *);
-};
+REGISTER_SCHEME_END(compose_relative);
 
 node *compose_relative_scheme::generate_proof() const {
   real_op const *r = boost::get< real_op const >(real);
@@ -405,15 +366,10 @@ proof_scheme *compose_relative_scheme::factory(ast_real const *real) {
   return new compose_relative_scheme(real);
 }
 
-static scheme_register compose_relative_scheme_register(&compose_relative_scheme::factory);
-
 // NUMBER
-struct number_scheme: proof_scheme {
+REGISTER_SCHEME_BEGIN(number);
   number_scheme(ast_real const *r): proof_scheme(r) {}
-  virtual node *generate_proof() const;
-  virtual ast_real_vect needed_reals() const { return ast_real_vect(); }
-  static proof_scheme *factory(ast_real const *);
-};
+REGISTER_SCHEME_END(number);
 
 interval create_interval(ast_interval const &, bool widen = true);
 
@@ -428,12 +384,14 @@ node *number_scheme::generate_proof() const {
   return new theorem_node(0, NULL, property(real, create_interval(_i)), s);
 }
 
+ast_real_vect number_scheme::needed_reals() const {
+  return ast_real_vect();
+}
+
 proof_scheme *number_scheme::factory(ast_real const *real) {
   if (!boost::get< ast_number const *const >(real)) return NULL;
   return new number_scheme(real);
 }
-
-static scheme_register number_scheme_register(&number_scheme::factory);
 
 // REWRITE
 ast_real_vect rewrite_scheme::needed_reals() const {
