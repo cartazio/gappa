@@ -1,5 +1,4 @@
 #include <iostream>
-
 #include "numbers/interval_utility.hpp"
 #include "numbers/round.hpp"
 #include "parser/ast.hpp"
@@ -16,17 +15,21 @@ class dichotomy_node: public dependent_node {
   graph_vect graphs;
   property_vect &tmp_hyp;
   int depth;
+  property res;
+  bool var_node;
  public:
   graph_t *last_graph;
-  dichotomy_node(property_vect &v, property const &p)
-      : dependent_node(UNION, p), tmp_hyp(v), depth(0), last_graph(NULL) {
-    hyp = v;
+  dichotomy_node(property_vect &v, property const &p, node *n)
+      : dependent_node(UNION), tmp_hyp(v), depth(0), res(p), var_node(n), last_graph(NULL) {
+    if (n) insert_pred(n);
   }
   ~dichotomy_node();
   void dichotomize();
   bool add_graph(graph_t *);
   void try_graph(graph_t *);
   virtual void clean_dependencies();
+  virtual property const &get_result() const { return res; }
+  virtual property_vect const &get_hypotheses() const { return graph->get_hypotheses(); }
 };
 
 void dichotomy_node::clean_dependencies() {
@@ -167,12 +170,12 @@ node *dichotomy_scheme::generate_proof(interval const &bnd) const {
   goals.push_back(property(real, bnd));
   graph_t *g = new graph_t(top_graph, hyp, goals, helper, false);
   graph_loader loader(g);
-  dichotomy_node *n = new dichotomy_node(hyp2, property(real, bnd));
+  dichotomy_node *n = new dichotomy_node(hyp2, property(real, bnd), varn->type == HYPOTHESIS ? NULL : varn);
   try {
     n->dichotomize();
     n->add_graph(n->last_graph);
     n->last_graph = NULL;
-    dich = create_modus(n);
+    dich = n;
     g->purge(dich);
     g->flatten();
   } catch (dichotomy_failure e) {

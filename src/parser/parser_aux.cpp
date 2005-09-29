@@ -40,7 +40,7 @@ static property generate_property(ast_atom_bound const &p, bool goal, bool axiom
   return r;
 }
 
-static void generate_axiom(ast_prop_impl const &p, node_vect &axioms) {
+static void generate_axiom(ast_prop_impl const &p, axiom_vect &axioms) {
   ast_prop_and tmp = merge_prop_and(p.left);
   property_vect hyp;
   for(int i = 0, l = tmp.size(); i < l; ++i) {
@@ -52,12 +52,12 @@ static void generate_axiom(ast_prop_impl const &p, node_vect &axioms) {
   tmp = merge_prop_and(p.right);
   for(int i = 0, l = tmp.size(); i < l; ++i) {
     if (ast_atom_bound *r = boost::get< ast_atom_bound >(&tmp[i]))
-      axioms.push_back(new axiom_node(hyp, generate_property(*r, true, true)));
+      axioms.push_back(new theorem_node(hyp.size(), &*hyp.begin(), generate_property(*r, true, true), ""));
     else { std::cerr << "Error: too complex a logical proposition.\n"; exit(1); }
   }
 }
 
-static void generate_subgraph(ast_prop_impl const &p, node_vect &axioms, property_vect &hyp, property_vect &goal) {
+static void generate_subgraph(ast_prop_impl const &p, axiom_vect &axioms, property_vect &hyp, property_vect &goal) {
   ast_prop_and tmp = merge_prop_and(p.left);
   for(int i = 0, l = tmp.size(); i < l; ++i) {
     ast_prop &q = tmp[i];
@@ -91,7 +91,7 @@ void generate_graph(ast_prop const &p) {
       tmp.right = p;
       q = &tmp;
     }
-    node_vect axioms;
+    axiom_vect axioms;
     property_vect hyp, goal;
     generate_subgraph(*q, axioms, hyp, goal);
     std::set< ast_real const * > real_set;
@@ -100,7 +100,7 @@ void generate_graph(ast_prop const &p) {
     if (hyp.size() != real_set.size()) // we don't want to encounter: x in [0,2] /\ x in [1,3] -> ...
       { std::cerr << "Error: you don't want to have multiple hypotheses concerning the same real.\n"; exit(1); }
     graph_t *g = new graph_t(NULL, hyp, goal, NULL, true);
-    for(node_vect::const_iterator i = axioms.begin(), end = axioms.end(); i != end; ++i)
+    for(axiom_vect::const_iterator i = axioms.begin(), end = axioms.end(); i != end; ++i)
       g->insert_axiom(*i);
     graphs.push_back(g);
   }

@@ -1,11 +1,10 @@
+#include <iostream>
+#include <map>
+#include <set>
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
 #include "proofs/basic_proof.hpp"
 #include "proofs/schemes.hpp"
-
-#include <iostream>
-#include <map>
-#include <set>
 
 std::vector< scheme_factory const * > scheme_register::factories;
 
@@ -75,9 +74,9 @@ void proof_helper::initialize_real(ast_real const *real, proof_scheme const *par
   }
   assert(top_graph);
   // maybe there are some axioms?
-  node_vect axioms = top_graph->find_useful_axioms(real);
-  for(node_vect::const_iterator i = axioms.begin(), i_end = axioms.end(); i != i_end; ++i) {
-    property_vect const &hyp = (*i)->get_hypotheses();
+  axiom_vect axioms = top_graph->find_useful_axioms(real);
+  for(axiom_vect::const_iterator i = axioms.begin(), i_end = axioms.end(); i != i_end; ++i) {
+    property_vect const &hyp = (*i)->hyp;
     ast_real_vect v;
     for(property_vect::const_iterator j = hyp.begin(), j_end = hyp.end(); j != j_end; ++j)
       v.push_back(j->real);
@@ -240,19 +239,18 @@ bool graph_t::populate() {
     v.swap(helper->axiom_reals);
     for(real_set::iterator i = v.begin(), i_end = v.end(); i != i_end; ++i) {
       ast_real const *real = *i;
-      node_vect axioms = find_useful_axioms(real);
-      for(node_vect::const_iterator j = axioms.begin(), j_end = axioms.end(); j != j_end; ++j) {
-        node *n = *j;
-        property_vect const &hyp = n->get_hypotheses();
+      axiom_vect axioms = find_useful_axioms(real);
+      for(axiom_vect::const_iterator j = axioms.begin(), j_end = axioms.end(); j != j_end; ++j) {
+        theorem_node *n = *j;
+        assert(n);
         bool good = true;
-        for(property_vect::const_iterator k = hyp.begin(), k_end = hyp.end(); k != k_end; ++k)
+        for(property_vect::const_iterator k = n->hyp.begin(), k_end = n->hyp.end(); k != k_end; ++k)
           if (!find_proof(*k)) { good = false; break; }
         if (!good) {
           helper->axiom_reals.insert(real);
           continue;
         }
-        node *m = create_modus(n);
-        bool b = try_real(m);
+        bool b = try_real(new modus_node(n));
         assert(b);
         remove_axiom(n);
         helper->insert_dependent(missing_schemes, real);

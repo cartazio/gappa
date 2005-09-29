@@ -215,7 +215,7 @@ node *computation_scheme::generate_proof() const {
   case 2: {
     bool same_ops = r->ops[0] == r->ops[1];
     if (same_ops && r->type == BOP_SUB)
-      return new theorem_node(0, NULL, property(real, zero()), "sub_refl");
+      return create_theorem(0, NULL, property(real, zero()), "sub_refl");
     std::string s;
     node *n1 = find_proof(r->ops[0]);
     if (!n1) return NULL;
@@ -383,7 +383,7 @@ node *number_scheme::generate_proof() const {
   if ((**r).base == 0 || (**r).exponent == 0) s = "constant1";
   else if ((**r).base == 2) s = "constant2";
   else s = "constant10";
-  return new theorem_node(0, NULL, property(real, create_interval(_i)), s);
+  return create_theorem(0, NULL, property(real, create_interval(_i)), s);
 }
 
 ast_real_vect number_scheme::needed_reals() const {

@@ -110,12 +110,35 @@ static std::string display(property const &p) {
 
 static std::string display(node *n);
 
+static std::string display(theorem_node *t) {
+  static int t_id = 0;
+  std::string name = composite('t', ++t_id);
+  auto_flush plouf;
+  plouf << (t->name.empty() ? "Hypothesis " : "Lemma ") << name << " : ";
+  for(property_vect::const_iterator i = t->hyp.begin(), end = t->hyp.end(); i != end; ++i)
+    plouf << display(*i) << " -> ";
+  plouf << display(t->res) << ".\n";
+  if (t->name.empty()) return name;
+  int nb_hyps = t->hyp.size();
+  if (nb_hyps) {
+    plouf << " intros";
+    for(int i = 0; i < nb_hyps; ++i) plouf << " h" << i;
+    plouf << '.';
+  }
+  plouf << " apply " << t->name;
+  if (nb_hyps) {
+    plouf << " with";
+    for(int i = 0; i < nb_hyps; ++i) plouf << " (" << i + 1 << " := h" << i << ')';
+  }
+  plouf << ".\n reflexivity.\nQed.\n";
+  return name;  
+}
+
 typedef std::map< ast_real const *, std::pair< int, interval const * > > property_map;
 
-static void invoke_lemma(auto_flush &plouf, node *m, property_map const &pmap) {
-  plouf << " apply " << display(m) << '.';
-  property_vect const &m_hyp = m->get_hypotheses();
-  for(property_vect::const_iterator j = m_hyp.begin(), j_end = m_hyp.end(); j != j_end; ++j) {
+static void invoke_lemma(auto_flush &plouf, std::string const &name, property_vect const &hyp, property_map const &pmap) {
+  plouf << " apply " << name << '.';
+  for(property_vect::const_iterator j = hyp.begin(), j_end = hyp.end(); j != j_end; ++j) {
     property_map::const_iterator pki = pmap.find(j->real);
     assert(pki != pmap.end());
     int h = pki->second.first;
@@ -129,6 +152,10 @@ static void invoke_lemma(auto_flush &plouf, node *m, property_map const &pmap) {
   plouf << '\n';
 }
 
+static void invoke_lemma(auto_flush &plouf, node *n, property_map const &pmap) {
+  invoke_lemma(plouf, display(n), n->get_hypotheses(), pmap);
+}
+
 static std::map< node *, int > displayed_nodes;
 
 static std::string display(node *n) {
@@ -137,34 +164,20 @@ static std::string display(node *n) {
   std::string name = composite('l', n_id);
   if (n_id < 0) return name;
   auto_flush plouf;
-  plouf << (n->type == AXIOM ? "Hypothesis " : "Lemma ") << name << " : ";
+  plouf << "Lemma " << name << " : ";
   property_vect const &n_hyp = n->get_hypotheses();
   for(property_vect::const_iterator i = n_hyp.begin(), end = n_hyp.end(); i != end; ++i)
     plouf << display(*i) << " -> ";
   property const &n_res = n->get_result();
   std::string p_res = is_empty(n_res.bnd) ? "(forall P, P)" : display(n_res);
-  plouf << p_res << '.';
-  if (n->type == AXIOM) {
-    plouf << '\n';
-    return name;
-  }
+  plouf << p_res << ".\n";
   int nb_hyps = n_hyp.size();
   if (nb_hyps) {
-    plouf << "\n intros";
+    plouf << " intros";
     for(int i = 0; i < nb_hyps; ++i) plouf << " h" << i;
     plouf << '.';
   }
   switch (n->type) {
-  case THEOREM: {
-    theorem_node *t = static_cast< theorem_node * >(n);
-    if (!nb_hyps) plouf << '\n';
-    plouf << " apply " << t->name;
-    if (nb_hyps) {
-      plouf << " with";
-      for(int i = 0; i < nb_hyps; ++i) plouf << " (" << i + 1 << " := h" << i << ')';
-    }
-    plouf << ".\n reflexivity.\nQed.\n";
-    break; }
   case MODUS: {
     plouf << '\n';
     property_map pmap;
@@ -182,8 +195,8 @@ static std::string display(node *n) {
       pmap[res.real] = std::make_pair(num_hyp, &res.bnd);
     }
     modus_node *mn = dynamic_cast< modus_node * >(n);
-    assert(mn);
-    invoke_lemma(plouf, mn->target, pmap);
+    assert(mn && mn->target);
+    invoke_lemma(plouf, display(mn->target), mn->target->hyp, pmap);
     plouf << "Qed.\n";
     break; }
   case INTERSECTION: {

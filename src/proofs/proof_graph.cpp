@@ -15,13 +15,13 @@ node_vect const &node::get_subproofs() const {
   return dummy;
 }
 
-node::node(node_id t, graph_t *g): type(t), graph(g) {
+node::node(node_id t, graph_t *g): type(t), graph(g), nb_good(0) {
   if (g)
     g->insert(this);
 }
 
 node::~node() {
-  assert(succ.empty());
+  assert(succ.empty() && nb_good == 0);
   if (graph)
     graph->remove(this);
 }
@@ -35,16 +35,12 @@ bool graph_t::dominates(graph_t const *g) const {
 }
 
 static bool dominates(node const *n1, node const *n2) {
-  assert(n1);
-  if (n1->type == AXIOM) return true;
-  assert(n1->graph && n2);
+  assert(n1 && n1->graph && n2);
   return n1->graph->dominates(n2->graph);
 }
 
-result_node::result_node(node_id t, property const &p, graph_t *g): node(t, g), res(p) {}
-
 theorem_node::theorem_node(int nb, property const h[], property const &p, std::string const &n)
-    : result_node(THEOREM, p), name(n) {
+    : res(p), name(n) {
   for(int i = 0; i < nb; ++i) hyp.push_back(h[i]);
 }
 
@@ -96,83 +92,48 @@ static void fill_property_vect(property_vect &v, property_map const &m) {
     v.push_back(property(i->first, i->second));
 }
 
-modus_node::modus_node(property_vect const &h, node_vect const &nodes, node *n)
-    : dependent_node(MODUS, n->get_result()) {
+modus_node::modus_node(theorem_node *n)
+    : dependent_node(MODUS) {
+  assert(n);
   target = n;
-  for(node_vect::const_iterator i = nodes.begin(), i_end = nodes.end();
+  property_map pmap;
+  for(property_vect::const_iterator i = n->hyp.begin(), i_end = n->hyp.end();
       i != i_end; ++i) {
-    node *m = *i;
-    assert(dominates(m, this) && m->type != HYPOTHESIS);
-    insert_pred(m);
+    node *m = find_proof(*i);
+    assert(m && dominates(m, this));
+    fill_property_map(pmap, m);
+    if (m->type != HYPOTHESIS)
+      insert_pred(m);
   }
-  hyp = h;
-}
-
-void modus_node::clean_dependencies() {
-  if (target->type != AXIOM)
-    target->clean_dependencies();
-  dependent_node::clean_dependencies();
+  fill_property_vect(hyp, pmap);
 }
 
 modus_node::~modus_node() {
-  if (target->type != AXIOM)
+  // axioms are not owned by modus node
+  if (!target->name.empty())
     delete target;
 }
 
-// a modus can only target an axiom, a theorem, or an union; unless it is an
-// axiom, the target will be strictly owned by the modus
-
-node *create_modus(node *n) {
-  assert(n->type == THEOREM || n->type == AXIOM || n->type == UNION);
-  assert(n->type == AXIOM || n->succ.empty());
-  typedef std::set< ast_real const * > real_set;
-  node_vect nodes;
-  real_set reals;
-  property_vect const &n_hyp = n->get_hypotheses();
-  property_map pmap;
-  for(property_vect::const_iterator i = n_hyp.begin(), i_end = n_hyp.end();
-      i != i_end; ++i) {
-    node *m = find_proof(*i);
-    assert(m);
-    fill_property_map(pmap, m);
-    if (m->type != HYPOTHESIS)
-      nodes.push_back(m);
-  }
-  if (n->type == UNION && nodes.empty())
-    return n;
-  if (n->type != AXIOM) {
-    n->graph->remove(n);
-    n->graph = NULL;
-  }
-  property_vect hyp;
-  fill_property_vect(hyp, pmap);
-  node *res = new modus_node(hyp, nodes, n);
-  if (n->type == AXIOM)
-    n->succ.insert(res);
-  return res;
-}
-
 node *create_theorem(int nb, property const h[], property const &p, std::string const &n) {
-  return create_modus(new theorem_node(nb, h, p, n));
+  return new modus_node(new theorem_node(nb, h, p, n));
 }
 
 class intersection_node: public dependent_node {
-  static property helper(node *n1, node *n2);
+  property res;
+  property_vect hyp;
  public:
   intersection_node(node *n1, node *n2);
+  virtual property const &get_result() const { return res; }
+  virtual property_vect const &get_hypotheses() const { return hyp; }
 };
 
-property intersection_node::helper(node *n1, node *n2) {
+intersection_node::intersection_node(node *n1, node *n2)
+    : dependent_node(INTERSECTION) {
+  assert(dominates(n1, this) && dominates(n2, this));
   property const &res1 = n1->get_result(), &res2 = n2->get_result();
   assert(res1.real == res2.real);
-  return property(res1.real, intersect(res1.bnd, res2.bnd));
-}
-
-intersection_node::intersection_node(node *n1, node *n2)
-    : dependent_node(INTERSECTION, helper(n1, n2)) {
-  assert(dominates(n1, this) && dominates(n2, this));
-  interval const &i1 = n1->get_result().bnd, &i2 = n2->get_result().bnd;
-  if (lower(i1) > lower(i2)) std::swap(n1, n2);
+  res = property(res1.real, intersect(res1.bnd, res2.bnd));
+  if (lower(res1.bnd) > lower(res2.bnd)) std::swap(n1, n2);
   // to simplify the graph, no intersection should be nested
   if (n1->type == INTERSECTION) n1 = n1->get_subproofs()[0];
   if (n2->type == INTERSECTION) n2 = n2->get_subproofs()[1];
@@ -185,24 +146,15 @@ intersection_node::intersection_node(node *n1, node *n2)
   fill_property_map(pmap, n1);
   fill_property_map(pmap, n2);
   fill_property_vect(hyp, pmap);
-  if (is_empty(get_result().bnd))
+  if (is_empty(res.bnd))
     top_graph->contradiction = this;
 }
-
-class graph_node: public node {
-  graph_node(graph_t *g): node(GRAPH, NULL) { graph = g; }
-  friend class graph_t;
- public:
-  virtual property const &get_result() const { assert(false); }
-  virtual property_vect const &get_hypotheses() const { assert(false); }
-  virtual node_vect const &get_subproofs() const {assert(false); }
-};
 
 static void delete_forest(node_set &nodes, node *except) {
   while (!nodes.empty()) {
     node *n = *nodes.begin();
     nodes.erase(n);
-    if (n == except || !n->succ.empty()) continue;
+    if (n == except || !n->succ.empty() || n->nb_good != 0) continue;
     if (n->type != UNION) {
       node_vect const &v = n->get_subproofs();
       nodes.insert(v.begin(), v.end());
@@ -218,19 +170,22 @@ static void delete_tree(node *n) {
 }
 
 graph_t::graph_t(graph_t *f, property_vect const &h, property_vect const &g, proof_helper *p, bool o)
-  : father(f), known_node(new graph_node(this)), hyp(h), goals(g),
-    owned_helper(o), contradiction(NULL) {
+  : father(f), hyp(h), goals(g), owned_helper(o), contradiction(NULL) {
   graph_loader loader(this);
   if (f) {
     assert(hyp.implies(f->hyp));
     known_reals = f->known_reals;
-    for(node_set::const_iterator i = f->axioms.begin(), end = f->axioms.end(); i != end; ++i)
+    for(node_map::iterator i = known_reals.begin(), end = known_reals.end(); i != end; ++i)
+      ++i->second->nb_good;
+    for(axiom_set::const_iterator i = f->axioms.begin(), end = f->axioms.end(); i != end; ++i)
       insert_axiom(*i);
   }
   if (owned_helper) helper = duplicate_proof_helper(p);
   else helper = p;
-  for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
-    try_real(new hypothesis_node(*i));
+  for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i) {
+    node *n = new hypothesis_node(*i);
+    if (!try_real(n)) delete n;
+  }
 }
 
 ast_real_vect graph_t::get_known_reals() const {
@@ -256,21 +211,21 @@ bool graph_t::try_real(node *n) {
       n = new intersection_node(old, n);
     }
     dst = n;
-    old->succ.erase(known_node);
+    --old->nb_good;
     delete_tree(old);
   }
-  n->succ.insert(known_node);
+  ++n->nb_good;
   return true;
 }
 
-node_vect graph_t::find_useful_axioms(ast_real const *real) {
-  node_vect res;
-  node_set ax;
+axiom_vect graph_t::find_useful_axioms(ast_real const *real) {
+  axiom_vect res;
+  axiom_set ax;
   ax.swap(axioms);
   node_map::const_iterator j_end = known_reals.end();
-  for(node_set::const_iterator i = ax.begin(), i_end = ax.end(); i != i_end; ++i) {
-    node *n = *i;
-    property const &p = n->get_result();
+  for(axiom_set::const_iterator i = ax.begin(), i_end = ax.end(); i != i_end; ++i) {
+    theorem_node *n = *i;
+    property const &p = n->res;
     if (p.real == real) {
       node_map::const_iterator j = known_reals.find(real);
       if (j != j_end) {
@@ -289,11 +244,12 @@ node *graph_t::find_already_known(ast_real const *real) const {
   return (i != known_reals.end()) ? i->second : NULL;
 }
 
-void graph_t::insert_axiom(node *n) {
-  assert(n && n->type == AXIOM && !n->graph);
-  if (hyp.implies(n->get_hypotheses())) {
+void graph_t::insert_axiom(theorem_node *n) {
+  assert(n);
+  if (hyp.implies(n->hyp)) {
     graph_loader loader(this);
-    try_real(create_modus(n));
+    node *m = new modus_node(n);
+    if (!try_real(m)) delete m;
   } else axioms.insert(n);
 }
 
@@ -303,17 +259,14 @@ graph_t::~graph_t() {
     assert(n && n->graph == this);
     n->clean_dependencies();
   }
-  for(node_map::const_iterator i = known_reals.begin(), end = known_reals.end(); i != end; ++i) {
-    node *n = i->second;
-    n->succ.erase(known_node);
-  }
+  for(node_map::const_iterator i = known_reals.begin(), end = known_reals.end(); i != end; ++i)
+    --i->second->nb_good;
   node_set ns;
   ns.swap(nodes);
   for(node_set::const_iterator i = ns.begin(), end = ns.end(); i != end; ++i)
     delete *i;
   if (owned_helper)
     delete_proof_helper(helper);
-  delete known_node;
 }
 
 void graph_t::flatten() {
@@ -340,7 +293,7 @@ void graph_t::purge(node *except) {
   m.swap(known_reals);
   for(node_map::const_iterator i = m.begin(), i_end = m.end(); i != i_end; ++i) {
     if (reals.count(i->first) == 0)
-      i->second->succ.erase(known_node);
+      --i->second->nb_good;
     else
       known_reals.insert(*i);
   }
@@ -355,7 +308,7 @@ bool graph_t::migrate() {
   while (!ns.empty()) {
     node *n = *ns.begin();
     ns.erase(n);
-    if (n->graph != this || n->type == HYPOTHESIS || n->type == GRAPH) continue;
+    if (n->graph != this || n->type == HYPOTHESIS) continue;
     node_vect const &v = n->get_subproofs();
     bool good = true;
     for(node_vect::const_iterator i = v.begin(), i_end = v.end(); i != i_end; ++i)
