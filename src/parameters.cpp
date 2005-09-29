@@ -1,14 +1,14 @@
 #include <iostream>
 #include <string>
-
 #include "../config.h"
+#include "backends/backend.hpp"
 
 int parameter_internal_precision = 60;
 int parameter_dichotomy_depth = 100;
 bool warning_dichotomy_failure = true;
 bool warning_hint_difference = true;
 bool warning_null_denominator = true;
-std::string proof_generator;
+backend_register const *proof_generator = NULL;
 
 static void help() {
   std::cerr <<
@@ -56,9 +56,12 @@ bool parse_option(std::string const &s, bool internal) {
     break; }
   case 'B': {
     if (internal) return false;
-    proof_generator = s.substr(2);
-    if (proof_generator == "null") proof_generator.clear();
-    else if (proof_generator != "coq") return false;
+    std::string ss = s.substr(2);
+    if (ss == "null") proof_generator = NULL;
+    else {
+      proof_generator = backend_register::find(ss);
+      if (!proof_generator) return false;
+    }
     break; }
   default:
     return false;

@@ -2,6 +2,7 @@
 #include <ostream>
 #include <sstream>
 
+#include "backends/backend.hpp"
 #include "numbers/interval_utility.hpp"
 #include "numbers/round.hpp"
 #include "parser/ast.hpp"
@@ -248,18 +249,24 @@ static std::string display(node *n) {
   return name;
 }
 
-void coq_display(std::ostream &stream, node_vect const &nodes) {
-  out = &stream;
-  stream << "Require Import IA_comput.\n"
-            "Require Import IA_manip.\n"
-            "Require Import IA_float.\n"
-            "Section Gappa_generated.\n";
-  for(node_vect::const_iterator i = nodes.begin(), end = nodes.end();
-      i != end; ++i)
-    if (*i)
-      if ((*i)->type == HYPOTHESIS)
-        std::cerr << "Warning: proof of triviality will not be generated.\n";
-      else
-        display(*i);
-  stream << "End Gappa_generated.\n";
-}
+struct coq_backend: backend {
+  coq_backend(std::ostream &o): backend(o) {
+    ::out = &o;
+    out << "Require Import IA_comput.\n"
+           "Require Import IA_manip.\n"
+           "Require Import IA_float.\n"
+           "Section Gappa_generated.\n";
+  }
+  virtual ~coq_backend() {
+    out << "End Gappa_generated.\n";
+  }
+  virtual void axiom() {}
+  virtual void theorem(node *n) {
+    assert(n);
+    if (n->type == HYPOTHESIS)
+      std::cerr << "Warning: proof of triviality will not be generated.\n";
+    else display(n);
+  }
+};
+
+REGISTER_BACKEND(coq);

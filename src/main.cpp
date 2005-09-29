@@ -1,19 +1,20 @@
+#include <iostream>
+#include "backends/backend.hpp"
 #include "numbers/interval_utility.hpp"
 #include "parser/ast.hpp"
 #include "proofs/proof_graph.hpp"
 #include "proofs/schemes.hpp"
 
-#include <iostream>
-
 extern int yyparse(void);
 extern std::vector< graph_t * > graphs;
-extern void coq_display(std::ostream &stream, node_vect const &nodes);
 extern bool parse_args(int argc, char **argv);
-extern std::string proof_generator;
+extern backend_register const *proof_generator;
 
 int main(int argc, char **argv) {
   if (!parse_args(argc, argv)) return 0;
   yyparse();
+  backend *display = NULL;
+  if (proof_generator) display = proof_generator->create(std::cout);
   for(std::vector< graph_t * >::const_iterator i = graphs.begin(), i_end = graphs.end(); i != i_end; ++i) {
     graph_t *g = *i;
     graph_loader loader(g);
@@ -31,8 +32,9 @@ int main(int argc, char **argv) {
     std::cerr << "\n\n";
     if (g->populate()) {
       node_vect results(nb);
-      std::cerr << "Hypotheses are in contradiction, any result is true.\n";
-      coq_display(std::cout, node_vect(1, g->get_contradiction()));
+      std::cerr << "Warning: Hypotheses are in contradiction, any result is true.\n";
+      if (display)
+        display->theorem(g->get_contradiction());
     } else {
       node_vect results(nb);
       for(int j = 0; j < nb; ++j) {
@@ -46,10 +48,12 @@ int main(int argc, char **argv) {
         property const &p = n->get_result();
         std::cerr << dump_real(p.real) << " in " << p.bnd << '\n';
       }
-      if (proof_generator == "coq")
-        coq_display(std::cout, results);
+      if (display)
+        for(node_vect::const_iterator i = results.begin(), end = results.end(); i != end; ++i)
+          if (*i) display->theorem(*i);
     }
     delete g;
   }
+  delete display;
   return 0;
 }

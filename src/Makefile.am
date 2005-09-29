@@ -6,6 +6,7 @@ bin_PROGRAMS = gappa
 
 # Dependencies:
 # parser/ast.cpp initialization requires proofs/field.cpp initialization
+# backends/*.cpp initialization requires backends/backends.cpp initialization
 
 gappa_SOURCES = \
 	arithmetic/double.cpp \
@@ -13,6 +14,8 @@ gappa_SOURCES = \
 	arithmetic/float.cpp \
 	arithmetic/homogen.cpp \
 	backends/coq.cpp \
+	backends/backend.cpp \
+	backends/backend.hpp \
 	numbers/interval.cpp \
 	numbers/interval.hpp \
 	numbers/interval_arith.hpp \
