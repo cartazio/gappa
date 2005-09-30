@@ -1,12 +1,15 @@
-#include <iostream>
 #include <map>
 #include <set>
+#include <vector>
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
 #include "proofs/basic_proof.hpp"
 #include "proofs/schemes.hpp"
 
-std::vector< scheme_factory const * > scheme_register::factories;
+struct scheme_factories: std::vector< scheme_factory const * > {
+  ~scheme_factories() { for(iterator i = begin(), i_end = end(); i != i_end; ++i) delete *i; }
+};
+static scheme_factories factories;
 
 struct scheme_factory_wrapper: scheme_factory {
   typedef scheme_register::scheme_factory_fun scheme_factory_fun;
@@ -66,8 +69,7 @@ void proof_helper::initialize_real(ast_real const *real, proof_scheme const *par
   it = reals.insert(std::make_pair(real, real_dependency())).first;
   real_dependency &dep = it->second;
   scheme_set &l = dep.schemes;
-  typedef scheme_register all_schemes;
-  for(all_schemes::iterator i = all_schemes::begin(), i_end = all_schemes::end(); i != i_end; ++i) {
+  for(scheme_factories::iterator i = factories.begin(), i_end = factories.end(); i != i_end; ++i) {
     proof_scheme *s = (**i)(real);
     if (!s) continue;
     l.insert(s);
