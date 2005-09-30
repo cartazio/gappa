@@ -49,6 +49,7 @@ struct ast_ident {
   function_generator const *fun;
   ast_real const *var;
   ast_ident(std::string const &s): name(s), fun(NULL), var(NULL) {}
+  bool operator<(ast_ident const &i) const { return name < i.name; }
   static ast_ident *find(std::string const &s);
   static ast_ident *temp();
 };

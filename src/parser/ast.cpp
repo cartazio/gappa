@@ -2,34 +2,9 @@
 #include <cassert>
 #include <set>
 #include <sstream>
-
 #include "numbers/round.hpp"
 #include "parser/ast.hpp"
 #include "proofs/schemes.hpp"
-
-namespace {
-
-struct ast_ident_lt {
-  bool operator()(ast_ident const *i1, ast_ident const *i2) {
-    return i1->name < i2->name;
-  }
-};
-
-}
-
-typedef std::set< ast_ident *, ast_ident_lt > store_t;
-static store_t store;
-
-ast_ident *ast_ident::find(std::string const &s) {
-  ast_ident id(s);
-  store_t::const_iterator i = store.find(&id);
-  ast_ident *ptr;
-  if (i == store.end()) {
-    ptr = new ast_ident(id);
-    store.insert(ptr);
-  } else ptr = *i;
-  return ptr;
-}
 
 template< class T >
 class cache {
@@ -40,20 +15,24 @@ class cache {
   store_t store;
  public:
   T *find(T const &);
-  typedef typename store_t::iterator iterator;
-  iterator begin() const { return store.begin(); }
-  iterator end  () const { return store.end  (); }
+  ~cache();
 };
 
 template< class T >
 T *cache< T >::find(T const &v) {
-  iterator i = store.find(const_cast< T * >(&v));
+  typename store_t::iterator i = store.find(const_cast< T * >(&v));
   T *ptr;
   if (i == store.end()) {
     ptr = new T(v);
     store.insert(ptr);
   } else ptr = *i;
   return ptr;
+}
+
+template< class T >
+cache< T >::~cache() {
+  for(typename store_t::iterator i = store.begin(), end = store.end(); i != end; ++i)
+    delete *i;
 }
 
 bool ast_real::operator==(ast_real const &v) const {
@@ -68,6 +47,8 @@ bool ast_real::operator<(ast_real const &v) const {
   return ast_real_aux::operator<(static_cast< ast_real_aux const & >(v));
 }
 
+static cache< ast_ident > ast_ident_cache;
+ast_ident *ast_ident::find(std::string const &s) { return ast_ident_cache.find(ast_ident(s)); }
 static cache< ast_number > ast_number_cache;
 ast_number *normalize(ast_number const &v) { return ast_number_cache.find(v); }
 static cache< ast_real > ast_real_cache;
