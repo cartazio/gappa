@@ -182,10 +182,8 @@ graph_t::graph_t(graph_t *f, property_vect const &h, property_vect const &g, pro
   }
   if (owned_helper) helper = duplicate_proof_helper(p);
   else helper = p;
-  for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i) {
-    node *n = new hypothesis_node(*i);
-    if (!try_real(n)) delete n;
-  }
+  for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
+    try_real(new hypothesis_node(*i));
 }
 
 ast_real_vect graph_t::get_known_reals() const {
@@ -204,9 +202,10 @@ bool graph_t::try_real(node *n) {
     node *old = dst;
     property const &res1 = old->get_result();
     interval const &i1 = res1.bnd, &i2 = res2.bnd;
-    if (i1 <= i2)
+    if (i1 <= i2) {
+      delete_tree(n);
       return false;
-    else if (!(i2 < i1)) {
+    } else if (!(i2 < i1)) {
       graph_loader loader(this);
       n = new intersection_node(old, n);
     }
@@ -248,8 +247,7 @@ void graph_t::insert_axiom(theorem_node *n) {
   assert(n);
   if (hyp.implies(n->hyp)) {
     graph_loader loader(this);
-    node *m = new modus_node(n);
-    if (!try_real(m)) delete m;
+    try_real(new modus_node(n));
   } else axioms.insert(n);
 }
 
@@ -269,6 +267,7 @@ graph_t::~graph_t() {
     delete_proof_helper(helper);
 }
 
+// FIXME: contradiction handling
 void graph_t::flatten() {
   assert(father && father->hyp.implies(hyp));
   node_set ns;
@@ -277,12 +276,24 @@ void graph_t::flatten() {
     node *n = *i;
     assert(n && n->graph == this);
     if (n->type != HYPOTHESIS) {
+      property const &res = n->get_result();
+      node_map::iterator i = known_reals.find(res.real);
+      if (i != known_reals.end() && i->second == n) {
+        // if this is a known real, it should override any older known real
+        std::pair< node_map::iterator, bool > ib = father->known_reals.insert(std::make_pair(res.real, n));
+        if (!ib.second) { // there was a known real in the father and it has to be overridden
+          node *&dst = ib.first->second;
+          assert(res.bnd <= dst->get_result().bnd);
+          --dst->nb_good;
+          delete_tree(dst);
+          dst = n;
+        }
+        known_reals.erase(i);
+      }
       father->nodes.insert(n);
       n->graph = father;
     } else nodes.insert(n);
   }
-  for(node_map::const_iterator i = known_reals.begin(), end = known_reals.end(); i != end; ++i)
-    father->try_real(i->second);
 }
 
 void graph_t::purge(node *except) {
@@ -321,7 +332,8 @@ bool graph_t::migrate() {
     father->nodes.insert(n);
     n->graph = father;
     ns.insert(n->succ.begin(), n->succ.end());
-    father->try_real(n);
+    bool b = father->try_real(n);
+    assert(b);
     res = true;
   }
   return res;

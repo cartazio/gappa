@@ -228,11 +228,11 @@ bool graph_t::populate() {
     if (n && try_real(n)) {
       if (top_graph->get_contradiction()) break;
       helper->insert_dependent(missing_schemes, s->real);
-    }
-    if (completely_bounded && n && i != bounds_end && n->get_result().bnd <= *i->second) {
-      bounds.erase(s->real);
-      if (bounds.empty()) break;
-      bounds_end = bounds.end();
+      if (completely_bounded && i != bounds_end && n->get_result().bnd <= *i->second) {
+        bounds.erase(s->real);
+        if (bounds.empty()) break;
+        bounds_end = bounds.end();
+      }
     }
     if (helper->axiom_reals.empty() || (iter % 256 && !missing_schemes.empty())) continue;
     real_set v;
