@@ -30,6 +30,6 @@ class backend_register {
     name##_backend_register(): backend_register(#name) {} \
     virtual backend *create(std::ostream &out) const { return new name##_backend(out); } \
   }; \
-  static name##_backend_register dummy;
+  static name##_backend_register dummy
 
 #endif // BACKENDS_BACKEND_HPP
