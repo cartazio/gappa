@@ -7,6 +7,7 @@ Version 0.5.0:
    - simplified rounding and function syntax: purely C++-template-like syntax
  * arithmetic
    - replaced relative rounding by functions
+   - factored rounding handling
    - added fixed-point arithmetic
    - generalized floating-point rounding modes to any triplet (precision, subnormal smallest exponent, direction)
  * proof graph
