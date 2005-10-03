@@ -16,34 +16,6 @@ struct float_format: gs_rounding {
   float_format(int e, int p): min_exp(e), prec(p) {}
 };
 
-enum direction_type { ROUND_UP, ROUND_DN, ROUND_ZR, ROUND_NE };
-
-static rounding_fun direction_functions[4] = {
-  &float_format::roundU,
-  &float_format::roundD,
-  &float_format::roundZ,
-  &float_format::roundNE
-};
-
-static char const *direction_names[4] = { "up", "dn", "zr", "ne" };
-
-typedef std::map< ast_ident const *, direction_type > float_directions;
-static float_directions directions;
-
-struct float_direction_register {
-  float_direction_register(char const *name, direction_type t) {
-    directions.insert(std::make_pair(ast_ident::find(name), t));
-  }
-};
-
-#define REGISTER_DIRECTION(name, t) \
-  static float_direction_register name##_direction_register(#name, t)
-
-REGISTER_DIRECTION(up, ROUND_UP);
-REGISTER_DIRECTION(dn, ROUND_DN);
-REGISTER_DIRECTION(zr, ROUND_ZR);
-REGISTER_DIRECTION(ne, ROUND_NE);
-
 typedef std::map< ast_ident const *, float_format > float_formats;
 static float_formats formats;
 
@@ -88,22 +60,22 @@ typedef std::map< long long int, float_rounding_class > float_cache;
 static float_cache cache;
 function_class const *float_rounding_generator::operator()(function_params const &p) const {
   if (p.empty()) return NULL;
-  ast_ident const *nf = param_ident(p[0]), *nd;
+  ast_ident const *nf = param_ident(p[0]);
+  int nd;
   float_format f;
   if (nf) {
     if (p.size() != 2) return NULL;
     float_formats::const_iterator i = formats.find(nf);
     if (i == formats.end()) return NULL;
     f = i->second;
-    nd = param_ident(p[1]);
+    nd = 1;
   } else {
     if (p.size() != 3) return NULL;
     if (!param_int(p[0], f.prec) || !param_int(p[1], f.min_exp)) return NULL;
-    nd = param_ident(p[2]);
+    nd = 2;
   }
-  float_directions::const_iterator i = directions.find(nd);
-  if (i == directions.end()) return NULL;
-  direction_type d = i->second;
+  direction_type d = get_direction(p[nd]);
+  if (d == ROUND_ARGL) return NULL;
   long long int h = (((long long int)f.min_exp) << 24) | (f.prec << 8) | (int)d;
   float_cache::const_iterator j = cache.find(h);
   if (j != cache.end()) return &j->second;
@@ -127,7 +99,7 @@ interval float_rounding_class::round(interval const &i, std::string &name) const
   rounding_fun f = direction_functions[type];
   number a = round_number(lower(i), &format, f);
   number b = round_number(upper(i), &format, f);
-  name = std::string("float") + ident + "_round";
+  name = "(float_round" + ident + ')';
   return interval(a, b);
 }
 
@@ -182,9 +154,10 @@ interval float_rounding_class::absolute_error_from_real(interval const &i, std::
 interval float_rounding_class::absolute_error_from_rounded(interval const &i, std::string &name) const {
   int e1 = exponent(lower(i), format), e2 = exponent(upper(i), format);
   int e_err = std::max(e1, e2);
-  if (type == ROUND_NE) --e_err;
   name = "(float_absolute_inv" + ident + ')';
-  return from_exponent(e_err, type == ROUND_UP ? 1 : (type == ROUND_DN ? -1 : 0));
+  if (type == ROUND_DN || type == ROUND_ZR && lower(i) > 0) return from_exponent(e_err, -1);
+  if (type == ROUND_UP || type == ROUND_ZR && upper(i) < 0) return from_exponent(e_err, +1);
+  return from_exponent(type == ROUND_ZR ? e_err : e_err - 1, 0);
 }
 
 interval float_rounding_class::relative_error_from_real(interval const &i, std::string &name) const {

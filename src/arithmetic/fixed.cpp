@@ -6,65 +6,54 @@
 #include "numbers/round.hpp"
 #include "parser/ast.hpp"
 
-struct fixed_rounding_class: function_class {
-  int prec;
-  fixed_rounding_class(int p): prec(p) {}
-  virtual interval round                      (interval const &, std::string &) const;
-  virtual interval absolute_error_from_real   (interval const &, std::string &) const;
-  virtual interval absolute_error_from_rounded(interval const &, std::string &) const;
-  virtual std::string name() const;
- private:
-  number trunc(number const &) const;
+struct fixed_format: gs_rounding {
+  int min_exp;
+  virtual int shift_val(int exp, int) const { return min_exp - exp; }
+  fixed_format() {}
+  fixed_format(int e): min_exp(e) {}
 };
 
-number fixed_rounding_class::trunc(number const &n) const {
-  mpz_t m;
-  mpz_init(m);
-  int s, e;
-  split_exact(n.mpfr_data(), m, e, s);
-  number res = n;
-  if (e < prec) {
-    mpz_fdiv_q_2exp(m, m, prec - e);
-    mpfr_t &f = res.unique()->val;
-    mpfr_set_prec(f, parameter_internal_precision);
-    int v = mpfr_set_z(f, m, GMP_RNDN);
-    assert(v == 0);
-    mpfr_mul_2si(f, f, prec, GMP_RNDN);
-    if (s < 0) mpfr_neg(f, f, GMP_RNDN);
-  }
-  mpz_clear(m);
-  return res;
+struct fixed_rounding_class: function_class {
+  fixed_format format;
+  direction_type type;
+  std::string ident;
+  fixed_rounding_class(fixed_format const &f, direction_type t, std::string const &i)
+    : format(f), type(t), ident(i) {}
+  virtual interval round                      (interval const &, std::string &) const;
+  virtual interval enforce                    (interval const &, std::string &) const;
+  virtual interval absolute_error_from_real   (interval const &, std::string &) const;
+  virtual interval absolute_error_from_rounded(interval const &, std::string &) const;
+  virtual std::string name() const { return "rounding_fixed " + ident; }
+};
+
+interval fixed_rounding_class::enforce(interval const &i, std::string &name) const {
+  number a = round_number(lower(i), &format, &fixed_format::roundU);
+  number b = round_number(upper(i), &format, &fixed_format::roundD);
+  if (!(a <= b)) return interval();
+  name = "(fixed_enforce" + ident + ')';
+  return interval(a, b);
 }
 
 interval fixed_rounding_class::round(interval const &i, std::string &name) const {
-  std::ostringstream s;
-  s << "(fixed_error " << prec << ')';
-  name = s.str();
-  return interval(trunc(lower(i)), trunc(upper(i)));
+  rounding_fun f = direction_functions[type];
+  number a = round_number(lower(i), &format, f);
+  number b = round_number(upper(i), &format, f);
+  name = "(fixed_round" + ident + ')';
+  return interval(a, b);
 }
 
 interval fixed_rounding_class::absolute_error_from_real(interval const &i, std::string &name) const {
-  std::ostringstream s;
-  s << "(fixed_error " << prec << ')';
-  name = s.str();
-  if (lower(i) >= 0) return from_exponent(prec, -1);
-  if (upper(i) <= 0) return from_exponent(prec, +1);
-  return from_exponent(prec, 0);
+  name = "(fixed_error" + ident + ')';
+  if (type == ROUND_DN || type == ROUND_ZR && lower(i) >= 0) return from_exponent(format.min_exp, -1);
+  if (type == ROUND_UP || type == ROUND_ZR && upper(i) <= 0) return from_exponent(format.min_exp, +1);
+  return from_exponent(type == ROUND_ZR ? format.min_exp : format.min_exp - 1, 0);
 }
 
 interval fixed_rounding_class::absolute_error_from_rounded(interval const &i, std::string &name) const {
-  std::ostringstream s;
-  s << "(fixed_error " << prec << ')';
-  name = s.str();
-  if (lower(i) > 0) return from_exponent(prec, -1);
-  if (upper(i) < 0) return from_exponent(prec, +1);
-  return from_exponent(prec, 0);
-}
-
-std::string fixed_rounding_class::name() const {
-  std::ostringstream s;
-  s << "rounding_fixed " << prec;
-  return s.str();
+  name = "(fixed_error_inv" + ident + ')';
+  if (type == ROUND_DN || type == ROUND_ZR && lower(i) > 0) return from_exponent(format.min_exp, -1);
+  if (type == ROUND_UP || type == ROUND_ZR && upper(i) < 0) return from_exponent(format.min_exp, +1);
+  return from_exponent(type == ROUND_ZR ? format.min_exp : format.min_exp - 1, 0);
 }
 
 struct fixed_rounding_generator: function_generator {
@@ -79,17 +68,21 @@ fixed_rounding_generator::fixed_rounding_generator() {
   id->fun = this;
 }
 
-typedef std::map< int, function_class const * > fixed_cache;
+typedef std::map< int, fixed_rounding_class > fixed_cache;
 static fixed_cache cache;
 
 function_class const *fixed_rounding_generator::operator()(function_params const &p) const {
-  int prec;
-  if (p.size() != 1 || !param_int(p[0], prec)) return NULL;
-  fixed_cache::const_iterator i = cache.find(prec);
-  if (i != cache.end()) return i->second;
-  function_class const *rnd = new fixed_rounding_class(prec);
-  cache.insert(std::make_pair(prec, rnd));
-  return rnd;
+  fixed_format f;
+  if (p.size() != 2 || !param_int(p[0], f.min_exp)) return NULL;
+  direction_type d = get_direction(p[1]);
+  if (d == ROUND_ARGL) return NULL;
+  int h = (f.min_exp << 8) | (int)d;
+  fixed_cache::const_iterator i = cache.find(h);
+  if (i != cache.end()) return &i->second;
+  std::ostringstream s;
+  s << direction_names[d] << " (" << f.min_exp << ')';
+  i = cache.insert(std::make_pair(h, fixed_rounding_class(f, d, s.str()))).first;
+  return &i->second;
 }
 
 static fixed_rounding_generator dummy;

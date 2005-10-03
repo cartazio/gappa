@@ -40,4 +40,9 @@ struct interval;
 typedef void (gs_rounding::*rounding_fun)(mpfr_t &) const;
 number round_number(number const &, gs_rounding const *, rounding_fun);
 
+enum direction_type { ROUND_UP, ROUND_DN, ROUND_ZR, ROUND_NE, ROUND_ARGL = -1 };
+extern char const *direction_names[4];
+extern rounding_fun direction_functions[4];
+direction_type get_direction(unsigned long);
+
 #endif // NUMBERS_ROUND_HPP
