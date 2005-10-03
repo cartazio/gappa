@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cassert>
 #include <map>
 #include <sstream>
 #include "numbers/interval_utility.hpp"
@@ -7,6 +8,13 @@
 #include "parser/ast.hpp"
 #include "proofs/proof_graph.hpp"
 #include "proofs/schemes.hpp"
+
+struct float_format: gs_rounding {
+  int min_exp, prec;
+  virtual int shift_val(int exp, int sz) const { return std::max(min_exp - exp, sz - prec); }
+  float_format() {}
+  float_format(int e, int p): min_exp(e), prec(p) {}
+};
 
 enum direction_type { ROUND_UP, ROUND_DN, ROUND_ZR, ROUND_NE };
 
@@ -41,8 +49,7 @@ static float_formats formats;
 
 struct float_format_register {
   float_format_register(char const *name, int e, int p) {
-    float_format f = { min_exp: e, prec: p };
-    formats.insert(std::make_pair(ast_ident::find(name), f));
+    formats.insert(std::make_pair(ast_ident::find(name), float_format(e, p)));
   }
 };
 
@@ -91,7 +98,7 @@ function_class const *float_rounding_generator::operator()(function_params const
     nd = param_ident(p[1]);
   } else {
     if (p.size() != 3) return NULL;
-    if (!param_int(p[0], *reinterpret_cast< int *>(&f.prec)) || !param_int(p[1], f.min_exp)) return NULL;
+    if (!param_int(p[0], f.prec) || !param_int(p[1], f.min_exp)) return NULL;
     nd = param_ident(p[2]);
   }
   float_directions::const_iterator i = directions.find(nd);

@@ -52,10 +52,14 @@ floatx_rounding_class::floatx_rounding_class() {
   new default_function_generator("float80x", this);
 }
 
+struct floatx_format: gs_rounding {
+  virtual int shift_val(int exp, int sz) const { return std::max(-1074 - exp, sz - 53); }
+};
+
 interval floatx_rounding_class::round(interval const &i, std::string &name) const {
-  static float_format format = { min_exp: -1074, prec: 53 };
-  number a = round_number(lower(i), &format, &float_format::roundD);
-  number b = round_number(upper(i), &format, &float_format::roundU);
+  static floatx_format format;
+  number a = round_number(lower(i), &format, &floatx_format::roundD);
+  number b = round_number(upper(i), &format, &floatx_format::roundU);
   name = "float80x_round";
   return interval(a, b);
 }

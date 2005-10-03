@@ -16,27 +16,28 @@ struct rnd {
   void shr(int d);
 };
 
-class float_format {
+class gs_rounding {
   void succ(mpz_t &m, int &e) const;
   void trunc(mpfr_t const &f, rnd &r, int &sign) const;
-  typedef bool (float_format::*rnd_fun)(rnd const &) const;
+  typedef bool (gs_rounding::*rnd_fun)(rnd const &) const;
   void round(mpfr_t &f, rnd_fun g1, rnd_fun g2) const;
   bool rndZ(rnd const &) const { return false; }
   bool rndU(rnd const &) const;
   bool rndNE(rnd const &) const;
+ protected:
+  virtual int shift_val(int, int) const = 0;
  public:
-  int min_exp;
-  unsigned prec;
-  void roundZ(mpfr_t &f) const { round(f, &float_format::rndZ, &float_format::rndZ); }
-  void roundU(mpfr_t &f) const { round(f, &float_format::rndU, &float_format::rndZ); }
-  void roundD(mpfr_t &f) const { round(f, &float_format::rndZ, &float_format::rndU); }
-  void roundNE(mpfr_t &f) const { round(f, &float_format::rndNE, &float_format::rndNE); }
+  void roundZ(mpfr_t &f) const { round(f, &gs_rounding::rndZ, &gs_rounding::rndZ); }
+  void roundU(mpfr_t &f) const { round(f, &gs_rounding::rndU, &gs_rounding::rndZ); }
+  void roundD(mpfr_t &f) const { round(f, &gs_rounding::rndZ, &gs_rounding::rndU); }
+  void roundNE(mpfr_t &f) const { round(f, &gs_rounding::rndNE, &gs_rounding::rndNE); }
+  virtual ~gs_rounding() {}
 };
 
 struct number;
 struct interval;
 
-typedef void (float_format::*rounding_fun)(mpfr_t &) const;
-number round_number(number const &, float_format const *, rounding_fun);
+typedef void (gs_rounding::*rounding_fun)(mpfr_t &) const;
+number round_number(number const &, gs_rounding const *, rounding_fun);
 
 #endif // NUMBERS_ROUND_HPP
