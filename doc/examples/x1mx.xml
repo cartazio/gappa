@@ -13,18 +13,18 @@
 </programlisting>
 
 <para>This function computes the value <code>x * (1 - x)</code> for an argument
-<code>x</code> between 0 and 1. The <type>float</type> type is meant to force the compiler
-to use IEEE-754 single precision floating-point numbers. We will also assume
-that the default rounding mode is used: rounding to nearest number, break to
-even on tie.</para>
+<code>x</code> between 0 and 1. The <type>float</type> type is meant to force
+the compilerbvto use IEEE-754 single precision floating-point numbers. We will
+also assume that the default rounding mode is used: rounding to nearest number,
+break to even on tie.</para>
 
 <para>The function returns the value <texinline>x \otimes (1 \ominus x)</texinline>
-instead of the ideal value <texinline>x \cdot (1 - x)</texinline> due to the limited precision of the
-computations. If we rule out the overflow possibility (floating-point numbers
-are limited, not only in precision, but also in range), the returned value is
-also <texinline>\circ(x \cdot \circ(1 - x))</texinline>. This o function is a unary operator related to
-the floating-point format and the rounding mode used for the computations.
-This is the form Gappa works on.</para>
+instead of the ideal value <texinline>x \cdot (1 - x)</texinline> due to the
+limited precision of the computations. If we rule out the overflow possibility
+(floating-point numbers are limited, not only in precision, but also in range),
+the returned value is also <texinline>\circ(x \cdot \circ(1 - x))</texinline>.
+This o function is a unary operator related to the floating-point format and
+the rounding mode used for the computations. This is the form Gappa works on.</para>
 </section>
 
 <section>
@@ -38,27 +38,85 @@ result is in ... something. Since we do not want to enforce some specific
 bounds yet, we will just note this interval <code>?</code> for now.</para>
 
 <para>The logical formula Gappa has to verify is enclosed between braces. The
-rounding operator is noted between angles. <code>float32ne</code> means:
-standard floating-point format stored on 32 bits (IEEE-754 single precision
-format) with rounding to nearest even. The following Gappa line will ask Gappa
-to find an interval such that the logical formula describing our previous
-function is true.</para>
+rounding operator is a unary function <code>float&lt; ieee_32, ne &gt;</code>.
+The result of this function is a real number that would fit in a IEEE-754 single
+precision (<code>ieee_32</code>) floating-point number (<code>float</code>), if
+there was no overflow. This number is potentially a subnormal number and it
+was obtained by rounding the argument of the rounding operator toward nearest
+even (<code>ne</code>).</para>
 
-<programlisting><![CDATA[{ x in [0,1] -> <float32ne>(x * <float32ne>(1 - x)) in ? }]]>
+<para>The following Gappa line will ask Gappa to find an interval such that
+the logical formula describing our previous function is true.</para>
+
+<programlisting><![CDATA[{ x in [0,1] -> float<ieee_32,ne>(x * float<ieee_32,ne>(1 - x)) in ? }]]>
 </programlisting>
 
 <para>Gappa will answer that the result is between 0 and 1. Without any help
 from the user, they are the best bounds Gappa will be able to reach.</para>
 
-<programlisting><![CDATA[$ echo "{ x in [0,1] -> <float32ne>(x * <float32ne>(1 - x)) in ? }" | src/gappa
+<screen><![CDATA[$ echo "{ x in [0,1] -> float<ieee_32,ne>(x * float<ieee_32,ne>(1 - x)) in ? }" | src/gappa
 
-<float32ne>(x * <float32ne>(1 - x)) in [0 {-0}, 1 {1}]]]>
-</programlisting>
+[rounding_float_ne 24 149](x * [rounding_float_ne 24 149](1 - x)) in [0 {-0}, 1 {1}]]]>
+</screen>
 
 <para>Gappa will display the bounds it has reached. The numbers between braces
 are an approximation of the numbers on their left. These exact left numbers are
 written in decimal with a power-of-two exponent. The precise format will be
 described below.</para>
+</section>
+
+<section>
+<title>Defining notations</title>
+
+<para>Directly writing the completely expanded logical formula is fine for small
+formulas, but it may become tedious once the problem gets big enough. For this
+reason, notations can be defined to avoid repeating the same terms over and over.
+These notations are all written before the logical formula.</para>
+
+<para>For example, if we had wanted not only the resulting range of the function,
+but also the absolute error, it would have been tedious to write the expression
+of the result two times. So we will give it a name.</para>
+
+<programlisting><![CDATA[y = float<ieee_32,ne>(x * float<ieee_32,ne>(1 - x));
+{ x in [0,1] -> y in ? /\ y - x * (1 - x) in ? }]]>
+</programlisting>
+
+<para>We can simplify the input a bit further by giving a name to the rounding
+operator too.</para>
+
+<programlisting><![CDATA[@rnd = float< ieee_32, ne >;
+y = rnd(x * rnd(1 - x));
+{ x in [0,1] -> y in ? /\ y - x * (1 - x) in ? }]]>
+</programlisting>
+
+<para>These explicit rounding operators right in the middle of the expressions
+make it difficult to directly express the initial C code. So we will factor
+the operators by putting before the equal sign.</para>
+
+<programlisting><![CDATA[@rnd = float< ieee_32, ne >;
+y rnd= x * (1 - x);]]>
+</programlisting>
+
+<para>Please note that this implicit rounding operator only applies to the
+results of arithmetic operations. In particular, <code>a rnd= b</code> is not
+equivalent to <code>a = rnd(b)</code>; it is equivalent to <code>a = b</code>.</para>
+
+<para>Finally, we can also give a name to the infinitely precise result of the
+function to clearly show that both expressions have a similar arithmetic
+structure.</para>
+
+<programlisting><![CDATA[@rnd = float< ieee_32, ne >;
+y rnd= x * (1 - x);
+z = x * (1 - x);
+
+{ x in [0,1] -> y in ? /\ y - z in ? }]]>
+</programlisting>
+
+<para>Gappa will then display the following.</para>
+
+<screen><![CDATA[y in [0 {-0}, 1 {1}]
+y - z in [-1b-24 {-5.96046e-08}, 1b-24 {5.96046e-08}]]]>
+</screen>
 </section>
 
 <section>
@@ -72,14 +130,8 @@ interval on the computational absolute error.</para>
 <section>
 <title>Notations</title>
 
-<para>The whole mathematical description of a problem can simply be written in
-Gappa's logical formulas. But it may become tedious once the problem gets big
-enough. For this reason, notations can be defined to avoid repeating the same
-terms over and over. These notations are all written before the logical
-formula.</para>
-
-<programlisting><![CDATA[x = <float32ne>(xx);             # x is a floating-point number
-y <float32ne>= x * (1 - x);      # means y = <f32..>(x * <f32..>(1 - x))
+<programlisting><![CDATA[x = rnd(xx);                           # x is a floating-point number
+y rnd= x * (1 - x);                    # equivalent to y = rnd(x * rnd(1 - x))
 z = x * (1 - x);]]>
 </programlisting>
 
@@ -87,22 +139,14 @@ z = x * (1 - x);]]>
 representing the expression on the right hand side. Using one or the other side
 in the logical formula will make no difference, both are equivalents. Gappa
 will use the left hand side when displaying the results and generating the
-proofs though, in order to make them more readable. The third notation will
-simply define <code>z</code> as a synonym for the right hand side
-<code>x * (1 - x)</code>.</para>
+proofs though, in order to make them more readable.</para>
 
-<para>The first notation defines <code>x</code> as the rounded value of a real
-number <code>xx</code>. In the previous example, we had not expressed this
-property of <code>x</code>: it is a floating-point number. This additional
-piece of information will help Gappa to improve the bound on the error bound.
-</para>
-
-<para>The second notation gives a name to the result of the function. The
-syntax <code>&lt;..&gt;=</code> implicitly applies the rounding operator to the
-result of any operation in the right hand side. Please note that it only
-applies if operation there is. In particular, <code>a &lt;..&gt;= b</code> is
-not equivalent to <code>a = &lt;..&gt;(b)</code>; it is equivalent to
-<code>a = b</code>.</para>
+<para>The second and third notations have already been presented. The first
+one defines <code>x</code> as the rounded value of a real number <code>xx</code>.
+In the previous example, we had not expressed this property of <code>x</code>:
+it is a floating-point number. This additional piece of information will help
+Gappa to improve the bound on the error bound. Without it, a theorem like
+Sterbenz's cannot apply to the <code>1 - x</code> subtraction.</para>
 </section>
 
 <section>
@@ -113,14 +157,17 @@ not equivalent to <code>a = &lt;..&gt;(b)</code>; it is equivalent to
 
 <para>Numbers and bounds can be written either in the usual scientific decimal
 notation or by using a power-of-two exponent: <code>3b-27</code> means
-<texinline>3 \cdot 2^{-27}</texinline>.</para>
+<texinline>3 \cdot 2^{-27}</texinline>. Numbers can also be written with the
+C99 hexadecimal notation: <code>0x0.Cp-25</code> is another way to express the
+bound on the absolute error.</para>
 </section>
 
 <section>
 <title>Hints</title>
 
-<para>Although we added one additional through the type of <code>x</code>,
-Gappa will not be able to prove the formula. It needs some user hints.</para>
+<para>Although we gave one additional information through the type of
+<code>x</code>, Gappa will not be able to prove the formula. It needs some
+user hints.</para>
 
 <programlisting><![CDATA[z -> 0.25 - (x - 0.5) * (x - 0.5);     # x * (1 - x) == 1/4 - (x - 1/2)^2
 y $ x;                                 # bound y by splitting the interval on x
@@ -144,8 +191,9 @@ reached is used.</para>
 <para>And to conclude this example, here is the full listing.</para>
 
 <programlisting><![CDATA[# some notations
-x = <float32ne>(xx);                   # x is a floating-point number
-y <float32ne>= x * (1 - x);            # means y = <f32..>(x * <f32..>(1 - x))
+@rnd = float< ieee_32, ne >;
+x = rnd(xx);                           # x is a floating-point number
+y rnd= x * (1 - x);                    # equivalent to y = rnd(x * rnd(1 - x))
 z = x * (1 - x);
 
 # the logical property
