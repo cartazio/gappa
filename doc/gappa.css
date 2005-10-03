@@ -1,6 +1,13 @@
 pre.programlisting {
-  background-color: #FFFF99 ;
-  border: 1px solid #006600 ;
+  background-color: #FF9 ;
+  border: 1px solid #060 ;
+  margin: 0 3em ;
+  padding: 0.5em 0.5em ;
+}
+
+pre.screen {
+  background-color: #CCC ;
+  border: 1px dashed #000 ;
   margin: 0 3em ;
   padding: 0.5em 0.5em ;
 }
