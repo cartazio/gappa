@@ -68,7 +68,7 @@ std::string dump_real(ast_real const *r, unsigned prio) {
   }
   if (real_op const *o = boost::get< real_op const >(r)) {
     if (o->type == ROP_FUN) {
-      std::string s = o->fun->name() + '(' + dump_real(o->ops[0], 0);
+      std::string s = '[' + o->fun->name() + "](" + dump_real(o->ops[0], 0);
       for(ast_real_vect::const_iterator i = ++(o->ops.begin()), end = o->ops.end(); i != end; ++i)
         s += ", " + dump_real(*i, 0);
       return s + ')';
