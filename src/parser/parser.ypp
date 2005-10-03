@@ -196,7 +196,7 @@ REAL:
     ast_real_vect *ops = $3;
     if (f->type == UOP_ID && ops->size() != 1 || f->type != UOP_ID && ops->size() != 2)
       failure("incorrect number of arguments when calling " << f->name());
-    $$ = rnd_normalize(ast_real(real_op(f, *ops)));
+    $$ = normalize(ast_real(real_op(f, *ops)));
     delete ops;
   }
 | REAL '+' REAL		{ $$ = rnd_normalize(ast_real(real_op($1, BOP_ADD, $3))); }
