@@ -1,5 +1,10 @@
 <para>Comments begin with a sharp sign <code>#</code> and go till the end of
-the line. Space, tabulation, and line-break characters are not significant.</para>
+the line. Comments beginning by <code>#@</code> are handled as embedded
+command-line options. All these comments are no different from a space
+character.</para>
+
+<para>Space, tabulation, and line-break characters are not significant, they
+at most act as identifier separators.</para>
 
 <section>
 <title>Tokens</title>
@@ -11,9 +16,17 @@ the line. Space, tabulation, and line-break characters are not significant.</par
 <para>Numbers are either written with a binary representation, or with a
 decimal representation. In both representations, the <code>{integer}</code>
 parts are radix-10 natural numbers.</para>
-<programlisting><![CDATA[{binary}   {integer}([bB][-+]?{integer})?
-{decimal}  (({integer}(\.{integer}?)?)|(\.{integer}))([eE][-+]?{integer})?]]>
+<programlisting><![CDATA[binary        {integer}([bB][-+]?{integer})?
+decimal       (({integer}(\.{integer}?)?)|(\.{integer}))([eE][-+]?{integer})?
+hexadecimal   0x(({hexa}(\.{hexa}?)?)|(\.{hexa}))([pP][-+]?{integer})?
+number        ({binary}|{decimal}|{hexadecimal})]]>
 </programlisting>
+
+<para>These three expressions represent the same number: <code>57.5e-1</code>,
+<code>23b-2</code>, <code>0x5.Cp0</code>. They do not have the same semantic
+for Gappa though and a different property will be proved in the decimal case.
+Indeed, some decimal numbers cannot be expressed as a dyadic number and Gappa
+will have to harden the proof and add a layer to take this into account.</para>
 
 <para>Identifiers (<code>IDENT</code>) are described by
 <code>{alpha}({alpha}|{digit}|_)*</code>.</para>
@@ -23,50 +36,59 @@ parts are radix-10 natural numbers.</para>
 <section>
 <title>Grammar</title>
 
-<programlisting><![CDATA[
-$accept: BLOB $end
+<programlisting><![CDATA[    0 $accept: BLOB $end
 
-BLOB: PROG '{' PROP '}' REWRITE
+    1 BLOB: PROG '{' PROP '}' REWRITE
 
-PROP: ATOM
-    | '(' PROP ')'
-    | PROP AND PROP
-    | PROP IMPL PROP
+    2 PROP: ATOM
+    3     | '(' PROP ')'
+    4     | PROP AND PROP
+    5     | PROP IMPL PROP
 
-SNUMBER: NUMBER
-       | '+' NUMBER
-       | '-' NUMBER
+    6 SNUMBER: NUMBER
+    7        | '+' NUMBER
+    8        | '-' NUMBER
 
-INTERVAL: '[' SNUMBER ',' SNUMBER ']'
-        | '?'
+    9 INTERVAL: '[' SNUMBER ',' SNUMBER ']'
+   10         | '?'
 
-ATOM: REAL IN INTERVAL
+   11 ATOM: REAL IN INTERVAL
 
-ROUNDING: '<' IDENT '>'
+   12 FUNCTION_PARAM: SNUMBER
+   13               | IDENT
 
-EQUAL: '='
-     | ROUNDING '='
+   14 FUNCTION_PARAMS_AUX: FUNCTION_PARAM
+   15                    | FUNCTION_PARAMS_AUX ',' FUNCTION_PARAM
 
-PROG: /* empty */
-    | PROG IDENT EQUAL REAL ';'
+   16 FUNCTION_PARAMS: /* empty */
+   17                | '<' FUNCTION_PARAMS_AUX '>'
 
-REAL: NUMBER
-    | IDENT
-    | IDENT '(' OPERANDS ')'
-    | ROUNDING '(' REAL ')'
-    | REAL '+' REAL
-    | REAL '-' REAL
-    | REAL '*' REAL
-    | REAL '/' REAL
-    | '(' REAL ')'
-    | '+' REAL
-    | '-' REAL
+   18 FUNCTION: IDENT FUNCTION_PARAMS
 
-OPERANDS: REAL
-        | OPERANDS ',' REAL
+   19 EQUAL: '='
+   20      | FUNCTION '='
 
-REWRITE: /* empty */
-       | REWRITE REAL IMPL REAL ';'
-       | REWRITE REAL '$' REAL ';']]>
+   21 PROG: /* empty */
+   22     | PROG IDENT EQUAL REAL ';'
+   23     | PROG '@' IDENT '=' FUNCTION ';'
+
+   24 REAL: SNUMBER
+   25     | IDENT
+   26     | FUNCTION '(' OPERANDS ')'
+   27     | REAL '+' REAL
+   28     | REAL '-' REAL
+   29     | REAL '*' REAL
+   30     | REAL '/' REAL
+   31     | '|' REAL '|'
+   32     | '(' REAL ')'
+   33     | '+' REAL
+   34     | '-' REAL
+
+   35 OPERANDS: REAL
+   36         | OPERANDS ',' REAL
+
+   37 REWRITE: /* empty */
+   38        | REWRITE REAL IMPL REAL ';'
+   39        | REWRITE REAL '$' REAL ';']]>
 </programlisting>
 </section>
