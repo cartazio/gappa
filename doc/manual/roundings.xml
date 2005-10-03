@@ -1,0 +1,57 @@
+<section>
+<title>Rounding directions</title>
+
+<para>Some of the classes of operators presented in the following sections are
+templated by a rounding direction. This is the direction chosen when converting
+a real number that cannot be exactly represented in the destination format.</para>
+
+<para>There are four directions:</para>
+
+<variablelist>
+<varlistentry><term><code>zr</code></term><listitem>toward zero</listitem></varlistentry>
+<varlistentry><term><code>dn</code></term><listitem>toward minus infinity (down)</listitem></varlistentry>
+<varlistentry><term><code>up</code></term><listitem>toward plus infinity</listitem></varlistentry>
+<varlistentry><term><code>ne</code></term><listitem>to nearest, tie breaking to even mantissas</listitem></varlistentry>
+</variablelist>
+
+</section>
+
+<section>
+<title>Floating-point operators</title>
+
+<para>This class of operators covers all the formats whose number sets are
+<texinline>F(p,d) = \{m \times 2^e; |m| &lt; 2^p, e \ge d\}</texinline>. In
+particular, IEEE-754 floating-point formats (with subnormal numbers) are part
+of this class, if we set apart overflow issues. Both parameters p and d select
+a particular format. The last parameter selects the rounding direction.</para>
+
+<programlisting><![CDATA[float< precision, minimum_exponent, rounding_direction >(...)]]></programlisting>
+
+<para>Having to remember the precision and minimum exponent parameters may be
+a bit tedious, so an alternate syntax is provided: instead of these two
+parameters, a name can be given to the <code>float</code> class:</para>
+
+<variablelist>
+<varlistentry><term><code>ieee_32</code></term><listitem>IEEE-754 single precision</listitem></varlistentry>
+<varlistentry><term><code>ieee_64</code></term><listitem>IEEE-754 double precision</listitem></varlistentry>
+<varlistentry><term><code>ieee_128</code></term><listitem>IEEE-754 quadruple precision</listitem></varlistentry>
+<varlistentry><term><code>x86_80</code></term><listitem>extended precision on x86-like processors</listitem></varlistentry>
+</variablelist>
+
+<programlisting><![CDATA[float< name, rounding_direction >(...)]]></programlisting>
+</section>
+
+<section>
+<title>Fixed-point operators</title>
+
+<para>This class of operators covers all the formats whose number sets are
+<texinline>F(e) = \{m \times 2^e\}</texinline>. The first parameter selects
+the weight of the least significant bit. The second parameter selects the
+rounding direction.</para>
+
+<programlisting><![CDATA[float< lsb, rounding_direction >(...)]]></programlisting>
+</section>
+
+<section>
+<title>Miscellaneous operators</title>
+</section>

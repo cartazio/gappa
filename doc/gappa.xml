@@ -3,8 +3,9 @@
   "file:///usr/share/xml/docbook/schema/dtd/4.3/docbookx.dtd"
 [
   <!ENTITY gappa-expressions SYSTEM "manual/expressions.xml">
-  <!ENTITY gappa-invoking    SYSTEM "manual/invoking.xml">
   <!ENTITY gappa-grammar     SYSTEM "manual/grammar.xml">
+  <!ENTITY gappa-invoking    SYSTEM "manual/invoking.xml">
+  <!ENTITY gappa-roundings   SYSTEM "manual/roundings.xml">
   <!ENTITY gappa-warnings    SYSTEM "manual/warnings.xml">
   <!ENTITY gappa-x1mx        SYSTEM "examples/x1mx.xml">
   <!ENTITY gappa-tang        SYSTEM "examples/tang.xml">
@@ -57,6 +58,11 @@ errors due to floating-point arithmetic.</para>
 <chapter>
 <title>Formalizing a problem</title>
 &gappa-expressions;
+</chapter>
+
+<chapter>
+<title>Rounding operators</title>
+&gappa-roundings;
 </chapter>
 
 <chapter>
