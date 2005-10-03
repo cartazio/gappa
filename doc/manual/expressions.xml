@@ -18,8 +18,8 @@ The relative error is the quotient between the absolute error and the exact
 value: <code>(approx - exact) / exact</code>.</para>
 
 <para>Writing the errors differently will prevent Gappa from applying theorems
-on rounding errors: <code>-(x - &lt;float64ne&gt;(x))</code> may lead to a
-worse enclosure than <code>&lt;float64ne&gt;(x) - x</code>.</para>
+on rounding errors: <code>-(x - o(x))</code> may lead to a worse enclosure than
+<code>o(x) - x</code>.</para>
 </section>
 
 <section>

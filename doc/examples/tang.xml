@@ -48,12 +48,12 @@ l2 = 12566158b-48;
 s1 = 8572288b-23;
 s2 = 13833605b-44;
 
-r2 <rnd>= -n * l2;
-r <rnd>= r1 + r2;
-q <rnd>= r * r * (a1 + r * a2);
-p <rnd>= r1 + (r2 + q);
-s <rnd>= s1 + s2;
-e <rnd>= s1 + (s2 + s * p);
+r2 rnd= -n * l2;
+r rnd= r1 + r2;
+q rnd= r * r * (a1 + r * a2);
+p rnd= r1 + (r2 + q);
+s rnd= s1 + s2;
+e rnd= s1 + (s2 + s * p);
 
 R = r1 + r2;
 S = s1 + s2;
@@ -100,7 +100,7 @@ e - E0 -> (e - E) + (Er - E0);]]>
 <section>
 <title>Full listing</title>
 
-<programlisting><![CDATA[<rnd> = <float32ne>;
+<programlisting><![CDATA[@rnd = float< ieee_32, ne >;
 
 a1 = 8388676b-24;
 a2 = 11184876b-26;
@@ -108,12 +108,12 @@ l2 = 12566158b-48;
 s1 = 8572288b-23;
 s2 = 13833605b-44;
 
-r2 <rnd>= -n * l2;
-r <rnd>= r1 + r2;
-q <rnd>= r * r * (a1 + r * a2);
-p <rnd>= r1 + (r2 + q);
-s <rnd>= s1 + s2;
-e <rnd>= s1 + (s2 + s * p);
+r2 rnd= -n * l2;
+r rnd= r1 + r2;
+q rnd= r * r * (a1 + r * a2);
+p rnd= r1 + (r2 + q);
+s rnd= s1 + s2;
+e rnd= s1 + (s2 + s * p);
 
 R = r1 + r2;
 S = s1 + s2;
@@ -133,5 +133,9 @@ r1 -> R - r2;]]>
 <para>Gappa will answer that the error is bounded by 0.535 ulp. This is
 consistent with the bounds computed by Tang and Harrison.</para>
 </section>
+
+<screen><![CDATA[e in [4282253b-22 {1.02097}, 8768135b-23 {1.04524}]
+e - E0 in [-75807082762648785b-80 {-6.27061e-08}, 154166255364809243b-81 {6.37617e-08}]]]>
+</screen>
 
 </section>
