@@ -74,7 +74,7 @@ static ast_real const *rnd_normalize(ast_real const &real) {
 %type <real>		REAL
 %type <operands>	OPERANDS
 %type <prop>		PROP
-%type <function>	ROUNDING
+%type <function>	FUNCTION
 %type <params>		FUNCTION_PARAMS
 %type <params>		FUNCTION_PARAMS_AUX
 %type <param>		FUNCTION_PARAM
@@ -139,24 +139,29 @@ FUNCTION_PARAMS:
   { $$ = NULL; }
 | '<' FUNCTION_PARAMS_AUX '>'	{ $$ = $2; }
 
-ROUNDING: '<' FUNCTION_PARAMS_AUX '>'
+FUNCTION:
+  IDENT FUNCTION_PARAMS
   {
-    function_params *p = $2;
-    unsigned long l = (*p)[0];
-    if (l & 1) failure("first rounding parameter is not an identifier");
-    ast_ident *r = (ast_ident *)(l);
+    ast_ident *r = $1;
     function_generator const *fun = r->fun;
-    if (!fun) failure(r->name << " is not a rounding");
-    function_class const *f = (*fun)(function_params(++(p->begin()), p->end()));
-    delete p;
+    if (!fun) failure(r->name << " is not a function");
+    function_class const *f;
+    if (function_params *p = $2) {
+      f = (*fun)(*p);
+      delete p;
+    } else f = (*fun)(function_params());
     if (!f) failure("invalid parameters for " << r->name);
-    else if (f->type != UOP_ID) failure(r->name << " is not a rounding");
     $$ = f;
   }
 
 EQUAL:
   '='
-| ROUNDING '='	{ rounding_mode = $1; }
+| FUNCTION '='
+  {
+    function_class const *f = $1;
+    if (f->type != UOP_ID) failure(f->name() << " is not a rounding operator");
+    rounding_mode = f;
+  }
 
 PROG:
 | PROG IDENT EQUAL REAL ';'
@@ -169,11 +174,11 @@ PROG:
     r->name = v;
     rounding_mode = NULL;
   }
-| PROG '<' IDENT '>' '=' ROUNDING ';'
+| PROG '@' IDENT '=' FUNCTION ';'
   {
     ast_ident *v = $3;
     if (v->fun) failure("the function " << v->name << " is already defined");
-    v->fun = new default_function_generator($6);
+    v->fun = new default_function_generator($5);
   }
 
 REAL:
@@ -185,24 +190,15 @@ REAL:
       v->var = normalize(ast_real(v));
     $$ = v->var;
   }
-| IDENT FUNCTION_PARAMS '(' OPERANDS ')'
+| FUNCTION '(' OPERANDS ')'
   {
-    ast_ident *r = $1;
-    function_generator const *fun = r->fun;
-    if (!fun) failure(r->name << " is not a function");
-    function_class const *f;
-    if (function_params *p = $2) {
-      f = (*fun)(*p);
-      delete p;
-    } else f = (*fun)(function_params());
-    if (!f) failure("invalid parameters for " << r->name);
-    ast_real_vect *ops = $4;
+    function_class const *f = $1;
+    ast_real_vect *ops = $3;
     if (f->type == UOP_ID && ops->size() != 1 || f->type != UOP_ID && ops->size() != 2)
-      failure("incorrect number of arguments when calling " << r->name);
+      failure("incorrect number of arguments when calling " << f->name());
     $$ = rnd_normalize(ast_real(real_op(f, *ops)));
     delete ops;
   }
-| ROUNDING '(' REAL ')'	{ $$ = rnd_normalize(ast_real(real_op($1, $3))); }
 | REAL '+' REAL		{ $$ = rnd_normalize(ast_real(real_op($1, BOP_ADD, $3))); }
 | REAL '-' REAL		{ $$ = rnd_normalize(ast_real(real_op($1, BOP_SUB, $3))); }
 | REAL '*' REAL		{ $$ = rnd_normalize(ast_real(real_op($1, BOP_MUL, $3))); }
