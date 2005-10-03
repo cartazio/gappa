@@ -80,7 +80,7 @@ function_class const *fixed_rounding_generator::operator()(function_params const
   fixed_cache::const_iterator i = cache.find(h);
   if (i != cache.end()) return &i->second;
   std::ostringstream s;
-  s << direction_names[d] << " (" << f.min_exp << ')';
+  s << '_' << direction_names[d] << " (" << f.min_exp << ')';
   i = cache.insert(std::make_pair(h, fixed_rounding_class(f, d, s.str()))).first;
   return &i->second;
 }
