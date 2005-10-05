@@ -23,7 +23,7 @@ struct fixed_rounding_class: function_class {
   virtual interval enforce                    (interval const &, std::string &) const;
   virtual interval absolute_error_from_real   (interval const &, std::string &) const;
   virtual interval absolute_error_from_rounded(interval const &, std::string &) const;
-  virtual std::string name() const { return "rounding_fixed " + ident; }
+  virtual std::string name() const { return "rounding_fixed" + ident; }
 };
 
 interval fixed_rounding_class::enforce(interval const &i, std::string &name) const {
