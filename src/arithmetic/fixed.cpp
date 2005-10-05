@@ -57,30 +57,41 @@ interval fixed_rounding_class::absolute_error_from_rounded(interval const &i, st
 }
 
 struct fixed_rounding_generator: function_generator {
-  fixed_rounding_generator();
+  fixed_rounding_generator() { ast_ident::find("fixed")->fun = this; }
+  static function_class const *generate(direction_type, int);
   virtual function_class const *operator()(function_params const &) const;
 };
-
-fixed_rounding_generator::fixed_rounding_generator() {
-  ast_ident *id = ast_ident::find("fixed");
-  id->fun = this;
-}
 
 typedef std::map< int, fixed_rounding_class > fixed_cache;
 static fixed_cache cache;
 
-function_class const *fixed_rounding_generator::operator()(function_params const &p) const {
-  fixed_format f;
-  if (p.size() != 2 || !param_int(p[0], f.min_exp)) return NULL;
-  direction_type d = get_direction(p[1]);
+function_class const *fixed_rounding_generator::generate(direction_type d, int min_exp) {
   if (d == ROUND_ARGL) return NULL;
-  int h = (f.min_exp << 8) | (int)d;
+  int h = (min_exp << 8) | (int)d;
   fixed_cache::const_iterator i = cache.find(h);
   if (i != cache.end()) return &i->second;
   std::ostringstream s;
-  s << '_' << direction_names[d] << " (" << f.min_exp << ')';
-  i = cache.insert(std::make_pair(h, fixed_rounding_class(f, d, s.str()))).first;
+  s << '_' << direction_names[d] << " (" << min_exp << ')';
+  i = cache.insert(std::make_pair(h, fixed_rounding_class(fixed_format(min_exp), d, s.str()))).first;
   return &i->second;
 }
 
+function_class const *fixed_rounding_generator::operator()(function_params const &p) const {
+  int min_exp;
+  if (p.size() != 2 || !param_int(p[0], min_exp)) return NULL;
+  return generate(get_direction(p[1]), min_exp);
+}
+
 static fixed_rounding_generator dummy;
+
+struct int_rounding_generator: function_generator {
+  int_rounding_generator() { ast_ident::find("int")->fun = this; }
+  virtual function_class const *operator()(function_params const &) const;
+};
+
+function_class const *int_rounding_generator::operator()(function_params const &p) const {
+  if (p.size() != 1) return NULL;
+  return fixed_rounding_generator::generate(get_direction(p[0]), 0);
+}
+
+static int_rounding_generator dummy2;

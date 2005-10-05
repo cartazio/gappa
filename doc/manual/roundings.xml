@@ -49,7 +49,12 @@ parameters, a name can be given to the <code>float</code> class:</para>
 the weight of the least significant bit. The second parameter selects the
 rounding direction.</para>
 
-<programlisting><![CDATA[float< lsb, rounding_direction >(...)]]></programlisting>
+<programlisting><![CDATA[fixed< lsb_weight, rounding_direction >(...)]]></programlisting>
+
+<para>Rounding to integer is a special case of fixed point rounding of weight
+0. A syntactic shortcut is provided.</para>
+
+<programlisting><![CDATA[int< rounding_direction >(...)]]></programlisting>
 </section>
 
 <section>
