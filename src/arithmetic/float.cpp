@@ -49,8 +49,6 @@ struct float_rounding_class: function_class {
 };
 
 struct float_rounding_generator: function_generator {
-  function_class const *fun;
-  std::string rnd;
   float_rounding_generator() { ast_ident::find("float")->fun = this; }
   virtual function_class const *operator()(function_params const &) const;
 };

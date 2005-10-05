@@ -57,8 +57,6 @@ interval fixed_rounding_class::absolute_error_from_rounded(interval const &i, st
 }
 
 struct fixed_rounding_generator: function_generator {
-  function_class const *fun;
-  std::string rnd;
   fixed_rounding_generator();
   virtual function_class const *operator()(function_params const &) const;
 };
