@@ -56,7 +56,7 @@ from the user, they are the best bounds Gappa will be able to reach.</para>
 
 <screen><![CDATA[$ echo "{ x in [0,1] -> float<ieee_32,ne>(x * float<ieee_32,ne>(1 - x)) in ? }" | src/gappa
 
-[rounding_float_ne 24 149](x * [rounding_float_ne 24 149](1 - x)) in [0 {-0}, 1 {1}]]]>
+[rounding_float,ne,24,149](x * [rounding_float,ne,24,149](1 - x)) in [0 {-0}, 1 {1}]]]>
 </screen>
 
 <para>Gappa will display the bounds it has reached. The numbers between braces
