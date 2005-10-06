@@ -57,7 +57,7 @@ interval fixed_rounding_class::absolute_error_from_rounded(interval const &i, st
 }
 
 struct fixed_rounding_generator: function_generator {
-  fixed_rounding_generator() { ast_ident::find("fixed")->fun = this; }
+  fixed_rounding_generator(): function_generator("fixed") {}
   static function_class const *generate(direction_type, int);
   virtual function_class const *operator()(function_params const &) const;
 };
@@ -85,7 +85,7 @@ function_class const *fixed_rounding_generator::operator()(function_params const
 static fixed_rounding_generator dummy;
 
 struct int_rounding_generator: function_generator {
-  int_rounding_generator() { ast_ident::find("int")->fun = this; }
+  int_rounding_generator(): function_generator("int") {}
   virtual function_class const *operator()(function_params const &) const;
 };
 

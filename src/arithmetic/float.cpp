@@ -49,7 +49,7 @@ struct float_rounding_class: function_class {
 };
 
 struct float_rounding_generator: function_generator {
-  float_rounding_generator() { ast_ident::find("float")->fun = this; }
+  float_rounding_generator(): function_generator("float") {}
   virtual function_class const *operator()(function_params const &) const;
 };
 

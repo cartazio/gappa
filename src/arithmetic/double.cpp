@@ -40,14 +40,12 @@ interval dbldbl_function_class::relative_error_from_rounded(interval const &, st
 struct dbldbl_function_generator: function_generator {
   function_class const *fun;
   std::string rnd;
-  dbldbl_function_generator(std::string const &, real_op_type, std::string const &, int);
+  dbldbl_function_generator(char const *, real_op_type, std::string const &, int);
   virtual function_class const *operator()(function_params const &) const;
 };
 
-dbldbl_function_generator::dbldbl_function_generator(std::string const &n, real_op_type t, std::string const &r, int p)
-  : rnd(r) {
-  ast_ident *id = ast_ident::find(n);
-  id->fun = this;
+dbldbl_function_generator::dbldbl_function_generator(char const *n, real_op_type t, std::string const &r, int p)
+  : function_generator(n), rnd(r) {
   fun = new dbldbl_function_class(t, p, n + '_' + r);
 }
 

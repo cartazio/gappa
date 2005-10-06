@@ -91,9 +91,7 @@ std::string dump_real(ast_real const *r, unsigned prio) {
   return "...";
 }
 
-default_function_generator::default_function_generator(std::string const &name, function_class const *f)
-  : fun(f)
-{
+function_generator::function_generator(char const *name) {
   ast_ident::find(name)->fun = this;
 }
 
