@@ -17,3 +17,11 @@ div.variablelist dl {
   margin: 1.5em 3em ;
   padding: 0.5em 0.5em ;
 }
+
+div.informalequation div {
+  text-align: center ;
+}
+
+div.informalequation + div.informalequation {
+  margin-top: 1em ;
+}
