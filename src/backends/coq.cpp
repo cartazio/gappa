@@ -1,3 +1,4 @@
+#include <cctype>
 #include <iostream>
 #include <ostream>
 #include <sstream>
@@ -28,6 +29,22 @@ static std::string composite(char prefix, int num) {
   std::stringstream s;
   s << prefix << (num < 0 ? -num : num);
   return s.str();
+}
+
+static std::string convert_name(std::string const &name) {
+  std::string::size_type p2 = name.find(',');
+  if (p2 == std::string::npos) return name;
+  std::ostringstream res;
+  res << '(' << name.substr(0, p2);
+  while (p2 != std::string::npos) {
+    std::string::size_type p1 = p2 + 1;
+    p2 = name.find(',', p1);
+    std::string s(name, p1, p2 == std::string::npos ? p2 : p2 - p1);
+    if (std::isalpha(s[0])) res << '_' << s;
+    else res << " (" << s << ')';
+  }
+  res << ')';
+  return res.str();
 }
 
 static std::map< std::string, int > displayed_floats;
@@ -81,7 +98,7 @@ static std::string display(ast_real const *r) {
   } else if (real_op const *o = boost::get< real_op const >(r)) {
     static char const op[] = "X-X+-*/XX";
     if (o->type == ROP_FUN) {
-      plouf << o->fun->name() << " (" << display(o->ops[0]) << ')';
+      plouf << convert_name(o->fun->name()) << " (" << display(o->ops[0]) << ')';
       for(ast_real_vect::const_iterator i = ++(o->ops.begin()), end = o->ops.end(); i != end; ++i)
         plouf << " (" << display(*i) << ')';
     } else if (o->ops.size() == 1) {
@@ -125,7 +142,7 @@ static std::string display(theorem_node *t) {
     for(int i = 0; i < nb_hyps; ++i) plouf << " h" << i;
     plouf << '.';
   }
-  plouf << " apply " << t->name;
+  plouf << " apply " << convert_name(t->name);
   if (nb_hyps) {
     plouf << " with";
     for(int i = 0; i < nb_hyps; ++i) plouf << " (" << i + 1 << " := h" << i << ')';

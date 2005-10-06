@@ -30,7 +30,7 @@ interval fixed_rounding_class::enforce(interval const &i, std::string &name) con
   number a = round_number(lower(i), &format, &fixed_format::roundU);
   number b = round_number(upper(i), &format, &fixed_format::roundD);
   if (!(a <= b)) return interval();
-  name = "(fixed_enforce" + ident + ')';
+  name = "fixed_enforce" + ident;
   return interval(a, b);
 }
 
@@ -38,19 +38,19 @@ interval fixed_rounding_class::round(interval const &i, std::string &name) const
   rounding_fun f = direction_functions[type];
   number a = round_number(lower(i), &format, f);
   number b = round_number(upper(i), &format, f);
-  name = "(fixed_round" + ident + ')';
+  name = "fixed_round" + ident;
   return interval(a, b);
 }
 
 interval fixed_rounding_class::absolute_error_from_real(interval const &i, std::string &name) const {
-  name = "(fixed_error" + ident + ')';
+  name = "fixed_error" + ident;
   if (type == ROUND_DN || type == ROUND_ZR && lower(i) >= 0) return from_exponent(format.min_exp, -1);
   if (type == ROUND_UP || type == ROUND_ZR && upper(i) <= 0) return from_exponent(format.min_exp, +1);
   return from_exponent(type == ROUND_ZR ? format.min_exp : format.min_exp - 1, 0);
 }
 
 interval fixed_rounding_class::absolute_error_from_rounded(interval const &i, std::string &name) const {
-  name = "(fixed_error_inv" + ident + ')';
+  name = "fixed_error_inv" + ident;
   if (type == ROUND_DN || type == ROUND_ZR && lower(i) > 0) return from_exponent(format.min_exp, -1);
   if (type == ROUND_UP || type == ROUND_ZR && upper(i) < 0) return from_exponent(format.min_exp, +1);
   return from_exponent(type == ROUND_ZR ? format.min_exp : format.min_exp - 1, 0);
@@ -71,7 +71,7 @@ function_class const *fixed_rounding_generator::generate(direction_type d, int m
   fixed_cache::const_iterator i = cache.find(h);
   if (i != cache.end()) return &i->second;
   std::ostringstream s;
-  s << '_' << direction_names[d] << " (" << min_exp << ')';
+  s << ',' << direction_names[d] << ',' << min_exp;
   i = cache.insert(std::make_pair(h, fixed_rounding_class(fixed_format(min_exp), d, s.str()))).first;
   return &i->second;
 }
