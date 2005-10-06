@@ -35,7 +35,7 @@ typedef std::vector< unsigned long > function_params;
 struct function_generator {
   function_generator(bool) {}
   function_generator(const char *);
-  virtual function_class const *operator()(function_params const &) const { return NULL; }
+  virtual function_class const *operator()(function_params const &) const = 0;
   virtual ~function_generator() {}
 };
 
