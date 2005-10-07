@@ -2,6 +2,7 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
   "file:///usr/share/xml/docbook/schema/dtd/4.3/docbookx.dtd"
 [
+  <!ENTITY gappa-customizing SYSTEM "manual/customizing.xml">
   <!ENTITY gappa-expressions SYSTEM "manual/expressions.xml">
   <!ENTITY gappa-grammar     SYSTEM "manual/grammar.xml">
   <!ENTITY gappa-invoking    SYSTEM "manual/invoking.xml">
@@ -69,6 +70,11 @@ errors due to floating-point arithmetic.</para>
 <title>Examples</title>
 &gappa-x1mx;
 &gappa-tang;
+</chapter>
+
+<chapter>
+<title>Customizing Gappa</title>
+&gappa-customizing;
 </chapter>
 
 <appendix>
