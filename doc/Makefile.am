@@ -10,12 +10,10 @@ html-doc: clean-local
 	mv html/tex-math-equations.tex html/tmp/
 	cd html/tmp ; latex tex-math-equations.tex
 	cd html/tmp ; $(DVI2BITMAP) --magnification=4 --scaledown=4 --verbose=quiet --query=bitmaps tex-math-equations.dvi |\
-	  tee bitmaps.log |\
-	  awk '$$6 > -10 {printf "s/img src=\"%s\"/img style=\"margin-bottom: %dpx\" src=\"%s\"/g\n", $$2, ($$6 - $$4 + 14.25), $$2}' >\
-	  margin.sed
+	  awk '$$6 > -10 {printf "s/img src=\"%s\"/img style=\"margin-bottom: %dpx\" src=\"%s\"/g\n", $$2, ($$6 - $$4 + 14.25), $$2}' > margin.sed
 	for f in html/*.html; do sed -f html/tmp/margin.sed -i "$$f"; done
 	mv html/tmp/*.png html/
-	rm -rf html/
+	rm -rf html/tmp/
 
 clean-local:
 	rm -rf html/
