@@ -31,9 +31,8 @@ struct fixed_rounding_class: function_class {
 interval fixed_rounding_class::enforce(interval const &i, std::string &name) const {
   number a = round_number(lower(i), &format, &fixed_format::roundU);
   number b = round_number(upper(i), &format, &fixed_format::roundD);
-  if (!(a <= b)) return interval();
   name = "fixed_enforce" + ident;
-  return interval(a, b);
+  return interval(a, (a <= b) ? b : a);
 }
 
 interval fixed_rounding_class::round(interval const &i, std::string &name) const {
