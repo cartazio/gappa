@@ -21,7 +21,7 @@ REGISTER_SCHEME_END(absolute_error);
 node *absolute_error_scheme::generate_proof() const {
   std::string name;
   property res(real, function->absolute_error(name));
-  if (!is_defined(res.bnd)) return NULL;
+  assert(is_defined(res.bnd));
   return create_theorem(0, NULL, res, name);
 }
 
@@ -34,6 +34,7 @@ proof_scheme *absolute_error_scheme::factory(ast_real const *real) {
   if (!match(real, absolute_error_pattern, holders)) return NULL;
   real_op const *p = boost::get < real_op const >(holders[1]);
   assert(p && p->fun);
+  if (!(p->fun->theorem_mask & function_class::TH_ABS)) return NULL;
   return new absolute_error_scheme(real, p->fun);
 }
 
@@ -64,6 +65,7 @@ proof_scheme *absolute_error_from_real_scheme::factory(ast_real const *real) {
   if (!match(real, absolute_error_pattern, holders)) return NULL;
   real_op const *p = boost::get < real_op const >(holders[1]);
   assert(p && p->fun);
+  if (!(p->fun->theorem_mask & function_class::TH_ABS_REA)) return NULL;
   return new absolute_error_from_real_scheme(real, holders[0], p->fun);
 }
 
@@ -94,6 +96,7 @@ proof_scheme *absolute_error_from_rounded_scheme::factory(ast_real const *real) 
   if (!match(real, absolute_error_pattern, holders)) return NULL;
   real_op const *p = boost::get < real_op const >(holders[1]);
   assert(p && p->fun);
+  if (!(p->fun->theorem_mask & function_class::TH_ABS_RND)) return NULL;
   return new absolute_error_from_rounded_scheme(real, holders[1], p->fun);
 }
 
@@ -124,6 +127,7 @@ proof_scheme *relative_error_from_real_scheme::factory(ast_real const *real) {
   if (!match(real, relative_error_pattern, holders)) return NULL;
   real_op const *p = boost::get < real_op const >(holders[1]);
   assert(p && p->fun);
+  if (!(p->fun->theorem_mask & function_class::TH_REL_REA)) return NULL;
   ast_real const *av = normalize(ast_real(real_op(UOP_ABS, holders[0])));
   return new relative_error_from_real_scheme(real, av, p->fun);
 }
@@ -155,6 +159,7 @@ proof_scheme *relative_error_from_rounded_scheme::factory(ast_real const *real) 
   if (!match(real, relative_error_pattern, holders)) return NULL;
   real_op const *p = boost::get < real_op const >(holders[1]);
   assert(p && p->fun);
+  if (!(p->fun->theorem_mask & function_class::TH_REL_RND)) return NULL;
   ast_real const *av = normalize(ast_real(real_op(UOP_ABS, holders[0])));
   return new relative_error_from_rounded_scheme(real, av, p->fun);
 }
@@ -184,7 +189,7 @@ ast_real_vect rounding_bound_scheme::needed_reals() const {
 proof_scheme *rounding_bound_scheme::factory(ast_real const *real) {
   function_class const *f;
   ast_real const *r = morph(real, &f);
-  if (!r) return NULL;
+  if (!r || !(f->theorem_mask & function_class::TH_RND)) return NULL;
   return new rounding_bound_scheme(real, r, f);
 }
 
@@ -211,7 +216,7 @@ ast_real_vect enforce_bound_scheme::needed_reals() const {
 
 proof_scheme *enforce_bound_scheme::factory(ast_real const *real) {
   function_class const *f;
-  if (!morph(real, &f)) return NULL;
+  if (!morph(real, &f) || !(f->theorem_mask & function_class::TH_ENF)) return NULL;
   return new enforce_bound_scheme(real, f);
 }
 

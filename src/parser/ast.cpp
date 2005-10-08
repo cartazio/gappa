@@ -99,10 +99,10 @@ function_class const *default_function_generator::operator()(function_params con
   return p.empty() ? fun : NULL;
 }
 
-interval function_class::round                      (interval const &, std::string &) const { return interval(); }
-interval function_class::enforce                    (interval const &, std::string &) const { return interval(); }
-interval function_class::absolute_error                               (std::string &) const { return interval(); }
-interval function_class::absolute_error_from_real   (interval const &, std::string &) const { return interval(); }
-interval function_class::relative_error_from_real   (interval const &, std::string &) const { return interval(); }
-interval function_class::absolute_error_from_rounded(interval const &, std::string &) const { return interval(); }
-interval function_class::relative_error_from_rounded(interval const &, std::string &) const { return interval(); }
+interval function_class::round                      (interval const &, std::string &) const { assert(false); }
+interval function_class::enforce                    (interval const &, std::string &) const { assert(false); }
+interval function_class::absolute_error                               (std::string &) const { assert(false); }
+interval function_class::absolute_error_from_real   (interval const &, std::string &) const { assert(false); }
+interval function_class::relative_error_from_real   (interval const &, std::string &) const { assert(false); }
+interval function_class::absolute_error_from_rounded(interval const &, std::string &) const { assert(false); }
+interval function_class::relative_error_from_rounded(interval const &, std::string &) const { assert(false); }
