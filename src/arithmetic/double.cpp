@@ -18,7 +18,7 @@ struct dbldbl_function_class: function_class {
 };
 
 dbldbl_function_class::dbldbl_function_class(real_op_type t, int p, std::string const &n)
-  : function_class(t), prec(p), nm(n) {
+  : function_class(t, TH_RND | TH_REL_REA | TH_REL_RND), prec(p), nm(n) {
   he = from_exponent(-p, 0);
 }
 

@@ -38,7 +38,8 @@ struct float_rounding_class: function_class {
   direction_type type;
   std::string ident;
   float_rounding_class(float_format const &f, direction_type t, std::string i)
-    : format(f), type(t), ident(i) {}
+    : function_class(UOP_ID, TH_RND | TH_ENF | TH_ABS_REA | TH_ABS_RND | TH_REL_REA | TH_REL_RND),
+      format(f), type(t), ident(i) {}
   virtual interval round                      (interval const &, std::string &) const;
   virtual interval enforce                    (interval const &, std::string &) const;
   virtual interval absolute_error_from_real   (interval const &, std::string &) const;

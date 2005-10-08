@@ -18,7 +18,8 @@ struct fixed_rounding_class: function_class {
   direction_type type;
   std::string ident;
   fixed_rounding_class(fixed_format const &f, direction_type t, std::string const &i)
-    : format(f), type(t), ident(i) {}
+    : function_class(UOP_ID, TH_RND | TH_ENF | TH_ABS_REA | TH_ABS_RND),
+      format(f), type(t), ident(i) {}
   virtual interval round                      (interval const &, std::string &) const;
   virtual interval enforce                    (interval const &, std::string &) const;
   virtual interval absolute_error_from_real   (interval const &, std::string &) const;

@@ -11,7 +11,8 @@ struct homogen_rounding_class: function_class {
   virtual std::string name() const { return "homogen80x"; }
 };
 
-homogen_rounding_class::homogen_rounding_class() {
+homogen_rounding_class::homogen_rounding_class()
+  : function_class(UOP_ID, TH_ABS_REA) {
   he = from_exponent(-53, 0) + from_exponent(-64, 0);
   new default_function_generator("homogen80x", this);
 }
@@ -30,7 +31,8 @@ struct homogen_init_rounding_class: function_class {
   virtual std::string name() const { return "homogen80x_init"; }
 };
 
-homogen_init_rounding_class::homogen_init_rounding_class() {
+homogen_init_rounding_class::homogen_init_rounding_class()
+  : function_class(UOP_ID, TH_ABS_RND) {
   he = from_exponent(-53, 0) + from_exponent(-64, 0);
   new default_function_generator("homogen80x_init", this);
 }
@@ -48,7 +50,8 @@ struct floatx_rounding_class: function_class {
   virtual std::string name() const { return "float80x"; }
 };
 
-floatx_rounding_class::floatx_rounding_class() {
+floatx_rounding_class::floatx_rounding_class()
+  : function_class(UOP_ID, TH_RND) {
   new default_function_generator("float80x", this);
 }
 

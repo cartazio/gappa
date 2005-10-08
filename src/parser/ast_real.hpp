@@ -24,7 +24,10 @@ struct interval;
 
 struct function_class {
   real_op_type type;
-  function_class(real_op_type t = UOP_ID): type(t) {}
+  int theorem_mask;
+  static const int TH_RND = 1, TH_ENF = 2, TH_ABS = 4, TH_ABS_REA = 8,
+                   TH_ABS_RND = 16, TH_REL_REA = 32, TH_REL_RND = 64;
+  function_class(real_op_type t, int m): type(t), theorem_mask(m) {}
   virtual interval round                      (interval const &, std::string &) const;
   virtual interval enforce                    (interval const &, std::string &) const;
   virtual interval absolute_error                               (std::string &) const;
