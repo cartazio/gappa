@@ -25,11 +25,12 @@ struct interval;
 struct function_class {
   real_op_type type;
   function_class(real_op_type t = UOP_ID): type(t) {}
-  virtual interval round(interval const &, std::string &) const;
-  virtual interval enforce(interval const &, std::string &) const;
-  virtual interval absolute_error_from_real(interval const &, std::string &) const;
+  virtual interval round                      (interval const &, std::string &) const;
+  virtual interval enforce                    (interval const &, std::string &) const;
+  virtual interval absolute_error                               (std::string &) const;
+  virtual interval absolute_error_from_real   (interval const &, std::string &) const;
   virtual interval absolute_error_from_rounded(interval const &, std::string &) const;
-  virtual interval relative_error_from_real(interval const &, std::string &) const;
+  virtual interval relative_error_from_real   (interval const &, std::string &) const;
   virtual interval relative_error_from_rounded(interval const &, std::string &) const;
   virtual std::string name() const = 0;
   virtual ~function_class() {}

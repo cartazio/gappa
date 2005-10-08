@@ -11,6 +11,32 @@
 extern pattern absolute_error_pattern, relative_error_pattern;
 extern backend *display;
 
+// ABSOLUTE_ERROR
+REGISTER_SCHEME_BEGIN(absolute_error);
+  function_class const *function;
+  absolute_error_scheme(ast_real const *r, function_class const *f)
+    : proof_scheme(r), function(f) {}
+REGISTER_SCHEME_END(absolute_error);
+
+node *absolute_error_scheme::generate_proof() const {
+  std::string name;
+  property res(real, function->absolute_error(name));
+  if (!is_defined(res.bnd)) return NULL;
+  return create_theorem(0, NULL, res, name);
+}
+
+ast_real_vect absolute_error_scheme::needed_reals() const {
+  return ast_real_vect();
+}
+
+proof_scheme *absolute_error_scheme::factory(ast_real const *real) {
+  ast_real_vect holders(2);
+  if (!match(real, absolute_error_pattern, holders)) return NULL;
+  real_op const *p = boost::get < real_op const >(holders[1]);
+  assert(p && p->fun);
+  return new absolute_error_scheme(real, p->fun);
+}
+
 // ABSOLUTE_ERROR_FROM_REAL
 REGISTER_SCHEME_BEGIN(absolute_error_from_real);
   ast_real const *rounded;
