@@ -19,10 +19,12 @@ operator, and six theorems.</para>
 
 <programlisting><![CDATA[struct function_class {
   real_op_type type;
-  function_class(real_op_type t = UOP_ID): type(t) {}
+  int theorem_mask;
+  function_class(real_op_type t, int m): type(t), theorem_mask(m) {}
   virtual std::string name() const = 0;
   virtual interval round                      (interval const &, std::string &) const;
   virtual interval enforce                    (interval const &, std::string &) const;
+  virtual interval absolute_error                               (std::string &) const;
   virtual interval absolute_error_from_real   (interval const &, std::string &) const;
   virtual interval absolute_error_from_rounded(interval const &, std::string &) const;
   virtual interval relative_error_from_real   (interval const &, std::string &) const;
@@ -34,7 +36,8 @@ operator, and six theorems.</para>
 It will be used when generating the notations of the proof. If the description
 of the final function needs more than a name, additional parameters can be
 provided by adding them to the name after a comma. The back-end will take care
-of the formatting of the final string.</para>
+of the formatting of the final string. This remark also applies to names
+returned by the theorem methods (see below).</para>
 
 <para>The <code>type</code> is the associated real operator. This will be
 <code>UOP_ID</code> (the unary identity function) for standard rounding
@@ -59,16 +62,24 @@ operator (the diamond in this example).</para>
 
 <para>For these rules and the following theorems to be useful, the expressions
 <texinline>f(a, b)</texinline> and <texinline>a \diamond b</texinline> have to
-be close to zero. Bounding their distance is the purpose of the last four
+be close to zero. Bounding their distance is the purpose of the last five
 theorems. The first two theorems compute the range of <texinline>f(a, b)</texinline>
 itself.</para>
+
+<para>It is better for the proof engine not to consider theorems that never
+return a useful range. The second argument of the <code>function_class</code>
+constructor is a combination of the following flags. They indicate which
+theorem methods have been overloaded.</para>
+
+<programlisting><![CDATA[struct function_class {
+  static const int TH_RND, TH_ENF, TH_ABS, TH_ABS_REA, TH_ABS_RND, TH_REL_REA, TH_REL_RND;
+};]]></programlisting>
 
 <para>All the theorem virtual methods have a similar signature. If the result
 is the undefined interval <code>interval()</code>, the theorem does not apply.
 Otherwise, the last parameter is updated with the name of the theorem which
 has to be applied. The proof generator will generate an internal node from the
-two intervals and the name. As a side note, the ancestor method systematically
-returns the undefined interval; this effectively disables the theorem.</para>
+two intervals and the name.</para>
 
 <variablelist>
 <varlistentry><term><code>round</code></term>
@@ -76,8 +87,10 @@ returns the undefined interval; this effectively disables the theorem.</para>
 range of <texinline>f(a, b)</texinline>.</listitem></varlistentry>
 <varlistentry><term><code>enforce</code></term>
 <listitem>Given the range of <texinline>f(a, b)</texinline>, compute a stricter
-range of it. For example, if this expression is an integer between 1.7 and 3.5,
-then it is also a real number between 2 and 3.</listitem></varlistentry>
+range of it.</listitem></varlistentry>
+<varlistentry><term><code>absolute_error</code></term>
+<listitem>Given no range, compute the range of
+<texinline>f(a, b) - a \diamond b</texinline>.</listitem></varlistentry>
 <varlistentry><term><code>absolute_error_from_real</code></term>
 <listitem>Given the range of <texinline>a \diamond b</texinline>, compute the
 range of <texinline>f(a, b) - a \diamond b</texinline>.</listitem></varlistentry>
@@ -92,6 +105,21 @@ range of <texinline>\frac{f(a, b) - a \diamond b}{a \diamond b}</texinline>.</li
 range of <texinline>\frac{f(a, b) - a \diamond b}{a \diamond b}</texinline>.</listitem></varlistentry>
 </variablelist>
 </section>
+
+<para>The <code>enforce</code> theorem is meant to trim the bounds of a range.
+For example, if this expression is an integer between 1.7 and 3.5, then it is
+also a real number between 2 and 3. This property is especially when doing a
+dichotomy resolution, since some of the smaller intervals may be reduced to a
+single exact value through this theorem.</para>
+
+<para>Since the undefined interval is used when a theorem does not apply, it
+cannot be used by <code>enforce</code> to flag an empty interval in case of a
+contradiction. The method should instead return an interval that does not
+intersect the initial interval. Due to formal certification considerations, it
+should however be in the rounded outward version of the initial interval. For
+example, if the expression is an integer between 1.3 and 1.7, then the method
+should return an interval contained in [1,1.3[ or ]1.7,2]. For practical
+reasons, [1,1] and [2,2] are the most interesting answers.</para>
 
 <section>
 <title>Function generators</title>
