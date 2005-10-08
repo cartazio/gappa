@@ -18,10 +18,11 @@ struct fixed_rounding_class: function_class {
   direction_type type;
   std::string ident;
   fixed_rounding_class(fixed_format const &f, direction_type t, std::string const &i)
-    : function_class(UOP_ID, TH_RND | TH_ENF | TH_ABS_REA | TH_ABS_RND),
+    : function_class(UOP_ID, TH_RND | TH_ENF | TH_ABS | (t == ROUND_ZR ? TH_ABS_REA | TH_ABS_RND : 0)),
       format(f), type(t), ident(i) {}
   virtual interval round                      (interval const &, std::string &) const;
   virtual interval enforce                    (interval const &, std::string &) const;
+  virtual interval absolute_error                               (std::string &) const;
   virtual interval absolute_error_from_real   (interval const &, std::string &) const;
   virtual interval absolute_error_from_rounded(interval const &, std::string &) const;
   virtual std::string name() const { return "rounding_fixed" + ident; }
@@ -43,18 +44,27 @@ interval fixed_rounding_class::round(interval const &i, std::string &name) const
   return interval(a, b);
 }
 
-interval fixed_rounding_class::absolute_error_from_real(interval const &i, std::string &name) const {
+interval fixed_rounding_class::absolute_error(std::string &name) const {
   name = "fixed_error" + ident;
-  if (type == ROUND_DN || type == ROUND_ZR && lower(i) >= 0) return from_exponent(format.min_exp, -1);
-  if (type == ROUND_UP || type == ROUND_ZR && upper(i) <= 0) return from_exponent(format.min_exp, +1);
+  if (type == ROUND_DN) return from_exponent(format.min_exp, -1);
+  if (type == ROUND_UP) return from_exponent(format.min_exp, +1);
   return from_exponent(type == ROUND_ZR ? format.min_exp : format.min_exp - 1, 0);
 }
 
+interval fixed_rounding_class::absolute_error_from_real(interval const &i, std::string &name) const {
+  assert(type == ROUND_ZR);
+  name = "fixed_error_dir" + ident;
+  if (lower(i) >= 0) return from_exponent(format.min_exp, -1);
+  if (upper(i) <= 0) return from_exponent(format.min_exp, +1);
+  return from_exponent(format.min_exp, 0);
+}
+
 interval fixed_rounding_class::absolute_error_from_rounded(interval const &i, std::string &name) const {
+  assert(type == ROUND_ZR);
   name = "fixed_error_inv" + ident;
-  if (type == ROUND_DN || type == ROUND_ZR && lower(i) > 0) return from_exponent(format.min_exp, -1);
-  if (type == ROUND_UP || type == ROUND_ZR && upper(i) < 0) return from_exponent(format.min_exp, +1);
-  return from_exponent(type == ROUND_ZR ? format.min_exp : format.min_exp - 1, 0);
+  if (lower(i) > 0) return from_exponent(format.min_exp, -1);
+  if (upper(i) < 0) return from_exponent(format.min_exp, +1);
+  return from_exponent(format.min_exp, 0);
 }
 
 struct fixed_rounding_generator: function_generator {
