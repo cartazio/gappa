@@ -10,7 +10,6 @@ struct ast_real;
 struct backend {
   std::ostream &out;
   backend(std::ostream &o): out(o) {}
-  virtual void axiom() = 0;
   virtual std::string rewrite(ast_real const *, ast_real const *) = 0;
   virtual void theorem(node *) = 0;
   virtual ~backend() {}

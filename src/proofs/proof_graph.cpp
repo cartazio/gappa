@@ -177,8 +177,6 @@ graph_t::graph_t(graph_t *f, property_vect const &h, property_vect const &g, pro
     known_reals = f->known_reals;
     for(node_map::iterator i = known_reals.begin(), end = known_reals.end(); i != end; ++i)
       ++i->second->nb_good;
-    for(axiom_set::const_iterator i = f->axioms.begin(), end = f->axioms.end(); i != end; ++i)
-      insert_axiom(*i);
   }
   if (owned_helper) helper = duplicate_proof_helper(p);
   else helper = p;
@@ -217,38 +215,9 @@ bool graph_t::try_real(node *n) {
   return true;
 }
 
-axiom_vect graph_t::find_useful_axioms(ast_real const *real) {
-  axiom_vect res;
-  axiom_set ax;
-  ax.swap(axioms);
-  node_map::const_iterator j_end = known_reals.end();
-  for(axiom_set::const_iterator i = ax.begin(), i_end = ax.end(); i != i_end; ++i) {
-    theorem_node *n = *i;
-    property const &p = n->res;
-    if (p.real == real) {
-      node_map::const_iterator j = known_reals.find(real);
-      if (j != j_end) {
-        interval const &i1 = j->second->get_result().bnd, &i2 = p.bnd;
-        if (i1 <= i2) continue;
-      }
-      res.push_back(n);
-    }
-    axioms.insert(n);
-  }
-  return res;
-}
-
 node *graph_t::find_already_known(ast_real const *real) const {
   node_map::const_iterator i = known_reals.find(real);
   return (i != known_reals.end()) ? i->second : NULL;
-}
-
-void graph_t::insert_axiom(theorem_node *n) {
-  assert(n);
-  if (hyp.implies(n->hyp)) {
-    graph_loader loader(this);
-    try_real(new modus_node(n));
-  } else axioms.insert(n);
 }
 
 graph_t::~graph_t() {

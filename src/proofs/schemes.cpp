@@ -37,7 +37,6 @@ struct dummy_scheme: proof_scheme {
 struct proof_helper {
   typedef std::set< ast_real const * > real_set;
   real_set missing_reals;
-  real_set axiom_reals;
 
   typedef std::set< proof_scheme const * > scheme_set;
   scheme_set source_schemes;
@@ -75,15 +74,6 @@ void proof_helper::initialize_real(ast_real const *real, proof_scheme const *par
     l.insert(s);
   }
   assert(top_graph);
-  // maybe there are some axioms?
-  axiom_vect axioms = top_graph->find_useful_axioms(real);
-  for(axiom_vect::const_iterator i = axioms.begin(), i_end = axioms.end(); i != i_end; ++i) {
-    property_vect const &hyp = (*i)->hyp;
-    ast_real_vect v;
-    for(property_vect::const_iterator j = hyp.begin(), j_end = hyp.end(); j != j_end; ++j)
-      v.push_back(j->real);
-    l.insert(new dummy_scheme(real, v));
-  }
   // or an hypothesis?
   if (top_graph->find_already_known(real))
     l.insert(new dummy_scheme(real, ast_real_vect()));
@@ -130,20 +120,17 @@ proof_helper::proof_helper(ast_real_vect &targets) {
         // if we are here, no scheme needs this real anymore, so erase all the schemes of the real
         delete_scheme(*i, NULL);
       }
-      axiom_reals.erase(real);
       reals.erase(real);
     }
     missing_reals.erase(real);
   }
   for(real_dependencies::iterator i = reals.begin(), i_end = reals.end(); i != i_end; ++i) {
-    ast_real const *real = i->first;
     real_dependency &r = i->second;
     scheme_set v;
     v.swap(r.schemes);
     for(scheme_set::iterator j = v.begin(), j_end = v.end(); j != j_end; ++j) {
       proof_scheme const *s = *j;
       if (s->dummy()) {
-        axiom_reals.insert(real);
         delete_scheme(s, NULL);
         continue;
       }
@@ -162,7 +149,7 @@ proof_helper::proof_helper(ast_real_vect &targets) {
 }
 
 proof_helper::proof_helper(proof_helper const &h)
-  : axiom_reals(h.axiom_reals), source_schemes(h.source_schemes), reals(h.reals) {
+  : source_schemes(h.source_schemes), reals(h.reals) {
 }
 
 proof_helper::~proof_helper() {
@@ -234,28 +221,6 @@ bool graph_t::populate() {
         bounds.erase(s->real);
         if (bounds.empty()) break;
         bounds_end = bounds.end();
-      }
-    }
-    if (helper->axiom_reals.empty() || (iter % 256 && !missing_schemes.empty())) continue;
-    real_set v;
-    v.swap(helper->axiom_reals);
-    for(real_set::iterator i = v.begin(), i_end = v.end(); i != i_end; ++i) {
-      ast_real const *real = *i;
-      axiom_vect axioms = find_useful_axioms(real);
-      for(axiom_vect::const_iterator j = axioms.begin(), j_end = axioms.end(); j != j_end; ++j) {
-        theorem_node *n = *j;
-        assert(n);
-        bool good = true;
-        for(property_vect::const_iterator k = n->hyp.begin(), k_end = n->hyp.end(); k != k_end; ++k)
-          if (!find_proof(*k)) { good = false; break; }
-        if (!good) {
-          helper->axiom_reals.insert(real);
-          continue;
-        }
-        bool b = try_real(new modus_node(n));
-        assert(b);
-        remove_axiom(n);
-        helper->insert_dependent(missing_schemes, real);
       }
     }
   }

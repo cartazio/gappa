@@ -74,7 +74,6 @@ struct proof_helper;
 class graph_t {
   graph_t *father;
   node_set nodes;		// nodes owned by the graph, each node is implied by hyp
-  axiom_set axioms;		// unusuable axioms (not implied by hyp)
   node_map known_reals;		// best node implied by hyp for each real
   property_vect hyp;		// hypotheses of the graph (they imply the hypotheses from the super-graph)
   property_vect goals;		// goals of the graph (they keep nodes alive)
@@ -85,12 +84,9 @@ class graph_t {
   proof_helper *helper;
   void insert(node *n) { nodes.insert(n); }
   void remove(node *n) { nodes.erase (n); }
-  void insert_axiom(theorem_node *);
-  void remove_axiom(theorem_node *n) { axioms.erase(n); }
   graph_t(graph_t *, property_vect const &, property_vect const &, proof_helper *, bool);
   ~graph_t();
   node *find_already_known(ast_real const *) const;
-  axiom_vect find_useful_axioms(ast_real const *);
   bool try_real(node *);
   property_vect const &get_hypotheses() const { return hyp; }
   property_vect const &get_goals() const { return goals; }

@@ -131,11 +131,10 @@ static std::string display(theorem_node *t) {
   static int t_id = 0;
   std::string name = composite('t', ++t_id);
   auto_flush plouf;
-  plouf << (t->name.empty() ? "Hypothesis " : "Lemma ") << name << " : ";
+  plouf << "Lemma " << name << " : ";
   for(property_vect::const_iterator i = t->hyp.begin(), end = t->hyp.end(); i != end; ++i)
     plouf << display(*i) << " -> ";
   plouf << display(t->res) << ".\n";
-  if (t->name.empty()) return name;
   int nb_hyps = t->hyp.size();
   if (nb_hyps) {
     plouf << " intros";
@@ -289,7 +288,6 @@ struct coq_backend: backend {
   virtual ~coq_backend() {
     out << "End Gappa_generated.\n";
   }
-  virtual void axiom() {}
   virtual std::string rewrite(ast_real const *, ast_real const *);
   virtual void theorem(node *n) {
     assert(n);
