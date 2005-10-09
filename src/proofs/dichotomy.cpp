@@ -16,12 +16,11 @@ class dichotomy_node: public dependent_node {
   property_vect &tmp_hyp;
   int depth;
   property res;
-  bool var_node;
  public:
   graph_t *last_graph;
   dichotomy_node(property_vect &v, property const &p, node *n)
-      : dependent_node(UNION), tmp_hyp(v), depth(0), res(p), var_node(n), last_graph(NULL) {
-    if (n) insert_pred(n);
+      : dependent_node(UNION), tmp_hyp(v), depth(0), res(p), last_graph(NULL) {
+    insert_pred(n);
   }
   ~dichotomy_node();
   void dichotomize();
@@ -170,7 +169,7 @@ node *dichotomy_scheme::generate_proof(interval const &bnd) const {
   goals.push_back(property(real, bnd));
   graph_t *g = new graph_t(top_graph, hyp, goals, helper, false);
   graph_loader loader(g);
-  dichotomy_node *n = new dichotomy_node(hyp2, property(real, bnd), varn->type == HYPOTHESIS ? NULL : varn);
+  dichotomy_node *n = new dichotomy_node(hyp2, property(real, bnd), varn);
   try {
     n->dichotomize();
     n->add_graph(n->last_graph);

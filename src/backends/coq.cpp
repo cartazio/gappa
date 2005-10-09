@@ -248,15 +248,23 @@ static std::string display(node *n) {
     for(property_vect::const_iterator j = n_hyp.begin(), j_end = n_hyp.end();
         j != j_end; ++j, ++num_hyp)
       pmap.insert(std::make_pair(j->real, std::make_pair(num_hyp, &j->bnd)));
-    interval const *&hcase = pmap[n_hyp[0].real].second;
-    plouf << " generalize h0. clear h0.\n";
     node_vect const &pred = n->get_subproofs();
-    for(node_vect::const_iterator i = pred.begin(), i_end = pred.end();
-        i != i_end; ++i) {
+    assert(pred.size() >= 2);
+    node *mcase = pred[0];
+    property const &pcase = mcase->get_result();
+    property_map::mapped_type &hcase = pmap[pcase.real];
+    if (mcase->type != HYPOTHESIS) {
+      plouf << "\n assert (h" << num_hyp << " : " << display(pcase) << ").";
+      invoke_lemma(plouf, mcase, pmap);
+      hcase = std::make_pair(num_hyp, &pcase.bnd);
+    }
+    plouf << " generalize h" << hcase.first << ". clear h" << hcase.first << ".\n";
+    for(node_vect::const_iterator i = pred.begin() + 1, i_end = pred.end(); i != i_end; ++i) {
       node *m = *i;
       property_vect const &m_hyp = m->get_hypotheses();
-      hcase = &m_hyp[0].bnd;
-      plouf << " assert (u : " << display(m_hyp[0]) << " -> " << p_res << "). intro h0.\n";
+      hcase.second = &m_hyp[0].bnd;
+      plouf << " assert (u : " << display(m_hyp[0]) << " -> " << p_res << ")."
+               " intro h" << hcase.first << ".\n";
       property const &res = m->get_result();
       if (!is_empty(res.bnd)) { // not a contradictory result
         assert(res.bnd <= n_res.bnd);
