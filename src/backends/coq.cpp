@@ -139,7 +139,7 @@ static std::string display(theorem_node *t) {
   if (nb_hyps) {
     plouf << " intros";
     for(int i = 0; i < nb_hyps; ++i) plouf << " h" << i;
-    plouf << '.';
+    plouf << ".\n";
   }
   plouf << " apply " << convert_name(t->name);
   if (nb_hyps) {
@@ -191,11 +191,10 @@ static std::string display(node *n) {
   if (nb_hyps) {
     plouf << " intros";
     for(int i = 0; i < nb_hyps; ++i) plouf << " h" << i;
-    plouf << '.';
+    plouf << ".\n";
   }
   switch (n->type) {
   case MODUS: {
-    plouf << '\n';
     property_map pmap;
     int num_hyp = 0;
     for(property_vect::const_iterator j = n_hyp.begin(), j_end = n_hyp.end();
@@ -254,7 +253,7 @@ static std::string display(node *n) {
     property const &pcase = mcase->get_result();
     property_map::mapped_type &hcase = pmap[pcase.real];
     if (mcase->type != HYPOTHESIS) {
-      plouf << "\n assert (h" << num_hyp << " : " << display(pcase) << ").";
+      plouf << " assert (h" << num_hyp << " : " << display(pcase) << ").";
       invoke_lemma(plouf, mcase, pmap);
       hcase = std::make_pair(num_hyp, &pcase.bnd);
     }
