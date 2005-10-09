@@ -6,102 +6,139 @@
 
 interval create_interval(ast_interval const &, bool widen);
 
-ast_prop_and merge_prop_and(ast_prop const &_p1, ast_prop const &_p2) {
-  ast_prop_and p;
-  if (ast_prop_and const *p1 = boost::get< ast_prop_and const >(&_p1))
-    p = *p1;
-  else p.push_back(_p1);
-  if (ast_prop_and const *p2 = boost::get< ast_prop_and const >(&_p2))
-    p.insert(p.end(), p2->begin(), p2->end());
-  else p.push_back(_p2);
-  return p;
-}
-
-static ast_prop_and merge_prop_and(ast_prop const &_p) {
-  if (ast_prop_and const *p = boost::get< ast_prop_and const >(&_p))
-    return *p;
-  else {
-    ast_prop_and p;
-    p.push_back(_p);
-    return p;
-  }
-}
-
-static property generate_property(ast_atom_bound const &p, bool goal, bool axiom) {
+static property generate_property(ast_atom_bound const &p, bool goal) {
   property r(p.real);
   if (p.interval.lower) {
     assert(p.interval.upper);
     r.bnd = create_interval(p.interval, goal);
   } else {
-    if (!goal || axiom)
+    if (!goal)
       { std::cerr << "Error: undefined intervals are reserved for conclusions.\n"; exit(1); }
     assert(!p.interval.upper);
   }
   return r;
 }
 
-static void generate_axiom(ast_prop_impl const &p, axiom_vect &axioms) {
-  ast_prop_and tmp = merge_prop_and(p.left);
-  property_vect hyp;
-  for(int i = 0, l = tmp.size(); i < l; ++i) {
-    ast_prop &q = tmp[i];
-    if (ast_atom_bound *r = boost::get< ast_atom_bound >(&q))
-      hyp.push_back(generate_property(*r, false, true));
-    else { std::cerr << "Error: too complex a logical proposition.\n"; exit(1); }
+static bool is_positive(ast_prop const *p) {
+  switch (p->type) {
+  case PROP_ATOM:	return true;
+  case PROP_IMPL:
+  case PROP_NOT:	return false;
+  case PROP_AND:
+  case PROP_OR:		break;
   }
-  tmp = merge_prop_and(p.right);
-  for(int i = 0, l = tmp.size(); i < l; ++i) {
-    if (ast_atom_bound *r = boost::get< ast_atom_bound >(&tmp[i]))
-      axioms.push_back(new theorem_node(hyp.size(), &*hyp.begin(), generate_property(*r, true, true), ""));
-    else { std::cerr << "Error: too complex a logical proposition.\n"; exit(1); }
-  }
+  return is_positive(p->lhs) && is_positive(p->rhs);
 }
 
-static void generate_subgraph(ast_prop_impl const &p, axiom_vect &axioms, property_vect &hyp, property_vect &goal) {
-  ast_prop_and tmp = merge_prop_and(p.left);
-  for(int i = 0, l = tmp.size(); i < l; ++i) {
-    ast_prop &q = tmp[i];
-    if (ast_atom_bound *r = boost::get< ast_atom_bound >(&q))
-      hyp.push_back(generate_property(*r, false, false));
-    else {
-      ast_prop_impl *r = boost::get< ast_prop_impl >(&q);
-      assert(r);
-      generate_axiom(*r, axioms);
-    }
-  }
-  tmp = merge_prop_and(p.right);
-  for(int i = 0, l = tmp.size(); i < l; ++i) {
-    if (ast_atom_bound *r = boost::get< ast_atom_bound >(&tmp[i]))
-      goal.push_back(generate_property(*r, true, false));
-    else { std::cerr << "Error: too complex a logical proposition.\n"; exit(1); }
+static void generate_goal(property_vect &goal, ast_prop const *p) {
+  switch (p->type) {
+  case PROP_ATOM:
+    goal.push_back(generate_property(*p->atom, true));
+    break;
+  case PROP_AND:
+    generate_goal(goal, p->lhs);
+    generate_goal(goal, p->rhs);
+    break;
+  case PROP_OR:
+    { std::cerr << "Error: complex logical formulas not yet implemented.\n"; exit(1); }
+  default:
+    assert(false);
   }
 }
 
 std::vector< graph_t * > graphs;
 
-void generate_graph(ast_prop const &p) {
-  if (ast_prop_and const *q = boost::get< ast_prop_and >(&p)) {
-    for(int i = 0, l = q->size(); i < l; ++i)
-      generate_graph((*q)[i]);
-  } else {
-    ast_prop_impl const *q = boost::get< ast_prop_impl >(&p);
-    ast_prop_impl tmp;
-    if (!q) {
-      tmp.left = ast_prop(ast_prop_and());
-      tmp.right = p;
-      q = &tmp;
+struct sequent {
+  ast_prop_vect lhs, rhs;
+};
+
+static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
+  while (idl < s.lhs.size() || idr < s.rhs.size()) {
+    while (idl < s.lhs.size()) {
+      ast_prop const *p = s.lhs[idl];
+      switch (p->type) {
+      case PROP_NOT: {
+        s.lhs[idl] = s.lhs[s.lhs.size() - 1];
+        s.lhs.pop_back();
+        s.rhs.push_back(p->lhs);
+        break;
+      }
+      case PROP_AND: {
+        s.lhs[idl] = p->lhs;
+        s.lhs.push_back(p->rhs);
+        break;
+      }
+      case PROP_OR: {
+        sequent t = s;
+        s.lhs[idl] = p->lhs;
+        t.lhs[idl] = p->rhs;
+        parse_sequent(t, idl, idr);
+        break;
+      }
+      case PROP_IMPL: {
+        sequent t = s;
+        s.lhs[idl] = p->rhs;
+        t.lhs[idl] = s.lhs[s.lhs.size() - 1];
+        t.lhs.pop_back();
+        t.rhs.push_back(p->lhs);
+        parse_sequent(t, idl, idr);
+        break;
+      }
+      case PROP_ATOM:
+        ++idl;
+      }
     }
-    axiom_vect axioms;
-    property_vect hyp, goal;
-    generate_subgraph(*q, axioms, hyp, goal);
-    std::set< ast_real const * > real_set;
-    for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
-      real_set.insert(i->real);
-    if (hyp.size() != real_set.size()) // we don't want to encounter: x in [0,2] /\ x in [1,3] -> ...
-      { std::cerr << "Error: you don't want to have multiple hypotheses concerning the same real.\n"; exit(1); }
-    graph_t *g = new graph_t(NULL, hyp, goal, NULL, true);
-    for(axiom_vect::const_iterator i = axioms.begin(), end = axioms.end(); i != end; ++i)
-      g->insert_axiom(*i);
-    graphs.push_back(g);
+    while (idr < s.rhs.size()) {
+      ast_prop const *p = s.rhs[idr];
+      if (is_positive(p)) { ++idr; continue; }
+      switch (p->type) {
+      case PROP_NOT: {
+        s.rhs[idr] = s.rhs[s.rhs.size() - 1];
+        s.rhs.pop_back();
+        s.lhs.push_back(p->lhs);
+        break;
+      }
+      case PROP_AND: {
+        sequent t = s;
+        s.rhs[idr] = p->lhs;
+        t.rhs[idr] = p->rhs;
+        parse_sequent(t, idl, idr);
+        break;
+      }
+      case PROP_OR: {
+        s.rhs[idr] = p->lhs;
+        s.rhs.push_back(p->rhs);
+        break;
+      }
+      case PROP_IMPL: {
+        s.rhs[idr] = p->rhs;
+        s.lhs.push_back(p->lhs);
+        break;
+      }
+      default:
+        assert(false);
+      }
+    }
   }
+  property_vect hyp;
+  std::set< ast_real const * > real_set;
+  for(ast_prop_vect::const_iterator i = s.lhs.begin(), end = s.lhs.end(); i != end; ++i) {
+    assert(*i && (*i)->type == PROP_ATOM);
+    hyp.push_back(generate_property(*(*i)->atom, false));
+    real_set.insert((*i)->atom->real);
+  }
+  if (hyp.size() != real_set.size()) // we don't want to encounter: x in [0,2] /\ x in [1,3] -> ...
+    { std::cerr << "Error: you don't want to have multiple hypotheses concerning the same real.\n"; exit(1); }
+  if (s.rhs.size() != 1)
+    { std::cerr << "Error: complex logical formulas not yet implemented.\n"; exit(1); }
+  property_vect goal;
+  generate_goal(goal, s.rhs[0]);
+  graph_t *g = new graph_t(NULL, hyp, goal, NULL, true);
+  graphs.push_back(g);
+}
+
+void generate_graph(ast_prop const *p) {
+  sequent s;
+  s.rhs.push_back(p);
+  parse_sequent(s, 0, 0);
 }

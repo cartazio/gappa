@@ -93,7 +93,9 @@ zero		((((0+(\.0*)?)|(\.0+))([eE][-+]?{integer})?)|0x(((0+(\.0*)?)|(\.0+))([pP][
 #@[^\n]*	read_options(*yylloc);
 #[^\n]*
 "/\\"		return AND;
+"\\/"		return OR;
 "->"		return IMPL;
+"not"		return NOT;
 "in"		return IN;
 {zero}		{ read_zero(yylval);	return NUMBER; }
 {number}	{ read_number(yylval);	return NUMBER; }

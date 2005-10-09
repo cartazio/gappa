@@ -15,20 +15,18 @@ struct ast_atom_bound {
   ast_atom_bound(ast_real const *r, ast_interval i): real(r), interval(i) {}
 };
 
-struct ast_prop_and;
-struct ast_prop_impl;
+enum ast_prop_type { PROP_ATOM, PROP_NOT, PROP_AND, PROP_OR, PROP_IMPL };
 
-typedef boost::variant
-  < boost::recursive_wrapper< ast_prop_and >
-  , boost::recursive_wrapper< ast_prop_impl >
-  , ast_atom_bound
-  > ast_prop;
-
-struct ast_prop_and: std::vector< ast_prop > {};
-
-struct ast_prop_impl {
-  ast_prop left, right;
+struct ast_prop {
+  ast_prop_type type;
+  ast_prop const *lhs, *rhs;
+  ast_atom_bound const *atom;
+  ast_prop(ast_atom_bound const *a): type(PROP_ATOM), atom(a) {}
+  ast_prop(ast_prop const *p): type(PROP_NOT), lhs(p) {}
+  ast_prop(ast_prop const *l, ast_prop_type t, ast_prop const *r): type(t), lhs(l), rhs(r) {}
 };
+
+typedef std::vector< ast_prop const * > ast_prop_vect;
 
 typedef std::vector< unsigned long > function_params;
 
