@@ -46,7 +46,7 @@ struct dbldbl_function_generator: function_generator {
 
 dbldbl_function_generator::dbldbl_function_generator(char const *n, real_op_type t, std::string const &r, int p)
   : function_generator(n), rnd(r) {
-  fun = new dbldbl_function_class(t, p, n + '_' + r);
+  fun = new dbldbl_function_class(t, p, std::string(n) + '_' + r);
 }
 
 function_class const *dbldbl_function_generator::operator()(function_params const &p) const {
