@@ -25,3 +25,25 @@ div.informalequation div {
 div.informalequation + div.informalequation {
   margin-top: 1em ;
 }
+
+div.navheader, div.navfooter {
+  background-color: #CEF ;
+  border: 1px solid #000 ;
+}
+
+div.navfooter {
+  margin-top: 1em ;
+}
+
+div.navfooter td {
+  vertical-align: middle;
+  padding-bottom: 11px ;
+}
+
+div.navheader img, div.navfooter img {
+  border-style: none ;
+}
+
+div.navfooter img {
+  margin-bottom: -11px ;
+}

@@ -5,6 +5,8 @@ html-doc: clean-local
 	$(XSLTPROC) -o html/ "$(srcdir)/gappa.xsl" gappa-preprocessed.xml
 	rm gappa-preprocessed.xml
 	cp "$(srcdir)/gappa.css" html/
+	mkdir html/images
+	cp "$(srcdir)/images"/*.png html/images/
 	sed -e 's/dvi2bitmap outputfile/dvi2bitmap mark outputfile/' -i html/tex-math-equations.tex
 	mkdir html/tmp
 	mv html/tex-math-equations.tex html/tmp/
