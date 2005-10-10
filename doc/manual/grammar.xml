@@ -1,3 +1,6 @@
+<section>
+<title>Comments and embedded options</title>
+
 <para>Comments begin with a sharp sign <code>#</code> and go till the end of
 the line. Comments beginning by <code>#@</code> are handled as embedded
 command-line options. All these comments are no different from a space
@@ -5,22 +8,24 @@ character.</para>
 
 <para>Space, tabulation, and line-break characters are not significant, they
 at most act as identifier separators.</para>
+</section>
 
 <section>
-<title>Tokens</title>
+<title>Tokens and operator priority</title>
 
-<para>There are two composite operators <code>/\</code> (<code>AND</code>) and
-<code>-&gt;</code> (<code>IMPL</code>), and one keyword <code>in</code>
-(<code>IN</code>).</para>
+<para>There are three composite operators: <code>/\</code> (<code>AND</code>)
+and <code>\/</code> (<code>OR</code>) and <code>-&gt;</code> (<code>IMPL</code>).
+And two keywords: <code>in</code> (<code>IN</code>) and <code>not</code>
+(<code>NOT</code>).</para>
 
 <para>Numbers are either written with a binary representation, or with a
 decimal representation. In both representations, the <code>{integer}</code>
 parts are radix-10 natural numbers.</para>
+
 <programlisting><![CDATA[binary        {integer}([bB][-+]?{integer})?
 decimal       (({integer}(\.{integer}?)?)|(\.{integer}))([eE][-+]?{integer})?
 hexadecimal   0x(({hexa}(\.{hexa}?)?)|(\.{hexa}))([pP][-+]?{integer})?
-number        ({binary}|{decimal}|{hexadecimal})]]>
-</programlisting>
+number        ({binary}|{decimal}|{hexadecimal})]]></programlisting>
 
 <para>These three expressions represent the same number: <code>57.5e-1</code>,
 <code>23b-2</code>, <code>0x5.Cp0</code>. They do not have the same semantic
@@ -28,9 +33,20 @@ for Gappa though and a different property will be proved in the decimal case.
 Indeed, some decimal numbers cannot be expressed as a dyadic number and Gappa
 will have to harden the proof and add a layer to take this into account.</para>
 
-<para>Identifiers (<code>IDENT</code>) are described by
+<para>Identifiers (<code>IDENT</code>) are matched by
 <code>{alpha}({alpha}|{digit}|_)*</code>.</para>
 
+<para>The associativity and priority of the operators is as follows. It is
+meant to match the usual conventions. <code>NEG</code> is the priority of the
+unary minus; this is the operator with the highest precedence.</para>
+
+<programlisting><![CDATA[%right IMPL
+%left OR
+%left AND
+%left NOT
+%left '+' '-'
+%left '*' '/'
+%left NEG]]></programlisting>
 </section>
 
 <section>
@@ -40,55 +56,54 @@ will have to harden the proof and add a layer to take this into account.</para>
 
     1 BLOB: PROG '{' PROP '}' REWRITE
 
-    2 PROP: ATOM
-    3     | '(' PROP ')'
-    4     | PROP AND PROP
+    2 PROP: REAL IN INTERVAL
+    3     | PROP AND PROP
+    4     | PROP OR PROP
     5     | PROP IMPL PROP
+    6     | NOT PROP
+    7     | '(' PROP ')'
 
-    6 SNUMBER: NUMBER
-    7        | '+' NUMBER
-    8        | '-' NUMBER
+    8 SNUMBER: NUMBER
+    9        | '+' NUMBER
+   10        | '-' NUMBER
 
-    9 INTERVAL: '[' SNUMBER ',' SNUMBER ']'
-   10         | '?'
+   11 INTERVAL: '[' SNUMBER ',' SNUMBER ']'
+   12         | '?'
 
-   11 ATOM: REAL IN INTERVAL
+   13 FUNCTION_PARAM: SNUMBER
+   14               | IDENT
 
-   12 FUNCTION_PARAM: SNUMBER
-   13               | IDENT
+   15 FUNCTION_PARAMS_AUX: FUNCTION_PARAM
+   16                    | FUNCTION_PARAMS_AUX ',' FUNCTION_PARAM
 
-   14 FUNCTION_PARAMS_AUX: FUNCTION_PARAM
-   15                    | FUNCTION_PARAMS_AUX ',' FUNCTION_PARAM
+   17 FUNCTION_PARAMS: /* vide */
+   18                | '<' FUNCTION_PARAMS_AUX '>'
 
-   16 FUNCTION_PARAMS: /* empty */
-   17                | '<' FUNCTION_PARAMS_AUX '>'
+   19 FUNCTION: IDENT FUNCTION_PARAMS
 
-   18 FUNCTION: IDENT FUNCTION_PARAMS
+   20 EQUAL: '='
+   21      | FUNCTION '='
 
-   19 EQUAL: '='
-   20      | FUNCTION '='
+   22 PROG: /* vide */
+   23     | PROG IDENT EQUAL REAL ';'
+   24     | PROG '@' IDENT '=' FUNCTION ';'
 
-   21 PROG: /* empty */
-   22     | PROG IDENT EQUAL REAL ';'
-   23     | PROG '@' IDENT '=' FUNCTION ';'
+   25 REAL: SNUMBER
+   26     | IDENT
+   27     | FUNCTION '(' OPERANDS ')'
+   28     | REAL '+' REAL
+   29     | REAL '-' REAL
+   30     | REAL '*' REAL
+   31     | REAL '/' REAL
+   32     | '|' REAL '|'
+   33     | '(' REAL ')'
+   34     | '+' REAL
+   35     | '-' REAL
 
-   24 REAL: SNUMBER
-   25     | IDENT
-   26     | FUNCTION '(' OPERANDS ')'
-   27     | REAL '+' REAL
-   28     | REAL '-' REAL
-   29     | REAL '*' REAL
-   30     | REAL '/' REAL
-   31     | '|' REAL '|'
-   32     | '(' REAL ')'
-   33     | '+' REAL
-   34     | '-' REAL
+   36 OPERANDS: REAL
+   37         | OPERANDS ',' REAL
 
-   35 OPERANDS: REAL
-   36         | OPERANDS ',' REAL
-
-   37 REWRITE: /* empty */
-   38        | REWRITE REAL IMPL REAL ';'
-   39        | REWRITE REAL '$' REAL ';']]>
-</programlisting>
+   38 REWRITE: /* vide */
+   39        | REWRITE REAL IMPL REAL ';'
+   40        | REWRITE REAL '$' REAL ';']]></programlisting>
 </section>
