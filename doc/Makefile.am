@@ -1,4 +1,5 @@
-EXTRA_DIST = gappa.xml gappa-preprocess.xsl gappa.xsl gappa.css manual/*.xml examples/*.xml
+EXTRA_DIST = gappa.xml gappa-preprocess.xsl gappa.xsl gappa.css \
+             $(wildcard manual/*.xml) $(wildcard examples/*.xml) $(wildcard images/*.png)
 
 html-doc: clean-local
 	$(XSLTPROC) -o gappa-preprocessed.xml "$(srcdir)/gappa-preprocess.xsl" "$(srcdir)/gappa.xml"
