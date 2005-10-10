@@ -152,8 +152,7 @@ static std::string display(theorem_node *t) {
 
 typedef std::map< ast_real const *, std::pair< int, interval const * > > property_map;
 
-static void invoke_lemma(auto_flush &plouf, std::string const &name, property_vect const &hyp, property_map const &pmap) {
-  plouf << " apply " << name << '.';
+static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_map const &pmap) {
   for(property_vect::const_iterator j = hyp.begin(), j_end = hyp.end(); j != j_end; ++j) {
     property_map::const_iterator pki = pmap.find(j->real);
     assert(pki != pmap.end());
@@ -169,7 +168,14 @@ static void invoke_lemma(auto_flush &plouf, std::string const &name, property_ve
 }
 
 static void invoke_lemma(auto_flush &plouf, node *n, property_map const &pmap) {
-  invoke_lemma(plouf, display(n), n->get_hypotheses(), pmap);
+  if (n->type != HYPOTHESIS) {
+    plouf << " apply " << display(n) << '.';
+    invoke_lemma(plouf, n->get_hypotheses(), pmap);
+  } else {
+    property_vect hyp;
+    hyp.push_back(n->get_result());
+    invoke_lemma(plouf, hyp, pmap);
+  }
 }
 
 static std::map< node *, int > displayed_nodes;
@@ -211,7 +217,8 @@ static std::string display(node *n) {
     }
     modus_node *mn = dynamic_cast< modus_node * >(n);
     assert(mn && mn->target);
-    invoke_lemma(plouf, display(mn->target), mn->target->hyp, pmap);
+    plouf << " apply " << display(mn->target) << '.';
+    invoke_lemma(plouf, mn->target->hyp, pmap);
     plouf << "Qed.\n";
     break; }
   case INTERSECTION: {
@@ -260,7 +267,7 @@ static std::string display(node *n) {
     plouf << " generalize h" << hcase.first << ". clear h" << hcase.first << ".\n";
     for(node_vect::const_iterator i = pred.begin() + 1, i_end = pred.end(); i != i_end; ++i) {
       node *m = *i;
-      property_vect const &m_hyp = m->get_hypotheses();
+      property_vect const &m_hyp = m->graph->get_hypotheses();
       hcase.second = &m_hyp[0].bnd;
       plouf << " assert (u : " << display(m_hyp[0]) << " -> " << p_res << ")."
                " intro h" << hcase.first << ".\n";
