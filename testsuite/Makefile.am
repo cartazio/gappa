@@ -1,5 +1,5 @@
 EXTRA_DIST = $(wildcard *.g)
-
+CLEANFILES = $(wildcard failures-*.log)
 
 check: check-indep check-coq
 
