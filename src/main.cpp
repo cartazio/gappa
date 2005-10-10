@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
   if (!parse_args(argc, argv)) return 0;
   if (proof_generator) display = proof_generator->create(std::cout);
   else display = new null_backend;
-  yyparse();
+  if (yyparse()) return EXIT_FAILURE;
   for(std::vector< graph_t * >::const_iterator i = graphs.begin(), i_end = graphs.end(); i != i_end; ++i) {
     graph_t *g = *i;
     graph_loader loader(g);
@@ -61,5 +61,5 @@ int main(int argc, char **argv) {
     delete g;
   }
   delete display;
-  return 0;
+  return EXIT_SUCCESS;
 }
