@@ -37,7 +37,16 @@ int main(int argc, char **argv) {
       for(int j = 0; j < nb; ++j)
         scheme_results[j] = reals[j];
     }
-    std::cerr << "\n\n";
+    std::cerr << "\nResults";
+    property_vect const &hyp = g->get_hypotheses();
+    if (unsigned nb_hyp = hyp.size()) {
+      std::cerr << " for ";
+      for(unsigned i = 0; i < nb_hyp; ++i) {
+        if (i != 0) std::cerr << " and ";
+        std::cerr << dump_real(hyp[i].real) << " in " << hyp[i].bnd;
+      }
+    }
+    std::cerr << ":\n";
     if (g->populate()) {
       node_vect results(nb);
       std::cerr << "Warning: Hypotheses are in contradiction, any result is true.\n";
