@@ -55,26 +55,22 @@ std::string get_real_split(number const &f, int &exp, bool &zero) {
   return get_real_split(f.data->val, exp, zero);
 }
 
-static void write_exact(std::ostream &stream, mpfr_t const &f) {
-  bool zero;
-  int exp;
-  stream << get_real_split(f, exp, zero);
-  if (!zero && exp != 0) stream << 'b' << exp;
-}
-
-static void write_approx(std::ostream &stream, mpfr_t const &f) {
-  stream << mpfr_get_d(f, GMP_RNDN);  
-}
-
-static void write_real(std::ostream &stream, number_base const *data) {
-  write_exact(stream, data->val);
-  stream << " {";
-  write_approx(stream, data->val);
-  stream << '}';
-}
-
 std::ostream &operator<<(std::ostream &stream, number const &value) {
-  write_real(stream, value.data);
+  mpfr_t const &f = value.data->val;
+  bool zero; int exp;
+  std::string s = get_real_split(f, exp, zero);
+  bool neg = s[0] == '-';
+  stream << s;
+  if (!zero && exp != 0) stream << 'b' << exp;
+  else if (s.size() < 5U + neg) return stream;
+  stream << " {" << mpfr_get_d(f, GMP_RNDN) << ", ";
+  if (neg) stream << '-';
+  mpfr_t g;
+  mpfr_init2(g, 20);
+  mpfr_abs(g, f, GMP_RNDN);
+  mpfr_log2(g, g, GMP_RNDN);
+  stream << "2^(" << mpfr_get_d(g, GMP_RNDN) << ")}";
+  mpfr_clear(g);
   return stream;
 }
 
