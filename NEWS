@@ -5,6 +5,7 @@ Version 0.5.0:
  * syntax
    - split variables and functions
    - simplified rounding and function syntax: purely C++-template-like syntax
+   - added NOT and OR logical operators
  * arithmetic
    - replaced relative rounding by functions
    - factored number rounding handling
