@@ -37,7 +37,7 @@ struct float_rounding_class: function_class {
   float_format format;
   direction_type type;
   std::string ident;
-  float_rounding_class(float_format const &f, direction_type t, std::string i)
+  float_rounding_class(float_format const &f, direction_type t, std::string const &i)
     : function_class(UOP_ID, TH_RND | TH_ENF | TH_ABS_REA | TH_ABS_RND | TH_REL_REA | TH_REL_RND),
       format(f), type(t), ident(i) {}
   virtual interval round                      (interval const &, std::string &) const;
