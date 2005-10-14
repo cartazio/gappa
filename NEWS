@@ -2,6 +2,7 @@ Version 0.5.0:
  * whole engine
    - generalized rounding modes as functions
    - generalized functions with rounding theorems
+   - removed default rounding theorems
  * syntax
    - split variables and functions
    - simplified rounding and function syntax: purely C++-template-like syntax
