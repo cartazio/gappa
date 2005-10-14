@@ -55,8 +55,8 @@ struct float_rounding_generator: function_generator {
 };
 
 typedef std::map< long long int, float_rounding_class > float_cache;
-
 static float_cache cache;
+
 function_class const *float_rounding_generator::operator()(function_params const &p) const {
   if (p.empty()) return NULL;
   ast_ident const *nf = param_ident(p[0]);
