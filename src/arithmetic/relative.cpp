@@ -28,14 +28,14 @@ interval relative_function_class::round(interval const &i, std::string &name) co
 }
 
 interval relative_function_class::relative_error_from_real(interval const &i, std::string &name) const {
-  if (!is_empty(intersect(i, from_exponent(min_exp, 0))))
+  if (min_exp != INT_MIN && !is_empty(intersect(i, from_exponent(min_exp, 0))))
     return interval();
   name = "rel_error" + ident;
   return he;
 }
 
 interval relative_function_class::relative_error_from_rounded(interval const &i, std::string &name) const {
-  if (!is_empty(intersect(i, from_exponent(min_exp, 0))))
+  if (min_exp != INT_MIN && !is_empty(intersect(i, from_exponent(min_exp, 0))))
     return interval();
   name = "rel_error_inv" + ident;
   return he;
@@ -53,7 +53,9 @@ struct relative_function_generator: function_generator {
 
 function_class const *relative_function_generator::operator()(function_params const &p) const {
   int prec, min_exp;
-  if (p.size() != 2 || !param_int(p[0], prec) || !param_int(p[1], min_exp)) return NULL;
+  if (p.empty() || !param_int(p[0], prec)) return NULL;
+  if (p.size() == 1) min_exp = INT_MIN;
+  else if (p.size() != 2 || !param_int(p[1], min_exp)) return NULL;
   long long int h = (((long long int)min_exp) << 32) | prec;
   relative_cache::const_iterator j = cache.find(h);
   if (j != cache.end()) return &j->second;
