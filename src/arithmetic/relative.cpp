@@ -27,12 +27,16 @@ interval relative_function_class::round(interval const &i, std::string &name) co
   return i * (interval(number(1), number(1)) + he);
 }
 
-interval relative_function_class::relative_error_from_real(interval const &, std::string &name) const {
+interval relative_function_class::relative_error_from_real(interval const &i, std::string &name) const {
+  if (!is_empty(intersect(i, from_exponent(min_exp, 0))))
+    return interval();
   name = "rel_error" + ident;
   return he;
 }
 
-interval relative_function_class::relative_error_from_rounded(interval const &, std::string &name) const {
+interval relative_function_class::relative_error_from_rounded(interval const &i, std::string &name) const {
+  if (!is_empty(intersect(i, from_exponent(min_exp, 0))))
+    return interval();
   name = "rel_error_inv" + ident;
   return he;
 }
