@@ -9,10 +9,10 @@ bin_PROGRAMS = gappa
 # backends/*.cpp initialization requires backends/backends.cpp initialization
 
 gappa_SOURCES = \
-	arithmetic/double.cpp \
 	arithmetic/fixed.cpp \
 	arithmetic/float.cpp \
 	arithmetic/homogen.cpp \
+	arithmetic/relative.cpp \
 	backends/coq.cpp \
 	backends/backend.cpp \
 	backends/backend.hpp \
