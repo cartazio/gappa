@@ -58,4 +58,23 @@ rounding direction.</para>
 
 <section>
 <title>Miscellaneous operators</title>
+
+<section>
+<title>Functions with relative error</title>
+
+<para>This set of functions is defined with related theorems on relative error.
+They can be used to express properties that cannot be directly expressed
+through unary rounding operators.</para>
+
+<programlisting><![CDATA[{add|sub|mul}_rel< precision [, minimum_exponent] >(..., ...)]]></programlisting>
+
+<para>If the minimum exponent is not provided, no domain will be excluded when
+considering the validity of the theorems, not even zero. Otherwise the domain
+<texinline>[-2^e,2^e]</texinline> is excluded.</para>
+
+</section>
+
+<section>
+<title>Rounding operators with homogen properties</title>
+</section>
 </section>
