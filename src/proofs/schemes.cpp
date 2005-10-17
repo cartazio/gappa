@@ -27,11 +27,10 @@ scheme_register::scheme_register(scheme_factory const *f) {
 }
 
 struct dummy_scheme: proof_scheme {
-  ast_real_vect reals;
-  dummy_scheme(ast_real const *r, ast_real_vect const &v): proof_scheme(r), reals(v) {}
+  dummy_scheme(ast_real const *r): proof_scheme(r) {}
   virtual bool dummy() const { return true; }
   virtual node *generate_proof() const { assert(false); return NULL; }
-  virtual ast_real_vect needed_reals() const { return reals; }
+  virtual ast_real_vect needed_reals() const { return ast_real_vect(); }
 };
 
 struct proof_helper {
@@ -76,7 +75,7 @@ void proof_helper::initialize_real(ast_real const *real, proof_scheme const *par
   assert(top_graph);
   // or an hypothesis?
   if (top_graph->find_already_known(real))
-    l.insert(new dummy_scheme(real, ast_real_vect()));
+    l.insert(new dummy_scheme(real));
   // create the dependencies
   for(scheme_set::const_iterator i = l.begin(), i_end = l.end(); i != i_end; ++i) {
     proof_scheme const *s = *i;
