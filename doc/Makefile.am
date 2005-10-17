@@ -1,4 +1,4 @@
-EXTRA_DIST = gappa.xml gappa-preprocess.xsl gappa.xsl gappa.css \
+EXTRA_DIST = gappa.xml gappa-preprocess.xsl gappa.xsl gappa.css gappa.dsl unescape_math.pl \
              $(wildcard manual/*.xml) $(wildcard examples/*.xml) $(wildcard images/*.png)
 
 html-doc: clean-local
@@ -17,6 +17,16 @@ html-doc: clean-local
 	for f in html/*.html; do sed -f html/tmp/margin.sed -i "$$f"; done
 	mv html/tmp/*.png html/
 	rm -rf html/tmp/
+
+pdf-doc: clean-local
+	$(XSLTPROC) -o gappa-preprocessed.xml "$(srcdir)/gappa-preprocess.xsl" "$(srcdir)/gappa.xml"
+	mkdir -p tmp
+	jade -t tex -V tex-backend -i tex -d "$(srcdir)/gappa.dsl" /usr/share/xml/declaration/xml.dcl gappa-preprocessed.xml || true
+	mv gappa-preprocessed.tex tmp/gappa.tex
+	"$(srcdir)/unescape_math.pl" tmp/gappa.tex
+	(cd tmp ; pdfjadetex gappa.tex ; pdfjadetex gappa.tex ; pdfjadetex gappa.tex ; pdfjadetex gappa.tex) > /dev/null
+	mv tmp/gappa.pdf .
+	rm -rf tmp/
 
 clean-local:
 	rm -rf html/
