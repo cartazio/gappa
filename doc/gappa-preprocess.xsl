@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
-  <xsl:output method="xml" indent="yes" encoding="UTF-8" media-type="book"
+  <xsl:output method="xml" indent="yes" encoding="ISO-8859-15" media-type="book"
               doctype-public="-//OASIS//DTD DocBook XML V4.3//EN"
               doctype-system="file:///usr/share/xml/docbook/schema/dtd/4.3/docbookx.dtd"/>
 
