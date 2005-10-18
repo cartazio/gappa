@@ -8,10 +8,14 @@ a real number that cannot be exactly represented in the destination format.</par
 <para>There are four directions:</para>
 
 <variablelist>
-<varlistentry><term><code>zr</code></term><listitem>toward zero</listitem></varlistentry>
-<varlistentry><term><code>dn</code></term><listitem>toward minus infinity (down)</listitem></varlistentry>
-<varlistentry><term><code>up</code></term><listitem>toward plus infinity</listitem></varlistentry>
-<varlistentry><term><code>ne</code></term><listitem>to nearest, tie breaking to even mantissas</listitem></varlistentry>
+<varlistentry><term><code>zr</code></term>
+  <listitem><para>toward zero</para></listitem></varlistentry>
+<varlistentry><term><code>dn</code></term>
+  <listitem><para>toward minus infinity (down)</para></listitem></varlistentry>
+<varlistentry><term><code>up</code></term>
+  <listitem><para>toward plus infinity</para></listitem></varlistentry>
+<varlistentry><term><code>ne</code></term>
+  <listitem><para>to nearest, tie breaking to even mantissas</para></listitem></varlistentry>
 </variablelist>
 </section>
 
@@ -28,16 +32,22 @@ a particular format. The last parameter selects the rounding direction.</para>
 
 <para>Having to remember the precision and minimum exponent parameters may be
 a bit tedious, so an alternate syntax is provided: instead of these two
-parameters, a name can be given to the <code>float</code> class:</para>
-
-<variablelist>
-<varlistentry><term><code>ieee_32</code></term><listitem>IEEE-754 single precision</listitem></varlistentry>
-<varlistentry><term><code>ieee_64</code></term><listitem>IEEE-754 double precision</listitem></varlistentry>
-<varlistentry><term><code>ieee_128</code></term><listitem>IEEE-754 quadruple precision</listitem></varlistentry>
-<varlistentry><term><code>x86_80</code></term><listitem>extended precision on x86-like processors</listitem></varlistentry>
-</variablelist>
+parameters, a name can be given to the <code>float</code> class.</para>
 
 <programlisting><![CDATA[float< name, rounding_direction >(...)]]></programlisting>
+
+<para>There are four predefined formats:</para>
+
+<variablelist>
+<varlistentry><term><code>ieee_32</code></term>
+  <listitem><para>IEEE-754 single precision</para></listitem></varlistentry>
+<varlistentry><term><code>ieee_64</code></term>
+  <listitem><para>IEEE-754 double precision</para></listitem></varlistentry>
+<varlistentry><term><code>ieee_128</code></term>
+  <listitem><para>IEEE-754 quadruple precision</para></listitem></varlistentry>
+<varlistentry><term><code>x86_80</code></term>
+  <listitem><para>extended precision on x86-like processors</para></listitem></varlistentry>
+</variablelist>
 </section>
 
 <section>
@@ -76,5 +86,7 @@ considering the validity of the theorems, not even zero. Otherwise the domain
 
 <section>
 <title>Rounding operators with homogen properties</title>
+
+<para>To be written.</para>
 </section>
 </section>

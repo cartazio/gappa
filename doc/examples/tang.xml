@@ -86,7 +86,7 @@ since the structures of both terms do not match.</para>
 
 <para>So we will introduce a new expression <code>Er</code> equal to
 <code>E</code> yet matching the structure of <code>E0</code>. Since
-<code>Z</code> has no equivalent term in <code>E</code>, we had an
+<code>Z</code> has no equivalent term in <code>E</code>, we insert an
 artificial term <code>0</code> in the corresponding place in
 <code>Er</code>.</para>
 
@@ -132,10 +132,9 @@ r1 -> R - r2;]]>
 
 <para>Gappa will answer that the error is bounded by 0.535 ulp. This is
 consistent with the bounds computed by Tang and Harrison.</para>
-</section>
 
 <screen><![CDATA[e in [4282253b-22 {1.02097}, 8768135b-23 {1.04524}]
 e - E0 in [-75807082762648785b-80 {-6.27061e-08}, 154166255364809243b-81 {6.37617e-08}]]]>
 </screen>
-
+</section>
 </section>

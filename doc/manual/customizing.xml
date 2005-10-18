@@ -5,6 +5,8 @@ and <filename>src/backends</filename> directories.</para>
 
 <section>
 <title>Defining a new back-end</title>
+
+<para>To be written.</para>
 </section>
 
 <section>
@@ -83,28 +85,27 @@ two intervals and the name.</para>
 
 <variablelist>
 <varlistentry><term><code>round</code></term>
-<listitem>Given the range of <texinline>a \diamond b</texinline>, compute the
-range of <texinline>f(a, b)</texinline>.</listitem></varlistentry>
+<listitem><para>Given the range of <texinline>a \diamond b</texinline>, compute the
+range of <texinline>f(a, b)</texinline>.</para></listitem></varlistentry>
 <varlistentry><term><code>enforce</code></term>
-<listitem>Given the range of <texinline>f(a, b)</texinline>, compute a stricter
-range of it.</listitem></varlistentry>
+<listitem><para>Given the range of <texinline>f(a, b)</texinline>, compute a stricter
+range of it.</para></listitem></varlistentry>
 <varlistentry><term><code>absolute_error</code></term>
-<listitem>Given no range, compute the range of
-<texinline>f(a, b) - a \diamond b</texinline>.</listitem></varlistentry>
+<listitem><para>Given no range, compute the range of
+<texinline>f(a, b) - a \diamond b</texinline>.</para></listitem></varlistentry>
 <varlistentry><term><code>absolute_error_from_real</code></term>
-<listitem>Given the range of <texinline>a \diamond b</texinline>, compute the
-range of <texinline>f(a, b) - a \diamond b</texinline>.</listitem></varlistentry>
+<listitem><para>Given the range of <texinline>a \diamond b</texinline>, compute the
+range of <texinline>f(a, b) - a \diamond b</texinline>.</para></listitem></varlistentry>
 <varlistentry><term><code>absolute_error_from_rounded</code></term>
-<listitem>Given the range of <texinline>f(a, b)</texinline>, compute the
-range of <texinline>f(a, b) - a \diamond b</texinline>.</listitem></varlistentry>
+<listitem><para>Given the range of <texinline>f(a, b)</texinline>, compute the
+range of <texinline>f(a, b) - a \diamond b</texinline>.</para></listitem></varlistentry>
 <varlistentry><term><code>relative_error_from_real</code></term>
-<listitem>Given the range of <texinline>|a \diamond b|</texinline>, compute the
-range of <texinline>\frac{f(a, b) - a \diamond b}{a \diamond b}</texinline>.</listitem></varlistentry>
+<listitem><para>Given the range of <texinline>|a \diamond b|</texinline>, compute the
+range of <texinline>\frac{f(a, b) - a \diamond b}{a \diamond b}</texinline>.</para></listitem></varlistentry>
 <varlistentry><term><code>relative_error_from_rounded</code></term>
-<listitem>Given the range of <texinline>|f(a, b)|</texinline>, compute the
-range of <texinline>\frac{f(a, b) - a \diamond b}{a \diamond b}</texinline>.</listitem></varlistentry>
+<listitem><para>Given the range of <texinline>|f(a, b)|</texinline>, compute the
+range of <texinline>\frac{f(a, b) - a \diamond b}{a \diamond b}</texinline>.</para></listitem></varlistentry>
 </variablelist>
-</section>
 
 <para>The <code>enforce</code> theorem is meant to trim the bounds of a range.
 For example, if this expression is an integer between 1.7 and 3.5, then it is
@@ -120,6 +121,7 @@ should however be in the rounded outward version of the initial interval. For
 example, if the expression is an integer between 1.3 and 1.7, then the method
 should return an interval contained in [1,1.3[ or ]1.7,2]. For practical
 reasons, [1,1] and [2,2] are the most interesting answers.</para>
+</section>
 
 <section>
 <title>Function generators</title>

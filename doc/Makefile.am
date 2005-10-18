@@ -20,10 +20,12 @@ html-doc: clean-local
 
 pdf-doc: clean-local
 	$(XSLTPROC) -o gappa-preprocessed.xml "$(srcdir)/gappa-preprocess.xsl" "$(srcdir)/gappa.xml"
+	jade -t tex -i tex -d "$(srcdir)/gappa.dsl" /usr/share/xml/declaration/xml.dcl gappa-preprocessed.xml
+	rm gappa-preprocessed.xml
 	mkdir -p tmp
-	jade -t tex -V tex-backend -i tex -d "$(srcdir)/gappa.dsl" /usr/share/xml/declaration/xml.dcl gappa-preprocessed.xml || true
 	mv gappa-preprocessed.tex tmp/gappa.tex
 	"$(srcdir)/unescape_math.pl" tmp/gappa.tex
+	sed -e 's/\\Rightarrow/\\rightarrow/g' -i tmp/gappa.tex
 	(cd tmp ; pdfjadetex gappa.tex ; pdfjadetex gappa.tex ; pdfjadetex gappa.tex ; pdfjadetex gappa.tex) > /dev/null
 	mv tmp/gappa.pdf .
 	rm -rf tmp/
