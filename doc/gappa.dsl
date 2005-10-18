@@ -24,7 +24,7 @@
   (make sequence (literal "BEGINTEXLITERAL") (literal "$")
     (literal (data (current-node))) (literal "$") (literal "ENDTEXLITERAL")))
 (element (informalequation alt)
-  (make paragraph quadding: 'center
+  (make paragraph quadding: 'center start-indent: (- (inherited-start-indent) %block-start-indent%)
     (make sequence (literal "BEGINTEXLITERAL") (literal "$\\displaystyle ")
       (literal (data (current-node))) (literal "$") (literal "ENDTEXLITERAL"))))
 (element code ($mono-seq$))
