@@ -110,14 +110,11 @@ static int_rounding_generator dummy2;
 
 // FIX_OF_FIXED
 
-struct fix_of_fixed_scheme: proof_scheme {
+REGISTER_SCHEMEX_BEGIN(fix_of_fixed);
   long min_exp;
-  virtual node *generate_proof() const;
-  virtual preal_vect needed_reals() const;
-  fix_of_fixed_scheme(predicated_real const &r, long e): proof_scheme(r), min_exp(e) {}
-  static proof_scheme *factory(predicated_real const &);
-};
-
+  fix_of_fixed_scheme(predicated_real const &r, long e)
+    : proof_scheme(r), min_exp(e) {}
+REGISTER_SCHEMEX_END(fix_of_fixed);
 
 node *fix_of_fixed_scheme::generate_proof() const {
   return create_theorem(0, NULL, property(real, min_exp), "fix_of_fixed");
@@ -136,20 +133,14 @@ proof_scheme *fix_of_fixed_scheme::factory(predicated_real const &real) {
   return new fix_of_fixed_scheme(real, f->format.min_exp);
 }
 
-static scheme_register fix_of_fixed_scheme_register(fix_of_fixed_scheme::factory);
-
 // FIXED_OF_FIX
 
-struct fixed_of_fix_scheme: proof_scheme {
+REGISTER_SCHEME_BEGIN(fixed_of_fix);
   predicated_real fixval;
   long min_exp;
-  virtual node *generate_proof() const;
-  virtual preal_vect needed_reals() const;
   fixed_of_fix_scheme(ast_real const *r, predicated_real const &v, long e)
     : proof_scheme(r), fixval(v), min_exp(e) {}
-  static proof_scheme *factory(ast_real const *);
-};
-
+REGISTER_SCHEME_END(fixed_of_fix);
 
 node *fixed_of_fix_scheme::generate_proof() const {
   node *n = find_proof(fixval);
@@ -174,5 +165,3 @@ proof_scheme *fixed_of_fix_scheme::factory(ast_real const *real) {
   if (!f) return NULL;
   return new fixed_of_fix_scheme(real, predicated_real(holders[0], PRED_FIX), f->format.min_exp);
 }
-
-static scheme_register fixed_of_fix_scheme_register(fixed_of_fix_scheme::factory);

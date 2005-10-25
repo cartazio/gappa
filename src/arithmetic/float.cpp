@@ -6,7 +6,7 @@
 #include "numbers/real.hpp"
 #include "numbers/round.hpp"
 #include "parser/ast.hpp"
-#include "proofs/proof_graph.hpp"
+#include "parser/pattern.hpp"
 #include "proofs/schemes.hpp"
 
 struct float_format: gs_rounding {
@@ -174,81 +174,90 @@ interval float_rounding_class::relative_error_from_rounded(interval const &i, st
                        type == ROUND_ZR ? -1 : 0);
 }
 
-/*
-struct sterbenz_scheme: proof_scheme {
-  sterbenz_scheme(ast_real const *r): proof_scheme(r) {}
-  virtual node *generate_proof() const;
-  virtual ast_real_vect needed_reals() const;
-  static proof_scheme *factory(ast_real const *);
-};
+// FIX_OF_FLOAT
 
-static bool sterbenz_decomposition(ast_real const *real, ast_real const **r1, ast_real const **r2,
-                                   ast_real const **a, ast_real const **b, float_format const **ff) {
-  real_op const *o1 = boost::get< real_op const >(real);
-  if (!o1 || o1->type != BOP_SUB) return false;
-  real_op const *rr = boost::get< real_op const >(o1->ops[0]);
-  if (!rr) return false;
-  float_rounding_class const *fr = dynamic_cast< float_rounding_class const * >(rr->fun);
-  if (!fr) return false;
-  real_op const *o2 = boost::get< real_op const >(rr->ops[0]);
-  if (!o2 || !(o2->type == BOP_ADD || o2->type == BOP_SUB)) return false;
-  if (r1) *r1 = o1->ops[0];
-  if (r2) *r2 = normalize(ast_real(real_op(rr->ops[0], BOP_SUB, o1->ops[1])));
-  if (a) *a = o2->ops[0];
-  if (b) *b = o2->ops[1];
-  if (ff) *ff = &fr->format;
-  return true;
+REGISTER_SCHEMEX_BEGIN(fix_of_float);
+  long min_exp;
+  fix_of_float_scheme(predicated_real const &r, long e)
+    : proof_scheme(r), min_exp(e) {}
+REGISTER_SCHEMEX_END(fix_of_float);
+
+node *fix_of_float_scheme::generate_proof() const {
+  return create_theorem(0, NULL, property(real, min_exp), "fix_of_float");
 }
 
-static node *sterbenz_exponent(ast_real const *r, int &e) {
-  node *n = find_proof(r);
-  if (!n) return NULL;
-  interval const &bnd = n->get_result().bnd;
-  number const &l = lower(bnd), &u = upper(bnd);
-  if (l == u) {
-    int s;
-    mpz_t m;
-    mpz_init(m);
-    split_exact(l.data->val, m, e, s);
-    mpz_clear(m);
-    return n;
-  }
-  real_op const *rr = boost::get< real_op const >(r);
-  if (!rr) return NULL;
-  float_rounding_class const *fr = dynamic_cast< float_rounding_class const * >(rr->fun);
-  if (!fr) return NULL;
-  if (contains_zero(bnd)) e = fr->format.min_exp;
-  else e = std::min(exponent(l, fr->format), exponent(u, fr->format));
-  return n;
+preal_vect fix_of_float_scheme::needed_reals() const {
+  return preal_vect();
 }
 
-node *sterbenz_scheme::generate_proof() const {
-  ast_real const *r1, *r2, *ra, *rb; float_format const *f;
-  bool b = sterbenz_decomposition(real, &r1, &r2, &ra, &rb, &f);
-  assert(b);
-  int ea, eb;
-  node *na = sterbenz_exponent(ra, ea), *nb = sterbenz_exponent(rb, eb);
-  node *n1 = find_proof(r1), *n2 = find_proof(r2);
-  if (!n1 || !n2 || !na || !nb) return NULL;
-  property const &res1 = n1->get_result(), &res2 = n2->get_result(), &resa = na->get_result(), &resb = nb->get_result();
-  int e = std::max(exponent(lower(res1.bnd), *f), exponent(upper(res1.bnd), *f));
-  if (ea < e || eb < e) return NULL;
-  property res[] = { resa, resb, res1, res2 };
-  return create_theorem(4, res, property(real, res2.bnd), "sterbenz");
+proof_scheme *fix_of_float_scheme::factory(predicated_real const &real) {
+  if (real.pred() != PRED_FIX) return NULL;
+  real_op const *r = boost::get< real_op const >(real.real());
+  if (!r) return NULL;
+  float_rounding_class const *f = dynamic_cast< float_rounding_class const * >(r->fun);
+  if (!f) return NULL;
+  return new fix_of_float_scheme(real, f->format.min_exp);
 }
 
-ast_real_vect sterbenz_scheme::needed_reals() const {
-  ast_real_vect res(4);
-  bool b = sterbenz_decomposition(real, &res[0], &res[1], &res[2], &res[3], NULL);
-  assert(b);
+// FLT_OF_FLOAT
+
+REGISTER_SCHEMEX_BEGIN(flt_of_float);
+  long prec;
+  flt_of_float_scheme(predicated_real const &r, long p)
+    : proof_scheme(r), prec(p) {}
+REGISTER_SCHEMEX_END(flt_of_float);
+
+node *flt_of_float_scheme::generate_proof() const {
+  return create_theorem(0, NULL, property(real, prec), "flt_of_float");
+}
+
+preal_vect flt_of_float_scheme::needed_reals() const {
+  return preal_vect();
+}
+
+proof_scheme *flt_of_float_scheme::factory(predicated_real const &real) {
+  if (real.pred() != PRED_FLT) return NULL;
+  real_op const *r = boost::get< real_op const >(real.real());
+  if (!r) return NULL;
+  float_rounding_class const *f = dynamic_cast< float_rounding_class const * >(r->fun);
+  if (!f) return NULL;
+  return new flt_of_float_scheme(real, f->format.prec);
+}
+
+// FLOAT_OF_FIX_FLT
+
+REGISTER_SCHEME_BEGIN(float_of_fix_flt);
+  ast_real const *val;
+  long min_exp, prec;
+  float_of_fix_flt_scheme(ast_real const *r, ast_real const *v, long e, long p)
+    : proof_scheme(r), val(v), min_exp(e), prec(p) {}
+REGISTER_SCHEME_END(float_of_fix_flt);
+
+node *float_of_fix_flt_scheme::generate_proof() const {
+  node *n1 = find_proof(predicated_real(val, PRED_FIX));
+  if (!n1) return NULL;
+  node *n2 = find_proof(predicated_real(val, PRED_FLT));
+  if (!n2) return NULL;
+  property hyp[2] = { n1->get_result(), n2->get_result() };
+  if (hyp[0].cst() < min_exp || hyp[1].cst() > prec) return NULL;
+  return create_theorem(2, hyp, property(real, zero()), "float_of_fix_flt");
+}
+
+preal_vect float_of_fix_flt_scheme::needed_reals() const {
+  preal_vect res;
+  res.push_back(predicated_real(val, PRED_FIX));
+  res.push_back(predicated_real(val, PRED_FLT));
   return res;
 }
 
-proof_scheme *sterbenz_scheme::factory(ast_real const *real) {
-  bool b = sterbenz_decomposition(real, NULL, NULL, NULL, NULL, NULL);
-  if (!b) return NULL;
-  return new sterbenz_scheme(real);
-}
+extern pattern absolute_error_pattern;
 
-static scheme_register sterbenz_scheme_register(&sterbenz_scheme::factory);
-*/
+proof_scheme *float_of_fix_flt_scheme::factory(ast_real const *real) {
+  ast_real_vect holders(2);
+  if (!match(real, absolute_error_pattern, holders)) return NULL;
+  real_op const *p = boost::get < real_op const >(holders[1]);
+  assert(p);
+  float_rounding_class const *f = dynamic_cast< float_rounding_class const * >(p->fun);
+  if (!f) return NULL;
+  return new float_of_fix_flt_scheme(real, holders[0], f->format.min_exp, f->format.prec);
+}

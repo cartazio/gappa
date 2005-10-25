@@ -40,6 +40,16 @@ struct scheme_register {
   }; \
   static scheme_register name##_scheme_register(&name##_scheme::factory)
 
+#define REGISTER_SCHEMEX_BEGIN(name) \
+  struct name##_scheme: proof_scheme { \
+    virtual node *generate_proof() const; \
+    virtual preal_vect needed_reals() const; \
+    static proof_scheme *factory(predicated_real const &)
+
+#define REGISTER_SCHEMEX_END(name) \
+  }; \
+  static scheme_register name##_scheme_register(&name##_scheme::factory)
+
 struct proof_helper;
 
 node *find_proof(predicated_real const &);
