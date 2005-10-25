@@ -36,7 +36,7 @@ class property {
   property();
   property(ast_real const *);
   property(ast_real const *, interval const &);
-  property(ast_real const *, predicate_type, int);
+  property(predicated_real const &, long);
   property(property const &);
   property &operator=(property const &);
   ~property();

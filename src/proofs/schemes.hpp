@@ -24,7 +24,9 @@ struct scheme_factory {
 
 struct scheme_register {
   typedef proof_scheme *(*scheme_factory_fun)(ast_real const *);
+  typedef proof_scheme *(*scheme_factorz_fun)(predicated_real const &);
   scheme_register(scheme_factory_fun f);
+  scheme_register(scheme_factorz_fun f);
   scheme_register(scheme_factory const *);
 };
 

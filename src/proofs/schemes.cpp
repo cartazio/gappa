@@ -19,8 +19,19 @@ struct scheme_factory_wrapper: scheme_factory {
   { return r.pred() == PRED_BND ? (*fun)(r.real()) : NULL; }
 };
 
+struct scheme_factorz_wrapper: scheme_factory {
+  typedef scheme_register::scheme_factorz_fun scheme_factory_fun;
+  scheme_factory_fun fun;
+  scheme_factorz_wrapper(scheme_factory_fun f): fun(f) {}
+  virtual proof_scheme *operator()(predicated_real const &r) const { return (*fun)(r); }
+};
+
 scheme_register::scheme_register(scheme_factory_fun f) {
   factories.push_back(new scheme_factory_wrapper(f));
+}
+
+scheme_register::scheme_register(scheme_factorz_fun f) {
+  factories.push_back(new scheme_factorz_wrapper(f));
 }
 
 scheme_register::scheme_register(scheme_factory const *f) {

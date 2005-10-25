@@ -5,6 +5,8 @@
 #include "numbers/real.hpp"
 #include "numbers/round.hpp"
 #include "parser/ast.hpp"
+#include "parser/pattern.hpp"
+#include "proofs/schemes.hpp"
 
 struct fixed_format: gs_rounding {
   int min_exp;
@@ -105,3 +107,72 @@ function_class const *int_rounding_generator::operator()(function_params const &
 }
 
 static int_rounding_generator dummy2;
+
+// FIX_OF_FIXED
+
+struct fix_of_fixed_scheme: proof_scheme {
+  long min_exp;
+  virtual node *generate_proof() const;
+  virtual preal_vect needed_reals() const;
+  fix_of_fixed_scheme(predicated_real const &r, long e): proof_scheme(r), min_exp(e) {}
+  static proof_scheme *factory(predicated_real const &);
+};
+
+
+node *fix_of_fixed_scheme::generate_proof() const {
+  return create_theorem(0, NULL, property(real, min_exp), "fix_of_fixed");
+}
+
+preal_vect fix_of_fixed_scheme::needed_reals() const {
+  return preal_vect();
+}
+
+proof_scheme *fix_of_fixed_scheme::factory(predicated_real const &real) {
+  if (real.pred() != PRED_FIX) return NULL;
+  real_op const *r = boost::get< real_op const >(real.real());
+  if (!r) return NULL;
+  fixed_rounding_class const *f = dynamic_cast< fixed_rounding_class const * >(r->fun);
+  if (!f) return NULL;
+  return new fix_of_fixed_scheme(real, f->format.min_exp);
+}
+
+static scheme_register fix_of_fixed_scheme_register(fix_of_fixed_scheme::factory);
+
+// FIXED_OF_FIX
+
+struct fixed_of_fix_scheme: proof_scheme {
+  predicated_real fixval;
+  long min_exp;
+  virtual node *generate_proof() const;
+  virtual preal_vect needed_reals() const;
+  fixed_of_fix_scheme(ast_real const *r, predicated_real const &v, long e)
+    : proof_scheme(r), fixval(v), min_exp(e) {}
+  static proof_scheme *factory(ast_real const *);
+};
+
+
+node *fixed_of_fix_scheme::generate_proof() const {
+  node *n = find_proof(fixval);
+  if (!n) return NULL;
+  property const &hyp = n->get_result();
+  if (hyp.cst() < min_exp) return NULL;
+  return create_theorem(1, &hyp, property(real, zero()), "fixed_of_fix");
+}
+
+preal_vect fixed_of_fix_scheme::needed_reals() const {
+  return preal_vect(1, fixval);
+}
+
+extern pattern absolute_error_pattern;
+
+proof_scheme *fixed_of_fix_scheme::factory(ast_real const *real) {
+  ast_real_vect holders(2);
+  if (!match(real, absolute_error_pattern, holders)) return NULL;
+  real_op const *p = boost::get < real_op const >(holders[1]);
+  assert(p);
+  fixed_rounding_class const *f = dynamic_cast< fixed_rounding_class const * >(p->fun);
+  if (!f) return NULL;
+  return new fixed_of_fix_scheme(real, predicated_real(holders[0], PRED_FIX), f->format.min_exp);
+}
+
+static scheme_register fixed_of_fix_scheme_register(fixed_of_fix_scheme::factory);
