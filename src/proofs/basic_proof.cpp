@@ -572,9 +572,9 @@ node *fix_of_flt_bnd_scheme::generate_proof() const {
   mpz_init(m);
   int e, s;
   split_exact(lower(hyps[1].bnd()).data->val, m, e, s);
+  if (s <= 0) { mpz_clear(m); return NULL; }
   e += mpz_sizeinbase(m, 2);
   mpz_clear(m);
-  if (s <= 0) return NULL;
   return create_theorem(2, hyps, property(real, e - hyps[0].cst()), "fix_of_flt_bnd");
 }
 
@@ -590,7 +590,7 @@ proof_scheme *fix_of_flt_bnd_scheme::factory(predicated_real const &real) {
   return new fix_of_flt_bnd_scheme(real, hyps);
 }
 
-// flt_of_fix_bnd
+// FLT_OF_FIX_BND
 REGISTER_SCHEMEX_BEGIN(flt_of_fix_bnd);
   preal_vect needed;
   flt_of_fix_bnd_scheme(predicated_real const &r, preal_vect &v)
@@ -604,9 +604,9 @@ node *flt_of_fix_bnd_scheme::generate_proof() const {
   mpz_init(m);
   int e, s;
   split_exact(upper(hyps[1].bnd()).data->val, m, e, s);
+  if (s <= 0) { mpz_clear(m); return NULL; }
   e += mpz_sizeinbase(m, 2);
   mpz_clear(m);
-  if (s <= 0) return NULL;
   return create_theorem(2, hyps, property(real, e - hyps[0].cst()), "flt_of_fix_bnd");
 }
 
@@ -620,4 +620,69 @@ proof_scheme *flt_of_fix_bnd_scheme::factory(predicated_real const &real) {
   hyps.push_back(predicated_real(real.real(), PRED_FIX));
   hyps.push_back(predicated_real(normalize(ast_real(real_op(UOP_ABS, real.real()))), PRED_BND));
   return new flt_of_fix_bnd_scheme(real, hyps);
+}
+
+// FIX_OF_SINGLETON_BND
+REGISTER_SCHEMEX_BEGIN(fix_of_singleton_bnd);
+  predicated_real needed;
+  fix_of_singleton_bnd_scheme(predicated_real const &r, predicated_real const &v)
+    : proof_scheme(r), needed(v) {}
+REGISTER_SCHEMEX_END(fix_of_singleton_bnd);
+
+node *fix_of_singleton_bnd_scheme::generate_proof() const {
+  node *n = find_proof(needed);
+  if (!n) return NULL;
+  property const &hyp = n->get_result();
+  interval const &i = hyp.bnd();
+  number const &l = lower(i);
+  if (upper(i) != l) return NULL;
+  mpz_t m;
+  mpz_init(m);
+  int e, s;
+  split_exact(l.data->val, m, e, s);
+  mpz_clear(m);
+  if (s == 0) return NULL;
+  return create_theorem(1, &hyp, property(real, e), "fix_of_singleton_bnd");
+}
+
+preal_vect fix_of_singleton_bnd_scheme::needed_reals() const {
+  return preal_vect(1, needed);
+}
+
+proof_scheme *fix_of_singleton_bnd_scheme::factory(predicated_real const &real) {
+  if (real.pred() != PRED_FIX) return NULL;
+  return new fix_of_singleton_bnd_scheme(real, predicated_real(real.real(), PRED_BND));
+}
+
+// FLT_OF_SINGLETON_BND
+REGISTER_SCHEMEX_BEGIN(flt_of_singleton_bnd);
+  predicated_real needed;
+  flt_of_singleton_bnd_scheme(predicated_real const &r, predicated_real const &v)
+    : proof_scheme(r), needed(v) {}
+REGISTER_SCHEMEX_END(flt_of_singleton_bnd);
+
+node *flt_of_singleton_bnd_scheme::generate_proof() const {
+  node *n = find_proof(needed);
+  if (!n) return NULL;
+  property const &hyp = n->get_result();
+  interval const &i = hyp.bnd();
+  number const &l = lower(i);
+  if (upper(i) != l) return NULL;
+  mpz_t m;
+  mpz_init(m);
+  int e, s;
+  split_exact(l.data->val, m, e, s);
+  if (s == 0) e = 0;
+  else e = mpz_sizeinbase(m, 2);
+  mpz_clear(m);
+  return create_theorem(1, &hyp, property(real, e), "flt_of_singleton_bnd");
+}
+
+preal_vect flt_of_singleton_bnd_scheme::needed_reals() const {
+  return preal_vect(1, needed);
+}
+
+proof_scheme *flt_of_singleton_bnd_scheme::factory(predicated_real const &real) {
+  if (real.pred() != PRED_FIX) return NULL;
+  return new flt_of_singleton_bnd_scheme(real, predicated_real(real.real(), PRED_BND));
 }
