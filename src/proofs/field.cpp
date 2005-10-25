@@ -30,10 +30,12 @@ struct pattern_factory: scheme_factory {
   pattern_factory(pattern const &q1, pattern const &q2, std::string const &n,
                   pattern_cond_vect const &c, pattern_excl_vect const &e)
     : lhs(q1), rhs(q2), name(n), cond(c), excl(e) {}
-  virtual proof_scheme *operator()(ast_real const *) const;
+  virtual proof_scheme *operator()(predicated_real const &) const;
 };
 
-proof_scheme *pattern_factory::operator()(ast_real const *src) const {
+proof_scheme *pattern_factory::operator()(predicated_real const &r) const {
+  if (r.pred() != PRED_BND) return NULL;
+  ast_real const *src = r.real();
   ast_real_vect holders;
   if (!match(src, lhs, holders)) return NULL;
   std::set< ast_real const * > hold(holders.begin(), holders.end());

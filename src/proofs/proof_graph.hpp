@@ -24,7 +24,7 @@ typedef std::vector< node * > node_vect;
 typedef std::vector< theorem_node * > axiom_vect;
 typedef std::set< node * > node_set;
 typedef std::set< theorem_node * > axiom_set;
-typedef std::map< ast_real const *, node * > node_map;
+typedef std::map< predicated_real, node * > node_map;
 
 struct node {
   node_id type;
@@ -86,7 +86,7 @@ class graph_t {
   void remove(node *n) { nodes.erase (n); }
   graph_t(graph_t *, property_vect const &, property_vect const &, proof_helper *, bool);
   ~graph_t();
-  node *find_already_known(ast_real const *) const;
+  node *find_already_known(predicated_real const &) const;
   bool try_real(node *);
   property_vect const &get_hypotheses() const { return hyp; }
   property_vect const &get_goals() const { return goals; }

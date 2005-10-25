@@ -15,6 +15,7 @@ class predicated_real {
   predicated_real(ast_real const *r, predicate_type p): d(reinterpret_cast< long >(r) | p) {}
   operator ast_real const *() const { return reinterpret_cast< ast_real const * >(d & ~3); }
   predicate_type pred() const { return (predicate_type)(d & 3); }
+  ast_real const *real() const { return reinterpret_cast< ast_real const * >(d & ~3); }
   bool operator==(predicated_real const &r) const { return d == r.d; }
   bool operator!=(predicated_real const &r) const { return d != r.d; }
   bool operator< (predicated_real const &r) const { return d <  r.d; }

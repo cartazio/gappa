@@ -213,7 +213,7 @@ bool graph_t::try_real(node *n) {
   return true;
 }
 
-node *graph_t::find_already_known(ast_real const *real) const {
+node *graph_t::find_already_known(predicated_real const &real) const {
   node_map::const_iterator i = known_reals.find(real);
   return (i != known_reals.end()) ? i->second : NULL;
 }

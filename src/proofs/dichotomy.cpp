@@ -135,7 +135,7 @@ struct dichotomy_scheme: proof_scheme {
   ~dichotomy_scheme() { delete_proof_helper(helper); }
   virtual node *generate_proof(interval const &) const;
   virtual node *generate_proof() const { return dich; }
-  virtual ast_real_vect needed_reals() const;
+  virtual preal_vect needed_reals() const;
 };
 
 static bool no_dichotomy = false;
@@ -149,11 +149,8 @@ dichotomy_scheme::dichotomy_scheme(ast_real const *v, ast_real const *r)
   assert(reals[0]);
 }
 
-ast_real_vect dichotomy_scheme::needed_reals() const {
-  ast_real_vect res;
-  //res.push_back(real);
-  res.push_back(var);
-  return res;
+preal_vect dichotomy_scheme::needed_reals() const {
+  return preal_vect(1, predicated_real(var, PRED_BND));
 }
 
 node *dichotomy_scheme::generate_proof(interval const &bnd) const {
@@ -196,11 +193,11 @@ node *dichotomy_scheme::generate_proof(interval const &bnd) const {
 struct dichotomy_factory: scheme_factory {
   ast_real const *dst, *var;
   dichotomy_factory(ast_real const *q1, ast_real const *q2): dst(q1), var(q2) {}
-  virtual proof_scheme *operator()(ast_real const *) const;
+  virtual proof_scheme *operator()(predicated_real const &) const;
 };
 
-proof_scheme *dichotomy_factory::operator()(ast_real const *r) const {
-  if (no_dichotomy || r != dst) return NULL;
+proof_scheme *dichotomy_factory::operator()(predicated_real const &r) const {
+  if (no_dichotomy || r.pred() != PRED_BND || r.real() != dst) return NULL;
   return new dichotomy_scheme(var, dst);
 }
 

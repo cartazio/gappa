@@ -15,7 +15,8 @@ struct scheme_factory_wrapper: scheme_factory {
   typedef scheme_register::scheme_factory_fun scheme_factory_fun;
   scheme_factory_fun fun;
   scheme_factory_wrapper(scheme_factory_fun f): fun(f) {}
-  virtual proof_scheme *operator()(ast_real const *r) const { return (*fun)(r); }
+  virtual proof_scheme *operator()(predicated_real const &r) const
+  { return r.pred() == PRED_BND ? (*fun)(r.real()) : NULL; }
 };
 
 scheme_register::scheme_register(scheme_factory_fun f) {
@@ -30,11 +31,11 @@ struct dummy_scheme: proof_scheme {
   dummy_scheme(ast_real const *r): proof_scheme(r) {}
   virtual bool dummy() const { return true; }
   virtual node *generate_proof() const { assert(false); return NULL; }
-  virtual ast_real_vect needed_reals() const { return ast_real_vect(); }
+  virtual preal_vect needed_reals() const { return preal_vect(); }
 };
 
 struct proof_helper {
-  typedef std::set< ast_real const * > real_set;
+  typedef std::set< predicated_real > real_set;
   real_set missing_reals;
 
   typedef std::set< proof_scheme const * > scheme_set;
@@ -45,19 +46,19 @@ struct proof_helper {
     scheme_set dependent;
     scheme_set schemes;
   };
-  typedef std::map< ast_real const *, real_dependency > real_dependencies;
+  typedef std::map< predicated_real, real_dependency > real_dependencies;
   real_dependencies reals;
-  void initialize_real(ast_real const *, proof_scheme const *);
-  void delete_scheme(proof_scheme const *, ast_real const *);
+  void initialize_real(predicated_real const &, proof_scheme const *);
+  void delete_scheme(proof_scheme const *, predicated_real const &);
 
   proof_helper(ast_real_vect &);
   proof_helper(proof_helper const &);
   ~proof_helper();
 
-  void insert_dependent(scheme_set &, ast_real const *) const;
+  void insert_dependent(scheme_set &, predicated_real const &) const;
 };
 
-void proof_helper::initialize_real(ast_real const *real, proof_scheme const *parent) {
+void proof_helper::initialize_real(predicated_real const &real, proof_scheme const *parent) {
   real_dependencies::iterator it = reals.find(real);
   if (it != reals.end()) {
     it->second.dependent.insert(parent);
@@ -79,18 +80,18 @@ void proof_helper::initialize_real(ast_real const *real, proof_scheme const *par
   // create the dependencies
   for(scheme_set::const_iterator i = l.begin(), i_end = l.end(); i != i_end; ++i) {
     proof_scheme const *s = *i;
-    ast_real_vect v = s->needed_reals();
-    for(ast_real_vect::const_iterator j = v.begin(), j_end = v.end(); j != j_end; ++j)
+    preal_vect v = s->needed_reals();
+    for(preal_vect::const_iterator j = v.begin(), j_end = v.end(); j != j_end; ++j)
       initialize_real(*j, s);
     missing_reals.insert(s->real);
   }
   dep.dependent.insert(parent);
 }
 
-void proof_helper::delete_scheme(proof_scheme const *s, ast_real const *restricted_real) {
-  ast_real_vect v = s->needed_reals();
-  for(ast_real_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i) {
-    ast_real const *real = *i;
+void proof_helper::delete_scheme(proof_scheme const *s, predicated_real const &restricted_real) {
+  preal_vect v = s->needed_reals();
+  for(preal_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i) {
+    predicated_real const &real = *i;
     if (real == restricted_real) continue;
     missing_reals.insert(real);
     reals[real].dependent.erase(s);
@@ -100,13 +101,13 @@ void proof_helper::delete_scheme(proof_scheme const *s, ast_real const *restrict
 
 proof_helper::proof_helper(ast_real_vect &targets) {
   for(ast_real_vect::const_iterator i = targets.begin(), i_end = targets.end(); i != i_end; ++i)
-    initialize_real(*i, NULL);
+    initialize_real(predicated_real(*i, PRED_BND), NULL);
   assert(top_graph);
   property_vect const &hyp = top_graph->get_hypotheses();
   for(property_vect::const_iterator i = hyp.begin(), i_end = hyp.end(); i != i_end; ++i)
     initialize_real(i->real, NULL); // initialize hypothesis reals to handle contradictions
   while (!missing_reals.empty()) {
-    ast_real const *real = *missing_reals.begin();
+    predicated_real const &real = *missing_reals.begin();
     real_dependency &r = reals[real];
     if (r.schemes.empty() || r.dependent.empty()) {
       for(scheme_set::const_iterator i = r.dependent.begin(), i_end = r.dependent.end(); i != i_end; ++i) {
@@ -117,7 +118,7 @@ proof_helper::proof_helper(ast_real_vect &targets) {
       }
       for(scheme_set::const_iterator i = r.schemes.begin(), i_end = r.schemes.end(); i != i_end; ++i) {
         // if we are here, no scheme needs this real anymore, so erase all the schemes of the real
-        delete_scheme(*i, NULL);
+        delete_scheme(*i, predicated_real());
       }
       reals.erase(real);
     }
@@ -130,7 +131,7 @@ proof_helper::proof_helper(ast_real_vect &targets) {
     for(scheme_set::iterator j = v.begin(), j_end = v.end(); j != j_end; ++j) {
       proof_scheme const *s = *j;
       if (s->dummy()) {
-        delete_scheme(s, NULL);
+        delete_scheme(s, predicated_real());
         continue;
       }
       if (s->needed_reals().empty())
@@ -141,7 +142,7 @@ proof_helper::proof_helper(ast_real_vect &targets) {
   }
   missing_reals.clear();
   for(ast_real_vect::iterator i = targets.begin(), end = targets.end(); i != end; ++i) {
-    real_dependencies::iterator j = reals.find(*i);
+    real_dependencies::iterator j = reals.find(predicated_real(*i, PRED_BND));
     if (j == reals.end())
       *i = NULL;
   }
@@ -156,7 +157,7 @@ proof_helper::~proof_helper() {
     delete *j;
 }
 
-void proof_helper::insert_dependent(scheme_set &v, ast_real const *real) const {
+void proof_helper::insert_dependent(scheme_set &v, predicated_real const &real) const {
   real_dependencies::const_iterator i = reals.find(real);
   if (i == reals.end()) return;
   real_dependency const &r = i->second;
@@ -180,7 +181,7 @@ node *proof_scheme::generate_proof(interval const &) const {
   return generate_proof();
 }
 
-node *find_proof(ast_real const *real) {
+node *find_proof(predicated_real const &real) {
   return top_graph->find_already_known(real);
 }
 
