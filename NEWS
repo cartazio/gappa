@@ -1,3 +1,7 @@
+Version 0.5.1:
+ * whole engine
+   - added FIX and FLT predicates in addition to the original BND predicate
+
 Version 0.5.0:
  * whole engine
    - generalized rounding modes as functions
