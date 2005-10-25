@@ -174,6 +174,7 @@ interval float_rounding_class::relative_error_from_rounded(interval const &i, st
                        type == ROUND_ZR ? -1 : 0);
 }
 
+/*
 struct sterbenz_scheme: proof_scheme {
   sterbenz_scheme(ast_real const *r): proof_scheme(r) {}
   virtual node *generate_proof() const;
@@ -250,3 +251,4 @@ proof_scheme *sterbenz_scheme::factory(ast_real const *real) {
 }
 
 static scheme_register sterbenz_scheme_register(&sterbenz_scheme::factory);
+*/

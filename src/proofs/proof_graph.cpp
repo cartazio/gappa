@@ -62,17 +62,15 @@ dependent_node::~dependent_node() {
   clean_dependencies();
 }
 
-typedef std::map< ast_real const *, interval > property_map;
+typedef std::map< predicated_real, property > property_map;
 
 // intersecting shouldn't create a wrong proof: by design
 // (for an hypothesis map) - the hypotheses are all satisfiable, hence their intersection too
 // (for a result map) - the results have been generated at the same time, they are identical
 static void fill_property_map(property_map &m, property const &p) {
-  property_map::iterator pki = m.find(p.real);
-  if (pki != m.end())
-    pki->second = intersect(pki->second, p.bnd);
-  else
-    m.insert(std::make_pair(p.real, p.bnd));
+  std::pair< property_map::iterator, bool > pki = m.insert(std::make_pair(p.real, p));
+  if (!pki.second) // there was already a similar predicate
+    pki.first->second.intersect(p);
 }
 
 static void fill_property_map(property_map &m, property_vect const &v) {
@@ -89,7 +87,7 @@ static void fill_property_map(property_map &m, node *n) {
 
 static void fill_property_vect(property_vect &v, property_map const &m) {
   for(property_map::const_iterator i = m.begin(), end = m.end(); i != end; ++i)
-    v.push_back(property(i->first, i->second));
+    v.push_back(i->second);
 }
 
 modus_node::modus_node(theorem_node *n)
@@ -132,8 +130,9 @@ intersection_node::intersection_node(node *n1, node *n2)
   assert(dominates(n1, this) && dominates(n2, this));
   property const &res1 = n1->get_result(), &res2 = n2->get_result();
   assert(res1.real == res2.real);
-  res = property(res1.real, intersect(res1.bnd, res2.bnd));
-  if (lower(res1.bnd) > lower(res2.bnd)) std::swap(n1, n2);
+  res = res1;
+  res.intersect(res2);
+  if (res.real.pred() == PRED_BND && lower(res1.bnd()) > lower(res2.bnd())) std::swap(n1, n2);
   // to simplify the graph, no intersection should be nested
   if (n1->type == INTERSECTION) n1 = n1->get_subproofs()[0];
   if (n2->type == INTERSECTION) n2 = n2->get_subproofs()[1];
@@ -146,7 +145,7 @@ intersection_node::intersection_node(node *n1, node *n2)
   fill_property_map(pmap, n1);
   fill_property_map(pmap, n2);
   fill_property_vect(hyp, pmap);
-  if (is_empty(res.bnd))
+  if (res.real.pred() == PRED_BND && is_empty(res.bnd()))
     top_graph->contradiction = this;
 }
 
@@ -199,11 +198,10 @@ bool graph_t::try_real(node *n) {
   if (!ib.second) { // there was already a known real
     node *old = dst;
     property const &res1 = old->get_result();
-    interval const &i1 = res1.bnd, &i2 = res2.bnd;
-    if (i1 <= i2) {
+    if (res1.implies(res2)) {
       delete_tree(n);
       return false;
-    } else if (!(i2 < i1)) {
+    } else if (!(res2.strict_implies(res1))) {
       graph_loader loader(this);
       n = new intersection_node(old, n);
     }
@@ -252,7 +250,7 @@ void graph_t::flatten() {
         std::pair< node_map::iterator, bool > ib = father->known_reals.insert(std::make_pair(res.real, n));
         if (!ib.second) { // there was a known real in the father and it has to be overridden
           node *&dst = ib.first->second;
-          assert(res.bnd <= dst->get_result().bnd);
+          assert(res.implies(dst->get_result()));
           --dst->nb_good;
           delete_tree(dst);
           dst = n;

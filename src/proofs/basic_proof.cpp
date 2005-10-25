@@ -21,7 +21,7 @@ REGISTER_SCHEME_END(absolute_error);
 node *absolute_error_scheme::generate_proof() const {
   std::string name;
   property res(real, function->absolute_error(name));
-  assert(is_defined(res.bnd));
+  assert(is_defined(res.bnd()));
   return create_theorem(0, NULL, res, name);
 }
 
@@ -51,8 +51,8 @@ node *absolute_error_from_real_scheme::generate_proof() const {
   if (!n) return NULL;
   property const &res1 = n->get_result();
   std::string name;
-  property res(real, function->absolute_error_from_real(res1.bnd, name));
-  if (!is_defined(res.bnd)) return NULL;
+  property res(real, function->absolute_error_from_real(res1.bnd(), name));
+  if (!is_defined(res.bnd())) return NULL;
   return create_theorem(1, &res1, res, name);
 }
 
@@ -82,8 +82,8 @@ node *absolute_error_from_rounded_scheme::generate_proof() const {
   if (!n) return NULL;
   property const &res1 = n->get_result();
   std::string name;
-  property res(real, function->absolute_error_from_rounded(res1.bnd, name));
-  if (!is_defined(res.bnd)) return NULL;
+  property res(real, function->absolute_error_from_rounded(res1.bnd(), name));
+  if (!is_defined(res.bnd())) return NULL;
   return create_theorem(1, &res1, res, name);
 }
 
@@ -113,8 +113,8 @@ node *relative_error_from_real_scheme::generate_proof() const {
   if (!n) return NULL;
   property const &res1 = n->get_result();
   std::string name;
-  property res(real, function->relative_error_from_real(res1.bnd, name));
-  if (!is_defined(res.bnd)) return NULL;
+  property res(real, function->relative_error_from_real(res1.bnd(), name));
+  if (!is_defined(res.bnd())) return NULL;
   return create_theorem(1, &res1, res, name);
 }
 
@@ -145,8 +145,8 @@ node *relative_error_from_rounded_scheme::generate_proof() const {
   if (!n) return NULL;
   property const &res1 = n->get_result();
   std::string name;
-  property res(real, function->relative_error_from_rounded(res1.bnd, name));
-  if (!is_defined(res.bnd)) return NULL;
+  property res(real, function->relative_error_from_rounded(res1.bnd(), name));
+  if (!is_defined(res.bnd())) return NULL;
   return create_theorem(1, &res1, res, name);
 }
 
@@ -177,8 +177,8 @@ node *rounding_bound_scheme::generate_proof() const {
   if (!n) return NULL;
   property const &res1 = n->get_result();
   std::string name;
-  property res(real, function->round(res1.bnd, name));
-  if (!is_defined(res.bnd)) return NULL;
+  property res(real, function->round(res1.bnd(), name));
+  if (!is_defined(res.bnd())) return NULL;
   return create_theorem(1, &res1, res, name);
 }
 
@@ -205,8 +205,8 @@ node *enforce_bound_scheme::generate_proof() const {
   if (!n) return NULL;
   property const &res1 = n->get_result();
   std::string name;
-  property res(real, function->enforce(res1.bnd, name));
-  if (!is_defined(res.bnd)) return NULL;
+  property res(real, function->enforce(res1.bnd(), name));
+  if (!is_defined(res.bnd())) return NULL;
   return create_theorem(1, &res1, res, name);
 }
 
@@ -233,7 +233,7 @@ node *computation_scheme::generate_proof() const {
     node *n1 = find_proof(r->ops[0]);
     if (!n1) return NULL;
     property const &res = n1->get_result();
-    interval const &i = res.bnd;
+    interval const &i = res.bnd();
     switch (r->type) {
     case UOP_NEG:
       return create_theorem(1, &res, property(real, -i), "neg");
@@ -251,7 +251,7 @@ node *computation_scheme::generate_proof() const {
     node *n1 = find_proof(r->ops[0]);
     if (!n1) return NULL;
     property const &res1 = n1->get_result();
-    interval const &i1 = res1.bnd;
+    interval const &i1 = res1.bnd();
     if (same_ops && r->type == BOP_MUL) {
       s = "square_";
       s += 'o' + sign(i1);
@@ -260,9 +260,9 @@ node *computation_scheme::generate_proof() const {
     node *n2 = find_proof(r->ops[1]);
     if (!n2) return NULL;
     property const &res2 = n2->get_result();
-    interval const &i2 = res2.bnd;
+    interval const &i2 = res2.bnd();
     property res(real);
-    interval &i = res.bnd;
+    interval &i = res.bnd();
     switch (r->type) {
     case BOP_ADD: i = i1 + i2; s = "add"; break;
     case BOP_SUB: i = i1 - i2; s = "sub"; break;
@@ -315,7 +315,7 @@ node *invert_abs_scheme::generate_proof() const {
   node *n = find_proof(absval);
   if (!n) return NULL;
   property const &res1 = n->get_result();
-  number const &num = upper(res1.bnd);
+  number const &num = upper(res1.bnd());
   property res(real, interval(-num, num));
   return create_theorem(1, &res1, res, "invert_abs");
 }
@@ -372,8 +372,8 @@ node *compose_relative_scheme::generate_proof() const {
   node *n1 = find_proof(r1->ops[0]), *n2 = find_proof(r1->ops[1]);
   if (!n1 || !n2) return NULL;
   property const &res1 = n1->get_result(), &res2 = n2->get_result();
-  property res(real, compose_relative(res1.bnd, res2.bnd));
-  if (!is_defined(res.bnd)) return NULL;
+  property res(real, compose_relative(res1.bnd(), res2.bnd()));
+  if (!is_defined(res.bnd())) return NULL;
   property hyps[2] = { res1, res2 };
   return create_theorem(2, hyps, res, "compose");
 }
@@ -444,7 +444,7 @@ node *rewrite_scheme::generate_proof() const {
     node *m = find_proof(i->real);
     if (!m) return NULL;
     property const &res = m->get_result();
-    interval const &b = res.bnd;
+    interval const &b = res.bnd();
     number n(i->value);
     bool good;
     switch (i->type) {
@@ -460,7 +460,7 @@ node *rewrite_scheme::generate_proof() const {
   }
   property const &res = n->get_result();
   hyps.push_back(res);
-  return create_theorem(hyps.size(), &*hyps.begin(), property(real, res.bnd), name);
+  return create_theorem(hyps.size(), &*hyps.begin(), property(real, res.bnd()), name);
 }
 
 struct rewrite_factory: scheme_factory {

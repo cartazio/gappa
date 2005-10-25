@@ -60,14 +60,14 @@ void dichotomy_node::try_graph(graph_t *g2) {
     return;
   }
   property p(g1->get_hypotheses()[0]);
-  p.bnd = interval(lower(p.bnd), upper(g2->get_hypotheses()[0].bnd));
+  p.bnd() = interval(lower(p.bnd()), upper(g2->get_hypotheses()[0].bnd()));
   tmp_hyp.replace_front(p);
   property const &res = get_result();
   graph_t *g0 = new graph_t(top_graph, tmp_hyp, g1->get_goals(), top_graph->helper, true);
   bool b = g0->populate();
   if (!b)
     if (node *n = g0->find_already_known(res.real))
-      if (n->get_result().bnd <= res.bnd)
+      if (n->get_result().bnd() <= res.bnd())
         b = true;
   if (b) {
     last_graph = g0;
@@ -84,7 +84,7 @@ void dichotomy_node::try_graph(graph_t *g2) {
     g2 = new graph_t(top_graph, tmp_hyp, g1->get_goals(), top_graph->helper, true);
     if (!g2->populate()) {
       node *n = g2->find_already_known(res.real);
-      assert(n->get_result().bnd <= res.bnd);
+      assert(n->get_result().bnd() <= res.bnd());
     }
   }
   last_graph = g2;
@@ -104,8 +104,8 @@ void dichotomy_node::dichotomize() {
   bool good = true;
   if (!g->populate()) {
     if (node *n = g->find_already_known(res.real)) {
-      bnd = n->get_result().bnd;
-      if (!(bnd <= res.bnd)) good = false;
+      bnd = n->get_result().bnd();
+      if (!(bnd <= res.bnd())) good = false;
     } else good = false;
   }
   if (good) {
@@ -115,10 +115,10 @@ void dichotomy_node::dichotomize() {
   property const &h = tmp_hyp[0];
   node *n = g->find_already_known(h.real);
   assert(n);
-  interval i = n->get_result().bnd;
+  interval i = n->get_result().bnd();
   delete g;
   if (!is_defined(i) || is_singleton(i)) throw dichotomy_failure(h, res, bnd);
-  std::pair< interval, interval > ii = split(h.bnd);
+  std::pair< interval, interval > ii = split(h.bnd());
   if (++depth > parameter_dichotomy_depth) throw dichotomy_failure(h, res, bnd);
   tmp_hyp.replace_front(property(h.real, ii.first));
   dichotomize();
@@ -180,11 +180,11 @@ node *dichotomy_scheme::generate_proof(interval const &bnd) const {
   } catch (dichotomy_failure e) {
     if (warning_dichotomy_failure) {
       property const &h = e.hyp;
-      std::cerr << "Warning: when " << dump_real(h.real) << " is in " << h.bnd << ", ";
+      std::cerr << "Warning: when " << dump_real(h.real) << " is in " << h.bnd() << ", ";
       property const &p = e.res;
       std::cerr << dump_real(p.real);
       if (is_defined(e.bnd))
-        std::cerr << " is in " << e.bnd << " potentially outside of " << p.bnd << '\n';
+        std::cerr << " is in " << e.bnd << " potentially outside of " << p.bnd() << '\n';
       else
         std::cerr << " is not computable\n";
     }

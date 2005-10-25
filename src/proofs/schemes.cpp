@@ -186,7 +186,7 @@ node *find_proof(ast_real const *real) {
 
 node *find_proof(property const &res) {
   node *n = find_proof(res.real);
-  return (n && n->get_result().bnd <= res.bnd) ? n : NULL;
+  return (n && n->get_result().implies(res)) ? n : NULL;
 }
 
 bool graph_t::populate() {
@@ -196,8 +196,8 @@ bool graph_t::populate() {
   bound_map bounds;
   bool completely_bounded = true;
   for(property_vect::const_iterator i = goals.begin(), i_end = goals.end(); i != i_end; ++i)
-    if (is_defined(i->bnd))
-      bounds[i->real] = &i->bnd;
+    if (i->real.pred() == PRED_BND && is_defined(i->bnd()))
+      bounds[i->real] = &i->bnd();
     else
       completely_bounded = false;
   bound_map::const_iterator bounds_end = bounds.end();
@@ -216,7 +216,7 @@ bool graph_t::populate() {
     if (n && try_real(n)) {
       if (top_graph->get_contradiction()) break;
       helper->insert_dependent(missing_schemes, s->real);
-      if (completely_bounded && i != bounds_end && n->get_result().bnd <= *i->second) {
+      if (completely_bounded && i != bounds_end && n->get_result().bnd() <= *i->second) {
         bounds.erase(s->real);
         if (bounds.empty()) break;
         bounds_end = bounds.end();

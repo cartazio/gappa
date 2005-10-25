@@ -10,7 +10,7 @@ static property generate_property(ast_atom_bound const &p, bool goal) {
   property r(p.real);
   if (p.interval.lower) {
     assert(p.interval.upper);
-    r.bnd = create_interval(p.interval, goal);
+    r.bnd() = create_interval(p.interval, goal);
   } else {
     if (!goal)
       { std::cerr << "Error: undefined intervals are reserved for conclusions.\n"; exit(1); }

@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
       std::cerr << " for ";
       for(unsigned i = 0; i < nb_hyp; ++i) {
         if (i != 0) std::cerr << " and ";
-        std::cerr << dump_real(hyp[i].real) << " in " << hyp[i].bnd;
+        std::cerr << dump_real(hyp[i].real) << " in " << hyp[i].bnd();
       }
     }
     std::cerr << ":\n";
@@ -62,7 +62,7 @@ int main(int argc, char **argv) {
           continue;
         }
         property const &p = n->get_result();
-        std::cerr << dump_real(p.real) << " in " << p.bnd << '\n';
+        std::cerr << dump_real(p.real) << " in " << p.bnd() << '\n';
       }
       for(node_vect::const_iterator i = results.begin(), end = results.end(); i != end; ++i)
         if (*i) display->theorem(*i);

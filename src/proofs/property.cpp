@@ -1,24 +1,75 @@
+#include <algorithm>
+#include <new>
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
 #include "proofs/property.hpp"
-#include <algorithm>
+
+typedef int long_is_not_long_enough[sizeof(long) - sizeof(interval *)];
+
+property::property(): d(0), real() {}
+
+property::property(ast_real const *r): real(r, PRED_BND) {
+  new(&d) interval();
+}
+
+property::property(ast_real const *r, interval const &i): real(r, PRED_BND) {
+  new(&d) interval(i);
+}
+
+property::property(property const &p): real(p.real) {
+  if (p.real.pred() == PRED_BND) new(&d) interval(p.bnd());
+  else d = p.d;
+}
+
+property::~property() {
+  if (real.pred() == PRED_BND) bnd().~interval();
+}
+
+property &property::operator=(property const &p) {
+  if (p.real.pred() == PRED_BND) {
+    interval const &pb = p.bnd();
+    if (real.pred() == PRED_BND) bnd() = pb;
+    else new(&d) interval(pb);
+  } else {
+    if (real.pred() == PRED_BND) bnd().~interval();
+    d = p.d;
+  }
+  real = p.real;
+  return *this;
+}
 
 bool property::implies(property const &p) const {
-  return real == p.real && bnd <= p.bnd;
+  if (real != p.real) return false;
+  switch (real.pred()) {
+  case PRED_BND: return bnd() <= p.bnd();
+  case PRED_FIX: return d >= p.d;
+  case PRED_FLT: return d <= p.d;
+  }
+  assert(false);
+  return false;
+}
+
+bool property::strict_implies(property const &p) const {
+  if (real != p.real) return false;
+  switch (real.pred()) {
+  case PRED_BND: return bnd() < p.bnd();
+  case PRED_FIX: return d > p.d;
+  case PRED_FLT: return d < p.d;
+  }
+  assert(false);
+  return false;
+}
+
+void property::intersect(property const &p) {
+  assert(real == p.real);
+  switch (real.pred()) {
+  case PRED_BND: { interval &i = bnd(); i = ::intersect(i, p.bnd()); break; }
+  case PRED_FIX: d = std::max(d, p.d); break;
+  case PRED_FLT: d = std::min(d, p.d); break;
+  }
 }
 
 typedef std::vector< property > vect;
-
-static bool operator==(vect const &v1, vect const &v2) {
-  unsigned l = v1.size();
-  if (v1.size() != v2.size()) return false;
-  for(unsigned i = 0; i < l; ++i) {
-    property const &p1 = v1[i], &p2 = v2[i];
-    if (p1.real != p2.real || lower(p1.bnd) != lower(p2.bnd) || upper(p1.bnd) != upper(p2.bnd))
-      return false;
-  }
-  return true;
-}
 
 bool property_vect::implies(property_vect const &s) const {
   for(const_iterator i = s.begin(), i_end = s.end(); i != i_end; ++i) {
@@ -34,10 +85,6 @@ int property_vect::find_compatible_property(property const &p) const {
   for(const_iterator i_begin = begin(), i = i_begin, i_end = end(); i != i_end; ++i)
     if (i->implies(p)) return i - i_begin;
   return -1;
-}
-
-bool property_vect::operator==(property_vect const &v) const {
-  return vec == v.vec;
 }
 
 void property_vect::push_front(property const &p) {

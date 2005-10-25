@@ -116,12 +116,15 @@ static std::map< std::string, int > displayed_properties;
 
 static std::string display(property const &p) {
   std::stringstream s;
-  s << display(p.bnd) << ' ' << display(p.real);
+  predicate_type t = p.real.pred();
+  if (t == PRED_BND) s << "IintF " << display(p.bnd());
+  else s << (t == PRED_FIX ? "FixedP" : "FloatP") << p.cst();
+  s << ' ' << display(static_cast< ast_real const * >(p.real));
   std::string s_ = s.str();
   int p_id = map_finder(displayed_properties, s_);
   std::string name = composite('p', p_id);
   if (p_id >= 0)
-    *out << "Notation " << name << " := (IintF " << s_ << ").\n";
+    *out << "Notation " << name << " := (" << s_ << ").\n";
   return name;
 }
 
@@ -150,16 +153,17 @@ static std::string display(theorem_node *t) {
   return name;  
 }
 
-typedef std::map< ast_real const *, std::pair< int, interval const * > > property_map;
+typedef std::map< predicated_real, std::pair< int, property const * > > property_map;
 
 static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_map const &pmap) {
   for(property_vect::const_iterator j = hyp.begin(), j_end = hyp.end(); j != j_end; ++j) {
     property_map::const_iterator pki = pmap.find(j->real);
     assert(pki != pmap.end());
     int h = pki->second.first;
-    interval const &i = *pki->second.second;
-    assert(i <= j->bnd);
-    if (j->bnd <= i)
+    assert(j->real.pred() == PRED_BND); // TODO
+    interval const &i = pki->second.second->bnd(), &ii = j->bnd();
+    assert(i <= ii);
+    if (ii <= i)
       plouf << " exact h" << h << '.';
     else
       plouf << " apply subset with (1 := h" << h << "). reflexivity.";
@@ -191,7 +195,7 @@ static std::string display(node *n) {
   for(property_vect::const_iterator i = n_hyp.begin(), end = n_hyp.end(); i != end; ++i)
     plouf << display(*i) << " -> ";
   property const &n_res = n->get_result();
-  std::string p_res = is_empty(n_res.bnd) ? "(forall P, P)" : display(n_res);
+  std::string p_res = (n_res.real.pred() == PRED_BND && is_empty(n_res.bnd())) ? "(forall P, P)" : display(n_res);
   plouf << p_res << ".\n";
   int nb_hyps = n_hyp.size();
   if (nb_hyps) {
@@ -205,7 +209,7 @@ static std::string display(node *n) {
     int num_hyp = 0;
     for(property_vect::const_iterator j = n_hyp.begin(), j_end = n_hyp.end();
         j != j_end; ++j, ++num_hyp)
-      pmap.insert(std::make_pair(j->real, std::make_pair(num_hyp, &j->bnd)));
+      pmap.insert(std::make_pair(j->real, std::make_pair(num_hyp, &*j)));
     node_vect const &pred = n->get_subproofs();
     for(node_vect::const_iterator i = pred.begin(), i_end = pred.end();
         i != i_end; ++i, ++num_hyp) {
@@ -213,7 +217,7 @@ static std::string display(node *n) {
       property const &res = m->get_result();
       plouf << " assert (h" << num_hyp << " : " << display(res) << ").";
       invoke_lemma(plouf, m, pmap);
-      pmap[res.real] = std::make_pair(num_hyp, &res.bnd);
+      pmap[res.real] = std::make_pair(num_hyp, &res);
     }
     modus_node *mn = dynamic_cast< modus_node * >(n);
     assert(mn && mn->target);
@@ -226,7 +230,7 @@ static std::string display(node *n) {
     int num_hyp = 0;
     for(property_vect::const_iterator j = n_hyp.begin(), j_end = n_hyp.end();
         j != j_end; ++j, ++num_hyp)
-      pmap.insert(std::make_pair(j->real, std::make_pair(num_hyp, &j->bnd)));
+      pmap.insert(std::make_pair(j->real, std::make_pair(num_hyp, &*j)));
     node_vect const &pred = n->get_subproofs();
     int num[2];
     for(int i = 0; i < 2; ++i) {
@@ -243,7 +247,7 @@ static std::string display(node *n) {
       num[i] = num_hyp++;
     }
     std::string prefix;
-    if (is_empty(n_res.bnd)) prefix = "absurd_";
+    if (is_empty(n_res.bnd())) prefix = "absurd_";
     plouf << " apply " << prefix << "intersect with"
                  " (1 := h" << num[0] << ") (2 := h" << num[1] << ").\n"
              " reflexivity.\nQed.\n";
@@ -253,7 +257,7 @@ static std::string display(node *n) {
     int num_hyp = 0;
     for(property_vect::const_iterator j = n_hyp.begin(), j_end = n_hyp.end();
         j != j_end; ++j, ++num_hyp)
-      pmap.insert(std::make_pair(j->real, std::make_pair(num_hyp, &j->bnd)));
+      pmap.insert(std::make_pair(j->real, std::make_pair(num_hyp, &*j)));
     node_vect const &pred = n->get_subproofs();
     assert(pred.size() >= 2);
     node *mcase = pred[0];
@@ -262,20 +266,21 @@ static std::string display(node *n) {
     if (mcase->type != HYPOTHESIS) {
       plouf << " assert (h" << num_hyp << " : " << display(pcase) << ").";
       invoke_lemma(plouf, mcase, pmap);
-      hcase = std::make_pair(num_hyp, &pcase.bnd);
+      hcase = std::make_pair(num_hyp, &pcase);
     }
     plouf << " generalize h" << hcase.first << ". clear h" << hcase.first << ".\n";
     for(node_vect::const_iterator i = pred.begin() + 1, i_end = pred.end(); i != i_end; ++i) {
       node *m = *i;
       property_vect const &m_hyp = m->graph->get_hypotheses();
-      hcase.second = &m_hyp[0].bnd;
+      hcase.second = &m_hyp[0];
       plouf << " assert (u : " << display(m_hyp[0]) << " -> " << p_res << ")."
                " intro h" << hcase.first << ".\n";
       property const &res = m->get_result();
-      if (!is_empty(res.bnd)) { // not a contradictory result
-        assert(res.bnd <= n_res.bnd);
-        if (!(n_res.bnd <= res.bnd))
-          plouf << " apply subset with " << display(res.bnd) << ". 2: reflexivity.\n";
+      interval const &mb = res.bnd(), &nb = n_res.bnd();
+      if (!is_empty(res.bnd())) { // not a contradictory result
+        assert(mb <= nb);
+        if (!(nb <= mb))
+          plouf << " apply subset with " << display(mb) << ". 2: reflexivity.\n";
       }
       invoke_lemma(plouf, m, pmap);
       if (i + 1 != i_end)
