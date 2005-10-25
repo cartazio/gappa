@@ -589,3 +589,35 @@ proof_scheme *fix_of_flt_bnd_scheme::factory(predicated_real const &real) {
   hyps.push_back(predicated_real(normalize(ast_real(real_op(UOP_ABS, real.real()))), PRED_BND));
   return new fix_of_flt_bnd_scheme(real, hyps);
 }
+
+// flt_of_fix_bnd
+REGISTER_SCHEMEX_BEGIN(flt_of_fix_bnd);
+  preal_vect needed;
+  flt_of_fix_bnd_scheme(predicated_real const &r, preal_vect &v)
+    : proof_scheme(r), needed(v) {}
+REGISTER_SCHEMEX_END(flt_of_fix_bnd);
+
+node *flt_of_fix_bnd_scheme::generate_proof() const {
+  property hyps[2];
+  if (!fill_hypotheses(hyps, needed)) return NULL;
+  mpz_t m;
+  mpz_init(m);
+  int e, s;
+  split_exact(upper(hyps[1].bnd()).data->val, m, e, s);
+  e += mpz_sizeinbase(m, 2);
+  mpz_clear(m);
+  if (s <= 0) return NULL;
+  return create_theorem(2, hyps, property(real, e - hyps[0].cst()), "flt_of_fix_bnd");
+}
+
+preal_vect flt_of_fix_bnd_scheme::needed_reals() const {
+  return needed;
+}
+
+proof_scheme *flt_of_fix_bnd_scheme::factory(predicated_real const &real) {
+  if (real.pred() != PRED_FLT) return NULL;
+  preal_vect hyps;
+  hyps.push_back(predicated_real(real.real(), PRED_FIX));
+  hyps.push_back(predicated_real(normalize(ast_real(real_op(UOP_ABS, real.real()))), PRED_BND));
+  return new flt_of_fix_bnd_scheme(real, hyps);
+}
