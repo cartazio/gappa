@@ -15,6 +15,15 @@ static preal_vect one_needed(ast_real const *r) {
   return preal_vect(1, predicated_real(r, PRED_BND));
 }
 
+static bool fill_hypotheses(property *hyp, preal_vect const &v) {
+  for(preal_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i) {
+    node *n = find_proof(*i);
+    if (!n) return false;
+    *(hyp++) = n->get_result();
+  }
+  return true;
+}
+
 // ABSOLUTE_ERROR
 REGISTER_SCHEME_BEGIN(absolute_error);
   function_class const *function;
@@ -501,11 +510,8 @@ REGISTER_SCHEMEX_BEGIN(add_sub_fix);
 REGISTER_SCHEMEX_END(add_sub_fix);
 
 node *add_sub_fix_scheme::generate_proof() const {
-  node *n1 = find_proof(needed[0]);
-  if (!n1) return NULL;
-  node *n2 = find_proof(needed[1]);
-  if (!n2) return NULL;
-  property hyps[2] = { n1->get_result(), n2->get_result() };
+  property hyps[2];
+  if (!fill_hypotheses(hyps, needed)) return NULL;
   return create_theorem(2, hyps, property(real, std::min(hyps[0].cst(), hyps[1].cst())), name);
 }
 
@@ -532,11 +538,8 @@ REGISTER_SCHEMEX_BEGIN(mul_fix_flt);
 REGISTER_SCHEMEX_END(mul_fix_flt);
 
 node *mul_fix_flt_scheme::generate_proof() const {
-  node *n1 = find_proof(needed[0]);
-  if (!n1) return NULL;
-  node *n2 = find_proof(needed[1]);
-  if (!n2) return NULL;
-  property hyps[2] = { n1->get_result(), n2->get_result() };
+  property hyps[2];
+  if (!fill_hypotheses(hyps, needed)) return NULL;
   return create_theorem(2, hyps, property(real, hyps[0].cst() + hyps[1].cst()), name);
 }
 
@@ -553,4 +556,36 @@ proof_scheme *mul_fix_flt_scheme::factory(predicated_real const &real) {
   hyps.push_back(predicated_real(p->ops[0], t));
   hyps.push_back(predicated_real(p->ops[1], t));
   return new mul_fix_flt_scheme(real, hyps, t == PRED_FIX ? "mul_fix" : "mul_flt");
+}
+
+// FIX_OF_FLT_BND
+REGISTER_SCHEMEX_BEGIN(fix_of_flt_bnd);
+  preal_vect needed;
+  fix_of_flt_bnd_scheme(predicated_real const &r, preal_vect &v)
+    : proof_scheme(r), needed(v) {}
+REGISTER_SCHEMEX_END(fix_of_flt_bnd);
+
+node *fix_of_flt_bnd_scheme::generate_proof() const {
+  property hyps[2];
+  if (!fill_hypotheses(hyps, needed)) return NULL;
+  mpz_t m;
+  mpz_init(m);
+  int e, s;
+  split_exact(lower(hyps[1].bnd()).data->val, m, e, s);
+  e += mpz_sizeinbase(m, 2);
+  mpz_clear(m);
+  if (s <= 0) return NULL;
+  return create_theorem(2, hyps, property(real, e - hyps[0].cst()), "fix_of_flt_bnd");
+}
+
+preal_vect fix_of_flt_bnd_scheme::needed_reals() const {
+  return needed;
+}
+
+proof_scheme *fix_of_flt_bnd_scheme::factory(predicated_real const &real) {
+  if (real.pred() != PRED_FIX) return NULL;
+  preal_vect hyps;
+  hyps.push_back(predicated_real(real.real(), PRED_FLT));
+  hyps.push_back(predicated_real(normalize(ast_real(real_op(UOP_ABS, real.real()))), PRED_BND));
+  return new fix_of_flt_bnd_scheme(real, hyps);
 }
