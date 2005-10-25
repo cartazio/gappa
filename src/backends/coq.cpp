@@ -118,7 +118,7 @@ static std::string display(property const &p) {
   std::stringstream s;
   predicate_type t = p.real.pred();
   if (t == PRED_BND) s << "IintF " << display(p.bnd());
-  else s << (t == PRED_FIX ? "FixedP" : "FloatP") << p.cst();
+  else s << (t == PRED_FIX ? "FixP " : "FltP ") << p.cst();
   s << ' ' << display(static_cast< ast_real const * >(p.real));
   std::string s_ = s.str();
   int p_id = map_finder(displayed_properties, s_);
@@ -160,13 +160,22 @@ static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_m
     property_map::const_iterator pki = pmap.find(j->real);
     assert(pki != pmap.end());
     int h = pki->second.first;
-    assert(j->real.pred() == PRED_BND); // TODO
-    interval const &i = pki->second.second->bnd(), &ii = j->bnd();
-    assert(i <= ii);
-    if (ii <= i)
-      plouf << " exact h" << h << '.';
-    else
-      plouf << " apply subset with (1 := h" << h << "). reflexivity.";
+    predicate_type t = j->real.pred();
+    if (t == PRED_BND) {
+      interval const &i = pki->second.second->bnd(), &ii = j->bnd();
+      assert(i <= ii);
+      if (ii <= i)
+        plouf << " exact h" << h << '.';
+      else
+        plouf << " apply subset with (1 := h" << h << "). reflexivity.";
+    } else {
+      long c = pki->second.second->cst(), cc = j->cst();
+      assert(t == PRED_FIX && c >= cc || t == PRED_FLT && c <= cc);
+      if (c == c)
+        plouf << " exact h" << h << '.';
+      else
+        plouf << " apply " << (t == PRED_FIX ? "fix" : "flt") << "subset with (1 := h" << h << "). reflexivity.";
+    }
   }
   plouf << '\n';
 }
