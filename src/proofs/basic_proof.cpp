@@ -491,3 +491,66 @@ proof_scheme *rewrite_factory::operator()(predicated_real const &r) const {
 void register_user_rewrite(ast_real const *r1, ast_real const *r2) {
   scheme_register dummy(new rewrite_factory(r1, r2));
 }
+
+// ADD_SUB_FIX
+REGISTER_SCHEMEX_BEGIN(add_sub_fix);
+  preal_vect needed;
+  char const *name;
+  add_sub_fix_scheme(predicated_real const &r, preal_vect &v, char const *n)
+    : proof_scheme(r), needed(v), name(n) {}
+REGISTER_SCHEMEX_END(add_sub_fix);
+
+node *add_sub_fix_scheme::generate_proof() const {
+  node *n1 = find_proof(needed[0]);
+  if (!n1) return NULL;
+  node *n2 = find_proof(needed[1]);
+  if (!n2) return NULL;
+  property hyps[2] = { n1->get_result(), n2->get_result() };
+  return create_theorem(2, hyps, property(real, std::min(hyps[0].cst(), hyps[1].cst())), name);
+}
+
+preal_vect add_sub_fix_scheme::needed_reals() const {
+  return needed;
+}
+
+proof_scheme *add_sub_fix_scheme::factory(predicated_real const &real) {
+  if (real.pred() != PRED_FIX) return NULL;
+  real_op const *p = boost::get< real_op const >(real.real());
+  if (!p || (p->type != BOP_ADD && p->type != BOP_SUB)) return NULL;
+  preal_vect hyps;
+  hyps.push_back(predicated_real(p->ops[0], PRED_FIX));
+  hyps.push_back(predicated_real(p->ops[1], PRED_FIX));
+  return new add_sub_fix_scheme(real, hyps, p->type == BOP_SUB ? "sub_fix" : "add_fix");
+}
+
+// MUL_FIX_FLT
+REGISTER_SCHEMEX_BEGIN(mul_fix_flt);
+  preal_vect needed;
+  char const *name;
+  mul_fix_flt_scheme(predicated_real const &r, preal_vect &v, char const *n)
+    : proof_scheme(r), needed(v), name(n) {}
+REGISTER_SCHEMEX_END(mul_fix_flt);
+
+node *mul_fix_flt_scheme::generate_proof() const {
+  node *n1 = find_proof(needed[0]);
+  if (!n1) return NULL;
+  node *n2 = find_proof(needed[1]);
+  if (!n2) return NULL;
+  property hyps[2] = { n1->get_result(), n2->get_result() };
+  return create_theorem(2, hyps, property(real, hyps[0].cst() + hyps[1].cst()), name);
+}
+
+preal_vect mul_fix_flt_scheme::needed_reals() const {
+  return needed;
+}
+
+proof_scheme *mul_fix_flt_scheme::factory(predicated_real const &real) {
+  predicate_type t = real.pred();
+  if (t == PRED_BND) return NULL;
+  real_op const *p = boost::get< real_op const >(real.real());
+  if (!p || p->type != BOP_MUL) return NULL;
+  preal_vect hyps;
+  hyps.push_back(predicated_real(p->ops[0], t));
+  hyps.push_back(predicated_real(p->ops[1], t));
+  return new mul_fix_flt_scheme(real, hyps, t == PRED_FIX ? "mul_fix" : "mul_flt");
+}
