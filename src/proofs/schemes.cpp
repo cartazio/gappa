@@ -201,6 +201,15 @@ node *find_proof(property const &res) {
   return (n && n->get_result().implies(res)) ? n : NULL;
 }
 
+bool fill_hypotheses(property *hyp, preal_vect const &v) {
+  for(preal_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i) {
+    node *n = find_proof(*i);
+    if (!n) return false;
+    *(hyp++) = n->get_result();
+  }
+  return true;
+}
+
 bool graph_t::populate() {
   graph_loader loader(this);
   typedef proof_helper::real_set real_set;

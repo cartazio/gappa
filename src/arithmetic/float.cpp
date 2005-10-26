@@ -227,27 +227,21 @@ proof_scheme *flt_of_float_scheme::factory(predicated_real const &real) {
 // FLOAT_OF_FIX_FLT
 
 REGISTER_SCHEME_BEGIN(float_of_fix_flt);
-  ast_real const *val;
+  preal_vect needed;
   long min_exp, prec;
-  float_of_fix_flt_scheme(ast_real const *r, ast_real const *v, long e, long p)
-    : proof_scheme(r), val(v), min_exp(e), prec(p) {}
+  float_of_fix_flt_scheme(ast_real const *r, preal_vect const &v, long e, long p)
+    : proof_scheme(r), needed(v), min_exp(e), prec(p) {}
 REGISTER_SCHEME_END(float_of_fix_flt);
 
 node *float_of_fix_flt_scheme::generate_proof() const {
-  node *n1 = find_proof(predicated_real(val, PRED_FIX));
-  if (!n1) return NULL;
-  node *n2 = find_proof(predicated_real(val, PRED_FLT));
-  if (!n2) return NULL;
-  property hyp[2] = { n1->get_result(), n2->get_result() };
-  if (hyp[0].cst() < min_exp || hyp[1].cst() > prec) return NULL;
-  return create_theorem(2, hyp, property(real, zero()), "float_of_fix_flt");
+  property hyps[2];
+  if (!fill_hypotheses(hyps, needed)) return NULL;
+  if (hyps[0].cst() < min_exp || hyps[1].cst() > prec) return NULL;
+  return create_theorem(2, hyps, property(real, zero()), "float_of_fix_flt");
 }
 
 preal_vect float_of_fix_flt_scheme::needed_reals() const {
-  preal_vect res;
-  res.push_back(predicated_real(val, PRED_FIX));
-  res.push_back(predicated_real(val, PRED_FLT));
-  return res;
+  return needed;
 }
 
 extern pattern absolute_error_pattern;
@@ -259,5 +253,8 @@ proof_scheme *float_of_fix_flt_scheme::factory(ast_real const *real) {
   assert(p);
   float_rounding_class const *f = dynamic_cast< float_rounding_class const * >(p->fun);
   if (!f) return NULL;
-  return new float_of_fix_flt_scheme(real, holders[0], f->format.min_exp, f->format.prec);
+  preal_vect needed;
+  needed.push_back(predicated_real(holders[0], PRED_FIX));
+  needed.push_back(predicated_real(holders[0], PRED_FLT));
+  return new float_of_fix_flt_scheme(real, needed, f->format.min_exp, f->format.prec);
 }

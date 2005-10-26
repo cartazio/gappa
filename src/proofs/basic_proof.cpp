@@ -15,15 +15,6 @@ static preal_vect one_needed(ast_real const *r) {
   return preal_vect(1, predicated_real(r, PRED_BND));
 }
 
-static bool fill_hypotheses(property *hyp, preal_vect const &v) {
-  for(preal_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i) {
-    node *n = find_proof(*i);
-    if (!n) return false;
-    *(hyp++) = n->get_result();
-  }
-  return true;
-}
-
 // ABSOLUTE_ERROR
 REGISTER_SCHEME_BEGIN(absolute_error);
   function_class const *function;
