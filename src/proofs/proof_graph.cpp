@@ -264,7 +264,7 @@ void graph_t::purge(node *except) {
   m.swap(known_reals);
   for(node_map::const_iterator i = m.begin(), i_end = m.end(); i != i_end; ++i) {
     predicated_real const &r = i->first;
-    if (r.pred() == PRED_BND && reals.count(r.real()) == 0)
+    if (r.pred() != PRED_BND || reals.count(r.real()) == 0)
       --i->second->nb_good;
     else
       known_reals.insert(*i);
