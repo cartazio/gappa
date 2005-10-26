@@ -683,6 +683,6 @@ preal_vect flt_of_singleton_bnd_scheme::needed_reals() const {
 }
 
 proof_scheme *flt_of_singleton_bnd_scheme::factory(predicated_real const &real) {
-  if (real.pred() != PRED_FIX) return NULL;
+  if (real.pred() != PRED_FLT) return NULL;
   return new flt_of_singleton_bnd_scheme(real, predicated_real(real.real(), PRED_BND));
 }
