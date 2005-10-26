@@ -90,7 +90,6 @@ class graph_t {
   bool try_real(node *);
   property_vect const &get_hypotheses() const { return hyp; }
   property_vect const &get_goals() const { return goals; }
-  ast_real_vect get_known_reals() const;
   bool dominates(graph_t const *) const;
   bool populate();		// fill the proof graph, return true in case of contradiction
   void purge(node * = NULL);	// remove all the unused nodes, except for this one

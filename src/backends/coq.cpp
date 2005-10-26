@@ -119,7 +119,7 @@ static std::string display(property const &p) {
   predicate_type t = p.real.pred();
   if (t == PRED_BND) s << "IintF " << display(p.bnd());
   else s << (t == PRED_FIX ? "FixP " : "FltP ") << p.cst();
-  s << ' ' << display(static_cast< ast_real const * >(p.real));
+  s << ' ' << display(p.real.real());
   std::string s_ = s.str();
   int p_id = map_finder(displayed_properties, s_);
   std::string name = composite('p', p_id);

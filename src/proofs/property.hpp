@@ -13,7 +13,6 @@ class predicated_real {
  public:
   predicated_real(): d(0) {}
   predicated_real(ast_real const *r, predicate_type p): d(reinterpret_cast< long >(r) | p) {}
-  operator ast_real const *() const { return reinterpret_cast< ast_real const * >(d & ~3); }
   predicate_type pred() const { return (predicate_type)(d & 3); }
   ast_real const *real() const { return reinterpret_cast< ast_real const * >(d & ~3); }
   bool operator==(predicated_real const &r) const { return d == r.d; }
@@ -36,6 +35,7 @@ class property {
   property();
   property(ast_real const *);
   property(ast_real const *, interval const &);
+  property(predicated_real const &, interval const &);
   property(predicated_real const &, long);
   property(property const &);
   property &operator=(property const &);

@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
     {
       ast_real_vect reals;
       for(int j = 0; j < nb; ++j)
-        reals.push_back(goals[j].real);
+        reals.push_back(goals[j].real.real());
       g->helper = generate_proof_helper(reals);
       for(int j = 0; j < nb; ++j)
         scheme_results[j] = reals[j];
@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
       std::cerr << " for ";
       for(unsigned i = 0; i < nb_hyp; ++i) {
         if (i != 0) std::cerr << " and ";
-        std::cerr << dump_real(hyp[i].real) << " in " << hyp[i].bnd();
+        std::cerr << dump_real(hyp[i].real.real()) << " in " << hyp[i].bnd();
       }
     }
     std::cerr << ":\n";
@@ -58,11 +58,11 @@ int main(int argc, char **argv) {
         results[j] = n;
         if (!n) {
           std::cerr << "No " << (scheme_results[j] ? "proof" : "path")
-                    << " for " << dump_real(goals[j].real) << '\n';
+                    << " for " << dump_real(goals[j].real.real()) << '\n';
           continue;
         }
         property const &p = n->get_result();
-        std::cerr << dump_real(p.real) << " in " << p.bnd() << '\n';
+        std::cerr << dump_real(p.real.real()) << " in " << p.bnd() << '\n';
       }
       for(node_vect::const_iterator i = results.begin(), end = results.end(); i != end; ++i)
         if (*i) display->theorem(*i);

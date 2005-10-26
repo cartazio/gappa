@@ -224,7 +224,7 @@ node *enforce_bound_scheme::generate_proof() const {
 }
 
 preal_vect enforce_bound_scheme::needed_reals() const {
-  return one_needed(real);
+  return preal_vect(1, real);
 }
 
 proof_scheme *enforce_bound_scheme::factory(ast_real const *real) {
@@ -274,7 +274,7 @@ node *computation_scheme::generate_proof() const {
     if (!n2) return NULL;
     property const &res2 = n2->get_result();
     interval const &i2 = res2.bnd();
-    property res(real);
+    property res(real.real());
     interval &i = res.bnd();
     switch (r->type) {
     case BOP_ADD: i = i1 + i2; s = "add"; break;

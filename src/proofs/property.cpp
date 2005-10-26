@@ -16,6 +16,11 @@ property::property(ast_real const *r, interval const &i): real(r, PRED_BND) {
   new(&d) interval(i);
 }
 
+property::property(predicated_real const &r, interval const &i): real(r) {
+  assert(r.pred() == PRED_BND);
+  new(&d) interval(i);
+}
+
 property::property(predicated_real const &r, long i): d(i), real(r) {
   assert(r.pred() != PRED_BND);
 }

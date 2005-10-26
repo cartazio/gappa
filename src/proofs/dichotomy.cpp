@@ -161,7 +161,7 @@ node *dichotomy_scheme::generate_proof(interval const &bnd) const {
   hyp2.push_back(varn->get_result());
   property_vect const &hyp = top_graph->get_hypotheses();
   for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
-    if (i->real != var) hyp2.push_back(*i);
+    if (i->real.real() != var) hyp2.push_back(*i);
   property_vect goals;
   goals.push_back(property(real, bnd));
   graph_t *g = new graph_t(top_graph, hyp, goals, helper, false);
@@ -177,9 +177,9 @@ node *dichotomy_scheme::generate_proof(interval const &bnd) const {
   } catch (dichotomy_failure e) {
     if (warning_dichotomy_failure) {
       property const &h = e.hyp;
-      std::cerr << "Warning: when " << dump_real(h.real) << " is in " << h.bnd() << ", ";
+      std::cerr << "Warning: when " << dump_real(h.real.real()) << " is in " << h.bnd() << ", ";
       property const &p = e.res;
-      std::cerr << dump_real(p.real);
+      std::cerr << dump_real(p.real.real());
       if (is_defined(e.bnd))
         std::cerr << " is in " << e.bnd << " potentially outside of " << p.bnd() << '\n';
       else

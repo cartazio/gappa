@@ -183,13 +183,6 @@ graph_t::graph_t(graph_t *f, property_vect const &h, property_vect const &g, pro
     try_real(new hypothesis_node(*i));
 }
 
-ast_real_vect graph_t::get_known_reals() const {
-  ast_real_vect res(known_reals.size());
-  for(node_map::const_iterator i = known_reals.begin(), end = known_reals.end(); i != end; ++i)
-    res.push_back(i->first);
-  return res;
-}
-
 bool graph_t::try_real(node *n) {
   assert(n && n->graph && n->graph->dominates(this));
   property const &res2 = n->get_result();
@@ -266,11 +259,12 @@ void graph_t::flatten() {
 void graph_t::purge(node *except) {
   std::set< ast_real const * > reals;
   for(property_vect::const_iterator i = goals.begin(), i_end = goals.end(); i != i_end; ++i)
-    reals.insert(i->real);
+    reals.insert(i->real.real());
   node_map m;
   m.swap(known_reals);
   for(node_map::const_iterator i = m.begin(), i_end = m.end(); i != i_end; ++i) {
-    if (reals.count(i->first) == 0)
+    predicated_real const &r = i->first;
+    if (r.pred() == PRED_BND && reals.count(r.real()) == 0)
       --i->second->nb_good;
     else
       known_reals.insert(*i);

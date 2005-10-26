@@ -39,7 +39,7 @@ scheme_register::scheme_register(scheme_factory const *f) {
 }
 
 struct dummy_scheme: proof_scheme {
-  dummy_scheme(ast_real const *r): proof_scheme(r) {}
+  dummy_scheme(predicated_real const &r): proof_scheme(r) {}
   virtual bool dummy() const { return true; }
   virtual node *generate_proof() const { assert(false); return NULL; }
   virtual preal_vect needed_reals() const { return preal_vect(); }
@@ -209,7 +209,7 @@ bool graph_t::populate() {
   bool completely_bounded = true;
   for(property_vect::const_iterator i = goals.begin(), i_end = goals.end(); i != i_end; ++i)
     if (i->real.pred() == PRED_BND && is_defined(i->bnd()))
-      bounds[i->real] = &i->bnd();
+      bounds[i->real.real()] = &i->bnd();
     else
       completely_bounded = false;
   bound_map::const_iterator bounds_end = bounds.end();
@@ -221,7 +221,7 @@ bool graph_t::populate() {
     ++iter;
     proof_scheme const *s = iter % 16 ? *missing_schemes.begin() : *missing_schemes.rbegin();
     missing_schemes.erase(s);
-    bound_map::const_iterator i = bounds.find(s->real);
+    bound_map::const_iterator i = s->real.pred() == PRED_BND ? bounds.find(s->real.real()) : bounds_end;
     node *n;
     if (i != bounds_end) n = s->generate_proof(*i->second);
     else n = s->generate_proof();
@@ -229,7 +229,7 @@ bool graph_t::populate() {
       if (top_graph->get_contradiction()) break;
       helper->insert_dependent(missing_schemes, s->real);
       if (completely_bounded && i != bounds_end && n->get_result().bnd() <= *i->second) {
-        bounds.erase(s->real);
+        bounds.erase(s->real.real());
         if (bounds.empty()) break;
         bounds_end = bounds.end();
       }
