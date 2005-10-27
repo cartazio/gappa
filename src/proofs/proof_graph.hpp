@@ -35,8 +35,9 @@ struct node {
   virtual property const &get_result() const = 0;
   virtual property_vect const &get_hypotheses() const;
   virtual node_vect const &get_subproofs() const;
-  virtual void clean_dependencies() {}
   virtual ~node();
+  void remove_known();
+  void remove_succ(node const *);
 };
 
 class hypothesis_node: public node {
@@ -51,13 +52,13 @@ class dependent_node: public node {
  protected:
   dependent_node(node_id t,  graph_t *g = top_graph): node(t, g) {}
   void insert_pred(node *n);
+  void clean_dependencies();
  public:
   virtual node_vect const &get_subproofs() const { return pred; }
-  virtual void clean_dependencies();
-  virtual ~dependent_node();
+  virtual ~dependent_node() { clean_dependencies(); }
 };
 
-node *create_theorem(int nb, property const h[], property const &p, std::string const &n);
+node *create_theorem(int, property const [], property const &, std::string const &);
 
 class modus_node: public dependent_node {
   property_vect hyp;
@@ -92,7 +93,7 @@ class graph_t {
   property_vect const &get_goals() const { return goals; }
   bool dominates(graph_t const *) const;
   bool populate();		// fill the proof graph, return true in case of contradiction
-  void purge(node * = NULL);	// remove all the unused nodes, except for this one
+  void purge();			// remove all the unused nodes
   void flatten();		// move all the nodes in the upper graph
   bool migrate();		// move the free nodes in the upper graph, return true if any
   node *get_contradiction() const { return contradiction; }

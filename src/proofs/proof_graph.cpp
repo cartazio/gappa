@@ -26,6 +26,15 @@ node::~node() {
     graph->remove(this);
 }
 
+void node::remove_known() {
+  if (--nb_good == 0 && succ.empty()) delete this;
+}
+
+void node::remove_succ(node const *n) {
+  succ.erase(const_cast< node * >(n));
+  if (succ.empty() && nb_good == 0) delete this;
+}
+
 bool graph_t::dominates(graph_t const *g) const {
   while (g) {
     if (g == this) return true;
@@ -51,15 +60,9 @@ void dependent_node::insert_pred(node *n) {
 }
 
 void dependent_node::clean_dependencies() {
-  for(node_vect::const_iterator i = pred.begin(), end = pred.end(); i != end; ++i) {
-    node *n = *i;
-    n->succ.erase(this);
-  }
+  for(node_vect::const_iterator i = pred.begin(), end = pred.end(); i != end; ++i)
+    (*i)->remove_succ(this);
   pred.clear();
-}
-
-dependent_node::~dependent_node() {
-  clean_dependencies();
 }
 
 typedef std::map< predicated_real, property > property_map;
@@ -149,25 +152,6 @@ intersection_node::intersection_node(node *n1, node *n2)
     top_graph->contradiction = this;
 }
 
-static void delete_forest(node_set &nodes, node *except) {
-  while (!nodes.empty()) {
-    node *n = *nodes.begin();
-    nodes.erase(n);
-    if (n == except || !n->succ.empty() || n->nb_good != 0) continue;
-    if (n->type != UNION) {
-      node_vect const &v = n->get_subproofs();
-      nodes.insert(v.begin(), v.end());
-    }
-    delete n;
-  }
-}
-
-static void delete_tree(node *n) {
-  node_set ns;
-  ns.insert(n);
-  delete_forest(ns, NULL);
-}
-
 graph_t::graph_t(graph_t *f, property_vect const &h, property_vect const &g, proof_helper *p, bool o)
   : father(f), hyp(h), goals(g), owned_helper(o), contradiction(NULL) {
   graph_loader loader(this);
@@ -192,15 +176,14 @@ bool graph_t::try_real(node *n) {
     node *old = dst;
     property const &res1 = old->get_result();
     if (res1.implies(res2)) {
-      delete_tree(n);
+      delete n;
       return false;
     } else if (!(res2.strict_implies(res1))) {
       graph_loader loader(this);
       n = new intersection_node(old, n);
     }
     dst = n;
-    --old->nb_good;
-    delete_tree(old);
+    old->remove_known();
   }
   ++n->nb_good;
   return true;
@@ -212,17 +195,9 @@ node *graph_t::find_already_known(predicated_real const &real) const {
 }
 
 graph_t::~graph_t() {
-  for(node_set::const_iterator i = nodes.begin(), end = nodes.end(); i != end; ++i) {
-    node *n = *i;
-    assert(n && n->graph == this);
-    n->clean_dependencies();
-  }
   for(node_map::const_iterator i = known_reals.begin(), end = known_reals.end(); i != end; ++i)
-    --i->second->nb_good;
-  node_set ns;
-  ns.swap(nodes);
-  for(node_set::const_iterator i = ns.begin(), end = ns.end(); i != end; ++i)
-    delete *i;
+    i->second->remove_known();
+  assert(nodes.empty());
   if (owned_helper)
     delete_proof_helper(helper);
 }
@@ -244,8 +219,7 @@ void graph_t::flatten() {
         if (!ib.second) { // there was a known real in the father and it has to be overridden
           node *&dst = ib.first->second;
           assert(res.implies(dst->get_result()));
-          --dst->nb_good;
-          delete_tree(dst);
+          dst->remove_known();
           dst = n;
         }
         known_reals.erase(i);
@@ -256,7 +230,7 @@ void graph_t::flatten() {
   }
 }
 
-void graph_t::purge(node *except) {
+void graph_t::purge() {
   std::set< ast_real const * > reals;
   for(property_vect::const_iterator i = goals.begin(), i_end = goals.end(); i != i_end; ++i)
     reals.insert(i->real.real());
@@ -265,12 +239,10 @@ void graph_t::purge(node *except) {
   for(node_map::const_iterator i = m.begin(), i_end = m.end(); i != i_end; ++i) {
     predicated_real const &r = i->first;
     if (r.pred() != PRED_BND || reals.count(r.real()) == 0)
-      --i->second->nb_good;
+      i->second->remove_known();
     else
       known_reals.insert(*i);
   }
-  node_set ns(nodes);
-  delete_forest(ns, except);
 }
 
 bool graph_t::migrate() {

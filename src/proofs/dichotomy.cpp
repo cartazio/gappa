@@ -26,22 +26,17 @@ class dichotomy_node: public dependent_node {
   void dichotomize();
   bool add_graph(graph_t *);
   void try_graph(graph_t *);
-  virtual void clean_dependencies();
   virtual property const &get_result() const { return res; }
   virtual property_vect const &get_hypotheses() const { return graph->get_hypotheses(); }
 };
 
-void dichotomy_node::clean_dependencies() {
-  dependent_node::clean_dependencies();
+dichotomy_node::~dichotomy_node() {
+  clean_dependencies();
   for(graph_vect::iterator i = graphs.begin(), end = graphs.end(); i != end; ++i)
     delete *i;
   graphs.clear();
   delete last_graph;
   last_graph = NULL;
-}
-
-dichotomy_node::~dichotomy_node() {
-  clean_dependencies();
 }
 
 bool dichotomy_node::add_graph(graph_t *g) {
@@ -172,8 +167,10 @@ node *dichotomy_scheme::generate_proof(interval const &bnd) const {
     n->add_graph(n->last_graph);
     n->last_graph = NULL;
     dich = n;
-    g->purge(dich);
+    ++dich->nb_good;
+    g->purge();
     g->flatten();
+    --dich->nb_good;
   } catch (dichotomy_failure e) {
     if (warning_dichotomy_failure) {
       property const &h = e.hyp;
