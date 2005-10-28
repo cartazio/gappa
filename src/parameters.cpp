@@ -27,7 +27,7 @@ static void help() {
     "  -W[no-]dichotomy-failure\n"
     "  -W[no-]hint-difference\n"
     "  -W[no-]null-denominator\n"
-    "  -W[no-]free-variable\n"
+    "  -W[no-]unbound-variable\n"
     "\n"
     "Backend:\n"
     "  -Bnull                          do not generate a proof (default)\n"
