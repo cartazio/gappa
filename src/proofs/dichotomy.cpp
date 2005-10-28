@@ -171,7 +171,7 @@ node *dichotomy_scheme::generate_proof(interval const &bnd) const {
     g->purge();
     g->flatten();
     --dich->nb_good;
-  } catch (dichotomy_failure e) {
+  } catch (dichotomy_failure const &e) {
     if (warning_dichotomy_failure) {
       property const &h = e.hyp;
       std::cerr << "Warning: when " << dump_real(h.real.real()) << " is in " << h.bnd() << ", ";
@@ -182,6 +182,7 @@ node *dichotomy_scheme::generate_proof(interval const &bnd) const {
       else
         std::cerr << " is not computable\n";
     }
+    delete n;
   }
   delete g;
   return dich;
