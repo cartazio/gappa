@@ -60,7 +60,8 @@ void dependent_node::insert_pred(node *n) {
 }
 
 void dependent_node::clean_dependencies() {
-  for(node_vect::const_iterator i = pred.begin(), end = pred.end(); i != end; ++i)
+  std::sort(pred.begin(), pred.end()); // do not remove a node more than once
+  for(node_vect::const_iterator i = pred.begin(), end = std::unique(pred.begin(), pred.end()); i != end; ++i)
     (*i)->remove_succ(this);
   pred.clear();
 }
