@@ -27,6 +27,7 @@ int my_yyerror(YYLTYPE &yylloc, char const *errstr) {
 
 extern void generate_graph(ast_prop const *p);
 extern void test_ringularity(ast_real const *, ast_real const *);
+extern std::set< ast_real const * > free_variables;
 
 ast_number *negative_number(ast_number *nn) {
   if (nn->base == 0) return nn;
@@ -170,9 +171,12 @@ REAL:
 | IDENT
   {
     ast_ident *v = $1;
-    if (!v->var)
-      v->var = normalize(ast_real(v));
-    $$ = v->var;
+    ast_real const *r = v->var;
+    if (!r) {
+      r = normalize(ast_real(v));
+      free_variables.insert(r);
+    }
+    $$ = r;
   }
 | FUNCTION '(' OPERANDS ')'
   {

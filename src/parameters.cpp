@@ -8,6 +8,7 @@ int parameter_dichotomy_depth = 100;
 bool warning_dichotomy_failure = true;
 bool warning_hint_difference = true;
 bool warning_null_denominator = true;
+bool warning_unbound_variable = true;
 backend_register const *proof_generator = NULL;
 
 static void help() {
@@ -26,6 +27,7 @@ static void help() {
     "  -W[no-]dichotomy-failure\n"
     "  -W[no-]hint-difference\n"
     "  -W[no-]null-denominator\n"
+    "  -W[no-]free-variable\n"
     "\n"
     "Backend:\n"
     "  -Bnull                          do not generate a proof (default)\n"
@@ -51,7 +53,8 @@ bool parse_option(std::string const &s, bool internal) {
     std::string w = s.substr(yes ? 2 : 5);
     if (w == "dichotomy-failure") warning_dichotomy_failure = yes; else
     if (w == "hint-difference"  ) warning_hint_difference   = yes; else
-    if (w == "null-denominator" ) warning_null_denominator  = yes;
+    if (w == "null-denominator" ) warning_hint_difference   = yes; else
+    if (w == "unbound-variable" ) warning_unbound_variable  = yes;
     else return false;
     break; }
   case 'B': {

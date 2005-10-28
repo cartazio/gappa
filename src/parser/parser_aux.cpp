@@ -6,6 +6,11 @@
 
 interval create_interval(ast_interval const &, bool widen);
 
+typedef std::set< ast_real const * > real_set;
+real_set free_variables, input_reals, output_reals;
+
+extern bool warning_unbound_variable;
+
 static property generate_property(ast_atom_bound const &p, bool goal) {
   property r(p.real);
   if (p.interval.lower) {
@@ -121,13 +126,16 @@ static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
     }
   }
   property_vect hyp;
-  std::set< ast_real const * > real_set;
+  real_set inputs;
   for(ast_prop_vect::const_iterator i = s.lhs.begin(), end = s.lhs.end(); i != end; ++i) {
-    assert(*i && (*i)->type == PROP_ATOM);
-    hyp.push_back(generate_property(*(*i)->atom, false));
-    real_set.insert((*i)->atom->real);
+    ast_prop const *p = *i;
+    assert(p && p->type == PROP_ATOM);
+    ast_atom_bound const &atom = *p->atom;
+    hyp.push_back(generate_property(atom, false));
+    inputs.insert(atom.real);
+    input_reals.insert(atom.real);
   }
-  if (hyp.size() != real_set.size()) // we don't want to encounter: x in [0,2] /\ x in [1,3] -> ...
+  if (hyp.size() != inputs.size()) // we don't want to encounter: x in [0,2] /\ x in [1,3] -> ...
     { std::cerr << "Error: you don't want to have multiple hypotheses concerning the same real.\n"; exit(1); }
   if (s.rhs.size() != 1)
     { std::cerr << "Error: complex logical formulas not yet implemented.\n"; exit(1); }
@@ -135,10 +143,26 @@ static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
   generate_goal(goal, s.rhs[0]);
   graph_t *g = new graph_t(NULL, hyp, goal, NULL, true);
   graphs.push_back(g);
+  for(property_vect::const_iterator i = goal.begin(), end = goal.end(); i != end; ++i)
+    output_reals.insert(i->real.real());
 }
 
 void generate_graph(ast_prop const *p) {
   sequent s;
   s.rhs.push_back(p);
   parse_sequent(s, 0, 0);
+  if (warning_unbound_variable) {
+    for(real_set::const_iterator i = input_reals.begin(), end = input_reals.end(); i != end; ++i) {
+      ast_real const *r = *i;
+      free_variables.erase(r);
+      real_op const *o = boost::get< real_op const >(r);
+      if (!o) continue;
+      if (o->type == UOP_ABS || o->fun && o->fun->type == UOP_ID) free_variables.erase(o->ops[0]);
+    }
+    for(real_set::const_iterator i = free_variables.begin(), end = free_variables.end(); i != end; ++i) {
+      ast_ident const *n = (*i)->name;
+      assert(n);
+      std::cerr << "Warning: " << n->name << " is a variable without definition, yet it is unbound.\n";
+    }
+  }
 }
