@@ -141,7 +141,7 @@ static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
     { std::cerr << "Error: complex logical formulas not yet implemented.\n"; exit(1); }
   property_vect goal;
   generate_goal(goal, s.rhs[0]);
-  graph_t *g = new graph_t(NULL, hyp, goal, NULL, true);
+  graph_t *g = new graph_t(NULL, hyp, goal);
   graphs.push_back(g);
   for(property_vect::const_iterator i = goal.begin(), end = goal.end(); i != end; ++i)
     output_reals.insert(i->real.real());
@@ -165,4 +165,5 @@ void generate_graph(ast_prop const *p) {
       std::cerr << "Warning: " << n->name << " is a variable without definition, yet it is unbound.\n";
     }
   }
+  free_variables.clear();
 }

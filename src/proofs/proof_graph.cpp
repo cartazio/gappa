@@ -153,8 +153,8 @@ intersection_node::intersection_node(node *n1, node *n2)
     top_graph->contradiction = this;
 }
 
-graph_t::graph_t(graph_t *f, property_vect const &h, property_vect const &g, proof_helper *p, bool o)
-  : father(f), hyp(h), goals(g), owned_helper(o), contradiction(NULL) {
+graph_t::graph_t(graph_t *f, property_vect const &h, property_vect const &g)
+  : father(f), hyp(h), goals(g), contradiction(NULL) {
   graph_loader loader(this);
   if (f) {
     assert(hyp.implies(f->hyp));
@@ -162,8 +162,6 @@ graph_t::graph_t(graph_t *f, property_vect const &h, property_vect const &g, pro
     for(node_map::iterator i = known_reals.begin(), end = known_reals.end(); i != end; ++i)
       ++i->second->nb_good;
   }
-  if (owned_helper) helper = duplicate_proof_helper(p);
-  else helper = p;
   for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
     try_real(new hypothesis_node(*i));
 }
@@ -199,8 +197,6 @@ graph_t::~graph_t() {
   for(node_map::const_iterator i = known_reals.begin(), end = known_reals.end(); i != end; ++i)
     i->second->remove_known();
   assert(nodes.empty());
-  if (owned_helper)
-    delete_proof_helper(helper);
 }
 
 // FIXME: contradiction handling

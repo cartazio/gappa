@@ -8,7 +8,7 @@ typedef std::vector< predicated_real > preal_vect;
 
 struct proof_scheme {
   virtual node *generate_proof() const = 0;
-  virtual node *generate_proof(interval const &) const;
+  virtual node *generate_proof(interval const &) const { return generate_proof(); }
   virtual preal_vect needed_reals() const = 0;
   virtual bool dummy() const { return false; }
   virtual ~proof_scheme() {}
@@ -50,13 +50,10 @@ struct scheme_register {
   }; \
   static scheme_register name##_scheme_register(&name##_scheme::factory)
 
-struct proof_helper;
-
-node *find_proof(predicated_real const &);
+inline node *find_proof(predicated_real const &real) { return top_graph->find_already_known(real); }
 node *find_proof(property const &);
 bool fill_hypotheses(property *, preal_vect const &);
-proof_helper *generate_proof_helper(ast_real_vect &);
-proof_helper *duplicate_proof_helper(proof_helper const *);
-void delete_proof_helper(proof_helper *);
+
+ast_real_vect generate_proof_paths();
 
 #endif // PROOFS_SCHEMES_HPP

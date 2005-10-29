@@ -13,7 +13,6 @@ backend *display = NULL;
 
 struct null_backend: backend {
   null_backend(): backend(std::cout) {}
-  virtual void axiom() {}
   virtual std::string rewrite(ast_real const *, ast_real const *) { return std::string(); }
   virtual void theorem(node *) {}
 };
@@ -23,20 +22,12 @@ int main(int argc, char **argv) {
   if (proof_generator) display = proof_generator->create(std::cout);
   else display = new null_backend;
   if (yyparse()) return EXIT_FAILURE;
+  ast_real_vect missing_paths = generate_proof_paths();
+  for(ast_real_vect::const_iterator i = missing_paths.begin(), i_end = missing_paths.end(); i != i_end; ++i)
+    std::cerr << "Warning: no path for " << dump_real(*i) << '\n';
   for(std::vector< graph_t * >::const_iterator i = graphs.begin(), i_end = graphs.end(); i != i_end; ++i) {
     graph_t *g = *i;
     graph_loader loader(g);
-    property_vect const &goals = g->get_goals();
-    int nb = goals.size();
-    std::vector< bool > scheme_results(nb);
-    {
-      ast_real_vect reals;
-      for(int j = 0; j < nb; ++j)
-        reals.push_back(goals[j].real.real());
-      g->helper = generate_proof_helper(reals);
-      for(int j = 0; j < nb; ++j)
-        scheme_results[j] = reals[j];
-    }
     std::cerr << "\nResults";
     property_vect const &hyp = g->get_hypotheses();
     if (unsigned nb_hyp = hyp.size()) {
@@ -48,24 +39,21 @@ int main(int argc, char **argv) {
     }
     std::cerr << ":\n";
     if (g->populate()) {
-      node_vect results(nb);
-      std::cerr << "Warning: Hypotheses are in contradiction, any result is true.\n";
+      std::cerr << "Warning: hypotheses are in contradiction, any result is true.\n";
       display->theorem(g->get_contradiction());
     } else {
-      node_vect results(nb);
+      property_vect const &goals = g->get_goals();
+      int nb = goals.size();
       for(int j = 0; j < nb; ++j) {
         node *n = find_proof(goals[j]);
-        results[j] = n;
         if (!n) {
-          std::cerr << "No " << (scheme_results[j] ? "proof" : "path")
-                    << " for " << dump_real(goals[j].real.real()) << '\n';
+          std::cerr << "No proof for " << dump_real(goals[j].real.real()) << '\n';
           continue;
         }
         property const &p = n->get_result();
         std::cerr << dump_real(p.real.real()) << " in " << p.bnd() << '\n';
+        display->theorem(n);
       }
-      for(node_vect::const_iterator i = results.begin(), end = results.end(); i != end; ++i)
-        if (*i) display->theorem(*i);
     }
     delete g;
   }

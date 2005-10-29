@@ -6,6 +6,9 @@
 #include "proofs/basic_proof.hpp"
 #include "proofs/schemes.hpp"
 
+typedef std::set< ast_real const * > ast_real_set;
+extern ast_real_set input_reals, output_reals;
+
 struct scheme_factories: std::vector< scheme_factory const * > {
   ~scheme_factories() { for(iterator i = begin(), i_end = end(); i != i_end; ++i) delete *i; }
 };
@@ -45,31 +48,31 @@ struct dummy_scheme: proof_scheme {
   virtual preal_vect needed_reals() const { return preal_vect(); }
 };
 
-struct proof_helper {
-  typedef std::set< predicated_real > real_set;
-  real_set missing_reals;
+typedef std::set< predicated_real > real_set;
+static real_set missing_reals;
 
-  typedef std::set< proof_scheme const * > scheme_set;
-  scheme_set source_schemes;
-  scheme_set owned_schemes;
+typedef std::set< proof_scheme const * > scheme_set;
+static scheme_set source_schemes, owned_schemes;
 
-  struct real_dependency {
-    scheme_set dependent;
-    scheme_set schemes;
-  };
-  typedef std::map< predicated_real, real_dependency > real_dependencies;
-  real_dependencies reals;
-  void initialize_real(predicated_real const &, proof_scheme const *);
-  void delete_scheme(proof_scheme const *, predicated_real const &);
-
-  proof_helper(ast_real_vect &);
-  proof_helper(proof_helper const &);
-  ~proof_helper();
-
-  void insert_dependent(scheme_set &, predicated_real const &) const;
+struct real_dependency {
+  scheme_set dependent;
+  scheme_set schemes;
 };
+typedef std::map< predicated_real, real_dependency > real_dependencies;
+static real_dependencies reals;
 
-void proof_helper::initialize_real(predicated_real const &real, proof_scheme const *parent) {
+static void delete_scheme(proof_scheme const *s, predicated_real const &restricted_real) {
+  preal_vect v = s->needed_reals();
+  for(preal_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i) {
+    predicated_real const &real = *i;
+    if (real == restricted_real) continue;
+    missing_reals.insert(real);
+    reals[real].dependent.erase(s);
+  }
+  delete s;
+}
+
+static void initialize_real(predicated_real const &real, proof_scheme const *parent) {
   real_dependencies::iterator it = reals.find(real);
   if (it != reals.end()) {
     it->second.dependent.insert(parent);
@@ -84,9 +87,8 @@ void proof_helper::initialize_real(predicated_real const &real, proof_scheme con
     if (!s) continue;
     l.insert(s);
   }
-  assert(top_graph);
   // or an hypothesis?
-  if (top_graph->find_already_known(real))
+  if (real.pred() == PRED_BND && input_reals.count(real.real()))
     l.insert(new dummy_scheme(real));
   // create the dependencies
   for(scheme_set::const_iterator i = l.begin(), i_end = l.end(); i != i_end; ++i) {
@@ -99,24 +101,11 @@ void proof_helper::initialize_real(predicated_real const &real, proof_scheme con
   dep.dependent.insert(parent);
 }
 
-void proof_helper::delete_scheme(proof_scheme const *s, predicated_real const &restricted_real) {
-  preal_vect v = s->needed_reals();
-  for(preal_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i) {
-    predicated_real const &real = *i;
-    if (real == restricted_real) continue;
-    missing_reals.insert(real);
-    reals[real].dependent.erase(s);
-  }
-  delete s;
-}
-
-proof_helper::proof_helper(ast_real_vect &targets) {
-  for(ast_real_vect::const_iterator i = targets.begin(), i_end = targets.end(); i != i_end; ++i)
+ast_real_vect generate_proof_paths() {
+  for(ast_real_set::const_iterator i = output_reals.begin(), i_end = output_reals.end(); i != i_end; ++i)
     initialize_real(predicated_real(*i, PRED_BND), NULL);
-  assert(top_graph);
-  property_vect const &hyp = top_graph->get_hypotheses();
-  for(property_vect::const_iterator i = hyp.begin(), i_end = hyp.end(); i != i_end; ++i)
-    initialize_real(i->real, NULL); // initialize hypothesis reals to handle contradictions
+  for(ast_real_set::const_iterator i = input_reals.begin(), i_end = input_reals.end(); i != i_end; ++i)
+    initialize_real(predicated_real(*i, PRED_BND), NULL); // initialize hypothesis reals to handle contradictions
   while (!missing_reals.empty()) {
     predicated_real const &real = *missing_reals.begin();
     real_dependency &r = reals[real];
@@ -152,48 +141,20 @@ proof_helper::proof_helper(ast_real_vect &targets) {
     r.dependent.erase(NULL);
   }
   missing_reals.clear();
-  for(ast_real_vect::iterator i = targets.begin(), end = targets.end(); i != end; ++i) {
+  ast_real_vect missing_targets;
+  for(ast_real_set::iterator i = output_reals.begin(), end = output_reals.end(); i != end; ++i) {
     real_dependencies::iterator j = reals.find(predicated_real(*i, PRED_BND));
     if (j == reals.end())
-      *i = NULL;
+      missing_targets.push_back(*i);
   }
+  return missing_targets;
 }
 
-proof_helper::proof_helper(proof_helper const &h)
-  : source_schemes(h.source_schemes), reals(h.reals) {
-}
-
-proof_helper::~proof_helper() {
-  for(scheme_set::iterator j = owned_schemes.begin(), j_end = owned_schemes.end(); j != j_end; ++j)
-    delete *j;
-}
-
-void proof_helper::insert_dependent(scheme_set &v, predicated_real const &real) const {
+static void insert_dependent(scheme_set &v, predicated_real const &real) {
   real_dependencies::const_iterator i = reals.find(real);
   if (i == reals.end()) return;
   real_dependency const &r = i->second;
   v.insert(r.dependent.begin(), r.dependent.end());
-}
-
-proof_helper *generate_proof_helper(ast_real_vect &reals) {
-  return new proof_helper(reals);
-}
-
-proof_helper *duplicate_proof_helper(proof_helper const *h) {
-  if (!h) return NULL;
-  return new proof_helper(*h);
-}
-
-void delete_proof_helper(proof_helper *h) {
-  delete h;
-}
-
-node *proof_scheme::generate_proof(interval const &) const {
-  return generate_proof();
-}
-
-node *find_proof(predicated_real const &real) {
-  return top_graph->find_already_known(real);
 }
 
 node *find_proof(property const &res) {
@@ -212,7 +173,6 @@ bool fill_hypotheses(property *hyp, preal_vect const &v) {
 
 bool graph_t::populate() {
   graph_loader loader(this);
-  typedef proof_helper::real_set real_set;
   typedef std::map< ast_real const *, interval const * > bound_map;
   bound_map bounds;
   bool completely_bounded = true;
@@ -222,9 +182,9 @@ bool graph_t::populate() {
     else
       completely_bounded = false;
   bound_map::const_iterator bounds_end = bounds.end();
-  proof_helper::scheme_set missing_schemes = helper->source_schemes;
+  scheme_set missing_schemes = source_schemes;
   for(node_map::const_iterator i = known_reals.begin(), i_end = known_reals.end(); i != i_end; ++i)
-    helper->insert_dependent(missing_schemes, i->first);
+    insert_dependent(missing_schemes, i->first);
   unsigned iter = 0;
   while (iter != 1000000 && !missing_schemes.empty()) {
     ++iter;
@@ -236,7 +196,7 @@ bool graph_t::populate() {
     else n = s->generate_proof();
     if (n && try_real(n)) {
       if (top_graph->get_contradiction()) break;
-      helper->insert_dependent(missing_schemes, s->real);
+      insert_dependent(missing_schemes, s->real);
       if (completely_bounded && i != bounds_end && n->get_result().bnd() <= *i->second) {
         bounds.erase(s->real.real());
         if (bounds.empty()) break;
@@ -244,8 +204,5 @@ bool graph_t::populate() {
       }
     }
   }
-  if (owned_helper)
-    delete helper;
-  helper = NULL;
   return get_contradiction();
 }

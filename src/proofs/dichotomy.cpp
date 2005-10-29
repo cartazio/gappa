@@ -58,7 +58,7 @@ void dichotomy_node::try_graph(graph_t *g2) {
   p.bnd() = interval(lower(p.bnd()), upper(g2->get_hypotheses()[0].bnd()));
   tmp_hyp.replace_front(p);
   property const &res = get_result();
-  graph_t *g0 = new graph_t(top_graph, tmp_hyp, g1->get_goals(), top_graph->helper, true);
+  graph_t *g0 = new graph_t(top_graph, tmp_hyp, g1->get_goals());
   bool b = g0->populate();
   if (!b)
     if (node *n = g0->find_already_known(res.real))
@@ -76,7 +76,7 @@ void dichotomy_node::try_graph(graph_t *g2) {
     // now that g1 has been added and some of its nodes have moved, recompute g2
     tmp_hyp.replace_front(g2->get_hypotheses()[0]);
     delete g2;
-    g2 = new graph_t(top_graph, tmp_hyp, g1->get_goals(), top_graph->helper, true);
+    g2 = new graph_t(top_graph, tmp_hyp, g1->get_goals());
     if (!g2->populate()) {
       node *n = g2->find_already_known(res.real);
       assert(n->get_result().bnd() <= res.bnd());
@@ -95,7 +95,7 @@ struct dichotomy_failure {
 void dichotomy_node::dichotomize() {
   property const &res = get_result();
   interval bnd;
-  graph_t *g = new graph_t(top_graph, tmp_hyp, top_graph->get_goals(), top_graph->helper, true);
+  graph_t *g = new graph_t(top_graph, tmp_hyp, top_graph->get_goals());
   bool good = true;
   if (!g->populate()) {
     if (node *n = g->find_already_known(res.real)) {
@@ -124,23 +124,16 @@ void dichotomy_node::dichotomize() {
 
 struct dichotomy_scheme: proof_scheme {
   ast_real const *var;
-  mutable node *dich;
-  proof_helper *helper;
+  mutable bool in_dichotomy;
   dichotomy_scheme(ast_real const *v, ast_real const *r);
-  ~dichotomy_scheme() { delete_proof_helper(helper); }
   virtual node *generate_proof(interval const &) const;
-  virtual node *generate_proof() const { return dich; }
+  virtual node *generate_proof() const { return NULL; }
   virtual preal_vect needed_reals() const;
 };
 
-static bool no_dichotomy = false;
-
 dichotomy_scheme::dichotomy_scheme(ast_real const *v, ast_real const *r)
-  : proof_scheme(r), var(v), dich(NULL) {
+  : proof_scheme(r), var(v), in_dichotomy(false) {
   ast_real_vect reals(1, r);
-  no_dichotomy = true;
-  helper = generate_proof_helper(reals);
-  no_dichotomy = false;
   assert(reals[0]);
 }
 
@@ -149,9 +142,10 @@ preal_vect dichotomy_scheme::needed_reals() const {
 }
 
 node *dichotomy_scheme::generate_proof(interval const &bnd) const {
-  if (dich) return dich;
+  if (in_dichotomy) return NULL;
   node *varn = find_proof(var);
   if (!varn) return NULL;
+  in_dichotomy = true;
   property_vect hyp2;
   hyp2.push_back(varn->get_result());
   property_vect const &hyp = top_graph->get_hypotheses();
@@ -159,18 +153,17 @@ node *dichotomy_scheme::generate_proof(interval const &bnd) const {
     if (i->real.real() != var) hyp2.push_back(*i);
   property_vect goals;
   goals.push_back(property(real, bnd));
-  graph_t *g = new graph_t(top_graph, hyp, goals, helper, false);
+  graph_t *g = new graph_t(top_graph, hyp, goals);
   graph_loader loader(g);
   dichotomy_node *n = new dichotomy_node(hyp2, property(real, bnd), varn);
   try {
     n->dichotomize();
     n->add_graph(n->last_graph);
     n->last_graph = NULL;
-    dich = n;
-    ++dich->nb_good;
+    ++n->nb_good;
     g->purge();
     g->flatten();
-    --dich->nb_good;
+    --n->nb_good;
   } catch (dichotomy_failure const &e) {
     if (warning_dichotomy_failure) {
       property const &h = e.hyp;
@@ -183,9 +176,11 @@ node *dichotomy_scheme::generate_proof(interval const &bnd) const {
         std::cerr << " is not computable\n";
     }
     delete n;
+    n = NULL;
   }
   delete g;
-  return dich;
+  in_dichotomy = false;
+  return n;
 }
 
 struct dichotomy_factory: scheme_factory {
@@ -195,7 +190,7 @@ struct dichotomy_factory: scheme_factory {
 };
 
 proof_scheme *dichotomy_factory::operator()(predicated_real const &r) const {
-  if (no_dichotomy || r.pred() != PRED_BND || r.real() != dst) return NULL;
+  if (r.pred() != PRED_BND || r.real() != dst) return NULL;
   return new dichotomy_scheme(var, dst);
 }
 

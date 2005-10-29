@@ -78,14 +78,12 @@ class graph_t {
   node_map known_reals;		// best node implied by hyp for each real
   property_vect hyp;		// hypotheses of the graph (they imply the hypotheses from the super-graph)
   property_vect goals;		// goals of the graph (they keep nodes alive)
-  bool owned_helper;
   node *contradiction;
   friend class intersection_node;
  public:
-  proof_helper *helper;
   void insert(node *n) { nodes.insert(n); }
   void remove(node *n) { nodes.erase (n); }
-  graph_t(graph_t *, property_vect const &, property_vect const &, proof_helper *, bool);
+  graph_t(graph_t *, property_vect const &, property_vect const &);
   ~graph_t();
   node *find_already_known(predicated_real const &) const;
   bool try_real(node *);
