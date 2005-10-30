@@ -16,10 +16,11 @@ class dichotomy_node: public dependent_node {
   property_vect &tmp_hyp;
   int depth;
   property res;
+  dichotomy_sequence const &hints;
  public:
   graph_t *last_graph;
-  dichotomy_node(property_vect &v, property const &p, node *n)
-      : dependent_node(UNION), tmp_hyp(v), depth(0), res(p), last_graph(NULL) {
+  dichotomy_node(property_vect &v, property const &p, node *n, dichotomy_sequence const &h)
+      : dependent_node(UNION), tmp_hyp(v), depth(0), res(p), hints(h), last_graph(NULL) {
     insert_pred(n);
   }
   ~dichotomy_node();
@@ -59,7 +60,7 @@ void dichotomy_node::try_graph(graph_t *g2) {
   tmp_hyp.replace_front(p);
   property const &res = get_result();
   graph_t *g0 = new graph_t(top_graph, tmp_hyp, g1->get_goals());
-  bool b = g0->populate();
+  bool b = g0->populate(hints);
   if (!b)
     if (node *n = g0->find_already_known(res.real))
       if (n->get_result().bnd() <= res.bnd())
@@ -77,7 +78,7 @@ void dichotomy_node::try_graph(graph_t *g2) {
     tmp_hyp.replace_front(g2->get_hypotheses()[0]);
     delete g2;
     g2 = new graph_t(top_graph, tmp_hyp, g1->get_goals());
-    if (!g2->populate()) {
+    if (!g2->populate(hints)) {
       node *n = g2->find_already_known(res.real);
       assert(n->get_result().bnd() <= res.bnd());
     }
@@ -97,7 +98,7 @@ void dichotomy_node::dichotomize() {
   interval bnd;
   graph_t *g = new graph_t(top_graph, tmp_hyp, top_graph->get_goals());
   bool good = true;
-  if (!g->populate()) {
+  if (!g->populate(hints)) {
     if (node *n = g->find_already_known(res.real)) {
       bnd = n->get_result().bnd();
       if (!(bnd <= res.bnd())) good = false;
@@ -122,48 +123,35 @@ void dichotomy_node::dichotomize() {
   --depth;
 }
 
-struct dichotomy_scheme: proof_scheme {
-  ast_real const *var;
-  mutable bool in_dichotomy;
-  dichotomy_scheme(ast_real const *v, ast_real const *r);
-  virtual node *generate_proof(interval const &) const;
-  virtual node *generate_proof() const { return NULL; }
-  virtual preal_vect needed_reals() const;
-};
-
-dichotomy_scheme::dichotomy_scheme(ast_real const *v, ast_real const *r)
-  : proof_scheme(r), var(v), in_dichotomy(false) {
-  ast_real_vect reals(1, r);
-  assert(reals[0]);
-}
-
-preal_vect dichotomy_scheme::needed_reals() const {
-  return preal_vect(1, predicated_real(var, PRED_BND));
-}
-
-node *dichotomy_scheme::generate_proof(interval const &bnd) const {
-  if (in_dichotomy) return NULL;
+void graph_t::dichotomize(dichotomy_hint const &hint) {
+  dichotomy_sequence hints;
+  assert(hint.src.size() >= 1);
+  ast_real const *var = hint.src[0];
+  if (hint.src.size() > 1) {
+    dichotomy_hint h;
+    h.dst = hint.dst;
+    h.src = ast_real_vect(hint.src.begin() + 1, hint.src.end());
+    hints.push_back(h);
+  }
   node *varn = find_proof(var);
-  if (!varn) return NULL;
-  in_dichotomy = true;
+  if (!varn) return;
   property_vect hyp2;
   hyp2.push_back(varn->get_result());
   property_vect const &hyp = top_graph->get_hypotheses();
   for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
     if (i->real.real() != var) hyp2.push_back(*i);
-  property_vect goals;
-  goals.push_back(property(real, bnd));
-  graph_t *g = new graph_t(top_graph, hyp, goals);
-  graph_loader loader(g);
-  dichotomy_node *n = new dichotomy_node(hyp2, property(real, bnd), varn);
+  assert(hint.dst.size() == 1);
+  property_vect new_goals;
+  for(property_vect::const_iterator i = goals.begin(), end = goals.end(); i != end; ++i)
+    if (i->real.pred() == PRED_BND && i->real.real() == hint.dst[0])
+      new_goals.push_back(*i);
+  if (new_goals.size() != 1) return;
+  graph_t *g = new graph_t(top_graph, hyp, new_goals);
+  dichotomy_node *n = NULL;
   try {
+    graph_loader loader(g);
+    n = new dichotomy_node(hyp2, new_goals[0], varn, hints);
     n->dichotomize();
-    n->add_graph(n->last_graph);
-    n->last_graph = NULL;
-    ++n->nb_good;
-    g->purge();
-    g->flatten();
-    --n->nb_good;
   } catch (dichotomy_failure const &e) {
     if (warning_dichotomy_failure) {
       property const &h = e.hyp;
@@ -178,22 +166,14 @@ node *dichotomy_scheme::generate_proof(interval const &bnd) const {
     delete n;
     n = NULL;
   }
+  if (n) {
+    n->add_graph(n->last_graph);
+    n->last_graph = NULL;
+    ++n->nb_good;
+    g->purge();
+    g->flatten();
+    --n->nb_good;
+    try_real(n);
+  }
   delete g;
-  in_dichotomy = false;
-  return n;
-}
-
-struct dichotomy_factory: scheme_factory {
-  ast_real const *dst, *var;
-  dichotomy_factory(ast_real const *q1, ast_real const *q2): dst(q1), var(q2) {}
-  virtual proof_scheme *operator()(predicated_real const &) const;
-};
-
-proof_scheme *dichotomy_factory::operator()(predicated_real const &r) const {
-  if (r.pred() != PRED_BND || r.real() != dst) return NULL;
-  return new dichotomy_scheme(var, dst);
-}
-
-void register_user_dichotomy(ast_real const *r1, ast_real const *r2) {
-  scheme_register dummy(new dichotomy_factory(r1, r2));
 }

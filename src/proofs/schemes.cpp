@@ -171,7 +171,7 @@ bool fill_hypotheses(property *hyp, preal_vect const &v) {
   return true;
 }
 
-bool graph_t::populate() {
+bool graph_t::populate(dichotomy_sequence const &dichotomy) {
   graph_loader loader(this);
   typedef std::map< ast_real const *, interval const * > bound_map;
   bound_map bounds;
@@ -204,5 +204,8 @@ bool graph_t::populate() {
       }
     }
   }
-  return get_contradiction();
+  if (completely_bounded && bounds.empty() || dichotomy.empty())
+    return get_contradiction();
+  top_graph->dichotomize(dichotomy[0]);
+  return top_graph->populate(dichotomy_sequence(dichotomy.begin() + 1, dichotomy.end()));
 }

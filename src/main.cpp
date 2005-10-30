@@ -10,6 +10,7 @@ extern std::vector< graph_t * > graphs;
 extern bool parse_args(int argc, char **argv);
 extern backend_register const *proof_generator;
 backend *display = NULL;
+dichotomy_sequence dichotomies;
 
 struct null_backend: backend {
   null_backend(): backend(std::cout) {}
@@ -38,7 +39,7 @@ int main(int argc, char **argv) {
       }
     }
     std::cerr << ":\n";
-    if (g->populate()) {
+    if (g->populate(dichotomies)) {
       std::cerr << "Warning: hypotheses are in contradiction, any result is true.\n";
       display->theorem(g->get_contradiction());
     } else {

@@ -4,6 +4,7 @@
 #include <map>
 #include <set>
 #include <vector>
+#include "proofs/dichotomy.hpp"
 #include "proofs/property.hpp"
 
 enum node_id { HYPOTHESIS, MODUS, UNION, INTERSECTION };
@@ -88,7 +89,8 @@ class graph_t {
   property_vect const &get_hypotheses() const { return hyp; }
   property_vect const &get_goals() const { return goals; }
   bool dominates(graph_t const *) const;
-  bool populate();		// fill the proof graph, return true in case of contradiction
+  bool populate(dichotomy_sequence const &);	// fill the proof graph, return true in case of contradiction
+  void dichotomize(dichotomy_hint const &);
   void purge();			// remove all the unused nodes
   void flatten();		// move all the nodes in the upper graph
   bool migrate();		// move the free nodes in the upper graph, return true if any

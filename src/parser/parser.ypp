@@ -211,4 +211,10 @@ REWRITE:
     test_ringularity(r1, r2);
     register_user_rewrite(r1, r2);
   }
-| REWRITE REAL '$' REAL ';'	{ register_user_dichotomy($2, $4); }
+| REWRITE OPERANDS '$' OPERANDS ';'
+  {
+    dichotomy_hint h;
+    h.dst = *$2; delete $2;
+    h.src = *$4; delete $4;
+    dichotomies.push_back(h);
+  }
