@@ -70,8 +70,6 @@ class modus_node: public dependent_node {
   virtual ~modus_node();
 };
 
-struct proof_helper;
-
 class graph_t {
   graph_t *father;
   node_set nodes;		// nodes owned by the graph, each node is implied by hyp
