@@ -5,7 +5,7 @@ AM_YFLAGS = -d
 bin_PROGRAMS = gappa
 
 # Dependencies:
-# parser/ast.cpp initialization requires proofs/field.cpp initialization
+# proofs/field.cpp initialization requires parser/ast.cpp initialization
 # backends/*.cpp initialization requires backends/backends.cpp initialization
 
 gappa_SOURCES = \
