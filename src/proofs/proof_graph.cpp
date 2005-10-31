@@ -150,7 +150,7 @@ intersection_node::intersection_node(node *n1, node *n2)
   fill_property_map(pmap, n2);
   fill_property_vect(hyp, pmap);
   if (res.real.pred() == PRED_BND && is_empty(res.bnd()))
-    top_graph->contradiction = this;
+    top_graph->set_contradiction(this);
 }
 
 graph_t::graph_t(graph_t *f, property_vect const &h, property_vect const &g)
@@ -158,13 +158,22 @@ graph_t::graph_t(graph_t *f, property_vect const &h, property_vect const &g)
   graph_loader loader(this);
   if (f) {
     assert(hyp.implies(f->hyp));
-    contradiction = f->contradiction;
+    assert(!f->contradiction);
     known_reals = f->known_reals;
     for(node_map::iterator i = known_reals.begin(), end = known_reals.end(); i != end; ++i)
       ++i->second->nb_good;
   }
   for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
     try_real(new hypothesis_node(*i));
+}
+
+void graph_t::set_contradiction(node *n) {
+  assert(n);
+  contradiction = n;
+  ++n->nb_good;
+  for(node_map::const_iterator i = known_reals.begin(), end = known_reals.end(); i != end; ++i)
+    i->second->remove_known();
+  known_reals.clear();
 }
 
 bool graph_t::try_real(node *n) {
@@ -179,8 +188,10 @@ bool graph_t::try_real(node *n) {
     if (res1.implies(res2)) {
       delete n;
       return false;
-    } else if (!res2.strict_implies(res1))
+    } else if (!res2.strict_implies(res1)) {
       n = new intersection_node(old, n);
+      if (n == contradiction) return true;
+    }
     dst = n;
     old->remove_known();
   }
@@ -194,7 +205,11 @@ node *graph_t::find_already_known(predicated_real const &real) const {
 }
 
 graph_t::~graph_t() {
-  for(node_map::const_iterator i = known_reals.begin(), end = known_reals.end(); i != end; ++i)
-    i->second->remove_known();
+  if (contradiction) {
+    --contradiction->nb_good;
+    delete contradiction;
+  } else
+    for(node_map::const_iterator i = known_reals.begin(), end = known_reals.end(); i != end; ++i)
+      i->second->remove_known();
   assert(nodes.empty());
 }

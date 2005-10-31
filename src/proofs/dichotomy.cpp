@@ -220,7 +220,7 @@ void graph_t::dichotomize(dichotomy_hint const &hint) {
     n->insert_pred(varn);
     for(graph_vect::const_iterator i = h->graphs.begin(), end = h->graphs.end(); i != end; ++i)
       n->insert_pred((*i)->get_contradiction());
-    contradiction = n;
+    set_contradiction(n);
     return;
   }
   ++h->nb_ref;

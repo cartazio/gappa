@@ -78,7 +78,6 @@ class graph_t {
   property_vect hyp;		// hypotheses of the graph (they imply the hypotheses from the super-graph)
   property_vect goals;		// goals of the graph
   node *contradiction;
-  friend class intersection_node;
  public:
   void insert(node *n) { nodes.insert(n); }
   void remove(node *n) { nodes.erase (n); }
@@ -92,6 +91,7 @@ class graph_t {
   bool populate(dichotomy_sequence const &);	// fill the proof graph, return true in case of contradiction
   void dichotomize(dichotomy_hint const &);	// apply a dichotomy hint
   node *get_contradiction() const { return contradiction; }
+  void set_contradiction(node *);
 };
 
 struct graph_loader {
