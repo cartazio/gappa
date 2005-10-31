@@ -218,3 +218,9 @@ REWRITE:
     h.src = *$4; delete $4;
     dichotomies.push_back(h);
   }
+| REWRITE '$' OPERANDS ';'
+  {
+    dichotomy_hint h;
+    h.src = *$3; delete $3;
+    dichotomies.push_back(h);
+  }
