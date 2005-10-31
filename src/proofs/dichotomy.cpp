@@ -214,6 +214,15 @@ void graph_t::dichotomize(dichotomy_hint const &hint) {
       reals.push_back(j->first);
     break;
   }
+  assert(!contradiction);
+  if (only_contradictions) {
+    dichotomy_node *n = new dichotomy_node(property(), h);
+    n->insert_pred(varn);
+    for(graph_vect::const_iterator i = h->graphs.begin(), end = h->graphs.end(); i != end; ++i)
+      n->insert_pred((*i)->get_contradiction());
+    contradiction = n;
+    return;
+  }
   ++h->nb_ref;
   for(preal_vect::const_iterator i = reals.begin(), end = reals.end(); i != end; ++i) {
     property p(*i);
