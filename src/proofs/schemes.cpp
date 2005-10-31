@@ -172,6 +172,8 @@ bool fill_hypotheses(property *hyp, preal_vect const &v) {
 }
 
 bool graph_t::populate(dichotomy_sequence const &dichotomy) {
+  if (contradiction)
+    return true;
   graph_loader loader(this);
   typedef std::map< ast_real const *, interval const * > bound_map;
   bound_map bounds;
@@ -182,30 +184,34 @@ bool graph_t::populate(dichotomy_sequence const &dichotomy) {
     else
       completely_bounded = false;
   bound_map::const_iterator bounds_end = bounds.end();
-  scheme_set missing_schemes = source_schemes;
-  for(node_map::const_iterator i = known_reals.begin(), i_end = known_reals.end(); i != i_end; ++i)
-    insert_dependent(missing_schemes, i->first);
-  unsigned iter = 0;
-  while (iter != 1000000 && !missing_schemes.empty()) {
-    ++iter;
-    proof_scheme const *s = iter % 16 ? *missing_schemes.begin() : *missing_schemes.rbegin();
-    missing_schemes.erase(s);
-    bound_map::const_iterator i = s->real.pred() == PRED_BND ? bounds.find(s->real.real()) : bounds_end;
-    node *n;
-    if (i != bounds_end) n = s->generate_proof(*i->second);
-    else n = s->generate_proof();
-    if (n && try_real(n)) {
-      if (top_graph->get_contradiction()) break;
-      insert_dependent(missing_schemes, s->real);
-      if (completely_bounded && i != bounds_end && n->get_result().bnd() <= *i->second) {
-        bounds.erase(s->real.real());
-        if (bounds.empty()) break;
-        bounds_end = bounds.end();
+  for(dichotomy_sequence::const_iterator dichotomy_it = dichotomy.begin(),
+      dichotomy_end = dichotomy.end(); /*nothing*/; ++dichotomy_it) {
+    scheme_set missing_schemes = source_schemes;
+    for(node_map::const_iterator i = known_reals.begin(), i_end = known_reals.end(); i != i_end; ++i)
+      insert_dependent(missing_schemes, i->first);
+    unsigned iter = 0;
+    while (iter != 1000000 && !missing_schemes.empty()) {
+      ++iter;
+      proof_scheme const *s = iter % 16 ? *missing_schemes.begin() : *missing_schemes.rbegin();
+      missing_schemes.erase(s);
+      bound_map::const_iterator i = s->real.pred() == PRED_BND ? bounds.find(s->real.real()) : bounds_end;
+      node *n = (i != bounds_end) ? s->generate_proof(*i->second) : s->generate_proof();
+      if (n && try_real(n)) {
+        if (contradiction)
+          return true;
+        insert_dependent(missing_schemes, s->real);
+        if (i != bounds_end && n->get_result().bnd() <= *i->second) {
+          bounds.erase(s->real.real());
+          if (completely_bounded && bounds.empty())
+            return false;
+          bounds_end = bounds.end();
+        }
       }
     }
+    if (dichotomy_it == dichotomy_end)
+      return false;
+    top_graph->dichotomize(*dichotomy_it);
+    if (contradiction)
+      return true;
   }
-  if (completely_bounded && bounds.empty() || dichotomy.empty())
-    return get_contradiction();
-  top_graph->dichotomize(dichotomy[0]);
-  return top_graph->populate(dichotomy_sequence(dichotomy.begin() + 1, dichotomy.end()));
 }
