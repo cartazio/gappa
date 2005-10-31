@@ -9,11 +9,19 @@ typedef int long_is_not_long_enough[sizeof(long) - sizeof(interval *)];
 property::property(): d(0), real() {}
 
 property::property(ast_real const *r): real(r, PRED_BND) {
-  new(&d) interval();
+  new(&d) interval;
 }
 
 property::property(ast_real const *r, interval const &i): real(r, PRED_BND) {
   new(&d) interval(i);
+}
+
+property::property(predicated_real const &r): real(r) {
+  switch (real.pred()) {
+  case PRED_BND: new(&d) interval; break;
+  case PRED_FIX: d = INT_MIN;
+  case PRED_FLT: d = INT_MAX;
+  }
 }
 
 property::property(predicated_real const &r, interval const &i): real(r) {
@@ -75,6 +83,16 @@ void property::intersect(property const &p) {
   case PRED_BND: { interval &i = bnd(); i = ::intersect(i, p.bnd()); break; }
   case PRED_FIX: d = std::max(d, p.d); break;
   case PRED_FLT: d = std::min(d, p.d); break;
+  }
+}
+
+
+void property::hull(property const &p) {
+  assert(real == p.real);
+  switch (real.pred()) {
+  case PRED_BND: { interval &i = bnd(); i = ::hull(i, p.bnd()); break; }
+  case PRED_FIX: d = std::min(d, p.d); break;
+  case PRED_FLT: d = std::max(d, p.d); break;
   }
 }
 

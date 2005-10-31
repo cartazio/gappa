@@ -35,6 +35,7 @@ class property {
   property();
   property(ast_real const *);
   property(ast_real const *, interval const &);
+  property(predicated_real const &);
   property(predicated_real const &, interval const &);
   property(predicated_real const &, long);
   property(property const &);
@@ -43,6 +44,7 @@ class property {
   bool implies(property const &) const;
   bool strict_implies(property const &) const;
   void intersect(property const &);
+  void hull(property const &);
 };
 
 class property_vect {
