@@ -149,8 +149,10 @@ intersection_node::intersection_node(node *n1, node *n2)
   fill_property_map(pmap, n1);
   fill_property_map(pmap, n2);
   fill_property_vect(hyp, pmap);
-  if (res.real.pred() == PRED_BND && is_empty(res.bnd()))
+  if (res.real.pred() == PRED_BND && is_empty(res.bnd())) {
+    res = property();
     top_graph->set_contradiction(this);
+  }
 }
 
 graph_t::graph_t(graph_t *f, property_vect const &h, property_vect const &g)

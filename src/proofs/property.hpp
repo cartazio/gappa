@@ -18,6 +18,7 @@ class predicated_real {
   bool operator==(predicated_real const &r) const { return d == r.d; }
   bool operator!=(predicated_real const &r) const { return d != r.d; }
   bool operator< (predicated_real const &r) const { return d <  r.d; }
+  bool null() const { return d == 0; }
 };
 
 class property {
@@ -45,6 +46,7 @@ class property {
   bool strict_implies(property const &) const;
   void intersect(property const &);
   void hull(property const &);
+  bool null() const { return real.null(); }
 };
 
 class property_vect {

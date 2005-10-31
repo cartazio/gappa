@@ -204,7 +204,7 @@ static std::string display(node *n) {
   for(property_vect::const_iterator i = n_hyp.begin(), end = n_hyp.end(); i != end; ++i)
     plouf << display(*i) << " -> ";
   property const &n_res = n->get_result();
-  std::string p_res = (n_res.real.pred() == PRED_BND && is_empty(n_res.bnd())) ? "(forall P, P)" : display(n_res);
+  std::string p_res = n_res.null() ? "(forall P, P)" : display(n_res);
   plouf << p_res << ".\n";
   int nb_hyps = n_hyp.size();
   if (nb_hyps) {
@@ -256,7 +256,7 @@ static std::string display(node *n) {
       num[i] = num_hyp++;
     }
     std::string prefix;
-    if (is_empty(n_res.bnd())) prefix = "absurd_";
+    if (n_res.null()) prefix = "absurd_";
     plouf << " apply " << prefix << "intersect with"
                  " (1 := h" << num[0] << ") (2 := h" << num[1] << ").\n"
              " reflexivity.\nQed.\n";
@@ -286,7 +286,7 @@ static std::string display(node *n) {
                " intro h" << hcase.first << ".\n";
       property const &res = m->get_result();
       interval const &mb = res.bnd(), &nb = n_res.bnd();
-      if (!is_empty(res.bnd())) { // not a contradictory result
+      if (!res.null()) { // not a contradictory result
         assert(mb <= nb);
         if (!(nb <= mb))
           plouf << " apply subset with " << display(mb) << ". 2: reflexivity.\n";
