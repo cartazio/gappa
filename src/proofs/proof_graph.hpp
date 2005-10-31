@@ -92,7 +92,6 @@ class graph_t {
   bool populate(dichotomy_sequence const &);	// fill the proof graph, return true in case of contradiction
   void dichotomize(dichotomy_hint const &);
   void purge();			// remove all the unused nodes
-  void flatten();		// move all the nodes in the upper graph
   node *get_contradiction() const { return contradiction; }
 };
 

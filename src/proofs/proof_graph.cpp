@@ -168,6 +168,7 @@ graph_t::graph_t(graph_t *f, property_vect const &h, property_vect const &g)
 }
 
 bool graph_t::try_real(node *n) {
+  assert(top_graph == this);
   assert(n && n->graph && n->graph->dominates(this));
   property const &res2 = n->get_result();
   std::pair< node_map::iterator, bool > ib = known_reals.insert(std::make_pair(res2.real, n));
@@ -178,10 +179,8 @@ bool graph_t::try_real(node *n) {
     if (res1.implies(res2)) {
       delete n;
       return false;
-    } else if (!(res2.strict_implies(res1))) {
-      graph_loader loader(this);
+    } else if (!res2.strict_implies(res1))
       n = new intersection_node(old, n);
-    }
     dst = n;
     old->remove_known();
   }
@@ -198,34 +197,6 @@ graph_t::~graph_t() {
   for(node_map::const_iterator i = known_reals.begin(), end = known_reals.end(); i != end; ++i)
     i->second->remove_known();
   assert(nodes.empty());
-}
-
-// FIXME: contradiction handling
-void graph_t::flatten() {
-  assert(father && father->hyp.implies(hyp));
-  node_set ns;
-  ns.swap(nodes);
-  for(node_set::const_iterator i = ns.begin(), end = ns.end(); i != end; ++i) {
-    node *n = *i;
-    assert(n && n->graph == this);
-    if (n->type != HYPOTHESIS) {
-      property const &res = n->get_result();
-      node_map::iterator i = known_reals.find(res.real);
-      if (i != known_reals.end() && i->second == n) {
-        // if this is a known real, it should override any older known real
-        std::pair< node_map::iterator, bool > ib = father->known_reals.insert(std::make_pair(res.real, n));
-        if (!ib.second) { // there was a known real in the father and it has to be overridden
-          node *&dst = ib.first->second;
-          assert(res.implies(dst->get_result()));
-          dst->remove_known();
-          dst = n;
-        }
-        known_reals.erase(i);
-      }
-      father->nodes.insert(n);
-      n->graph = father;
-    } else nodes.insert(n);
-  }
 }
 
 void graph_t::purge() {

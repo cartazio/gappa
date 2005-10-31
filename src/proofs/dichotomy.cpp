@@ -115,6 +115,7 @@ void dichotomy_node::dichotomize() {
 }
 
 void graph_t::dichotomize(dichotomy_hint const &hint) {
+  assert(top_graph == this);
   dichotomy_sequence hints;
   assert(hint.src.size() >= 1);
   ast_real const *var = hint.src[0];
@@ -137,11 +138,8 @@ void graph_t::dichotomize(dichotomy_hint const &hint) {
     if (i->real.pred() == PRED_BND && i->real.real() == hint.dst[0])
       new_goals.push_back(*i);
   if (new_goals.size() != 1) return;
-  graph_t *g = new graph_t(top_graph, hyp, new_goals);
-  dichotomy_node *n = NULL;
+  dichotomy_node *n = new dichotomy_node(hyp2, new_goals[0], varn, hints);
   try {
-    graph_loader loader(g);
-    n = new dichotomy_node(hyp2, new_goals[0], varn, hints);
     n->dichotomize();
   } catch (dichotomy_failure const &e) {
     if (warning_dichotomy_failure) {
@@ -155,16 +153,9 @@ void graph_t::dichotomize(dichotomy_hint const &hint) {
         std::cerr << " is not computable\n";
     }
     delete n;
-    n = NULL;
+    return;
   }
-  if (n) {
-    n->add_graph(n->last_graph);
-    n->last_graph = NULL;
-    ++n->nb_good;
-    g->purge();
-    g->flatten();
-    --n->nb_good;
-    try_real(n);
-  }
-  delete g;
+  n->add_graph(n->last_graph);
+  n->last_graph = NULL;
+  try_real(n);
 }
