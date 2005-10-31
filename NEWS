@@ -1,3 +1,11 @@
+Version 0.5.2:
+ * proof graph
+   - simplified memory handling
+   - simplified graph handling
+   - put dichotomy at a higher level, outside of proof schemes
+ * syntax
+   - added detection of unbound identifiers
+
 Version 0.5.1:
  * whole engine
    - added FIX and FLT predicates in addition to the original BND predicate
