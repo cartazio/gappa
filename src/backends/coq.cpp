@@ -204,7 +204,12 @@ static std::string display(node *n) {
   for(property_vect::const_iterator i = n_hyp.begin(), end = n_hyp.end(); i != end; ++i)
     plouf << display(*i) << " -> ";
   property const &n_res = n->get_result();
-  std::string p_res = n_res.null() ? "(forall P, P)" : display(n_res);
+  std::string p_res, prefix;
+  if (n_res.null()) {
+    p_res = "contradiction";
+    prefix = "absurd_";
+  } else
+    p_res = display(n_res);
   plouf << p_res << ".\n";
   int nb_hyps = n_hyp.size();
   if (nb_hyps) {
@@ -255,8 +260,6 @@ static std::string display(node *n) {
       invoke_lemma(plouf, m, pmap);
       num[i] = num_hyp++;
     }
-    std::string prefix;
-    if (n_res.null()) prefix = "absurd_";
     plouf << " apply " << prefix << "intersect with"
                  " (1 := h" << num[0] << ") (2 := h" << num[1] << ").\n"
              " reflexivity.\nQed.\n";
@@ -293,7 +296,7 @@ static std::string display(node *n) {
       }
       invoke_lemma(plouf, m, pmap);
       if (i + 1 != i_end)
-        plouf << " apply union with (1 := u). reflexivity. clear u.\n";
+        plouf << " apply " << prefix << "union with (1 := u). reflexivity. clear u.\n";
       else
         plouf << " apply u.\n";
     }
