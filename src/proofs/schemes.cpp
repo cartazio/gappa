@@ -210,7 +210,7 @@ bool graph_t::populate(dichotomy_sequence const &dichotomy) {
     }
     if (dichotomy_it == dichotomy_end)
       return false;
-    top_graph->dichotomize(*dichotomy_it);
+    dichotomize(*dichotomy_it);
     if (contradiction)
       return true;
   }
