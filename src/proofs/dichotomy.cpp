@@ -11,44 +11,70 @@ extern bool warning_dichotomy_failure;
 
 typedef std::vector< graph_t * > graph_vect;
 
-class dichotomy_node: public dependent_node {
+class dichotomy_node;
+
+
+struct dichotomy_helper {
   graph_vect graphs;
   property_vect &tmp_hyp;
   int depth;
+  unsigned nb_ref;
   property res;
   dichotomy_sequence const &hints;
- public:
   graph_t *last_graph;
-  dichotomy_node(property_vect &v, property const &p, node *n, dichotomy_sequence const &h)
-      : dependent_node(UNION), tmp_hyp(v), depth(0), res(p), hints(h), last_graph(NULL) {
-    insert_pred(n);
-  }
-  ~dichotomy_node();
-  void dichotomize();
-  void add_graph(graph_t *);
+  graph_t *try_hypothesis(interval *) const;
   void try_graph(graph_t *);
-  virtual property const &get_result() const { return res; }
-  virtual property_vect const &get_hypotheses() const { return graph->get_hypotheses(); }
+  void dichotomize();
+  dichotomy_node *generate_node(node *, property const &);
+  void purge();
+  dichotomy_helper(property_vect &v, property const &p, dichotomy_sequence const &h)
+    : tmp_hyp(v), depth(0), nb_ref(0), res(p), hints(h), last_graph(NULL) {}
+  ~dichotomy_helper();
 };
 
-dichotomy_node::~dichotomy_node() {
-  clean_dependencies();
+class dichotomy_node: public dependent_node {
+  property res;
+  dichotomy_helper *helper;
+ public:
+  dichotomy_node(property const &p, dichotomy_helper *h)
+    : dependent_node(UNION), res(p), helper(h) { ++h->nb_ref; }
+  ~dichotomy_node();
+  virtual property const &get_result() const { return res; }
+  virtual property_vect const &get_hypotheses() const { return graph->get_hypotheses(); }
+  using dependent_node::insert_pred;
+};
+
+dichotomy_helper::~dichotomy_helper() {
+  assert(nb_ref == 0);
   for(graph_vect::iterator i = graphs.begin(), end = graphs.end(); i != end; ++i)
     delete *i;
   graphs.clear();
   delete last_graph;
-  last_graph = NULL;
 }
 
-void dichotomy_node::add_graph(graph_t *g) {
-  graphs.push_back(g);
-  node *n = g->get_contradiction();
-  if (!n) n = g->find_already_known(get_result().real);
-  insert_pred(n);
-  g->purge();
+dichotomy_node::~dichotomy_node() {
+  clean_dependencies();
+  if (--helper->nb_ref == 0)
+    delete helper;
 }
 
-void dichotomy_node::try_graph(graph_t *g2) {
+graph_t *dichotomy_helper::try_hypothesis(interval *i) const {
+  graph_t *g = new graph_t(top_graph, tmp_hyp, top_graph->get_goals());
+  bool success = g->populate(hints);
+  if (!success) // no contradiction
+    if (node *n = g->find_already_known(res.real)) {
+      interval const &bnd = n->get_result().bnd();
+      if (bnd <= res.bnd()) success = true;
+      if (i) *i = bnd;
+    }
+  if (!success) { // no contradiction and no node good enough
+    delete g;
+    return NULL;
+  }
+  return g;
+}
+
+void dichotomy_helper::try_graph(graph_t *g2) {
   graph_t *g1 = last_graph;
   if (!g1) {
     last_graph = g2;
@@ -57,24 +83,42 @@ void dichotomy_node::try_graph(graph_t *g2) {
   property p(g1->get_hypotheses()[0]);
   p.bnd() = interval(lower(p.bnd()), upper(g2->get_hypotheses()[0].bnd()));
   tmp_hyp.replace_front(p);
-  property const &res = get_result();
-  graph_t *g0 = new graph_t(top_graph, tmp_hyp, g1->get_goals());
-  bool b = g0->populate(hints);
-  if (!b)
-    if (node *n = g0->find_already_known(res.real))
-      if (n->get_result().bnd() <= res.bnd())
-        b = true;
-  if (b) {
-    // graph g0 was successful, keep it as the last graph instead of g1 and g2
-    last_graph = g0;
+  if (graph_t *g = try_hypothesis(NULL)) {
+    // hull graph was successful, keep it as the last graph instead of g1 and g2
     delete g1;
     delete g2;
+    last_graph = g;
   } else {
-    // graph g0 was a failure, validate g1 and keep g2 as the last graph
-    delete g0;
-    add_graph(g1);
+    // validate g1 and keep g2 as the last graph
+    graphs.push_back(g1);
     last_graph = g2;
   }
+}
+
+dichotomy_node *dichotomy_helper::generate_node(node *varn, property const &p) {
+  assert(p.real.pred() == PRED_BND);
+  interval bnd;
+  for(graph_vect::const_iterator i = graphs.begin(), end = graphs.end(); i != end; ++i) {
+    graph_t *g = *i;
+    if (g->get_contradiction()) continue;
+    node *n = g->find_already_known(p.real);
+    if (!n) return NULL;
+    property const &res = n->get_result();
+    if (!res.implies(p)) return NULL;
+    interval const &b = res.bnd();
+    if (!is_defined(bnd)) bnd = b;
+    else bnd = hull(bnd, b);
+  }
+  assert(is_defined(bnd) && bnd <= p.bnd());
+  if (!(bnd < p.bnd())) return NULL;
+  dichotomy_node *n = new dichotomy_node(property(p.real, bnd), this);
+  n->insert_pred(varn);
+  for(graph_vect::const_iterator i = graphs.begin(), end = graphs.end(); i != end; ++i) {
+    graph_t *g = *i;
+    if (node *m = g->get_contradiction()) n->insert_pred(m); 
+    else n->insert_pred((*i)->find_already_known(p.real));
+  }
+  return n;
 }
 
 struct dichotomy_failure {
@@ -84,29 +128,18 @@ struct dichotomy_failure {
   dichotomy_failure(property const &h, property const &r, interval const &b): hyp(h), res(r), bnd(b) {}
 };
 
-void dichotomy_node::dichotomize() {
-  property const &res = get_result();
-  interval bnd;
-  graph_t *g = new graph_t(top_graph, tmp_hyp, top_graph->get_goals());
-  bool good = true;
-  if (!g->populate(hints)) {
-    if (node *n = g->find_already_known(res.real)) {
-      bnd = n->get_result().bnd();
-      if (!(bnd <= res.bnd())) good = false;
-    } else good = false;
-  }
-  if (good) {
-    try_graph(g);
-    return;
-  }
+void dichotomy_helper::dichotomize() {
   property const &h = tmp_hyp[0];
-  node *n = g->find_already_known(h.real);
-  assert(n);
-  interval i = n->get_result().bnd();
-  delete g;
-  if (!is_defined(i) || is_singleton(i)) throw dichotomy_failure(h, res, bnd);
+  if (depth != 0) {
+    interval bnd;
+    if (graph_t *g = try_hypothesis(&bnd)) {
+      try_graph(g);
+      return;
+    }
+    if (depth >= parameter_dichotomy_depth) throw dichotomy_failure(h, res, bnd);
+  }
   std::pair< interval, interval > ii = split(h.bnd());
-  if (++depth > parameter_dichotomy_depth) throw dichotomy_failure(h, res, bnd);
+  ++depth;
   tmp_hyp.replace_front(property(h.real, ii.first));
   dichotomize();
   tmp_hyp.replace_front(property(h.real, ii.second));
@@ -138,9 +171,9 @@ void graph_t::dichotomize(dichotomy_hint const &hint) {
     if (i->real.pred() == PRED_BND && i->real.real() == hint.dst[0])
       new_goals.push_back(*i);
   if (new_goals.size() != 1) return;
-  dichotomy_node *n = new dichotomy_node(hyp2, new_goals[0], varn, hints);
+  dichotomy_helper *h = new dichotomy_helper(hyp2, new_goals[0], hints);
   try {
-    n->dichotomize();
+    h->dichotomize();
   } catch (dichotomy_failure const &e) {
     if (warning_dichotomy_failure) {
       property const &h = e.hyp;
@@ -152,10 +185,11 @@ void graph_t::dichotomize(dichotomy_hint const &hint) {
       else
         std::cerr << " is not computable\n";
     }
-    delete n;
+    delete h;
     return;
   }
-  n->add_graph(n->last_graph);
-  n->last_graph = NULL;
+  h->graphs.push_back(h->last_graph);
+  h->last_graph = NULL;
+  node *n = h->generate_node(varn, property(hint.dst[0]));
   try_real(n);
 }
