@@ -76,7 +76,7 @@ class graph_t {
   node_set nodes;		// nodes owned by the graph, each node is implied by hyp
   node_map known_reals;		// best node implied by hyp for each real
   property_vect hyp;		// hypotheses of the graph (they imply the hypotheses from the super-graph)
-  property_vect goals;		// goals of the graph (they keep nodes alive)
+  property_vect goals;		// goals of the graph
   node *contradiction;
   friend class intersection_node;
  public:
@@ -90,8 +90,7 @@ class graph_t {
   property_vect const &get_goals() const { return goals; }
   bool dominates(graph_t const *) const;
   bool populate(dichotomy_sequence const &);	// fill the proof graph, return true in case of contradiction
-  void dichotomize(dichotomy_hint const &);
-  void purge();			// remove all the unused nodes
+  void dichotomize(dichotomy_hint const &);	// apply a dichotomy hint
   node *get_contradiction() const { return contradiction; }
 };
 

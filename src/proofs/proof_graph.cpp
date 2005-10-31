@@ -198,18 +198,3 @@ graph_t::~graph_t() {
     i->second->remove_known();
   assert(nodes.empty());
 }
-
-void graph_t::purge() {
-  std::set< ast_real const * > reals;
-  for(property_vect::const_iterator i = goals.begin(), i_end = goals.end(); i != i_end; ++i)
-    reals.insert(i->real.real());
-  node_map m;
-  m.swap(known_reals);
-  for(node_map::const_iterator i = m.begin(), i_end = m.end(); i != i_end; ++i) {
-    predicated_real const &r = i->first;
-    if (r.pred() != PRED_BND || reals.count(r.real()) == 0)
-      i->second->remove_known();
-    else
-      known_reals.insert(*i);
-  }
-}
