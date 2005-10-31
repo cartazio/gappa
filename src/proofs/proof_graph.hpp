@@ -93,7 +93,6 @@ class graph_t {
   void dichotomize(dichotomy_hint const &);
   void purge();			// remove all the unused nodes
   void flatten();		// move all the nodes in the upper graph
-  bool migrate();		// move the free nodes in the upper graph, return true if any
   node *get_contradiction() const { return contradiction; }
 };
 

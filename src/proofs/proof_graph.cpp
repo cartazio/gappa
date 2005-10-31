@@ -241,30 +241,3 @@ void graph_t::purge() {
       known_reals.insert(*i);
   }
 }
-
-bool graph_t::migrate() {
-  bool res = false;
-  assert(father);
-  node_set ns(nodes);
-  while (!ns.empty()) {
-    node *n = *ns.begin();
-    ns.erase(n);
-    if (n->graph != this || n->type == HYPOTHESIS) continue;
-    node_vect const &v = n->get_subproofs();
-    bool good = true;
-    for(node_vect::const_iterator i = v.begin(), i_end = v.end(); i != i_end; ++i)
-      if (!(*i)->graph->dominates(father)) {
-        good = false;
-        break;
-      }
-    if (!good || !father->hyp.implies(n->get_hypotheses())) continue;
-    nodes.erase(n);
-    father->nodes.insert(n);
-    n->graph = father;
-    ns.insert(n->succ.begin(), n->succ.end());
-    bool b = father->try_real(n);
-    assert(b);
-    res = true;
-  }
-  return res;
-}

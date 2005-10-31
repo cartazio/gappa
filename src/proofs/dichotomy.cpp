@@ -25,7 +25,7 @@ class dichotomy_node: public dependent_node {
   }
   ~dichotomy_node();
   void dichotomize();
-  bool add_graph(graph_t *);
+  void add_graph(graph_t *);
   void try_graph(graph_t *);
   virtual property const &get_result() const { return res; }
   virtual property_vect const &get_hypotheses() const { return graph->get_hypotheses(); }
@@ -40,13 +40,12 @@ dichotomy_node::~dichotomy_node() {
   last_graph = NULL;
 }
 
-bool dichotomy_node::add_graph(graph_t *g) {
+void dichotomy_node::add_graph(graph_t *g) {
   graphs.push_back(g);
   node *n = g->get_contradiction();
   if (!n) n = g->find_already_known(get_result().real);
   insert_pred(n);
   g->purge();
-  return g->migrate();
 }
 
 void dichotomy_node::try_graph(graph_t *g2) {
@@ -66,24 +65,16 @@ void dichotomy_node::try_graph(graph_t *g2) {
       if (n->get_result().bnd() <= res.bnd())
         b = true;
   if (b) {
+    // graph g0 was successful, keep it as the last graph instead of g1 and g2
     last_graph = g0;
     delete g1;
     delete g2;
-    return;
+  } else {
+    // graph g0 was a failure, validate g1 and keep g2 as the last graph
+    delete g0;
+    add_graph(g1);
+    last_graph = g2;
   }
-  delete g0;
-  bool recompute = add_graph(g1);
-  if (recompute) {
-    // now that g1 has been added and some of its nodes have moved, recompute g2
-    tmp_hyp.replace_front(g2->get_hypotheses()[0]);
-    delete g2;
-    g2 = new graph_t(top_graph, tmp_hyp, g1->get_goals());
-    if (!g2->populate(hints)) {
-      node *n = g2->find_already_known(res.real);
-      assert(n->get_result().bnd() <= res.bnd());
-    }
-  }
-  last_graph = g2;
 }
 
 struct dichotomy_failure {
