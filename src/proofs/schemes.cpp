@@ -194,19 +194,16 @@ bool graph_t::populate(dichotomy_sequence const &dichotomy) {
       ++iter;
       proof_scheme const *s = iter % 16 ? *missing_schemes.begin() : *missing_schemes.rbegin();
       missing_schemes.erase(s);
-      bound_map::const_iterator i = s->real.pred() == PRED_BND ? bounds.find(s->real.real()) : bounds_end;
-      node *n = (i != bounds_end) ? s->generate_proof(*i->second) : s->generate_proof();
-      if (n && try_real(n)) {
-        if (contradiction)
-          return true;
-        insert_dependent(missing_schemes, s->real);
-        if (i != bounds_end && n->get_result().bnd() <= *i->second) {
-          bounds.erase(s->real.real());
-          if (completely_bounded && bounds.empty())
-            return false;
-          bounds_end = bounds.end();
-        }
-      }
+      node *n = s->generate_proof();
+      if (!n || !try_real(n)) continue;
+      if (contradiction) return true;
+      insert_dependent(missing_schemes, s->real);
+      if (s->real.pred() != PRED_BND) continue;
+      bound_map::iterator i = bounds.find(s->real.real());
+      if (i == bounds_end || !(n->get_result().bnd() <= *i->second)) continue;
+      bounds.erase(i);
+      if (completely_bounded && bounds.empty()) return false;
+      bounds_end = bounds.end();
     }
     if (dichotomy_it == dichotomy_end)
       return false;

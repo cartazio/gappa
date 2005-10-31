@@ -8,7 +8,6 @@ typedef std::vector< predicated_real > preal_vect;
 
 struct proof_scheme {
   virtual node *generate_proof() const = 0;
-  virtual node *generate_proof(interval const &) const { return generate_proof(); }
   virtual preal_vect needed_reals() const = 0;
   virtual bool dummy() const { return false; }
   virtual ~proof_scheme() {}
