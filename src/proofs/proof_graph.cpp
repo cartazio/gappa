@@ -158,6 +158,7 @@ graph_t::graph_t(graph_t *f, property_vect const &h, property_vect const &g)
   graph_loader loader(this);
   if (f) {
     assert(hyp.implies(f->hyp));
+    contradiction = f->contradiction;
     known_reals = f->known_reals;
     for(node_map::iterator i = known_reals.begin(), end = known_reals.end(); i != end; ++i)
       ++i->second->nb_good;
