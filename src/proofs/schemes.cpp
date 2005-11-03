@@ -177,12 +177,15 @@ bool graph_t::populate(dichotomy_sequence const &dichotomy) {
   graph_loader loader(this);
   typedef std::map< ast_real const *, interval const * > bound_map;
   bound_map bounds;
-  bool completely_bounded = true;
-  for(property_vect::const_iterator i = goals.begin(), i_end = goals.end(); i != i_end; ++i)
-    if (i->real.pred() == PRED_BND && is_defined(i->bnd()))
-      bounds[i->real.real()] = &i->bnd();
-    else
-      completely_bounded = false;
+  bool completely_bounded = current_context;
+  if (completely_bounded) {
+    for(property_vect::const_iterator i = current_context->goals.begin(),
+        i_end = current_context->goals.end(); i != i_end; ++i)
+      if (i->real.pred() == PRED_BND && is_defined(i->bnd()))
+        bounds[i->real.real()] = &i->bnd();
+      else
+        completely_bounded = false;
+  }
   bound_map::const_iterator bounds_end = bounds.end();
   for(dichotomy_sequence::const_iterator dichotomy_it = dichotomy.begin(),
       dichotomy_end = dichotomy.end(); /*nothing*/; ++dichotomy_it) {
@@ -205,7 +208,7 @@ bool graph_t::populate(dichotomy_sequence const &dichotomy) {
       if (completely_bounded && bounds.empty()) return false;
       bounds_end = bounds.end();
     }
-    if (dichotomy_it == dichotomy_end || !dichotomize(*dichotomy_it))
+    if (!current_context || dichotomy_it == dichotomy_end || !dichotomize(*dichotomy_it))
       return false;
     if (contradiction)
       return true;

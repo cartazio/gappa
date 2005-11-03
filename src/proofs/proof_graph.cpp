@@ -155,8 +155,8 @@ intersection_node::intersection_node(node *n1, node *n2)
   }
 }
 
-graph_t::graph_t(graph_t *f, property_vect const &h, property_vect const &g)
-  : father(f), hyp(h), goals(g), contradiction(NULL) {
+graph_t::graph_t(graph_t *f, property_vect const &h)
+  : father(f), hyp(h), contradiction(NULL) {
   graph_loader loader(this);
   if (f) {
     assert(hyp.implies(f->hyp));

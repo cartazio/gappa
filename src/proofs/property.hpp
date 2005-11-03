@@ -65,4 +65,13 @@ class property_vect {
   unsigned size() const { return vec.size(); }
 };
 
+struct context {
+  property_vect hyp;
+  property_vect goals;
+};
+
+typedef std::vector< context > context_vect;
+extern context_vect contexts;
+extern context const *current_context;
+
 #endif // PROOFS_PROPERTY_HPP

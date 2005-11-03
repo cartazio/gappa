@@ -51,8 +51,6 @@ static void generate_goal(property_vect &goal, ast_prop const *p) {
   }
 }
 
-std::vector< graph_t * > graphs;
-
 struct sequent {
   ast_prop_vect lhs, rhs;
 };
@@ -125,25 +123,23 @@ static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
       }
     }
   }
-  property_vect hyp;
+  context ctxt;
   real_set inputs;
   for(ast_prop_vect::const_iterator i = s.lhs.begin(), end = s.lhs.end(); i != end; ++i) {
     ast_prop const *p = *i;
     assert(p && p->type == PROP_ATOM);
     ast_atom_bound const &atom = *p->atom;
-    hyp.push_back(generate_property(atom, false));
+    ctxt.hyp.push_back(generate_property(atom, false));
     inputs.insert(atom.real);
     input_reals.insert(atom.real);
   }
-  if (hyp.size() != inputs.size()) // we don't want to encounter: x in [0,2] /\ x in [1,3] -> ...
+  if (ctxt.hyp.size() != inputs.size()) // we don't want to encounter: x in [0,2] /\ x in [1,3] -> ...
     { std::cerr << "Error: you don't want to have multiple hypotheses concerning the same real.\n"; exit(1); }
   if (s.rhs.size() != 1)
     { std::cerr << "Error: complex logical formulas not yet implemented.\n"; exit(1); }
-  property_vect goal;
-  generate_goal(goal, s.rhs[0]);
-  graph_t *g = new graph_t(NULL, hyp, goal);
-  graphs.push_back(g);
-  for(property_vect::const_iterator i = goal.begin(), end = goal.end(); i != end; ++i)
+  generate_goal(ctxt.goals, s.rhs[0]);
+  contexts.push_back(ctxt);
+  for(property_vect::const_iterator i = ctxt.goals.begin(), end = ctxt.goals.end(); i != end; ++i)
     output_reals.insert(i->real.real());
 }
 

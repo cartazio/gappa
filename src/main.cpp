@@ -11,6 +11,8 @@ extern bool parse_args(int argc, char **argv);
 extern backend_register const *proof_generator;
 backend *display = NULL;
 dichotomy_sequence dichotomies;
+context_vect contexts;
+context const *current_context = NULL;
 
 struct null_backend: backend {
   null_backend(): backend(std::cout) {}
@@ -26,11 +28,12 @@ int main(int argc, char **argv) {
   ast_real_vect missing_paths = generate_proof_paths();
   for(ast_real_vect::const_iterator i = missing_paths.begin(), i_end = missing_paths.end(); i != i_end; ++i)
     std::cerr << "Warning: no path for " << dump_real(*i) << '\n';
-  for(std::vector< graph_t * >::const_iterator i = graphs.begin(), i_end = graphs.end(); i != i_end; ++i) {
-    graph_t *g = *i;
+  for(context_vect::const_iterator i = contexts.begin(), i_end = contexts.end(); i != i_end; ++i) {
+    current_context =&*i;
+    property_vect const &hyp = current_context->hyp;
+    graph_t *g = new graph_t(NULL, hyp);
     graph_loader loader(g);
     std::cerr << "\nResults";
-    property_vect const &hyp = g->get_hypotheses();
     if (unsigned nb_hyp = hyp.size()) {
       std::cerr << " for ";
       for(unsigned i = 0; i < nb_hyp; ++i) {
@@ -43,7 +46,7 @@ int main(int argc, char **argv) {
       std::cerr << "Warning: hypotheses are in contradiction, any result is true.\n";
       display->theorem(g->get_contradiction());
     } else {
-      property_vect const &goals = g->get_goals();
+      property_vect const &goals = current_context->goals;
       int nb = goals.size();
       for(int j = 0; j < nb; ++j) {
         node *n = find_proof(goals[j]);

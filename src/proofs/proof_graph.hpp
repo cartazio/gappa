@@ -76,17 +76,15 @@ class graph_t {
   node_set nodes;		// nodes owned by the graph, each node is implied by hyp
   node_map known_reals;		// best node implied by hyp for each real
   property_vect hyp;		// hypotheses of the graph (they imply the hypotheses from the super-graph)
-  property_vect goals;		// goals of the graph
   node *contradiction;
  public:
   void insert(node *n) { nodes.insert(n); }
   void remove(node *n) { nodes.erase (n); }
-  graph_t(graph_t *, property_vect const &, property_vect const &);
+  graph_t(graph_t *, property_vect const &);
   ~graph_t();
   node *find_already_known(predicated_real const &) const;
   bool try_real(node *);
   property_vect const &get_hypotheses() const { return hyp; }
-  property_vect const &get_goals() const { return goals; }
   bool dominates(graph_t const *) const;
   bool populate(dichotomy_sequence const &);	// fill the proof graph, return true in case of contradiction
   bool dichotomize(dichotomy_hint const &);	// apply a dichotomy hint, return true if nodes were added

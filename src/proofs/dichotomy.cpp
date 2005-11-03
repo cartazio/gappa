@@ -13,7 +13,6 @@ typedef std::vector< graph_t * > graph_vect;
 
 class dichotomy_node;
 
-
 struct dichotomy_helper {
   graph_vect graphs;
   property_vect &tmp_hyp;
@@ -59,7 +58,7 @@ dichotomy_node::~dichotomy_node() {
 }
 
 graph_t *dichotomy_helper::try_hypothesis(property *p) const {
-  graph_t *g = new graph_t(top_graph, tmp_hyp, top_graph->get_goals());
+  graph_t *g = new graph_t(top_graph, tmp_hyp);
   bool success = g->populate(hints);
   if (!success) { // no contradiction
     success = true;
@@ -179,8 +178,10 @@ bool graph_t::dichotomize(dichotomy_hint const &hint) {
   property_vect const &hyp = top_graph->get_hypotheses();
   for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
     if (i->real.real() != var) hyp2.push_back(*i);
+  assert(current_context);
   property_vect new_goals;
-  for(property_vect::const_iterator i = goals.begin(), i_end = goals.end(); i != i_end; ++i) {
+  for(property_vect::const_iterator i = current_context->goals.begin(),
+      i_end = current_context->goals.end(); i != i_end; ++i) {
     if (i->real.pred() != PRED_BND) continue;
     ast_real const *r = i->real.real();
     for(ast_real_vect::const_iterator j = hint.dst.begin(), j_end = hint.dst.end(); j != j_end; ++j)
