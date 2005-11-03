@@ -1,8 +1,9 @@
 Version 0.5.2:
  * proof graph
-   - simplified memory handling
+   - simplified node memory handling
    - simplified graph handling
    - put dichotomy at a higher level, outside of proof schemes
+   - replaced hypothesis property vectors by bit vectors, stored in-place if possible
  * syntax
    - added detection of unbound identifiers
 
