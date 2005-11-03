@@ -22,9 +22,7 @@ struct theorem_node {
 };
 
 typedef std::vector< node * > node_vect;
-typedef std::vector< theorem_node * > axiom_vect;
 typedef std::set< node * > node_set;
-typedef std::set< theorem_node * > axiom_set;
 typedef std::map< predicated_real, node * > node_map;
 
 struct node {
