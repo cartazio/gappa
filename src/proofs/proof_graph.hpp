@@ -32,11 +32,12 @@ struct node {
   unsigned nb_good;
   node(node_id, graph_t *);
   virtual property const &get_result() const = 0;
-  virtual property_vect const &get_hypotheses() const;
+  property_vect get_hypotheses() const;
   virtual node_vect const &get_subproofs() const;
   virtual ~node();
   void remove_known();
   void remove_succ(node const *);
+  virtual char const *get_hyps() const { return NULL; }
 };
 
 class hypothesis_node: public node {
@@ -60,12 +61,12 @@ class dependent_node: public node {
 node *create_theorem(int, property const [], property const &, std::string const &);
 
 class modus_node: public dependent_node {
-  property_vect hyp;
+  char *hyps;
  public:
   theorem_node *target;
   modus_node(theorem_node *);
-  virtual property_vect const &get_hypotheses() const { return hyp; }
   virtual property const &get_result() const { return target->res; }
+  virtual char const *get_hyps() const { return hyps; }
   virtual ~modus_node();
 };
 

@@ -5,9 +5,15 @@
 
 graph_t *top_graph = NULL;
 
-property_vect const &node::get_hypotheses() const {
-  static property_vect dummy;
-  return dummy;
+property_vect node::get_hypotheses() const {
+  property_vect res;
+  if (char const *v = get_hyps()) {
+    property_vect const &hyp = graph->get_hypotheses();
+    for(unsigned i = 0, nb = hyp.size(); i < nb; ++i)
+      if (v[i / 8] & (1 << (i & 7)))
+        res.push_back(hyp[i]);
+  }
+  return res;
 }
 
 node_vect const &node::get_subproofs() const {
@@ -66,54 +72,48 @@ void dependent_node::clean_dependencies() {
   pred.clear();
 }
 
-typedef std::map< predicated_real, property > property_map;
-
-// intersecting shouldn't create a wrong proof: by design
-// (for an hypothesis map) - the hypotheses are all satisfiable, hence their intersection too
-// (for a result map) - the results have been generated at the same time, they are identical
-static void fill_property_map(property_map &m, property const &p) {
-  std::pair< property_map::iterator, bool > pki = m.insert(std::make_pair(p.real, p));
-  if (!pki.second) // there was already a similar predicate
-    pki.first->second.intersect(p);
+static void fill_hyps(char *v, property_vect const &hyp, predicated_real const &r) {
+  for(unsigned i = 0, nb = hyp.size(); i < nb; ++i)
+    if (hyp[i].real == r)
+      v[i / 8] |= 1 << (i & 7);
 }
 
-static void fill_property_map(property_map &m, property_vect const &v) {
-  for(property_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i)
-    fill_property_map(m, *i);
-}
-
-static void fill_property_map(property_map &m, node *n) {
-  if (n->type == HYPOTHESIS)
-    fill_property_map(m, n->get_result());
+static void fill_hyps(char *v, property_vect const &hyp, node *n) {
+  if (n->type == HYPOTHESIS) {
+    fill_hyps(v, hyp, n->get_result().real);
+    return;
+  }
+  property_vect const &nhyp = n->graph->get_hypotheses();
+  char const *nv = n->get_hyps();
+  unsigned nb = nhyp.size();
+  if (&hyp == &nhyp)
+    for(unsigned i = 0, end = (nb + 7) / 8; i < end; ++i) v[i] |= nv[i];
   else
-    fill_property_map(m, n->get_hypotheses());
-}
-
-static void fill_property_vect(property_vect &v, property_map const &m) {
-  for(property_map::const_iterator i = m.begin(), end = m.end(); i != end; ++i)
-    v.push_back(i->second);
+    for(unsigned i = 0; i < nb; ++i)
+      if (nv[i / 8] & (1 << (i & 7))) fill_hyps(v, hyp, nhyp[i].real);
 }
 
 modus_node::modus_node(theorem_node *n)
     : dependent_node(MODUS) {
   assert(n);
   target = n;
-  property_map pmap;
+  property_vect const &ghyp = graph->get_hypotheses();
+  hyps = new char[(ghyp.size() + 7) / 8]();
   for(property_vect::const_iterator i = n->hyp.begin(), i_end = n->hyp.end();
       i != i_end; ++i) {
     node *m = find_proof(*i);
     assert(m && dominates(m, this));
-    fill_property_map(pmap, m);
+    fill_hyps(hyps, ghyp, m);
     if (m->type != HYPOTHESIS)
       insert_pred(m);
   }
-  fill_property_vect(hyp, pmap);
 }
 
 modus_node::~modus_node() {
   // axioms are not owned by modus node
   if (!target->name.empty())
     delete target;
+  delete[] hyps;
 }
 
 node *create_theorem(int nb, property const h[], property const &p, std::string const &n) {
@@ -122,11 +122,12 @@ node *create_theorem(int nb, property const h[], property const &p, std::string 
 
 class intersection_node: public dependent_node {
   property res;
-  property_vect hyp;
+  char *hyps;
  public:
   intersection_node(node *n1, node *n2);
+  ~intersection_node() { delete[] hyps; }
   virtual property const &get_result() const { return res; }
-  virtual property_vect const &get_hypotheses() const { return hyp; }
+  virtual char const *get_hyps() const { return hyps; }
 };
 
 intersection_node::intersection_node(node *n1, node *n2)
@@ -145,10 +146,10 @@ intersection_node::intersection_node(node *n1, node *n2)
   assert(n1->type != HYPOTHESIS || n2->type != HYPOTHESIS);
   insert_pred(n1);
   insert_pred(n2);
-  property_map pmap;
-  fill_property_map(pmap, n1);
-  fill_property_map(pmap, n2);
-  fill_property_vect(hyp, pmap);
+  property_vect const &ghyp = graph->get_hypotheses();
+  hyps = new char[(ghyp.size() + 7) / 8]();
+  fill_hyps(hyps, ghyp, n1);
+  fill_hyps(hyps, ghyp, n2);
   if (res.real.pred() == PRED_BND && is_empty(res.bnd())) {
     res = property();
     top_graph->set_contradiction(this);

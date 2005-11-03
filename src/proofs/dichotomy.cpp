@@ -39,9 +39,21 @@ class dichotomy_node: public dependent_node {
     : dependent_node(UNION), res(p), helper(h) { ++h->nb_ref; }
   ~dichotomy_node();
   virtual property const &get_result() const { return res; }
-  virtual property_vect const &get_hypotheses() const { return graph->get_hypotheses(); }
   using dependent_node::insert_pred;
+  virtual char const *get_hyps() const;
 };
+
+static char const *all_one() {
+  static char v[256];
+  for(int i = 0; i < 256; ++i) v[i] = -1;
+  return v;
+}
+
+char const *dichotomy_node::get_hyps() const {
+  static char const *s = all_one();
+  assert(graph->get_hypotheses().size() <= 256 * 8);
+  return s;
+}
 
 dichotomy_helper::~dichotomy_helper() {
   assert(nb_ref == 0);
