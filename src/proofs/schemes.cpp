@@ -205,9 +205,8 @@ bool graph_t::populate(dichotomy_sequence const &dichotomy) {
       if (completely_bounded && bounds.empty()) return false;
       bounds_end = bounds.end();
     }
-    if (dichotomy_it == dichotomy_end)
+    if (dichotomy_it == dichotomy_end || !dichotomize(*dichotomy_it))
       return false;
-    dichotomize(*dichotomy_it);
     if (contradiction)
       return true;
   }

@@ -89,7 +89,7 @@ class graph_t {
   property_vect const &get_goals() const { return goals; }
   bool dominates(graph_t const *) const;
   bool populate(dichotomy_sequence const &);	// fill the proof graph, return true in case of contradiction
-  void dichotomize(dichotomy_hint const &);	// apply a dichotomy hint
+  bool dichotomize(dichotomy_hint const &);	// apply a dichotomy hint, return true if nodes were added
   node *get_contradiction() const { return contradiction; }
   void set_contradiction(node *);
 };

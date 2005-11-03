@@ -161,7 +161,7 @@ void dichotomy_helper::dichotomize() {
   --depth;
 }
 
-void graph_t::dichotomize(dichotomy_hint const &hint) {
+bool graph_t::dichotomize(dichotomy_hint const &hint) {
   assert(top_graph == this);
   dichotomy_sequence hints;
   assert(hint.src.size() >= 1);
@@ -173,7 +173,7 @@ void graph_t::dichotomize(dichotomy_hint const &hint) {
     hints.push_back(h);
   }
   node *varn = find_proof(var);
-  if (!varn) return;
+  if (!varn) return false;
   property_vect hyp2;
   hyp2.push_back(varn->get_result());
   property_vect const &hyp = top_graph->get_hypotheses();
@@ -201,7 +201,7 @@ void graph_t::dichotomize(dichotomy_hint const &hint) {
         std::cerr << " is not computable\n";
     }
     delete h;
-    return;
+    return false;
   }
   h->graphs.push_back(h->last_graph);
   h->last_graph = NULL;
@@ -221,7 +221,7 @@ void graph_t::dichotomize(dichotomy_hint const &hint) {
     for(graph_vect::const_iterator i = h->graphs.begin(), end = h->graphs.end(); i != end; ++i)
       n->insert_pred((*i)->get_contradiction());
     set_contradiction(n);
-    return;
+    return true;
   }
   ++h->nb_ref;
   for(preal_vect::const_iterator i = reals.begin(), end = reals.end(); i != end; ++i) {
@@ -231,6 +231,9 @@ void graph_t::dichotomize(dichotomy_hint const &hint) {
   }
   if (--h->nb_ref == 0) {
     delete h;
-    std::cerr << "Warning: case splitting on " << dump_real(var) << " did not produce any usable result.\n";
+    if (warning_dichotomy_failure)
+      std::cerr << "Warning: case splitting on " << dump_real(var) << " did not produce any usable result.\n";
+    return false;
   }
+  return true;
 }
