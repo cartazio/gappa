@@ -96,8 +96,6 @@ void property::hull(property const &p) {
   }
 }
 
-typedef std::vector< property > vect;
-
 bool property_vect::implies(property_vect const &s) const {
   for(const_iterator i = s.begin(), i_end = s.end(); i != i_end; ++i) {
     bool implies_i = false;
@@ -112,13 +110,4 @@ int property_vect::find_compatible_property(property const &p) const {
   for(const_iterator i_begin = begin(), i = i_begin, i_end = end(); i != i_end; ++i)
     if (i->implies(p)) return i - i_begin;
   return -1;
-}
-
-void property_vect::push_front(property const &p) {
-  vec.insert(vec.begin(), p);
-}
-
-void property_vect::replace_front(property const &p) {
-  assert(vec.size() > 0);
-  vec[0] = p;
 }

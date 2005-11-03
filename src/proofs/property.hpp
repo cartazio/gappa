@@ -49,20 +49,9 @@ class property {
   bool null() const { return real.null(); }
 };
 
-class property_vect {
-  typedef std::vector< property > vect;
-  vect vec;
- public:
+struct property_vect: std::vector< property > {
   bool implies(property_vect const &) const;
   int find_compatible_property(property const &) const;
-  void push_back(property const &p) { vec.push_back(p); }
-  void push_front(property const &);
-  typedef vect::const_iterator const_iterator;
-  const_iterator begin() const { return vec.begin(); }
-  const_iterator end  () const { return vec.end  (); }
-  property const &operator[](unsigned i) const { return vec[i]; }
-  void replace_front(property const &);
-  unsigned size() const { return vec.size(); }
 };
 
 struct context {

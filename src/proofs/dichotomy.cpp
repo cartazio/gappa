@@ -87,7 +87,7 @@ void dichotomy_helper::try_graph(graph_t *g2) {
   if (goals.size()) { // try joining only if we have constraints
     property p(g1->get_hypotheses()[0]);
     p.bnd() = interval(lower(p.bnd()), upper(g2->get_hypotheses()[0].bnd()));
-    tmp_hyp.replace_front(p);
+    tmp_hyp[0] = p;
     if (graph_t *g = try_hypothesis(NULL)) {
       // joined graph was successful, keep it as the last graph instead of g1 and g2
       delete g1;
@@ -153,9 +153,9 @@ void dichotomy_helper::dichotomize() {
   }
   std::pair< interval, interval > ii = split(h.bnd());
   ++depth;
-  tmp_hyp.replace_front(property(h.real, ii.first));
+  tmp_hyp[0] = property(h.real, ii.first);
   dichotomize();
-  tmp_hyp.replace_front(property(h.real, ii.second));
+  tmp_hyp[0] = property(h.real, ii.second);
   dichotomize();
   --depth;
 }
