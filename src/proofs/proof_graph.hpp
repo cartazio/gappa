@@ -37,7 +37,7 @@ struct node {
   virtual ~node();
   void remove_known();
   void remove_succ(node const *);
-  virtual char const *get_hyps() const { return NULL; }
+  virtual long get_hyps() const { return 0; }
 };
 
 class hypothesis_node: public node {
@@ -61,12 +61,12 @@ class dependent_node: public node {
 node *create_theorem(int, property const [], property const &, std::string const &);
 
 class modus_node: public dependent_node {
-  char *hyps;
+  long hyps;
  public:
   theorem_node *target;
   modus_node(theorem_node *);
   virtual property const &get_result() const { return target->res; }
-  virtual char const *get_hyps() const { return hyps; }
+  virtual long get_hyps() const { return hyps; }
   virtual ~modus_node();
 };
 

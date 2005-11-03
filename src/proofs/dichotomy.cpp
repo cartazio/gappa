@@ -40,7 +40,7 @@ class dichotomy_node: public dependent_node {
   ~dichotomy_node();
   virtual property const &get_result() const { return res; }
   using dependent_node::insert_pred;
-  virtual char const *get_hyps() const;
+  virtual long get_hyps() const;
 };
 
 static char const *all_one() {
@@ -49,10 +49,12 @@ static char const *all_one() {
   return v;
 }
 
-char const *dichotomy_node::get_hyps() const {
+long dichotomy_node::get_hyps() const {
   static char const *s = all_one();
+  unsigned nb = graph->get_hypotheses().size();
+  if (nb <= sizeof(long) * 8) return -1;
   assert(graph->get_hypotheses().size() <= 256 * 8);
-  return s;
+  return reinterpret_cast< long >(s);
 }
 
 dichotomy_helper::~dichotomy_helper() {

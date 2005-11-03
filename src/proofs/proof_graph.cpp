@@ -5,14 +5,37 @@
 
 graph_t *top_graph = NULL;
 
+static char *new_hyps(long &h, property_vect const &hyp) {
+  unsigned nb = hyp.size();
+  if (nb <= sizeof(long) * 8) {
+    h = 0;
+    return reinterpret_cast< char * >(&h);
+  }
+  char *v = new char[(nb + 7) / 8]();
+  h = reinterpret_cast< long >(v);
+  return v;
+}
+
+static void delete_hyps(long h, property_vect const &hyp) {
+  if (hyp.size() > sizeof(long) * 8)
+    delete[] reinterpret_cast< char * >(h);
+}
+
+static char *get_hyps(long &h, property_vect const &hyp) {
+  if (hyp.size() > sizeof(long) * 8)
+    return reinterpret_cast< char * >(h);
+  else
+    return reinterpret_cast< char * >(&h);
+}
+
 property_vect node::get_hypotheses() const {
   property_vect res;
-  if (char const *v = get_hyps()) {
-    property_vect const &hyp = graph->get_hypotheses();
-    for(unsigned i = 0, nb = hyp.size(); i < nb; ++i)
-      if (v[i / 8] & (1 << (i & 7)))
-        res.push_back(hyp[i]);
-  }
+  long h = get_hyps();
+  if (h == 0) return res;
+  property_vect const &ghyp = graph->get_hypotheses();
+  char const *v = ::get_hyps(h, ghyp);
+  for(unsigned i = 0, nb = ghyp.size(); i < nb; ++i)
+    if (v[i / 8] & (1 << (i & 7))) res.push_back(ghyp[i]);
   return res;
 }
 
@@ -84,7 +107,8 @@ static void fill_hyps(char *v, property_vect const &hyp, node *n) {
     return;
   }
   property_vect const &nhyp = n->graph->get_hypotheses();
-  char const *nv = n->get_hyps();
+  long h = n->get_hyps();
+  char const *nv = get_hyps(h, nhyp);
   unsigned nb = nhyp.size();
   if (&hyp == &nhyp)
     for(unsigned i = 0, end = (nb + 7) / 8; i < end; ++i) v[i] |= nv[i];
@@ -98,12 +122,12 @@ modus_node::modus_node(theorem_node *n)
   assert(n);
   target = n;
   property_vect const &ghyp = graph->get_hypotheses();
-  hyps = new char[(ghyp.size() + 7) / 8]();
+  char *v = new_hyps(hyps, ghyp);
   for(property_vect::const_iterator i = n->hyp.begin(), i_end = n->hyp.end();
       i != i_end; ++i) {
     node *m = find_proof(*i);
     assert(m && dominates(m, this));
-    fill_hyps(hyps, ghyp, m);
+    fill_hyps(v, ghyp, m);
     if (m->type != HYPOTHESIS)
       insert_pred(m);
   }
@@ -113,7 +137,7 @@ modus_node::~modus_node() {
   // axioms are not owned by modus node
   if (!target->name.empty())
     delete target;
-  delete[] hyps;
+  delete_hyps(hyps, graph->get_hypotheses());
 }
 
 node *create_theorem(int nb, property const h[], property const &p, std::string const &n) {
@@ -122,12 +146,12 @@ node *create_theorem(int nb, property const h[], property const &p, std::string 
 
 class intersection_node: public dependent_node {
   property res;
-  char *hyps;
+  long hyps;
  public:
   intersection_node(node *n1, node *n2);
-  ~intersection_node() { delete[] hyps; }
+  ~intersection_node() { delete_hyps(hyps, graph->get_hypotheses()); }
   virtual property const &get_result() const { return res; }
-  virtual char const *get_hyps() const { return hyps; }
+  virtual long get_hyps() const { return hyps; }
 };
 
 intersection_node::intersection_node(node *n1, node *n2)
@@ -147,9 +171,9 @@ intersection_node::intersection_node(node *n1, node *n2)
   insert_pred(n1);
   insert_pred(n2);
   property_vect const &ghyp = graph->get_hypotheses();
-  hyps = new char[(ghyp.size() + 7) / 8]();
-  fill_hyps(hyps, ghyp, n1);
-  fill_hyps(hyps, ghyp, n2);
+  char *v = new_hyps(hyps, ghyp);
+  fill_hyps(v, ghyp, n1);
+  fill_hyps(v, ghyp, n2);
   if (res.real.pred() == PRED_BND && is_empty(res.bnd())) {
     res = property();
     top_graph->set_contradiction(this);
