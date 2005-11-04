@@ -4,7 +4,7 @@
 #include "numbers/real.hpp"
 #include "proofs/property.hpp"
 
-typedef int long_is_not_long_enough[sizeof(long) - sizeof(interval *)];
+typedef int long_is_not_long_enough[2 * (sizeof(long) >= sizeof(void *)) - 1];
 
 property::property(): d(0), real() {}
 
