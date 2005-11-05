@@ -9,7 +9,6 @@ typedef std::vector< predicated_real > preal_vect;
 struct proof_scheme {
   virtual node *generate_proof() const = 0;
   virtual preal_vect needed_reals() const = 0;
-  virtual bool dummy() const { return false; }
   virtual ~proof_scheme() {}
   proof_scheme(ast_real const *r): real(r, PRED_BND) {}
   proof_scheme(predicated_real const &r): real(r) {}

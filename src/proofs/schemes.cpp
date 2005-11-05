@@ -41,13 +41,6 @@ scheme_register::scheme_register(scheme_factory const *f) {
   factories.push_back(f);
 }
 
-struct dummy_scheme: proof_scheme {
-  dummy_scheme(predicated_real const &r): proof_scheme(r) {}
-  virtual bool dummy() const { return true; }
-  virtual node *generate_proof() const { assert(false); return NULL; }
-  virtual preal_vect needed_reals() const { return preal_vect(); }
-};
-
 typedef std::set< predicated_real > real_set;
 static real_set missing_reals;
 
@@ -87,9 +80,6 @@ static void initialize_real(predicated_real const &real, proof_scheme const *par
     if (!s) continue;
     l.insert(s);
   }
-  // or an hypothesis?
-  if (real.pred() == PRED_BND && input_reals.count(real.real()))
-    l.insert(new dummy_scheme(real));
   // create the dependencies
   for(scheme_set::const_iterator i = l.begin(), i_end = l.end(); i != i_end; ++i) {
     proof_scheme const *s = *i;
@@ -98,6 +88,9 @@ static void initialize_real(predicated_real const &real, proof_scheme const *par
       initialize_real(*j, s);
     missing_reals.insert(s->real);
   }
+  // is it an hypothesis?
+  if (real.pred() == PRED_BND && input_reals.count(real.real()))
+    l.insert(NULL);
   dep.dependent.insert(parent);
 }
 
@@ -118,7 +111,9 @@ ast_real_vect generate_proof_paths() {
       }
       for(scheme_set::const_iterator i = r.schemes.begin(), i_end = r.schemes.end(); i != i_end; ++i) {
         // if we are here, no scheme needs this real anymore, so erase all the schemes of the real
-        delete_scheme(*i, predicated_real());
+        proof_scheme const *p = *i;
+        if (p) // just in case it is a hypothesis real
+          delete_scheme(p, predicated_real());
       }
       reals.erase(real);
     }
@@ -130,17 +125,13 @@ ast_real_vect generate_proof_paths() {
     v.swap(r.schemes);
     for(scheme_set::iterator j = v.begin(), j_end = v.end(); j != j_end; ++j) {
       proof_scheme const *s = *j;
-      if (s->dummy()) {
-        delete_scheme(s, predicated_real());
-        continue;
-      }
+      if (!s) continue;
       if (s->needed_reals().empty())
         source_schemes.insert(s);
       r.schemes.insert(s);
     }
     r.dependent.erase(NULL);
   }
-  missing_reals.clear();
   ast_real_vect missing_targets;
   for(ast_real_set::iterator i = output_reals.begin(), end = output_reals.end(); i != end; ++i) {
     real_dependencies::iterator j = reals.find(predicated_real(*i, PRED_BND));
