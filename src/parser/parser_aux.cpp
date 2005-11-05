@@ -143,6 +143,23 @@ static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
     output_reals.insert(i->real.real());
 }
 
+static void delete_prop(ast_prop const *p) {
+  switch (p->type) {
+  case PROP_NOT:
+    delete_prop(p->lhs);
+    break;
+  case PROP_AND:
+  case PROP_OR:
+  case PROP_IMPL:
+    delete_prop(p->lhs);
+    delete_prop(p->rhs);
+    break;
+  case PROP_ATOM:
+    delete p->atom;
+  }
+  delete p;
+}
+
 void generate_graph(ast_prop const *p) {
   sequent s;
   s.rhs.push_back(p);
@@ -162,4 +179,5 @@ void generate_graph(ast_prop const *p) {
     }
   }
   free_variables.clear();
+  delete_prop(p);
 }
