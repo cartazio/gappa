@@ -5,6 +5,7 @@
 #include "numbers/round.hpp"
 
 struct homogen_rounding_class: function_class {
+  default_function_generator generator;
   interval he;
   homogen_rounding_class();
   virtual interval absolute_error_from_real(interval const &, std::string &) const;
@@ -12,9 +13,8 @@ struct homogen_rounding_class: function_class {
 };
 
 homogen_rounding_class::homogen_rounding_class()
-  : function_class(UOP_ID, TH_ABS_REA) {
+  : function_class(UOP_ID, TH_ABS_REA), generator("homogen80x", this) {
   he = from_exponent(-53, 0) + from_exponent(-64, 0);
-  new default_function_generator("homogen80x", this);
 }
 
 interval homogen_rounding_class::absolute_error_from_real(interval const &i, std::string &name) const {
@@ -25,6 +25,7 @@ interval homogen_rounding_class::absolute_error_from_real(interval const &i, std
 static homogen_rounding_class dummy;
 
 struct homogen_init_rounding_class: function_class {
+  default_function_generator generator;
   interval he;
   homogen_init_rounding_class();
   virtual interval absolute_error_from_rounded(interval const &, std::string &) const;
@@ -32,9 +33,8 @@ struct homogen_init_rounding_class: function_class {
 };
 
 homogen_init_rounding_class::homogen_init_rounding_class()
-  : function_class(UOP_ID, TH_ABS_RND) {
+  : function_class(UOP_ID, TH_ABS_RND), generator("homogen80x_init", this) {
   he = from_exponent(-53, 0) + from_exponent(-64, 0);
-  new default_function_generator("homogen80x_init", this);
 }
 
 interval homogen_init_rounding_class::absolute_error_from_rounded(interval const &i, std::string &name) const {
@@ -45,14 +45,14 @@ interval homogen_init_rounding_class::absolute_error_from_rounded(interval const
 static homogen_init_rounding_class dummy_init;
 
 struct floatx_rounding_class: function_class {
+  default_function_generator generator;
   floatx_rounding_class();
   virtual interval round(interval const &, std::string &) const;
   virtual std::string name() const { return "float80x"; }
 };
 
 floatx_rounding_class::floatx_rounding_class()
-  : function_class(UOP_ID, TH_RND) {
-  new default_function_generator("float80x", this);
+  : function_class(UOP_ID, TH_RND), generator("float80x", this) {
 }
 
 struct floatx_format: gs_rounding {
