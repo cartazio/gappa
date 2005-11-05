@@ -65,13 +65,10 @@ static void delete_scheme(proof_scheme const *s, predicated_real const &restrict
   delete s;
 }
 
-static void initialize_real(predicated_real const &real, proof_scheme const *parent) {
+static real_dependency &initialize_dependencies(predicated_real const &real) {
   real_dependencies::iterator it = reals.find(real);
-  if (it != reals.end()) {
-    it->second.dependent.insert(parent);
-    return;
-  }
-  // no dependencies, let's generate them
+  if (it != reals.end()) return it->second;
+  // no dependencies yet, let's generate them
   it = reals.insert(std::make_pair(real, real_dependency())).first;
   real_dependency &dep = it->second;
   scheme_set &l = dep.schemes;
@@ -85,20 +82,18 @@ static void initialize_real(predicated_real const &real, proof_scheme const *par
     proof_scheme const *s = *i;
     preal_vect v = s->needed_reals();
     for(preal_vect::const_iterator j = v.begin(), j_end = v.end(); j != j_end; ++j)
-      initialize_real(*j, s);
+      initialize_dependencies(*j).dependent.insert(s);
     missing_reals.insert(s->real);
   }
-  // is it an hypothesis?
-  if (real.pred() == PRED_BND && input_reals.count(real.real()))
-    l.insert(NULL);
-  dep.dependent.insert(parent);
+  return it->second;
 }
 
 ast_real_vect generate_proof_paths() {
   for(ast_real_set::const_iterator i = output_reals.begin(), i_end = output_reals.end(); i != i_end; ++i)
-    initialize_real(predicated_real(*i, PRED_BND), NULL);
+    initialize_dependencies(predicated_real(*i, PRED_BND)).dependent.insert(NULL);
+  // initialize hypothesis reals to handle contradictions
   for(ast_real_set::const_iterator i = input_reals.begin(), i_end = input_reals.end(); i != i_end; ++i)
-    initialize_real(predicated_real(*i, PRED_BND), NULL); // initialize hypothesis reals to handle contradictions
+    initialize_dependencies(predicated_real(*i, PRED_BND)).schemes.insert(NULL);
   while (!missing_reals.empty()) {
     predicated_real const &real = *missing_reals.begin();
     real_dependency &r = reals[real];
@@ -121,14 +116,11 @@ ast_real_vect generate_proof_paths() {
   }
   for(real_dependencies::iterator i = reals.begin(), i_end = reals.end(); i != i_end; ++i) {
     real_dependency &r = i->second;
-    scheme_set v;
-    v.swap(r.schemes);
-    for(scheme_set::iterator j = v.begin(), j_end = v.end(); j != j_end; ++j) {
+    r.schemes.erase(NULL);
+    for(scheme_set::iterator j = r.schemes.begin(), j_end = r.schemes.end(); j != j_end; ++j) {
       proof_scheme const *s = *j;
-      if (!s) continue;
       if (s->needed_reals().empty())
         source_schemes.insert(s);
-      r.schemes.insert(s);
     }
     r.dependent.erase(NULL);
   }
