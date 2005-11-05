@@ -52,7 +52,7 @@ typedef std::set< predicated_real > real_set;
 static real_set missing_reals;
 
 typedef std::set< proof_scheme const * > scheme_set;
-static scheme_set source_schemes, owned_schemes;
+static scheme_set source_schemes;
 
 struct real_dependency {
   scheme_set dependent;
