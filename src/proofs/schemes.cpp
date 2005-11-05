@@ -133,6 +133,22 @@ ast_real_vect generate_proof_paths() {
   return missing_targets;
 }
 
+#ifdef LEAK_CHECKER
+struct proof_paths_cleaner {
+  ~proof_paths_cleaner();
+};
+
+proof_paths_cleaner::~proof_paths_cleaner() {
+  for(real_dependencies::iterator i = reals.begin(), i_end = reals.end(); i != i_end; ++i) {
+    scheme_set &s = i->second.schemes;
+    for(scheme_set::iterator j = s.begin(), j_end = s.end(); j != j_end; ++j)
+      delete *j;
+  }
+}
+
+static proof_paths_cleaner dummy;
+#endif // LEAK_CHECKER
+
 static void insert_dependent(scheme_set &v, predicated_real const &real) {
   real_dependencies::const_iterator i = reals.find(real);
   if (i == reals.end()) return;
