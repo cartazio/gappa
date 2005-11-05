@@ -61,6 +61,8 @@ int main(int argc, char **argv) {
     }
     delete g;
   }
+  #ifdef LEAK_CHECKER
   delete display;
+  #endif
   return EXIT_SUCCESS;
 }

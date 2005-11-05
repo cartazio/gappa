@@ -31,8 +31,10 @@ T *cache< T >::find(T const &v) {
 
 template< class T >
 cache< T >::~cache() {
+  #ifdef LEAK_CHECKER
   for(typename store_t::iterator i = store.begin(), end = store.end(); i != end; ++i)
     delete *i;
+  #endif
 }
 
 bool ast_real::operator==(ast_real const &v) const {
