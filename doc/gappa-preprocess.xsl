@@ -3,7 +3,7 @@
 
   <xsl:output method="xml" indent="yes" encoding="ISO-8859-15" media-type="book"
               doctype-public="-//OASIS//DTD DocBook XML V4.3//EN"
-              doctype-system="file:///usr/share/xml/docbook/schema/dtd/4.3/docbookx.dtd"/>
+              doctype-system="http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd"/>
 
   <xsl:template match="texinline">
     <inlineequation><alt role="tex"><xsl:value-of select="."/></alt>
