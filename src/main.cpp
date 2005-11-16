@@ -28,13 +28,12 @@ int main(int argc, char **argv) {
   ast_real_vect missing_paths = generate_proof_paths();
   for(ast_real_vect::const_iterator i = missing_paths.begin(), i_end = missing_paths.end(); i != i_end; ++i)
     std::cerr << "Warning: no path for " << dump_real(*i) << '\n';
+  std::vector< bool > proven_contexts;
   bool globally_proven = true;
   for(context_vect::const_iterator i = contexts.begin(), i_end = contexts.end(); i != i_end; ++i) {
     context const &current_context = *i;
     current_goals = current_context.goals;
     property_vect const &hyp = current_context.hyp;
-    graph_t *g = new graph_t(NULL, hyp);
-    graph_loader loader(g);
     std::cerr << "\nResults";
     if (unsigned nb_hyp = hyp.size()) {
       std::cerr << " for ";
@@ -44,13 +43,25 @@ int main(int argc, char **argv) {
       }
     }
     std::cerr << ":\n";
+    bool deps_satisfied = true;
+    for(std::vector< int >::const_iterator j = current_context.deps.begin(),
+        j_end = current_context.deps.end(); j != j_end; ++j)
+      if (!proven_contexts[*j]) { deps_satisfied = false; break; }
+    if (!deps_satisfied) {
+      std::cerr << "Warning: generated hypotheses were not proved, skipping.\n";
+      continue;
+    }
+    graph_t *g = new graph_t(NULL, hyp);
+    graph_loader loader(g);
     if (g->populate(dichotomies)) {
       if (!current_context.goals.empty())
         std::cerr << "Warning: hypotheses are in contradiction, any result is true.\n";
       display->theorem(g->get_contradiction());
+      proven_contexts.push_back(true);
     } else if (current_context.goals.empty()) {
       std::cerr << "Warning: no contradiction was found.\n";
       globally_proven = false;
+      proven_contexts.push_back(false);
     } else {
       node_set goals;
       bool proven = current_context.goals.get_reals(goals);
@@ -64,6 +75,7 @@ int main(int argc, char **argv) {
         std::cerr << "Warning: some enclosures were not satisfied.\n";
         globally_proven = false;
       }
+      proven_contexts.push_back(proven);
     }
     delete g;
   }

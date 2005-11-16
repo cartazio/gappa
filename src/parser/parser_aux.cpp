@@ -66,6 +66,7 @@ struct sequent {
 };
 
 static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
+  std::vector< int > deps;
   while (idl < s.lhs.size() || idr < s.rhs.size()) {
     while (idl < s.lhs.size()) {
       ast_prop const *p = s.lhs[idl];
@@ -95,6 +96,7 @@ static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
         t.lhs.pop_back();
         t.rhs.push_back(p->lhs);
         parse_sequent(t, idl, idr);
+        deps.push_back(contexts.size() - 1);
         break;
       }
       case PROP_ATOM:
@@ -152,6 +154,7 @@ static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
     for(ast_prop_vect::const_iterator i = s.rhs.begin(), end = s.rhs.end(); i != end; ++i)
       generate_goal(ctxt.goals, *i);
   }
+  ctxt.deps.swap(deps);
   contexts.push_back(ctxt);
 }
 
