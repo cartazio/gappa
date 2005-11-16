@@ -2,6 +2,7 @@
 #define PROOFS_PROPERTY_HPP
 
 #include <cassert>
+#include <set>
 #include <vector>
 #include "numbers/interval.hpp"
 #include "parser/ast_real.hpp"
@@ -54,13 +55,44 @@ struct property_vect: std::vector< property > {
   int find_compatible_property(property const &) const;
 };
 
+struct node;
+
+struct property_tree {
+  struct data {
+    std::vector< property > leafs;
+    std::vector< property_tree > subtrees;
+    unsigned ref;
+    bool conjonction;
+    data(bool b): ref(0), conjonction(b) {}
+  };
+ private:
+  data *ptr;
+  void incr() { if (ptr) ++ptr->ref; }
+  void decr() { if (ptr && --ptr->ref == 0) delete ptr; }
+ public:
+  property_tree(): ptr(NULL) {}
+  property_tree(data *p): ptr(p) { incr(); }
+  property_tree(property_tree const &t): ptr(t.ptr) { incr(); }
+  property_tree &operator=(data *p)
+  { if (ptr != p) { decr(); ptr = p; incr(); } return *this; }
+  property_tree &operator=(property_tree const &t)
+  { if (ptr != t.ptr) { decr(); ptr = t.ptr; incr(); } return *this; }
+  ~property_tree() { decr(); }
+  void unique();
+  data const *operator->() const { return ptr; }
+  data *operator->() { unique(); return ptr; }
+  bool empty() const { return !ptr; }
+  bool remove(property const &p);		// false if the tree is not yet fully satisfied
+  bool get_reals(std::set< node * > &) const;	// false if some branches are not satisfied
+};
+
 struct context {
   property_vect hyp;
-  property_vect goals;
+  property_tree goals;
 };
 
 typedef std::vector< context > context_vect;
 extern context_vect contexts;
-extern context const *current_context;
+extern property_tree current_goals;
 
 #endif // PROOFS_PROPERTY_HPP

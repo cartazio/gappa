@@ -174,18 +174,6 @@ bool graph_t::populate(dichotomy_sequence const &dichotomy) {
   if (contradiction)
     return true;
   graph_loader loader(this);
-  typedef std::map< ast_real const *, interval const * > bound_map;
-  bound_map bounds;
-  bool completely_bounded = current_context;
-  if (completely_bounded) {
-    for(property_vect::const_iterator i = current_context->goals.begin(),
-        i_end = current_context->goals.end(); i != i_end; ++i)
-      if (i->real.pred() == PRED_BND && is_defined(i->bnd()))
-        bounds[i->real.real()] = &i->bnd();
-      else
-        completely_bounded = false;
-  }
-  bound_map::const_iterator bounds_end = bounds.end();
   for(dichotomy_sequence::const_iterator dichotomy_it = dichotomy.begin(),
       dichotomy_end = dichotomy.end(); /*nothing*/; ++dichotomy_it) {
     scheme_set missing_schemes = source_schemes;
@@ -197,17 +185,15 @@ bool graph_t::populate(dichotomy_sequence const &dichotomy) {
       proof_scheme const *s = iter % 16 ? *missing_schemes.begin() : *missing_schemes.rbegin();
       missing_schemes.erase(s);
       node *n = s->generate_proof();
-      if (!n || !try_real(n)) continue;
-      if (contradiction) return true;
+      if (!n || !try_real(n)) continue;		// the scheme did not find anything useful
+      if (contradiction) return true;		// we have got a contradiction, everything is true
       insert_dependent(missing_schemes, s->real);
+      if (current_goals.empty()) continue;	// originally empty, we are striving for a contradiction
       if (s->real.pred() != PRED_BND) continue;
-      bound_map::iterator i = bounds.find(s->real.real());
-      if (i == bounds_end || !(n->get_result().bnd() <= *i->second)) continue;
-      bounds.erase(i);
-      if (completely_bounded && bounds.empty()) return false;
-      bounds_end = bounds.end();
+      current_goals.remove(n->get_result());
+      if (current_goals.empty()) return false;	// now empty, there is nothing left to prove
     }
-    if (!current_context || dichotomy_it == dichotomy_end || !dichotomize(*dichotomy_it))
+    if (dichotomy_it == dichotomy_end/* || !dichotomize(*dichotomy_it)*/)
       return false;
     if (contradiction)
       return true;
