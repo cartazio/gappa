@@ -170,9 +170,10 @@ bool fill_hypotheses(property *hyp, preal_vect const &v) {
   return true;
 }
 
-bool graph_t::populate(dichotomy_sequence const &dichotomy) {
+bool graph_t::populate(property_tree const &goals, dichotomy_sequence const &dichotomy) {
   if (contradiction)
     return true;
+  property_tree current_goals = goals;
   graph_loader loader(this);
   for(dichotomy_sequence::const_iterator dichotomy_it = dichotomy.begin(),
       dichotomy_end = dichotomy.end(); /*nothing*/; ++dichotomy_it) {
@@ -193,7 +194,7 @@ bool graph_t::populate(dichotomy_sequence const &dichotomy) {
       current_goals.remove(n->get_result());
       if (current_goals.empty()) return false;	// now empty, there is nothing left to prove
     }
-    if (dichotomy_it == dichotomy_end/* || !dichotomize(*dichotomy_it)*/)
+    if (dichotomy_it == dichotomy_end || !dichotomize(current_goals, *dichotomy_it))
       return false;
     if (contradiction)
       return true;

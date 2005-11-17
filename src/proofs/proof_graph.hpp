@@ -85,8 +85,8 @@ class graph_t {
   bool try_real(node *);
   property_vect const &get_hypotheses() const { return hyp; }
   bool dominates(graph_t const *) const;
-  bool populate(dichotomy_sequence const &);	// fill the proof graph, return true in case of contradiction
-  bool dichotomize(dichotomy_hint const &);	// apply a dichotomy hint, return true if nodes were added
+  bool populate(property_tree const &, dichotomy_sequence const &);	// fill the proof graph, return true in case of contradiction
+  bool dichotomize(property_tree const &, dichotomy_hint const &);	// apply a dichotomy hint, return true if nodes were added
   node *get_contradiction() const { return contradiction; }
   void set_contradiction(node *);
 };

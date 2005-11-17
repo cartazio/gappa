@@ -56,6 +56,7 @@ struct property_vect: std::vector< property > {
 };
 
 struct node;
+struct graph_t;
 
 struct property_tree {
   struct data {
@@ -69,6 +70,7 @@ struct property_tree {
   data *ptr;
   void incr() { if (ptr) ++ptr->ref; }
   void decr() { if (ptr && --ptr->ref == 0) delete ptr; }
+  void flatten();
  public:
   property_tree(): ptr(NULL) {}
   property_tree(data *p): ptr(p) { incr(); }
@@ -79,11 +81,13 @@ struct property_tree {
   { if (ptr != t.ptr) { decr(); ptr = t.ptr; incr(); } return *this; }
   ~property_tree() { decr(); }
   void unique();
+  void restrict(ast_real_vect const &);
   data const *operator->() const { return ptr; }
   data *operator->() { unique(); return ptr; }
   bool empty() const { return !ptr; }
-  bool remove(property const &p);		// false if the tree is not yet fully satisfied
-  bool get_reals(std::set< node * > &) const;	// false if some branches are not satisfied
+  bool remove(property const &);		// false if the tree is not yet fully satisfied
+  bool verify(graph_t *, property *) const;	// false if some branches are not satisfied
+  bool get_nodes(graph_t *, std::set< node * > &) const;
 };
 
 struct context {
@@ -94,6 +98,5 @@ struct context {
 
 typedef std::vector< context > context_vect;
 extern context_vect contexts;
-extern property_tree current_goals;
 
 #endif // PROOFS_PROPERTY_HPP

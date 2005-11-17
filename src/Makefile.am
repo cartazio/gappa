@@ -8,9 +8,6 @@ bin_PROGRAMS = gappa
 # proofs/field.cpp initialization requires parser/ast.cpp initialization
 # backends/*.cpp initialization requires backends/backends.cpp initialization
 
-#	proofs/dichotomy.cpp \
-#
-
 gappa_SOURCES = \
 	arithmetic/fixed.cpp \
 	arithmetic/float.cpp \
@@ -38,6 +35,7 @@ gappa_SOURCES = \
 	parser/ring.cpp \
 	proofs/basic_proof.cpp \
 	proofs/basic_proof.hpp \
+	proofs/dichotomy.cpp \
 	proofs/dichotomy.hpp \
 	proofs/field.cpp \
 	proofs/proof_graph.cpp \

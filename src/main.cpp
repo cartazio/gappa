@@ -32,7 +32,6 @@ int main(int argc, char **argv) {
   bool globally_proven = true;
   for(context_vect::const_iterator i = contexts.begin(), i_end = contexts.end(); i != i_end; ++i) {
     context const &current_context = *i;
-    current_goals = current_context.goals;
     property_vect const &hyp = current_context.hyp;
     std::cerr << "\nResults";
     if (unsigned nb_hyp = hyp.size()) {
@@ -52,8 +51,7 @@ int main(int argc, char **argv) {
       continue;
     }
     graph_t *g = new graph_t(NULL, hyp);
-    graph_loader loader(g);
-    if (g->populate(dichotomies)) {
+    if (g->populate(current_context.goals, dichotomies)) {
       if (!current_context.goals.empty())
         std::cerr << "Warning: hypotheses are in contradiction, any result is true.\n";
       display->theorem(g->get_contradiction());
@@ -63,9 +61,9 @@ int main(int argc, char **argv) {
       globally_proven = false;
       proven_contexts.push_back(false);
     } else {
-      node_set goals;
-      bool proven = current_context.goals.get_reals(goals);
-      for(node_set::const_iterator j = goals.begin(), j_end = goals.end(); j != j_end; ++j) {
+      node_set nodes;
+      bool proven = current_context.goals.get_nodes(g, nodes);
+      for(node_set::const_iterator j = nodes.begin(), j_end = nodes.end(); j != j_end; ++j) {
         node *n = *j;
         property const &p = n->get_result();
         std::cerr << dump_real(p.real.real()) << " in " << p.bnd() << '\n';
