@@ -6,6 +6,8 @@ Version 0.5.2:
    - replaced hypothesis property vectors by bit vectors, stored in-place if possible
  * syntax
    - added detection of unbound identifiers
+ * whole engine
+   - added support for complex logical properties
 
 Version 0.5.1:
  * whole engine
