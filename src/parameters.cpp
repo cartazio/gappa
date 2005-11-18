@@ -81,7 +81,7 @@ bool parse_args(int argc, char **argv) {
       std::cout << PACKAGE_STRING << '\n';
     else {
       if (s != "-h" && s != "--help")
-        std::cerr << "Error: unrecognized option '" << s << "'\n\n";
+        std::cerr << "Error: unrecognized option '" << s << "'.\n\n";
       help();
     }
     return false;

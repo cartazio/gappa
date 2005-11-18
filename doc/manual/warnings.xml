@@ -1,36 +1,63 @@
 <section>
-<title>Error messages</title>
+<title>Syntax error messages</title>
 
 <section>
-<title>Error: undefined intervals are reserved for conclusions.</title>
-<para>You are not allowed to use an interrogation mark for an interval that
-appears as an hypothesis in the logical formula.</para>
-</section>
-
-<section>
-<title>Error: $bison-msg at line $17 column $42.</title>
+<title>Error: $bison at line $17 column $42.</title>
 <para>The Bison front-end has detected a syntax error at the given location.
 The error message is usually unusable, so let us hope the location will be
 enough for you to find what the problem is.</para>
 </section>
 
 <section>
-<title>Error: $toto is an already defined symbol.</title>
+<title>Error: unrecognized option '$titi'.</title>
+<para>Gappa was invoked with an unknown option.</para>
+<para>Variant: unrecognized option '$titi' at line $42. This error is
+displayed for options embedded in the script.</para>
+</section>
+
+<section>
+<title>Error: the symbol $toto is already defined...</title>
 <para>A symbol cannot be defined more than once, even if the right hand sides
 of every definitions are equivalent. E.g. <code>a = 1; a = 1;</code></para>
+<para>Variant: the function $toto is already defined... This error message is
+displayed when the syntax <code>@toto = ...</code> is used although
+<code>toto</code> is already a function.</para>
 </section>
 
 <section>
-<title>Error: $toto is not a rounding.</title>
-<para>A bracketed word does not denote the name of a rounding operator. E.g.
-<code>&lt;allyourbases&gt;(b)</code></para>
+<title>Error: $toto is not a rounding operator...</title>
+<para>Only rounding operators (unary function close to the identity function)
+can be prepended to the equal sign in a definition.</para>
 </section>
 
 <section>
-<title>Error: too complex a logical proposition.</title>
-<para>Gappa was not able to transform the logical proposition to a suitable
-form. It may happen when too much implications are nested on their left hand
-sides.</para>
+<title>Error: $toto is not a function...</title>
+<para>Only functions can be followed by bracketed parameters or parenthesized
+arguments.</para>
+</section>
+
+<section>
+<title>Error: invalid parameters for $toto...</title>
+<para>A function template has been instantiated with an incorrect number of
+parameters or with parameters of the wrong type. E.g.
+<code>float&lt;ieee_32, 0&gt;</code>.</para>
+</section>
+
+<section>
+<title>Error: incorrect number of arguments when calling $toto...</title>
+<para>There is either less or more expressions between parentheses than
+expected by the function. E.g. <code>int&lt;zr&gt;(x, y)</code>.</para>
+</section>
+
+</section>
+
+<section>
+<title>Error messages</title>
+
+<section>
+<title>Error: undefined intervals are reserved for conclusions.</title>
+<para>You are not allowed to use an interrogation mark for an interval that
+appears as an hypothesis in the logical formula.</para>
 </section>
 
 <section>
@@ -53,15 +80,17 @@ hypothesis. No proof will be generated for this goal. For example, the script
 </section>
 
 <section>
-<title>Warning: $toto is being renamed to titi.</title>
-<para>When an equality <code>a = b</code> is written, the name <code>a</code>
-is associated to the expression <code>b</code>. This name will then be used
-whenever Gappa would have needed to output <code>b</code>. If a new equality
-is written, the new name will supersede the name previously defined.</para>
+<title>Warning: $toto is being renamed to $titi.</title>
+<para>When a definition <code>toto = expr</code> is given to Gappa, the name
+<code>toto</code> is associated to the expression <code>expr</code>. This name
+will then be used whenever Gappa would have needed to output <code>expr</code>.
+If another definition <code>titi = expr</code> is later written, the new name
+will supersede the name previously defined.</para>
 </section>
 
 <section>
-<title>Warning: although present in a quotient, the expression $toto may not have been tested for non-zeroness.</title>
+<title>Warning: although present in a quotient, the expression $toto may not
+have been tested for non-zeroness.</title>
 <para>When Gappa verifies that both sides of a user rewriting rule are
 equivalent, it does not generate additional constraints to verify that the
 denominator is not zero. E.g. the rule <code>1 / (1 / x) -&gt; x</code> only
@@ -79,14 +108,94 @@ numerical computations are required; e.g. <code>1b-2 -&gt; 0.2 + 0.05</code>.</p
 </section>
 
 <section>
+<title>Warning: $titi is a variable without definition, yet it is unbound.</title>
+<para>No expression is associated to the identifier <code>titi</code> and it is
+not a sub-term of any of the bounded expressions of the logical property. This
+may mean an identifier was in fact mistyped.</para>
+</section>
+
+</section>
+
+<section>
+<title>Warning messages during proof computation</title>
+
+<section>
+<title>Warning: no path was found for $toto.</title>
+<para>The expression <code>toto</code> appears in one of the goals, yet Gappa
+does not have any theorem that could be used to compute this expression or one
+of its sub-terms.</para>
+</section>
+
+<section>
+<title>Warning: generated hypotheses were not proved, skipping.</title>
+<para>Gappa has created additional hypotheses in order to prove a property.
+These hypotheses could not be satisfied so the property is discarded, since it
+contains more hypotheses than required. For example, in order to prove
+<code>A /\ (B -&gt; C) -&gt; D</code>, Gappa creates two new properties:
+<code>A -&gt; D \/ B</code> and <code>A /\ C -&gt; D</code>. If Gappa was
+unable to prove the first property, there is no point in trying to prove the
+second one, since it contains an additional hypothesis.</para>
+</section>
+
+<section>
+<title>Warning: hypotheses are in contradiction, any result is true.</title>
+<para>Gappa has found a contradiction among the hypotheses. So, instead of
+proving the goals, it will just prove <code>False</code>, since it implies any
+possible goal.</para>
+<screen>$ echo "{ x in [1,2] /\ x - 1 in [3,4] -> x in [5,6] }" | src/gappa
+
+Results for x in [1, 1b1 {2, 2^(1)}] and x - 1 in [3, 1b2 {4, 2^(2)}]:
+Warning: hypotheses are in contradiction, any result is true.</screen>
+</section>
+
+<section>
+<title>Warning: no contradiction was found.</title>
+<para>Gappa had no specific goal to prove, and as such was expecting to find a
+contradiction and prove it. Unfortunately none was found.</para>
+<screen>$ echo "{ x in [1,2] -&gt; not x+1 in [2,3] }" | src/gappa
+
+Results for x in [1, 2] and x + 1 in [2, 3]:
+Warning: no contradiction was found.</screen>
+</section>
+
+<section>
+<title>Warning: some enclosures were not satisfied.</title>
+<para>Only part of a conjunction of goals was proved to be true. Gappa was
+unable to prove some other expressions.</para>
+<screen>$ echo "{ x in [1,2] -> x + 1 in ? /\ x + 2 in [2,3] }" | src/gappa
+
+Results for x in [1, 1b1 {2, 2^(1)}]:
+x + 1 in [1b1 {2, 2^(1)}, 3]
+Warning: some enclosures were not satisfied.</screen>
+</section>
+
+<section>
 <title>Warning: when $toto is in $i1, $titi is in $i2 potentially outside of $i3.</title>
-<para>When Gappa applies a dichotomy <code>titi $ toto</code>, it will split
+<para>When Gappa applies a case splitting <code>titi $ toto</code>, it will split
 the interval of <code>toto</code> until the goal containing <code>titi</code>
 holds true for any sub-interval. If the maximal dichotomy depth has been
 reached and the property still does not hold true, this warning will display
 the first failing sub-interval and the relevant ranges.</para>
-<para>Variant: when $toto is in $i1, $titi is not computable. This warning will
-be displayed if <code>titi</code> cannot even be bounded.</para>
+<screen>$ echo "{ x in [1,2] -> x + 1 in [2,2.75] } x + 1 $ x;" | src/gappa
+
+Results for x in [1, 2]:
+Warning: when x is in [1.75, 1008806316530991105b-59 {1.75}], x + 1 is in [2.75, 792633534417207297b-58 {2.75)}] potentially outside of [2, 2.75]
+Warning: some enclosures were not satisfied.</screen>
+<para>Variant: when $toto is in $i1, $titi is not computable. This warning is
+displayed if no bound of <code>titi</code> cannot even be computed.</para>
+<para>Option switch: <code>-W[no-]dichotomy-failure</code>.</para>
+</section>
+
+<section>
+<title>Warning: case splitting on $toto did not produce any usable result.</title>
+<para>Gappa displays this warning when it was successful in finding a case
+splitting that satisfies the goals. Yet the obtained results were not
+interesting: they had already been found through simple analysis.</para>
+<screen>$ echo "{ x in [1,2] -> x + 1 in ? } x + 1 $ x;" | src/gappa
+
+Results for x in [1, 2]:
+Warning: case splitting on x did not produce any usable result.
+x + 1 in [2, 3]</screen>
 <para>Option switch: <code>-W[no-]dichotomy-failure</code>.</para>
 </section>
 

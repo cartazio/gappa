@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
   if (yyparse()) return EXIT_FAILURE;
   ast_real_vect missing_paths = generate_proof_paths();
   for(ast_real_vect::const_iterator i = missing_paths.begin(), i_end = missing_paths.end(); i != i_end; ++i)
-    std::cerr << "Warning: no path for " << dump_real(*i) << '\n';
+    std::cerr << "Warning: no path was found for " << dump_real(*i) << ".\n";
   std::vector< bool > proven_contexts;
   bool globally_proven = true;
   for(context_vect::const_iterator i = contexts.begin(), i_end = contexts.end(); i != i_end; ++i) {

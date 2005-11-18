@@ -60,7 +60,7 @@ static void read_options(YYLTYPE &yylloc) {
     if (end == std::string::npos) end = s.size();
     std::string o = s.substr(begin, end - begin);
     if (!parse_option(o, true)) {
-      std::cerr << "Error: unrecognized option '" << o << "' at line " << yylloc.first_line << '\n';
+      std::cerr << "Error: unrecognized option '" << o << "' at line " << yylloc.first_line << ".\n";
       exit(EXIT_FAILURE);
     }
   }
