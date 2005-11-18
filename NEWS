@@ -1,3 +1,7 @@
+Version 0.5.3:
+ * proof graph
+   - fixed goal removal: undefined goals require "optimal" solutions
+
 Version 0.5.2:
  * proof graph
    - simplified node memory handling

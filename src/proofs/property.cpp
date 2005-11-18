@@ -130,8 +130,11 @@ struct remove_pred1 {
   bool unrelated;
   remove_pred1(property const &p): prop(p), unrelated(false) {}
   bool operator()(property const &p) {
-    if (p.real != prop.real) unrelated = true;
-    else if (prop.bnd() <= p.bnd()) return true;
+    if (p.real == prop.real) {
+      if (!is_defined(p.bnd())) return false;
+      if (prop.bnd() <= p.bnd()) return true;
+    }
+    unrelated = true;
     return false;
   }
 };
