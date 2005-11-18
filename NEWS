@@ -1,3 +1,7 @@
+Version 0.5.4:
+ * syntax
+   - reduced the number of false-positive for unbound identifiers
+
 Version 0.5.3:
  * proof graph
    - fixed goal removal: undefined goals require "optimal" solutions

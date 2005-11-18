@@ -1,3 +1,4 @@
+#include <set>
 #include <boost/variant.hpp>
 #include "parser/pattern.hpp"
 
@@ -84,6 +85,30 @@ ast_real const *rewrite_visitor::visit(ast_real const *dst) const {
 
 ast_real const *rewrite(ast_real const *dst, ast_real_vect const &holders) {
   return rewrite_visitor(holders).visit(dst);
+}
+
+typedef std::set< ast_real const * > real_set;
+
+struct unknown_visitor: boost::static_visitor< void > {
+  void visit(ast_real const *) const;
+  template< typename T > void operator()(T const &) const { return; }
+  void operator()(real_op const &) const;
+  real_set &reals;
+  unknown_visitor(real_set &r): reals(r) {}
+};
+
+void unknown_visitor::operator()(real_op const &r) const {
+  for(ast_real_vect::const_iterator i = r.ops.begin(), end = r.ops.end(); i != end; ++i)
+    visit(*i);
+}
+
+void unknown_visitor::visit(ast_real const *dst) const {
+  if (boost::get< undefined_real const >(dst)) reals.insert(dst);
+  return boost::apply_visitor(*this, *dst);
+}
+
+void find_unknown_reals(real_set &s, ast_real const *r) {
+  unknown_visitor(s).visit(r);
 }
 
 #define PATTERN_OP(symb, op) \

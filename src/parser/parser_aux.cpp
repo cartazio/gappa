@@ -4,10 +4,11 @@
 #include "proofs/proof_graph.hpp"
 #include "proofs/property.hpp"
 
-interval create_interval(ast_interval const &, bool widen);
-
 typedef std::set< ast_real const * > real_set;
 real_set free_variables, input_reals, output_reals;
+
+interval create_interval(ast_interval const &, bool);
+void find_unknown_reals(real_set &, ast_real const *);
 
 extern bool warning_unbound_variable;
 
@@ -177,24 +178,28 @@ static void delete_prop(ast_prop const *p) {
   delete p;
 }
 
+static void check_unbound() {
+  real_set bound_variables;
+  for(real_set::const_iterator i = input_reals.begin(), end = input_reals.end(); i != end; ++i)
+    find_unknown_reals(bound_variables, *i);
+  real_set s;
+  std::set_difference(free_variables.begin(), free_variables.end(),
+                      bound_variables.begin(), bound_variables.end(),
+                      std::inserter(s, s.begin()));
+  free_variables.swap(s);
+  for(real_set::const_iterator i = free_variables.begin(), end = free_variables.end(); i != end; ++i) {
+    ast_ident const *n = (*i)->name;
+    assert(n);
+    std::cerr << "Warning: " << n->name << " is a variable without definition, yet it is unbound.\n";
+  }
+}
+
 void generate_graph(ast_prop const *p) {
   sequent s;
   s.rhs.push_back(p);
   parse_sequent(s, 0, 0);
-  if (warning_unbound_variable) {
-    for(real_set::const_iterator i = input_reals.begin(), end = input_reals.end(); i != end; ++i) {
-      ast_real const *r = *i;
-      free_variables.erase(r);
-      real_op const *o = boost::get< real_op const >(r);
-      if (!o) continue;
-      if (o->type == UOP_ABS || o->fun && o->fun->type == UOP_ID) free_variables.erase(o->ops[0]);
-    }
-    for(real_set::const_iterator i = free_variables.begin(), end = free_variables.end(); i != end; ++i) {
-      ast_ident const *n = (*i)->name;
-      assert(n);
-      std::cerr << "Warning: " << n->name << " is a variable without definition, yet it is unbound.\n";
-    }
-  }
+  if (warning_unbound_variable)
+    check_unbound();
   free_variables.clear();
   delete_prop(p);
 }
