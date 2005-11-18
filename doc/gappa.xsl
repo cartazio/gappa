@@ -10,6 +10,9 @@
   <xsl:param name="navig.graphics.extension" select="'.png'"/>
   <xsl:param name="header.rule" select="0"/>
   <xsl:param name="footer.rule" select="0"/>
+  <xsl:param name="toc.max.depth" select="2"/>
+  <xsl:param name="chunk.first.sections" select="1"/>
+  <xsl:param name="variablelist.as.table" select="0"/>
 
 <xsl:template name="header.navigation">
   <xsl:param name="prev" select="/foo"/>
