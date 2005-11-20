@@ -1,3 +1,4 @@
+#include <list>
 #include <map>
 #include <set>
 #include <vector>
@@ -44,9 +45,10 @@ scheme_register::scheme_register(scheme_factory const *f) {
 typedef std::set< predicated_real > real_set;
 static real_set missing_reals;
 
-typedef std::set< proof_scheme const * > scheme_set;
-static scheme_set source_schemes;
+typedef std::vector< proof_scheme const * > scheme_vect;
+static scheme_vect source_schemes;
 
+typedef std::set< proof_scheme const * > scheme_set;
 struct real_dependency {
   scheme_set dependent;
   scheme_set schemes;
@@ -120,7 +122,7 @@ ast_real_vect generate_proof_paths() {
     for(scheme_set::iterator j = r.schemes.begin(), j_end = r.schemes.end(); j != j_end; ++j) {
       proof_scheme const *s = *j;
       if (s->needed_reals().empty())
-        source_schemes.insert(s);
+        source_schemes.push_back(s);
     }
     r.dependent.erase(NULL);
   }
@@ -149,11 +151,25 @@ proof_paths_cleaner::~proof_paths_cleaner() {
 static proof_paths_cleaner dummy;
 #endif // LEAK_CHECKER
 
-static void insert_dependent(scheme_set &v, predicated_real const &real) {
+typedef std::list< proof_scheme const * > scheme_list;
+static void insert_dependent(scheme_list &v, predicated_real const &real) {
   real_dependencies::const_iterator i = reals.find(real);
   if (i == reals.end()) return;
-  real_dependency const &r = i->second;
-  v.insert(r.dependent.begin(), r.dependent.end());
+  scheme_set const &dep = i->second.dependent;
+  for(scheme_set::const_iterator i = dep.begin(), end = dep.end(); i != end; ++i) {
+    proof_scheme const *s = *i;
+    if (s->scanned) continue;
+    s->scanned = true;
+    v.push_back(s);
+  }
+}
+
+static void clear_flags() {
+  for(real_dependencies::iterator i = reals.begin(), i_end = reals.end(); i != i_end; ++i) {
+    scheme_set &s = i->second.schemes;
+    for(scheme_set::iterator j = s.begin(), j_end = s.end(); j != j_end; ++j)
+      (*j)->scanned = false;
+  }
 }
 
 node *find_proof(property const &res) {
@@ -177,14 +193,22 @@ bool graph_t::populate(property_tree const &goals, dichotomy_sequence const &dic
   graph_loader loader(this);
   for(dichotomy_sequence::const_iterator dichotomy_it = dichotomy.begin(),
       dichotomy_end = dichotomy.end(); /*nothing*/; ++dichotomy_it) {
-    scheme_set missing_schemes = source_schemes;
+    clear_flags();
+    scheme_list missing_schemes;
+    for(scheme_vect::const_iterator i = source_schemes.begin(),
+        i_end = source_schemes.end(); i != i_end; ++i) {
+      proof_scheme const *s = *i;
+      s->scanned = true;
+      missing_schemes.push_back(s);
+    }
     for(node_map::const_iterator i = known_reals.begin(), i_end = known_reals.end(); i != i_end; ++i)
       insert_dependent(missing_schemes, i->first);
     unsigned iter = 0;
     while (iter != 1000000 && !missing_schemes.empty()) {
       ++iter;
-      proof_scheme const *s = iter % 16 ? *missing_schemes.begin() : *missing_schemes.rbegin();
-      missing_schemes.erase(s);
+      proof_scheme const *s = missing_schemes.front();
+      missing_schemes.pop_front();
+      s->scanned = false;
       node *n = s->generate_proof();
       if (!n || !try_real(n)) continue;		// the scheme did not find anything useful
       if (contradiction) return true;		// we have got a contradiction, everything is true

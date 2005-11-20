@@ -13,6 +13,7 @@ struct proof_scheme {
   proof_scheme(ast_real const *r): real(r, PRED_BND) {}
   proof_scheme(predicated_real const &r): real(r) {}
   predicated_real real;
+  mutable bool scanned;
 };
 
 struct scheme_factory {
