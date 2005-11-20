@@ -16,12 +16,10 @@ displayed for options embedded in the script.</para>
 </section>
 
 <section>
-<title>Error: the symbol $toto is already defined...</title>
+<title>Error: the symbol $toto is redefined...</title>
 <para>A symbol cannot be defined more than once, even if the right hand sides
-of every definitions are equivalent. E.g. <code>a = 1; a = 1;</code></para>
-<para>Variant: the function $toto is already defined... This error message is
-displayed when the syntax <code>@toto = ...</code> is used although
-<code>toto</code> is already a function.</para>
+of every definitions are equivalent. Neither can it be defined after having
+been used as an unbound variable. E.g. <code>b = a * 2; a = 1;</code></para>
 </section>
 
 <section>
@@ -34,6 +32,11 @@ can be prepended to the equal sign in a definition.</para>
 <title>Error: $toto is not a function...</title>
 <para>Only functions can be followed by bracketed parameters or parenthesized
 arguments.</para>
+</section>
+
+<section>
+<title>Error: $toto is not a variable...</title>
+<para>A function cannot be used without parenthesized arguments.</para>
 </section>
 
 <section>
