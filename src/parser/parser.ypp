@@ -46,6 +46,8 @@ static ast_real const *rnd_normalize(ast_real const &real) {
   return normalize(ast_real(real_op(rounding_mode, r)));
 }
 
+#define YYINCLUDED_STDLIB_H
+
 %}
 
 %error-verbose
@@ -128,13 +130,12 @@ FUNCTION:
   IDENT FUNCTION_PARAMS
   {
     ast_ident *r = $1;
-    function_generator const *fun = r->fun;
-    if (!fun) failure(r->name << " is not a function");
+    if (r->type != ID_FUN) failure(r->name << " is not a function");
     function_class const *f;
     if (function_params *p = $2) {
-      f = (*fun)(*p);
+      f = (*r->fun)(*p);
       delete p;
-    } else f = (*fun)(function_params());
+    } else f = (*r->fun)(function_params());
     if (!f) failure("invalid parameters for " << r->name);
     $$ = f;
   }
@@ -152,8 +153,9 @@ PROG:
 | PROG IDENT EQUAL REAL ';'
   {
     ast_ident *v = $2;
-    if (v->var) failure("the symbol " << v->name << " is already defined");
+    if (v->type != ID_NONE) failure("the symbol " << v->name << " is redefined");
     ast_real const *r = $4;
+    v->type = ID_VAR;
     v->var = r;
     if (r->name) warning(r->name->name << " is being renamed to " << v->name);
     r->name = v;
@@ -162,7 +164,8 @@ PROG:
 | PROG '@' IDENT '=' FUNCTION ';'
   {
     ast_ident *v = $3;
-    if (v->fun) failure("the function " << v->name << " is already defined");
+    if (v->type != ID_NONE) failure("the symbol " << v->name << " is redefined");
+    v->type = ID_FUN;
     v->fun = new default_function_generator($5);
   }
 
@@ -171,7 +174,10 @@ REAL:
 | IDENT
   {
     ast_ident *v = $1;
-    ast_real const *r = v->var;
+    ast_real const *r = NULL;
+    if (v->type == ID_VAR) r = v->var;
+    else if (v->type == ID_FUN) failure(v->name << " is not a variable");
+    else v->type = ID_VAR;
     if (!r) {
       r = normalize(ast_real(v));
       free_variables.insert(r);

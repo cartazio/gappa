@@ -94,7 +94,10 @@ std::string dump_real(ast_real const *r, unsigned prio) {
 }
 
 function_generator::function_generator(char const *name) {
-  ast_ident::find(name)->fun = this;
+  ast_ident * i = ast_ident::find(name);
+  assert(i->type == ID_NONE);
+  i->type = ID_FUN;
+  i->fun = this;
 }
 
 function_class const *default_function_generator::operator()(function_params const &p) const {

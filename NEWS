@@ -1,6 +1,9 @@
 Version 0.5.4:
  * syntax
    - reduced the number of false-positive for unbound identifiers
+   - merged variables and functions anew in order to correctly detect define-after-uses errors
+ * proof graph
+   - added fifo processing to proof schemes
 
 Version 0.5.3:
  * proof graph
