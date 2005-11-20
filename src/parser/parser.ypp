@@ -174,15 +174,16 @@ REAL:
 | IDENT
   {
     ast_ident *v = $1;
-    ast_real const *r = NULL;
-    if (v->type == ID_VAR) r = v->var;
-    else if (v->type == ID_FUN) failure(v->name << " is not a variable");
-    else v->type = ID_VAR;
-    if (!r) {
-      r = normalize(ast_real(v));
+    switch (v->type) {
+    case ID_FUN: failure(v->name << " is not a variable");
+    case ID_VAR: break;
+    case ID_NONE:
+      v->type = ID_VAR;
+      ast_real *r = normalize(ast_real(v));
       free_variables.insert(r);
+      v->var = r;
     }
-    $$ = r;
+    $$ = v->var;
   }
 | FUNCTION '(' OPERANDS ')'
   {
