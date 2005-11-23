@@ -11,8 +11,7 @@ check-backend:
 	  ../src/gappa -B$(BACKEND) < "$$f" > /dev/null 2> output.tmp; \
 	  return_code=$$?; \
 	  if [ $${return_code} -ne 0 ]; then \
-	    echo "$$f exited with error code $${return_code}" >> "$$logfile"; \
-	    cat output.tmp >> "$$logfile"; \
+	    (echo "*** $$f exited with error code $${return_code}"; cat output.tmp; echo) >> "$$logfile"; \
 	    echo "$$f exited with error code $${return_code}" >> log.tmp; \
 	  fi; \
 	  rm output.tmp; \
