@@ -4,6 +4,9 @@ Version 0.5.4:
    - merged variables and functions anew in order to correctly detect define-after-uses errors
  * proof graph
    - added fifo processing to proof schemes
+   - handled case splitting on empty goals
+ * hint parser
+   - shut up warning messages about trivial integers as denominators
 
 Version 0.5.3:
  * proof graph

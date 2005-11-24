@@ -131,8 +131,14 @@ static quotient mul(quotient const &q1, quotient const &q2) {
 }
 
 static quotient div(quotient const &q1, quotient const &q2) {
-  std::cerr << "Warning: although present in a quotient, the expression "
-            << dump_sum(q2.first) << " may have not been tested for non-zeroness.\n";
+  sum const &d = q2.first;
+  if (d.empty()) {
+    std::cerr << "Error: a zero appears as a denominator in a rewriting rule.\n";
+    exit(EXIT_FAILURE);
+  }
+  if (d.size() > 1 || !d.begin()->first.empty())
+    std::cerr << "Warning: although present in a quotient, the expression "
+              << dump_sum(d) << " may have not been tested for non-zeroness.\n";
   quotient res;
   fma(res.first, q1.first, q2.second);
   fma(res.second, q1.second, q2.first);
