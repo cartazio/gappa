@@ -139,6 +139,22 @@ std::pair< interval, interval > split(interval const &u) {
                         plop(_interval_base(m, plup.upper())));
 }
 
+std::pair< interval, interval > split(interval const &u, double f) {
+  assert(u.base);
+  number_base *d = new number_base;
+  mpfr_t tmp;
+  mpfr_init2(tmp, parameter_internal_precision);
+  mpfr_set_d(tmp, 1 - f, GMP_RNDN);
+  mpfr_mul(d->val, tmp, plup.lower().data->val, GMP_RNDN);
+  mpfr_set_d(tmp, f, GMP_RNDN);
+  mpfr_mul(tmp, tmp, plup.lower().data->val, GMP_RNDN);
+  mpfr_add(d->val, d->val, tmp, GMP_RNDN);
+  mpfr_clear(tmp);
+  number m(d);
+  return std::make_pair(plop(_interval_base(plup.lower(), m)),
+                        plop(_interval_base(m, plup.upper())));
+}
+
 bool interval::operator<=(interval const &v) const {
   if (!v.base) return true;
   if (!base) return false;

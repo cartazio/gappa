@@ -29,7 +29,7 @@ struct number {
   mpfr_t const &mpfr_data() const { return data->val; }
 
   number(): data(empty_mpfr->clone()) {}
-  number(int v);
+  number(int);
   number(number_base const *d): data(d) {}
   number(number const &v): data(v.data->clone()) {}
   number &operator=(number const &v);
