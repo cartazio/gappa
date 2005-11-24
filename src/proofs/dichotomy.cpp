@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stack>
 #include "numbers/interval_utility.hpp"
 #include "numbers/round.hpp"
 #include "parser/ast.hpp"
@@ -8,6 +9,63 @@
 
 extern int parameter_dichotomy_depth;
 extern bool warning_dichotomy_failure;
+
+struct splitter {
+  virtual bool split(interval &) = 0;
+  virtual bool next(interval &) = 0;
+  virtual ~splitter() {}
+  bool merge;
+};
+
+struct fixed_splitter: splitter {
+  interval bnd;
+  unsigned steps;
+  fixed_splitter(interval const &i, unsigned nb): bnd(i), steps(nb) { merge = false; }
+  virtual bool split(interval &) { return false; }
+  virtual bool next(interval &);
+};
+
+bool fixed_splitter::next(interval &i) {
+  if (steps == 0) return false;
+  if (steps == 1) {
+    i = bnd;
+    steps = 0;
+    return true;
+  }
+  std::pair< interval, interval > ii = ::split(i, 1 / steps--);
+  i = ii.first;
+  bnd = ii.second;
+  return true;
+};
+
+struct best_splitter: splitter {
+  std::stack< interval > stack;
+  best_splitter(interval const &i);
+  virtual bool split(interval &);
+  virtual bool next(interval &);
+};
+
+best_splitter::best_splitter(interval const &i) {
+  std::pair< interval, interval > ii = ::split(i);
+  stack.push(ii.second);
+  stack.push(ii.first);
+  merge = true;
+}
+
+bool best_splitter::split(interval &i) {
+  if (stack.size() >= (unsigned)parameter_dichotomy_depth) return false;
+  std::pair< interval, interval > ii = ::split(i);
+  i = ii.first;
+  stack.push(ii.second);
+  return true;
+}
+
+bool best_splitter::next(interval &i) {
+  if (stack.empty()) return false;
+  i = stack.top();
+  stack.pop();
+  return true;
+}
 
 typedef std::vector< graph_t * > graph_vect;
 
@@ -27,13 +85,14 @@ struct dichotomy_helper {
   property_tree const &goals;
   dichotomy_sequence const &hints;
   graph_t *last_graph;
+  splitter *gen;
   graph_t *try_hypothesis(dichotomy_failure * = NULL) const;
   void try_graph(graph_t *);
   void dichotomize();
   dichotomy_node *generate_node(node *, property const &);
   void purge();
-  dichotomy_helper(property_vect &v, property_tree const &g, dichotomy_sequence const &h)
-    : tmp_hyp(v), depth(0), nb_ref(0), goals(g), hints(h), last_graph(NULL) {}
+  dichotomy_helper(property_vect &v, property_tree const &g, dichotomy_sequence const &h, splitter *s)
+    : tmp_hyp(v), depth(0), nb_ref(0), goals(g), hints(h), last_graph(NULL), gen(s) {}
   ~dichotomy_helper();
 };
 
@@ -69,6 +128,7 @@ dichotomy_helper::~dichotomy_helper() {
     delete *i;
   graphs.clear();
   delete last_graph;
+  delete gen;
 }
 
 dichotomy_node::~dichotomy_node() {
@@ -95,7 +155,7 @@ void dichotomy_helper::try_graph(graph_t *g2) {
     last_graph = g2;
     return;
   }
-  if (!goals.empty()) { // try joining only if we have constraints
+  if (gen->merge) {
     property p(g1->get_hypotheses()[0]);
     p.bnd() = interval(lower(p.bnd()), upper(g2->get_hypotheses()[0].bnd()));
     tmp_hyp[0] = p;
@@ -141,25 +201,21 @@ dichotomy_node *dichotomy_helper::generate_node(node *varn, property const &p) {
 }
 
 void dichotomy_helper::dichotomize() {
-  property const &h = tmp_hyp[0];
-  if (depth != 0) {
-    dichotomy_failure exn;
+  interval &h = tmp_hyp[0].bnd();
+  interval bnd;
+  bool b = gen->next(bnd);
+  assert(b);
+  dichotomy_failure exn;
+  for(;;) {
+    h = bnd;
     if (graph_t *g = try_hypothesis(&exn)) {
       try_graph(g);
-      return;
-    }
-    if (depth >= parameter_dichotomy_depth) {
-      exn.hyp = h;
+      if (!gen->next(bnd)) return;
+    } else if (!gen->split(bnd)) {
+      exn.hyp = tmp_hyp[0];
       throw exn;
     }
   }
-  std::pair< interval, interval > ii = split(h.bnd());
-  ++depth;
-  tmp_hyp[0] = property(h.real, ii.first);
-  dichotomize();
-  tmp_hyp[0] = property(h.real, ii.second);
-  dichotomize();
-  --depth;
 }
 
 bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint) {
@@ -180,9 +236,19 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
   property_vect const &hyp = top_graph->get_hypotheses();
   for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
     if (i->real.real() != var) hyp2.push_back(*i);
+  splitter *gen;
   property_tree new_goals = goals;
-  new_goals.restrict(hint.dst);
-  dichotomy_helper *h = new dichotomy_helper(hyp2, new_goals, hints);
+  if (new_goals.empty())
+    gen = new fixed_splitter(hyp2[0].bnd(), 4);
+  else {
+    new_goals.restrict(hint.dst);
+    if (new_goals.empty()) {
+      std::cerr << "Warning: case split is not goal-driven anymore.\n";
+      return false;
+    }
+    gen = new best_splitter(hyp2[0].bnd());
+  }
+  dichotomy_helper *h = new dichotomy_helper(hyp2, new_goals, hints, gen);
   try {
     h->dichotomize();
   } catch (dichotomy_failure const &e) {

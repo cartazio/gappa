@@ -187,7 +187,7 @@ bool property_tree::remove(property const &p) {
 }
 
 bool property_tree::verify(graph_t *g, property *p) const {
-  assert(ptr);
+  if (!ptr) return false;
   graph_loader loader(g);
   bool b = ptr->conjonction;
   for(std::vector< property >::const_iterator i = ptr->leafs.begin(),
