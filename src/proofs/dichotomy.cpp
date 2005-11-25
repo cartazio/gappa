@@ -32,7 +32,7 @@ bool fixed_splitter::next(interval &i) {
     steps = 0;
     return true;
   }
-  std::pair< interval, interval > ii = ::split(i, 1 / steps--);
+  std::pair< interval, interval > ii = ::split(bnd, 1. / steps--);
   i = ii.first;
   bnd = ii.second;
   return true;
@@ -238,7 +238,7 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
     if (i->real.real() != var) hyp2.push_back(*i);
   splitter *gen;
   property_tree new_goals = goals;
-  if (new_goals.empty())
+  if (hint.dst.empty())
     gen = new fixed_splitter(hyp2[0].bnd(), 4);
   else {
     new_goals.restrict(hint.dst);
