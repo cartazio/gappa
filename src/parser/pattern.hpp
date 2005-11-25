@@ -30,6 +30,7 @@ class pattern {
   pattern_cond operator>=(int) const;
   pattern_cond operator!=(int) const;
   static pattern abs(pattern const &);
+  static pattern sqrt(pattern const &);
 };
 
 typedef std::vector< pattern_cond > pattern_cond_vect;

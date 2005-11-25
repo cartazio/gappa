@@ -65,6 +65,7 @@ static pattern a(0), b(1), c(2), d(3), b_a(-1);
 pattern absolute_error_pattern(b_a - a), relative_error_pattern((b_a - a) / a);
 
 #define abs pattern::abs
+#define sqrt pattern::sqrt
 
 #define REWRITE_NAME BOOST_PP_CAT(rewrite_, __LINE__)
 #define REWRITE(name,lhs,rhs) \
@@ -194,3 +195,13 @@ REWRIT9(mul_rel_decomposition_right,
 	(a - c) / c,
 	abs(b) > 0 && abs(c) > 0,
 	a ^ c);
+
+// FIXME? (double abs)
+REWRITE(sqrt_square,
+	sqrt(a * a),
+	abs(a));
+
+REWRIT3(square_sqrt,
+	sqrt(a) * sqrt(a),
+	a,
+	a >= 0);

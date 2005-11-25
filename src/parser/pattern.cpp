@@ -133,10 +133,6 @@ PATTERN_COND(<=, LE)
 PATTERN_COND(>=, GE)
 PATTERN_COND(!=, NE)
 
-pattern pattern::operator-() const {
-  return pattern(real_op(UOP_NEG, real));
-}
-
-pattern pattern::abs(pattern const &p) {
-  return pattern(real_op(UOP_ABS, p.real));
-}
+pattern pattern::operator-() const	{ return pattern(real_op(UOP_NEG, real)); }
+pattern pattern::abs(pattern const &p)	{ return pattern(real_op(UOP_ABS, p.real)); }
+pattern pattern::sqrt(pattern const &p)	{ return pattern(real_op(UOP_SQRT, p.real)); }
