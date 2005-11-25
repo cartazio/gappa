@@ -202,6 +202,11 @@ interval square(interval const &u) {
   return plop(square(plup));
 }
 
+interval sqrt(interval const &u) {
+  assert(u.base);
+  return plop(sqrt(plup));
+}
+
 interval from_exponent(int exp, int rnd) {
   number_base *l = new number_base, *u = new number_base;
   if (rnd == 0) {
