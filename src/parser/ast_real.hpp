@@ -18,7 +18,7 @@ struct ast_number {
 
 ast_number *normalize(ast_number const &);
 
-enum real_op_type { UOP_ID, UOP_NEG, UOP_ABS, BOP_ADD, BOP_SUB, BOP_MUL, BOP_DIV, ROP_FUN, ROP_UNK };
+enum real_op_type { UOP_ID, UOP_NEG, UOP_SQRT, UOP_ABS, BOP_ADD, BOP_SUB, BOP_MUL, BOP_DIV, ROP_FUN, ROP_UNK };
 
 struct interval;
 

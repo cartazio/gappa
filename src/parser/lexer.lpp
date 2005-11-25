@@ -97,6 +97,7 @@ zero		((((0+(\.0*)?)|(\.0+))([eE][-+]?{integer})?)|0x(((0+(\.0*)?)|(\.0+))([pP][
 "->"		return IMPL;
 "not"		return NOT;
 "in"		return IN;
+"sqrt"		return SQRT;
 {zero}		{ read_zero(yylval);	return NUMBER; }
 {number}	{ read_number(yylval);	return NUMBER; }
 {ident}		{ read_ident(yylval);	return IDENT;  }
