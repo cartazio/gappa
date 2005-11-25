@@ -36,7 +36,7 @@ bool fixed_splitter::next(interval &i) {
   i = ii.first;
   bnd = ii.second;
   return true;
-};
+}
 
 struct best_splitter: splitter {
   std::stack< interval > stack;
