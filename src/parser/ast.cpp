@@ -75,15 +75,22 @@ std::string dump_real(ast_real const *r, unsigned prio) {
         s += ", " + dump_real(*i, 0);
       return s + ')';
     }
-    static char const op[] = "X-X+-*/XX";
-    static unsigned const pr[] = { 0, 2, 0, 0, 0, 1, 1, 0, 0 };
+    static char const op[] = "X-XX+-*/XX";
+    static unsigned const pr[] = { 0, 2, 0, 0, 0, 0, 1, 1, 0, 0 };
     std::string s = dump_real(o->ops[0], pr[o->type]);
     if (o->ops.size() == 1)
-      if (o->type == UOP_ABS) {
+      switch (o->type) {
+      case UOP_ABS: {
         s = '|' + s + '|';
         prio = 0;
-      } else
+        break; }
+      case UOP_SQRT: {
+        s = "sqrt(" + s + ')';
+        prio = 0;
+        break; }
+      default:
         s = op[o->type] + s;
+      }
     else
       s = s + ' ' + op[o->type] + ' ' + dump_real(o->ops[1], pr[o->type] + 1);
     if (prio <= pr[o->type]) return s;

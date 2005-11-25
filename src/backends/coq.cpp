@@ -96,7 +96,7 @@ static std::string display(ast_real const *r) {
     else if (n.exponent == 0) plouf << "Float1 (" << m << ')';
     else plouf << "Float" << n.base << " (" << m << ") (" << n.exponent << ')';
   } else if (real_op const *o = boost::get< real_op const >(r)) {
-    static char const op[] = "X-X+-*/XX";
+    static char const op[] = "X-XX+-*/XX";
     if (o->type == ROP_FUN) {
       plouf << convert_name(o->fun->name()) << " (" << display(o->ops[0]) << ')';
       for(ast_real_vect::const_iterator i = ++(o->ops.begin()), end = o->ops.end(); i != end; ++i)
@@ -104,6 +104,7 @@ static std::string display(ast_real const *r) {
     } else if (o->ops.size() == 1) {
       std::string s(1, op[o->type]);
       if (o->type == UOP_ABS) s = "Rabs";
+      else if (o->type == UOP_SQRT) s = "Rsqrt";
       plouf << '(' << s << ' ' << display(o->ops[0]) << ")%R";
     } else
       plouf << '(' << display(o->ops[0]) << ' ' << op[o->type] << ' ' << display(o->ops[1]) << ")%R";
