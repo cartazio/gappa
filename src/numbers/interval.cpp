@@ -147,7 +147,7 @@ std::pair< interval, interval > split(interval const &u, double f) {
   mpfr_set_d(tmp, 1 - f, GMP_RNDN);
   mpfr_mul(d->val, tmp, plup.lower().data->val, GMP_RNDN);
   mpfr_set_d(tmp, f, GMP_RNDN);
-  mpfr_mul(tmp, tmp, plup.lower().data->val, GMP_RNDN);
+  mpfr_mul(tmp, tmp, plup.upper().data->val, GMP_RNDN);
   mpfr_add(d->val, d->val, tmp, GMP_RNDN);
   mpfr_clear(tmp);
   number m(d);
