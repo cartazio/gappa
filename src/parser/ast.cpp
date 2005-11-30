@@ -56,6 +56,12 @@ ast_number *normalize(ast_number const &v) { return ast_number_cache.find(v); }
 static cache< ast_real > ast_real_cache;
 ast_real *normalize(ast_real const &v) { return ast_real_cache.find(v); }
 
+ast_real::ast_real(real_op const &v): ast_real_aux(v), name(NULL), accurate(NULL) {
+  if (!v.fun || v.fun->type == ROP_UNK) return;
+  if (v.fun->type == UOP_ID) accurate = v.ops[0];
+  else accurate = normalize(ast_real(real_op(v.fun->type, v.ops)));
+}
+
 std::string dump_real(ast_real const *r, unsigned prio) {
   if (r->name)
     return r->name->name;

@@ -43,8 +43,7 @@ struct ast_real;
 
 typedef std::vector< ast_real const * > ast_real_vect;
 
-struct real_op
-{
+struct real_op {
   ast_real_vect ops;
   function_class const *fun;
   real_op_type type;
@@ -72,13 +71,13 @@ typedef boost::variant
   , placeholder
   > ast_real_aux;
 
-struct ast_real: ast_real_aux
-{
+struct ast_real: ast_real_aux {
   mutable ast_ident const *name;
-  ast_real(ast_ident const *v): ast_real_aux(undefined_real()), name(v) {}
-  ast_real(ast_number const *v): ast_real_aux(v), name(NULL) {}
-  ast_real(real_op const &v): ast_real_aux(v), name(NULL) {}
-  ast_real(placeholder v): ast_real_aux(v), name(NULL) {}
+  ast_real const *accurate;
+  ast_real(ast_ident const *v): ast_real_aux(undefined_real()), name(v), accurate(NULL) {}
+  ast_real(ast_number const *v): ast_real_aux(v), name(NULL), accurate(NULL) {}
+  ast_real(real_op const &v);
+  ast_real(placeholder v): ast_real_aux(v), name(NULL), accurate(NULL) {}
   bool operator==(ast_real const &v) const;
   bool operator<(ast_real const &v) const;
 };

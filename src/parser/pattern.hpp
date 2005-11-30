@@ -35,6 +35,4 @@ class pattern {
 
 typedef std::vector< pattern_cond > pattern_cond_vect;
 
-ast_real const *morph(ast_real const *, function_class const ** = NULL);
-
 #endif // PROOFS_PATTERN_HPP

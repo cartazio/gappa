@@ -2,14 +2,6 @@
 #include <boost/variant.hpp>
 #include "parser/pattern.hpp"
 
-ast_real const *morph(ast_real const *r, function_class const **f) {
-  real_op const *p = boost::get < real_op const >(r);
-  if (!p || !p->fun || p->fun->type == ROP_UNK) return NULL;
-  if (f) *f = p->fun;
-  if (p->fun->type == UOP_ID) return p->ops[0];
-  return normalize(ast_real(real_op(p->fun->type, p->ops)));
-}
-
 struct match_visitor: boost::static_visitor< bool > {
   bool visit(ast_real const *src, ast_real const *dst) const;
   template< typename T, typename U > bool operator()(T const &, U const &) const { return false; }
@@ -40,11 +32,10 @@ bool match_visitor::visit(ast_real const *src, ast_real const *dst) const {
     if (!r1) r1 = src;
     else if (r1 != src) return false;
     if (i >= 0) return true;
-    ast_real const *src2 = morph(src);
-    if (!src2) return false;
+    if (!src->accurate) return false;
     ast_real const *&r2 = holders[j - 2];
-    if (!r2) r2 = src2;
-    else if (r2 != src2) return false;
+    if (!r2) r2 = src->accurate;
+    else if (r2 != src->accurate) return false;
     return true;
   }
   return boost::apply_visitor(*this, *src, *dst);

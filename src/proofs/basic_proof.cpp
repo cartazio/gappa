@@ -191,10 +191,10 @@ preal_vect rounding_bound_scheme::needed_reals() const {
 }
 
 proof_scheme *rounding_bound_scheme::factory(ast_real const *real) {
-  function_class const *f;
-  ast_real const *r = morph(real, &f);
-  if (!r || !(f->theorem_mask & function_class::TH_RND)) return NULL;
-  return new rounding_bound_scheme(real, r, f);
+  real_op const *p = boost::get < real_op const >(real);
+  if (!p || !p->fun || p->fun->type == ROP_UNK ||
+      !(p->fun->theorem_mask & function_class::TH_RND)) return NULL;
+  return new rounding_bound_scheme(real, real->accurate, p->fun);
 }
 
 // ENFORCE_BOUND
@@ -219,9 +219,10 @@ preal_vect enforce_bound_scheme::needed_reals() const {
 }
 
 proof_scheme *enforce_bound_scheme::factory(ast_real const *real) {
-  function_class const *f;
-  if (!morph(real, &f) || !(f->theorem_mask & function_class::TH_ENF)) return NULL;
-  return new enforce_bound_scheme(real, f);
+  real_op const *p = boost::get < real_op const >(real);
+  if (!p || !p->fun || p->fun->type == ROP_UNK ||
+      !(p->fun->theorem_mask & function_class::TH_ENF)) return NULL;
+  return new enforce_bound_scheme(real, p->fun);
 }
 
 // COMPUTATION
