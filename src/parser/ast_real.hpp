@@ -73,7 +73,7 @@ typedef boost::variant
 
 struct ast_real: ast_real_aux {
   mutable ast_ident const *name;
-  ast_real const *accurate;
+  mutable ast_real const *accurate;
   ast_real(ast_ident const *v): ast_real_aux(undefined_real()), name(v), accurate(NULL) {}
   ast_real(ast_number const *v): ast_real_aux(v), name(NULL), accurate(NULL) {}
   ast_real(real_op const &v);

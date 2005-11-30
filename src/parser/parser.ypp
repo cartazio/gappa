@@ -90,7 +90,7 @@ static ast_real const *rnd_normalize(ast_real const &real) {
 
 %%
 
-BLOB: PROG '{' PROP '}' REWRITE		{ generate_graph($3); }
+BLOB: PROG '{' PROP '}' HINTS		{ generate_graph($3); }
 
 PROP:
   REAL IN INTERVAL	{ $$ = new ast_prop(new ast_atom_bound($1, $3)); }
@@ -212,23 +212,29 @@ OPERANDS:
     $$ = $1;
   }
 
-REWRITE:
-| REWRITE REAL IMPL REAL ';'
+HINTS:
+| HINTS REAL IMPL REAL ';'
   {
     ast_real const *r1 = $2, *r2 = $4;
     test_ringularity(r1, r2);
     register_user_rewrite(r1, r2);
   }
-| REWRITE OPERANDS '$' OPERANDS ';'
+| HINTS OPERANDS '$' OPERANDS ';'
   {
     dichotomy_hint h;
     h.dst = *$2; delete $2;
     h.src = *$4; delete $4;
     dichotomies.push_back(h);
   }
-| REWRITE '$' OPERANDS ';'
+| HINTS '$' OPERANDS ';'
   {
     dichotomy_hint h;
     h.src = *$3; delete $3;
     dichotomies.push_back(h);
+  }
+| HINTS REAL '~' REAL ';'
+  {
+    ast_real const *r1 = $2, *r2 = $4;
+    if (r1->accurate) failure("the accurate expression of " << dump_real(r1) << " is modified");
+    r1->accurate = r2;
   }
