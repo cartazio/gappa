@@ -37,8 +37,7 @@ proof_scheme *absolute_error_scheme::factory(ast_real const *real) {
   ast_real_vect holders(2);
   if (!match(real, absolute_error_pattern, holders)) return NULL;
   real_op const *p = boost::get < real_op const >(holders[1]);
-  assert(p && p->fun);
-  if (!(p->fun->theorem_mask & function_class::TH_ABS)) return NULL;
+  if (!p || !p->fun || !(p->fun->theorem_mask & function_class::TH_ABS)) return NULL;
   return new absolute_error_scheme(real, p->fun);
 }
 
@@ -68,8 +67,7 @@ proof_scheme *absolute_error_from_real_scheme::factory(ast_real const *real) {
   ast_real_vect holders(2);
   if (!match(real, absolute_error_pattern, holders)) return NULL;
   real_op const *p = boost::get < real_op const >(holders[1]);
-  assert(p && p->fun);
-  if (!(p->fun->theorem_mask & function_class::TH_ABS_REA)) return NULL;
+  if (!p || !p->fun || !(p->fun->theorem_mask & function_class::TH_ABS_REA)) return NULL;
   return new absolute_error_from_real_scheme(real, holders[0], p->fun);
 }
 
@@ -99,8 +97,7 @@ proof_scheme *absolute_error_from_rounded_scheme::factory(ast_real const *real) 
   ast_real_vect holders(2);
   if (!match(real, absolute_error_pattern, holders)) return NULL;
   real_op const *p = boost::get < real_op const >(holders[1]);
-  assert(p && p->fun);
-  if (!(p->fun->theorem_mask & function_class::TH_ABS_RND)) return NULL;
+  if (!p || !p->fun || !(p->fun->theorem_mask & function_class::TH_ABS_RND)) return NULL;
   return new absolute_error_from_rounded_scheme(real, holders[1], p->fun);
 }
 
@@ -130,8 +127,7 @@ proof_scheme *relative_error_from_real_scheme::factory(ast_real const *real) {
   ast_real_vect holders(2);
   if (!match(real, relative_error_pattern, holders)) return NULL;
   real_op const *p = boost::get < real_op const >(holders[1]);
-  assert(p && p->fun);
-  if (!(p->fun->theorem_mask & function_class::TH_REL_REA)) return NULL;
+  if (!p || !p->fun || !(p->fun->theorem_mask & function_class::TH_REL_REA)) return NULL;
   ast_real const *av = normalize(ast_real(real_op(UOP_ABS, holders[0])));
   return new relative_error_from_real_scheme(real, av, p->fun);
 }
@@ -162,8 +158,7 @@ proof_scheme *relative_error_from_rounded_scheme::factory(ast_real const *real) 
   ast_real_vect holders(2);
   if (!match(real, relative_error_pattern, holders)) return NULL;
   real_op const *p = boost::get < real_op const >(holders[1]);
-  assert(p && p->fun);
-  if (!(p->fun->theorem_mask & function_class::TH_REL_RND)) return NULL;
+  if (!p || !p->fun || !(p->fun->theorem_mask & function_class::TH_REL_RND)) return NULL;
   ast_real const *av = normalize(ast_real(real_op(UOP_ABS, holders[0])));
   return new relative_error_from_rounded_scheme(real, av, p->fun);
 }
@@ -192,8 +187,7 @@ preal_vect rounding_bound_scheme::needed_reals() const {
 
 proof_scheme *rounding_bound_scheme::factory(ast_real const *real) {
   real_op const *p = boost::get < real_op const >(real);
-  if (!p || !p->fun || p->fun->type == ROP_UNK ||
-      !(p->fun->theorem_mask & function_class::TH_RND)) return NULL;
+  if (!p || !p->fun || !(p->fun->theorem_mask & function_class::TH_RND)) return NULL;
   return new rounding_bound_scheme(real, real->accurate, p->fun);
 }
 
@@ -220,8 +214,7 @@ preal_vect enforce_bound_scheme::needed_reals() const {
 
 proof_scheme *enforce_bound_scheme::factory(ast_real const *real) {
   real_op const *p = boost::get < real_op const >(real);
-  if (!p || !p->fun || p->fun->type == ROP_UNK ||
-      !(p->fun->theorem_mask & function_class::TH_ENF)) return NULL;
+  if (!p || !p->fun || !(p->fun->theorem_mask & function_class::TH_ENF)) return NULL;
   return new enforce_bound_scheme(real, p->fun);
 }
 
