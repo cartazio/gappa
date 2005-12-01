@@ -9,6 +9,8 @@
 #include "parser/pattern.hpp"
 #include "proofs/schemes.hpp"
 
+extern bool parameter_constrained;
+
 struct float_format: gs_rounding {
   int min_exp, prec;
   virtual int shift_val(int exp, int sz) const { return std::max(min_exp - exp, sz - prec); }
@@ -159,7 +161,8 @@ interval float_rounding_class::absolute_error_from_rounded(interval const &i, st
 }
 
 interval float_rounding_class::relative_error_from_real(interval const &i, std::string &name) const {
-  if (!is_empty(intersect(i, from_exponent(format.min_exp + format.prec - 1, 0))))
+  if (parameter_constrained &&
+      !is_empty(intersect(i, from_exponent(format.min_exp + format.prec - 1, 0))))
     return interval();
   name = "float_relative" + ident;
   return from_exponent(type == ROUND_NE ? -format.prec : 1 - format.prec,
@@ -167,7 +170,8 @@ interval float_rounding_class::relative_error_from_real(interval const &i, std::
 }
 
 interval float_rounding_class::relative_error_from_rounded(interval const &i, std::string &name) const {
-  if (!is_empty(intersect(i, from_exponent(format.min_exp + format.prec - 1, 0))))
+  if (parameter_constrained &&
+      !is_empty(intersect(i, from_exponent(format.min_exp + format.prec - 1, 0))))
     return interval();
   name = "float_relative_inv" + ident;
   return from_exponent(type == ROUND_NE ? -format.prec : 1 - format.prec,

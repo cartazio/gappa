@@ -8,6 +8,7 @@
 #include "parser/ast.hpp"
 
 extern bool warning_hint_difference, warning_null_denominator;
+extern bool parameter_constrained;
 
 typedef std::map< ast_real const *, int > product;
 
@@ -136,7 +137,7 @@ static quotient div(quotient const &q1, quotient const &q2) {
     std::cerr << "Error: a zero appears as a denominator in a rewriting rule.\n";
     exit(EXIT_FAILURE);
   }
-  if (d.size() > 1 || !d.begin()->first.empty())
+  if (warning_null_denominator && parameter_constrained && (d.size() > 1 || !d.begin()->first.empty()))
     std::cerr << "Warning: although present in a quotient, the expression "
               << dump_sum(d) << " may have not been tested for non-zeroness.\n";
   quotient res;

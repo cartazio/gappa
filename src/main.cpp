@@ -5,6 +5,7 @@
 #include "proofs/proof_graph.hpp"
 #include "proofs/schemes.hpp"
 
+extern bool parameter_constrained;
 extern int yyparse(void);
 extern std::vector< graph_t * > graphs;
 extern bool parse_args(int argc, char **argv);
@@ -22,8 +23,13 @@ struct null_backend: backend {
 
 int main(int argc, char **argv) {
   if (!parse_args(argc, argv)) return 0;
-  if (proof_generator) display = proof_generator->create(std::cout);
-  else display = new null_backend;
+  if (proof_generator) {
+    if (!parameter_constrained) {
+      std::cerr << "Error: unconstrained mode is not compatible with script generation, since they are incomplete.\n";
+      return EXIT_FAILURE;
+    }
+    display = proof_generator->create(std::cout);
+  } else display = new null_backend;
   if (yyparse()) return EXIT_FAILURE;
   ast_real_vect missing_paths = generate_proof_paths();
   for(ast_real_vect::const_iterator i = missing_paths.begin(), i_end = missing_paths.end(); i != i_end; ++i)

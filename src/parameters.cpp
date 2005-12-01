@@ -5,6 +5,7 @@
 
 int parameter_internal_precision = 60;
 int parameter_dichotomy_depth = 100;
+bool parameter_constrained = true;
 bool warning_dichotomy_failure = true;
 bool warning_hint_difference = true;
 bool warning_null_denominator = true;
@@ -22,6 +23,9 @@ static void help() {
     "Engine parameters:\n"
     "  -Eprecision=int                 internal precision (default: " << parameter_internal_precision << ")\n"
     "  -Edichotomy=int                 dichotomy depth (default: " << parameter_dichotomy_depth << ")\n"
+    "\n"
+    "Engine modes:\n"
+    "  -Munconstrained                 do not check for theorem constraints\n"
     "\n"
     "Warnings: (default: all)\n"
     "  -W[no-]dichotomy-failure\n"
@@ -48,12 +52,18 @@ bool parse_option(std::string const &s, bool internal) {
     return false;
     *param = atoi(v.c_str()); 
     break; }
+  case 'M': {
+    std::string ss = s.substr(2);
+    if (ss == "unconstrained") parameter_constrained = false; else
+    return false;
+    break;
+  }
   case 'W': {
     bool yes = s.size() <= 6 || s.substr(2, 3) != "no-";
     std::string w = s.substr(yes ? 2 : 5);
     if (w == "dichotomy-failure") warning_dichotomy_failure = yes; else
     if (w == "hint-difference"  ) warning_hint_difference   = yes; else
-    if (w == "null-denominator" ) warning_hint_difference   = yes; else
+    if (w == "null-denominator" ) warning_null_denominator  = yes; else
     if (w == "unbound-variable" ) warning_unbound_variable  = yes;
     else return false;
     break; }

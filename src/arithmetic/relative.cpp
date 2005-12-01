@@ -6,6 +6,8 @@
 #include "numbers/real.hpp"
 #include "numbers/round.hpp"
 
+extern bool parameter_constrained;
+
 struct relative_function_class: function_class {
   interval he;
   int prec, min_exp;
@@ -28,14 +30,16 @@ interval relative_function_class::round(interval const &i, std::string &name) co
 }
 
 interval relative_function_class::relative_error_from_real(interval const &i, std::string &name) const {
-  if (min_exp != INT_MIN && !is_empty(intersect(i, from_exponent(min_exp, 0))))
+  if (parameter_constrained &&
+      min_exp != INT_MIN && !is_empty(intersect(i, from_exponent(min_exp, 0))))
     return interval();
   name = "rel_error" + ident;
   return he;
 }
 
 interval relative_function_class::relative_error_from_rounded(interval const &i, std::string &name) const {
-  if (min_exp != INT_MIN && !is_empty(intersect(i, from_exponent(min_exp, 0))))
+  if (parameter_constrained &&
+      min_exp != INT_MIN && !is_empty(intersect(i, from_exponent(min_exp, 0))))
     return interval();
   name = "rel_error_inv" + ident;
   return he;

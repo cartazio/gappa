@@ -10,6 +10,7 @@
 
 extern pattern absolute_error_pattern, relative_error_pattern;
 extern backend *display;
+extern bool parameter_constrained;
 
 static preal_vect one_needed(ast_real const *r) {
   return preal_vect(1, predicated_real(r, PRED_BND));
@@ -463,7 +464,7 @@ node *rewrite_scheme::generate_proof() const {
     case COND_NE: good = n > upper(b) || n < lower(b); break;
     default: assert(false);
     }
-    if (!good) return NULL;
+    if (parameter_constrained && !good) return NULL;
     hyps.push_back(res);
   }
   property const &res = n->get_result();
