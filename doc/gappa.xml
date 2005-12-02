@@ -71,12 +71,12 @@ errors due to floating-point arithmetic.</para>
 <title>Examples</title>
 &gappa-x1mx;
 &gappa-tang;
+&gappa-newton;
 </chapter>
 
 <chapter>
 <title>Customizing Gappa</title>
 &gappa-customizing;
-&gappa-newton;
 </chapter>
 
 <appendix>
