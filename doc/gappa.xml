@@ -10,6 +10,7 @@
   <!ENTITY gappa-warnings    SYSTEM "manual/warnings.xml">
   <!ENTITY gappa-x1mx        SYSTEM "examples/x1mx.xml">
   <!ENTITY gappa-tang        SYSTEM "examples/tang.xml">
+  <!ENTITY gappa-newton      SYSTEM "examples/newton.xml">
 ]>
 <book>
 
@@ -75,6 +76,7 @@ errors due to floating-point arithmetic.</para>
 <chapter>
 <title>Customizing Gappa</title>
 &gappa-customizing;
+&gappa-newton;
 </chapter>
 
 <appendix>

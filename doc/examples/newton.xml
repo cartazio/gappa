@@ -1,0 +1,128 @@
+<section>
+<title>Fixed-point Newton division</title>
+
+<section>
+<title>The algorithm and its verification</title>
+
+<para>Let us suppose we want to invert a floating-point number on a
+processor without a floating-point unit. The 24-bit mantissa will have
+to be inverted from a value between 0.5 and 1 toward a value between 1
+and 2. This will be done with fixed-point arithmetic thanks to Newton's
+iteration.</para>
+
+<para>Our mantissa will be noted <code>d</code> and its exact reciprocal
+will be <code>R</code>. A first approximation <code>r0</code> will be
+tabulated at precision <texinline>\pm 2^{-8}</texinline>. Two Newton's
+iterations will then be used to compute <code>r1</code> and then
+<code>r2</code>. The first one is computed on 16-bit words to speed up
+computations. The second one uses full 32-bit words.</para>
+
+<para>First, we define <code>R</code> as the reciprocal, and
+<code>d</code> and <code>r0</code> as two fixed-point numbers at a given
+precision.</para>
+
+<programlisting><![CDATA[d = fixed<-24,dn>(d_);
+R = 1 / d;
+r0 = fixed<-8,dn>(r0_);]]>
+</programlisting>
+
+<para>Next we have the two iterations. Gappa's representation of
+fixed-point arithmetic is high-level: the tool is only interested in the
+weight of the least significant bit. The shifts that occur in an
+implementation only have an impact on the internal representation of the
+values, not on the values themselves, so Gappa is only aware of them
+through the displacements of the least significant bits.</para>
+
+<programlisting><![CDATA[r1 fixed<-14,dn>= r0 * (2 - fixed<-16,dn>(d) * r0);
+r2 fixed<-30,dn>= r1 * (2 - d * r1);]]>
+</programlisting>
+
+<para>The property we are looking for expresses the absolute error
+between <code>r2</code> and <code>R</code>, knowing that <code>r0</code>
+is an approximation of <code>R</code> and that <code>d</code> is
+bounded.</para>
+
+<programlisting><![CDATA[{ r0 - R in [-1b-8,1b-8] /\ d in [0.5,1] -> r2 - R in ? }]]>
+</programlisting>
+
+<para>We expect Gappa to prove that <code>r2</code> is <texinline>R \pm
+2^{-24}</texinline>.</para>
+</section>
+
+<section>
+<title>Adding hints</title>
+
+<para>On the previous script, Gappa is not even able to compute
+<code>r2 - R</code>, so an intermediate result must be missing. Let us
+start by unrolling the iterations. And first, the seed <code>r0</code>.</para>
+
+<programlisting><![CDATA[{ r0 - R in [-1b-8,1b-8] /\ d in [0.5,1] ->
+  r0 in ? /\ r0 - R in ? /\ r2 - R in ?}]]>
+</programlisting>
+
+<para>As it appears, Gappa is unable to bound <code>r0</code>. The tool
+does not know that <code>r0</code> is supposed to approximate
+<code>R</code>. In particular, it does not see that <code>r0 - R</code>
+is known and <code>R</code> is computable. So we have to add a hint to
+express this fact.</para>
+
+<programlisting><![CDATA[r0 -> (r0 - R) + R;]]>
+</programlisting>
+
+<para>Now Gappa can compute the range of <code>r0</code>, and then the
+range of <code>r2 - R</code>. This range is so wide that it is unusable
+though. So let us go to the next iteration.</para>
+
+<programlisting><![CDATA[{ r0 - R in [-1b-8,1b-8] /\ d in [0.5,1] ->
+  r1 in ? /\ r1 - R in ? /\ r2 - R in ? }]]>
+</programlisting>
+
+<para>Gappa does not find what relation stands between <code>r1</code>
+and <code>R</code>. So we have to split the absolute error between two
+terms: a rounding error we expect Gappa to compute, and the convergence
+due to Newton's iteration.</para>
+
+<programlisting><![CDATA[{ r0 - R in [-1b-8,1b-8] /\ d in [0.5,1] ->
+  r1 - r0 * (2 - d * r0) in ? /\ r0 * (2 - d * r0) - R in ? }]]>
+</programlisting>
+
+<para>The rounding error almost corresponds to the precision of the
+computations, so it is fine. As for the second term, we have to help
+Gappa by directly providing an expression of this difference. This will
+be done by adding a rule describing the quadratic convergence of Newton's
+iteration. And since we also have to split <code>r1 - R</code>, we will
+do it in one single rewriting rule.</para>
+
+<programlisting><![CDATA[1 - R -> (r1 - r0 * (2 - d * r0)) - (r0 - R) * (r0 - R) * d;]]>
+</programlisting>
+
+<para>A similar rule will work for <code>r2 - R</code>. And we can also
+use the same trick than for <code>r0</code> to improve the ranges on
+<code>r1</code> and <code>r2</code> (and consequently any range that
+depends on these ranges).</para>
+</section>
+
+<section>
+<title>Full listing</title>
+
+<programlisting><![CDATA[d = fixed<-24,dn>(d_);
+R = 1 / d;
+r0 = fixed<-8,dn>(r0_);
+
+r1 fixed<-14,dn>= r0 * (2 - fixed<-16,dn>(d) * r0);
+r2 fixed<-30,dn>= r1 * (2 - d * r1);
+
+{ r0 - R in [-1b-8,1b-8] /\ d in [0.5,1] -> r2 - R in ? }
+
+r1 - R -> (r1 - r0 * (2 - d * r0)) - (r0 - R) * (r0 - R) * d;
+r2 - R -> (r2 - r1 * (2 - d * r1)) - (r1 - R) * (r1 - R) * d;
+
+r0 -> (r0 - R) + R;
+r1 -> (r1 - R) + R;
+r2 -> (r2 - R) + R;]]>
+</programlisting>
+
+<para>Gappa will answer that <texinline>r_2 = R \pm 2^{-24.7}</texinline>.</para>
+
+</section>
+</section>
