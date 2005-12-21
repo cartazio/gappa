@@ -6,7 +6,7 @@
 bool match(ast_real const *src, ast_real const *dst, ast_real_vect &);
 ast_real const *rewrite(ast_real const *, ast_real_vect const &);
 
-enum condition_type { COND_LT, COND_LE, COND_GT, COND_GE, COND_NE };
+enum condition_type { COND_LT, COND_LE, COND_GT, COND_GE, COND_NE, COND_NZ };
 
 struct pattern_cond {
   ast_real const *real;
@@ -29,6 +29,7 @@ class pattern {
   pattern_cond operator<=(int) const;
   pattern_cond operator>=(int) const;
   pattern_cond operator!=(int) const;
+  pattern_cond operator~() const;
   static pattern abs(pattern const &);
   static pattern sqrt(pattern const &);
 };

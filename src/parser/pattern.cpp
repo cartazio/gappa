@@ -127,3 +127,11 @@ PATTERN_COND(!=, NE)
 pattern pattern::operator-() const	{ return pattern(real_op(UOP_NEG, real)); }
 pattern pattern::abs(pattern const &p)	{ return pattern(real_op(UOP_ABS, p.real)); }
 pattern pattern::sqrt(pattern const &p)	{ return pattern(real_op(UOP_SQRT, p.real)); }
+
+pattern_cond pattern::operator~() const {
+  pattern_cond res;
+  res.real = real;
+  res.value = 0;
+  res.type = COND_NZ;
+  return res;
+}

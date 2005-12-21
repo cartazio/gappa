@@ -550,7 +550,7 @@ node *rewrite_scheme::generate_proof() const {
   std::vector< property > hyps;
   for(pattern_cond_vect::const_iterator i = conditions.begin(), end = conditions.end();
       i != end; ++i) {
-    node *m = find_proof(i->real);
+    node *m = find_proof(predicated_real(i->real, i->type == COND_NZ ? PRED_ABS : PRED_BND));
     if (!m) return NULL;
     property const &res = m->get_result();
     interval const &b = res.bnd();
@@ -560,6 +560,7 @@ node *rewrite_scheme::generate_proof() const {
     case COND_LE: good = n >= upper(b); break;
     case COND_GE: good = n <= lower(b); break;
     case COND_LT: good = n > upper(b); break;
+    case COND_NZ:
     case COND_GT: good = n < lower(b); break;
     case COND_NE: good = n > upper(b) || n < lower(b); break;
     default: assert(false);

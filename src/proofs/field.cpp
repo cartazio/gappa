@@ -169,37 +169,32 @@ REWRITe(mul_decomposition_full_right,
 REWRIT9(relative_transitivity, //relative_error_trans,
 	(b_a - c) / c,
 	(b - a) / a + (a - c) / c + ((b - a) / a) * ((a - c) / c),
-	abs(c) > 0 && abs(a) > 0,
+	~c && ~a,
 	a ^ c);
 
 REWRIT9(relative_to_absolute,
 	a - b,
 	((a - b) / b) * b,
-	abs(b) > 0,
+	~b,
 	a ^ b);
 
 REWRIT9(mul_rel_decomposition,
 	(a * b - c * d) / (c * d),
 	(a - c) / c + (b - d) / d + ((a - c) / c) * ((b - d) / d),
-	abs(c) > 0 && abs(d) > 0,
+	~c && ~d,
 	a ^ c && b ^ d);
 
 REWRIT9(mul_rel_decomposition_left,
 	(a * b - a * c) / (a * c),
 	(b - c) / c,
-	abs(a) > 0 && abs(c) > 0,
+	~a && ~c,
 	b ^ c);
 
 REWRIT9(mul_rel_decomposition_right,
 	(a * b - c * b) / (c * b),
 	(a - c) / c,
-	abs(b) > 0 && abs(c) > 0,
+	~b && ~c,
 	a ^ c);
-
-// FIXME? (double abs)
-REWRITE(sqrt_square,
-	sqrt(a * a),
-	abs(a));
 
 REWRIT3(square_sqrt,
 	sqrt(a) * sqrt(a),
