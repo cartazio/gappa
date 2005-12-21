@@ -16,6 +16,12 @@ static preal_vect one_needed(ast_real const *r) {
   return preal_vect(1, predicated_real(r, PRED_BND));
 }
 
+static ast_real const *absolute_value(ast_real const *real, bool &already) {
+  real_op const *ro = boost::get< real_op const >(real);
+  already = ro && ro->type == UOP_ABS;
+  return already ? real : normalize(ast_real(real_op(UOP_ABS, real)));
+}
+
 // ABSOLUTE_ERROR
 REGISTER_SCHEME_BEGIN(absolute_error);
   function_class const *function;
@@ -572,9 +578,10 @@ preal_vect fix_of_flt_bnd_scheme::needed_reals() const {
 
 proof_scheme *fix_of_flt_bnd_scheme::factory(predicated_real const &real) {
   if (real.pred() != PRED_FIX) return NULL;
+  bool b; // TODO
   preal_vect hyps;
   hyps.push_back(predicated_real(real.real(), PRED_FLT));
-  hyps.push_back(predicated_real(normalize(ast_real(real_op(UOP_ABS, real.real()))), PRED_BND));
+  hyps.push_back(predicated_real(absolute_value(real.real(), b), PRED_BND));;
   return new fix_of_flt_bnd_scheme(real, hyps);
 }
 
@@ -604,9 +611,10 @@ preal_vect flt_of_fix_bnd_scheme::needed_reals() const {
 
 proof_scheme *flt_of_fix_bnd_scheme::factory(predicated_real const &real) {
   if (real.pred() != PRED_FLT) return NULL;
+  bool b; // TODO
   preal_vect hyps;
   hyps.push_back(predicated_real(real.real(), PRED_FIX));
-  hyps.push_back(predicated_real(normalize(ast_real(real_op(UOP_ABS, real.real()))), PRED_BND));
+  hyps.push_back(predicated_real(absolute_value(real.real(), b), PRED_BND));;
   return new flt_of_fix_bnd_scheme(real, hyps);
 }
 
