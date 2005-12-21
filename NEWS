@@ -1,3 +1,10 @@
+Version 0.5.5:
+ * whole engine
+   - added square root (no rule checking though)
+   - added ABS predicate to workaround abuse of absolute values
+ * proof graph
+   - added option to disable constraint checking around zero
+
 Version 0.5.4:
  * syntax
    - reduced the number of false-positive for unbound identifiers
