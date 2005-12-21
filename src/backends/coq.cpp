@@ -162,20 +162,20 @@ static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_m
     assert(pki != pmap.end());
     int h = pki->second.first;
     predicate_type t = j->real.pred();
-    if (t == PRED_BND) {
+    if (j->real.pred_bnd()) {
       interval const &i = pki->second.second->bnd(), &ii = j->bnd();
       assert(i <= ii);
       if (ii <= i)
         plouf << " exact h" << h << '.';
       else
-        plouf << " apply subset with (1 := h" << h << "). reflexivity.";
+        plouf << " apply " << (t == PRED_ABS ? "abs_" : "") << "subset with (1 := h" << h << "). reflexivity.";
     } else {
       long c = pki->second.second->cst(), cc = j->cst();
       assert(t == PRED_FIX && c >= cc || t == PRED_FLT && c <= cc);
       if (c == c)
         plouf << " exact h" << h << '.';
       else
-        plouf << " apply " << (t == PRED_FIX ? "fix" : "flt") << "subset with (1 := h" << h << "). reflexivity.";
+        plouf << " apply " << (t == PRED_FIX ? "fix" : "flt") << "_subset with (1 := h" << h << "). reflexivity.";
     }
   }
   plouf << '\n';
