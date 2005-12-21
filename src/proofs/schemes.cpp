@@ -56,6 +56,34 @@ struct real_dependency {
 typedef std::map< predicated_real, real_dependency > real_dependencies;
 static real_dependencies reals;
 
+typedef std::list< proof_scheme const * > scheme_list;
+
+static void initialize_scheme_list(scheme_list &v) {
+  for(real_dependencies::iterator i = reals.begin(), i_end = reals.end(); i != i_end; ++i) {
+    scheme_set &s = i->second.schemes;
+    for(scheme_set::iterator j = s.begin(), j_end = s.end(); j != j_end; ++j)
+      (*j)->scanned = false;
+  }
+  for(scheme_vect::const_iterator i = source_schemes.begin(),
+      i_end = source_schemes.end(); i != i_end; ++i) {
+    proof_scheme const *s = *i;
+    s->scanned = true;
+    v.push_back(s);
+  }
+}
+
+static void insert_dependent(scheme_list &v, predicated_real const &real) {
+  real_dependencies::const_iterator i = reals.find(real);
+  if (i == reals.end()) return;
+  scheme_set const &dep = i->second.dependent;
+  for(scheme_set::const_iterator i = dep.begin(), end = dep.end(); i != end; ++i) {
+    proof_scheme const *s = *i;
+    if (s->scanned) continue;
+    s->scanned = true;
+    v.push_back(s);
+  }
+}
+
 static void delete_scheme(proof_scheme const *s, predicated_real const &restricted_real) {
   preal_vect v = s->needed_reals();
   for(preal_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i) {
@@ -151,27 +179,6 @@ proof_paths_cleaner::~proof_paths_cleaner() {
 static proof_paths_cleaner dummy;
 #endif // LEAK_CHECKER
 
-typedef std::list< proof_scheme const * > scheme_list;
-static void insert_dependent(scheme_list &v, predicated_real const &real) {
-  real_dependencies::const_iterator i = reals.find(real);
-  if (i == reals.end()) return;
-  scheme_set const &dep = i->second.dependent;
-  for(scheme_set::const_iterator i = dep.begin(), end = dep.end(); i != end; ++i) {
-    proof_scheme const *s = *i;
-    if (s->scanned) continue;
-    s->scanned = true;
-    v.push_back(s);
-  }
-}
-
-static void clear_flags() {
-  for(real_dependencies::iterator i = reals.begin(), i_end = reals.end(); i != i_end; ++i) {
-    scheme_set &s = i->second.schemes;
-    for(scheme_set::iterator j = s.begin(), j_end = s.end(); j != j_end; ++j)
-      (*j)->scanned = false;
-  }
-}
-
 node *find_proof(property const &res) {
   node *n = find_proof(res.real);
   return (n && n->get_result().implies(res)) ? n : NULL;
@@ -193,14 +200,8 @@ bool graph_t::populate(property_tree const &goals, dichotomy_sequence const &dic
   graph_loader loader(this);
   for(dichotomy_sequence::const_iterator dichotomy_it = dichotomy.begin(),
       dichotomy_end = dichotomy.end(); /*nothing*/; ++dichotomy_it) {
-    clear_flags();
     scheme_list missing_schemes;
-    for(scheme_vect::const_iterator i = source_schemes.begin(),
-        i_end = source_schemes.end(); i != i_end; ++i) {
-      proof_scheme const *s = *i;
-      s->scanned = true;
-      missing_schemes.push_back(s);
-    }
+    initialize_scheme_list(missing_schemes);
     for(node_map::const_iterator i = known_reals.begin(), i_end = known_reals.end(); i != i_end; ++i)
       insert_dependent(missing_schemes, i->first);
     unsigned iter = 0;
