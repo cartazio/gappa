@@ -1,9 +1,13 @@
 Version 0.5.5:
  * whole engine
    - added square root (no rule checking though)
-   - added ABS predicate to workaround abuse of absolute values
+   - added ABS predicate to workaround abuse of absolute values in theorems
  * proof graph
    - added option to disable constraint checking around zero
+ * arithmetic
+   - generalized fixed point range enforcing to any expression
+ * proof paths
+   - enhanced the detection of dead paths that contain cycles
 
 Version 0.5.4:
  * syntax
