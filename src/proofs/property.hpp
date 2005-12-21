@@ -7,7 +7,7 @@
 #include "numbers/interval.hpp"
 #include "parser/ast_real.hpp"
 
-enum predicate_type { PRED_BND, PRED_FIX, PRED_FLT };
+enum predicate_type { PRED_BND, PRED_ABS, PRED_FIX, PRED_FLT };
 
 class predicated_real {
   long d;
@@ -15,6 +15,8 @@ class predicated_real {
   predicated_real(): d(0) {}
   predicated_real(ast_real const *r, predicate_type p): d(reinterpret_cast< long >(r) | p) {}
   predicate_type pred() const { return (predicate_type)(d & 3); }
+  bool pred_bnd() const { return (d & 2) == 0; }
+  bool pred_cst() const { return (d & 2) != 0; }
   ast_real const *real() const { return reinterpret_cast< ast_real const * >(d & ~3); }
   bool operator==(predicated_real const &r) const { return d == r.d; }
   bool operator!=(predicated_real const &r) const { return d != r.d; }
@@ -27,13 +29,13 @@ class property {
  public:
   predicated_real real;
   interval &bnd()
-  { assert(real.pred() == PRED_BND); return *reinterpret_cast< interval * >(&d); }
+  { assert(real.pred_bnd()); return *reinterpret_cast< interval * >(&d); }
   interval const &bnd() const
-  { assert(real.pred() == PRED_BND); return *reinterpret_cast< interval const * >(&d); }
+  { assert(real.pred_bnd()); return *reinterpret_cast< interval const * >(&d); }
   long &cst()
-  { assert(real.pred() != PRED_BND); return d; }
+  { assert(real.pred_cst()); return d; }
   long const &cst() const
-  { assert(real.pred() != PRED_BND); return d; }
+  { assert(real.pred_cst()); return d; }
   property();
   property(ast_real const *);
   property(ast_real const *, interval const &);

@@ -118,7 +118,7 @@ static std::map< std::string, int > displayed_properties;
 static std::string display(property const &p) {
   std::stringstream s;
   predicate_type t = p.real.pred();
-  if (t == PRED_BND) s << "IintF " << display(p.bnd());
+  if (p.real.pred_bnd()) s << (t == PRED_BND ? "InP " : "AbsInP ") << display(p.bnd());
   else s << (t == PRED_FIX ? "FixP (" : "FltP (") << p.cst() << ')';
   s << ' ' << display(p.real.real());
   std::string s_ = s.str();

@@ -19,6 +19,7 @@ property::property(ast_real const *r, interval const &i): real(r, PRED_BND) {
 
 property::property(predicated_real const &r): real(r) {
   switch (real.pred()) {
+  case PRED_ABS:
   case PRED_BND: new(&d) interval; break;
   case PRED_FIX: d = INT_MIN;
   case PRED_FLT: d = INT_MAX;
@@ -26,30 +27,30 @@ property::property(predicated_real const &r): real(r) {
 }
 
 property::property(predicated_real const &r, interval const &i): real(r) {
-  assert(r.pred() == PRED_BND);
+  assert(r.pred_bnd());
   new(&d) interval(i);
 }
 
 property::property(predicated_real const &r, long i): d(i), real(r) {
-  assert(r.pred() != PRED_BND);
+  assert(r.pred_cst());
 }
 
 property::property(property const &p): real(p.real) {
-  if (p.real.pred() == PRED_BND) new(&d) interval(p.bnd());
+  if (p.real.pred_bnd()) new(&d) interval(p.bnd());
   else d = p.d;
 }
 
 property::~property() {
-  if (real.pred() == PRED_BND) bnd().~interval();
+  if (real.pred_bnd()) bnd().~interval();
 }
 
 property &property::operator=(property const &p) {
-  if (p.real.pred() == PRED_BND) {
+  if (p.real.pred_bnd()) {
     interval const &pb = p.bnd();
-    if (real.pred() == PRED_BND) bnd() = pb;
+    if (real.pred_bnd()) bnd() = pb;
     else new(&d) interval(pb);
   } else {
-    if (real.pred() == PRED_BND) bnd().~interval();
+    if (real.pred_bnd()) bnd().~interval();
     d = p.d;
   }
   real = p.real;
@@ -59,7 +60,8 @@ property &property::operator=(property const &p) {
 bool property::implies(property const &p) const {
   if (real != p.real) return false;
   switch (real.pred()) {
-  case PRED_BND: return bnd() <= p.bnd();
+  case PRED_BND:
+  case PRED_ABS: return bnd() <= p.bnd();
   case PRED_FIX: return d >= p.d;
   case PRED_FLT: return d <= p.d;
   }
@@ -70,6 +72,7 @@ bool property::implies(property const &p) const {
 bool property::strict_implies(property const &p) const {
   if (real != p.real) return false;
   switch (real.pred()) {
+  case PRED_ABS:
   case PRED_BND: return bnd() < p.bnd();
   case PRED_FIX: return d > p.d;
   case PRED_FLT: return d < p.d;
@@ -81,6 +84,7 @@ bool property::strict_implies(property const &p) const {
 void property::intersect(property const &p) {
   assert(real == p.real);
   switch (real.pred()) {
+  case PRED_ABS:
   case PRED_BND: { interval &i = bnd(); i = ::intersect(i, p.bnd()); break; }
   case PRED_FIX: d = std::max(d, p.d); break;
   case PRED_FLT: d = std::min(d, p.d); break;
@@ -91,6 +95,7 @@ void property::intersect(property const &p) {
 void property::hull(property const &p) {
   assert(real == p.real);
   switch (real.pred()) {
+  case PRED_ABS:
   case PRED_BND: { interval &i = bnd(); i = ::hull(i, p.bnd()); break; }
   case PRED_FIX: d = std::min(d, p.d); break;
   case PRED_FLT: d = std::max(d, p.d); break;
