@@ -61,9 +61,6 @@ pattern_register::pattern_register(pattern const &p1, pattern const &p2, std::st
 
 static pattern a(0), b(1), c(2), d(3), b_a(-1);
 
-// exported patterns
-pattern absolute_error_pattern(b_a - a), relative_error_pattern((b_a - a) / a);
-
 #define abs pattern::abs
 #define sqrt pattern::sqrt
 

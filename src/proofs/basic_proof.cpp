@@ -8,7 +8,6 @@
 #include "proofs/basic_proof.hpp"
 #include "proofs/proof_graph.hpp"
 
-extern pattern absolute_error_pattern, relative_error_pattern;
 extern backend *display;
 extern bool parameter_constrained;
 
@@ -35,11 +34,10 @@ preal_vect absolute_error_scheme::needed_reals() const {
 }
 
 proof_scheme *absolute_error_scheme::factory(ast_real const *real) {
-  ast_real_vect holders(2);
-  if (!match(real, absolute_error_pattern, holders)) return NULL;
-  real_op const *p = boost::get < real_op const >(holders[1]);
-  if (!p || !p->fun || !(p->fun->theorem_mask & function_class::TH_ABS)) return NULL;
-  return new absolute_error_scheme(real, p->fun);
+  ast_real const *holders[2];
+  function_class const *f = absolute_rounding_error(real, holders);
+  if (!f || !(f->theorem_mask & function_class::TH_ABS)) return NULL;
+  return new absolute_error_scheme(real, f);
 }
 
 // ABSOLUTE_ERROR_FROM_REAL
@@ -65,11 +63,10 @@ preal_vect absolute_error_from_real_scheme::needed_reals() const {
 }
 
 proof_scheme *absolute_error_from_real_scheme::factory(ast_real const *real) {
-  ast_real_vect holders(2);
-  if (!match(real, absolute_error_pattern, holders)) return NULL;
-  real_op const *p = boost::get < real_op const >(holders[1]);
-  if (!p || !p->fun || !(p->fun->theorem_mask & function_class::TH_ABS_REA)) return NULL;
-  return new absolute_error_from_real_scheme(real, holders[0], p->fun);
+  ast_real const *holders[2];
+  function_class const *f = absolute_rounding_error(real, holders);
+  if (!f || !(f->theorem_mask & function_class::TH_ABS_REA)) return NULL;
+  return new absolute_error_from_real_scheme(real, holders[0], f);
 }
 
 // ABSOLUTE_ERROR_FROM_ROUNDED
@@ -95,11 +92,10 @@ preal_vect absolute_error_from_rounded_scheme::needed_reals() const {
 }
 
 proof_scheme *absolute_error_from_rounded_scheme::factory(ast_real const *real) {
-  ast_real_vect holders(2);
-  if (!match(real, absolute_error_pattern, holders)) return NULL;
-  real_op const *p = boost::get < real_op const >(holders[1]);
-  if (!p || !p->fun || !(p->fun->theorem_mask & function_class::TH_ABS_RND)) return NULL;
-  return new absolute_error_from_rounded_scheme(real, holders[1], p->fun);
+  ast_real const *holders[2];
+  function_class const *f = absolute_rounding_error(real, holders);
+  if (!f || !(f->theorem_mask & function_class::TH_ABS_RND)) return NULL;
+  return new absolute_error_from_rounded_scheme(real, holders[1], f);
 }
 
 // RELATIVE_ERROR_FROM_REAL
@@ -125,11 +121,10 @@ preal_vect relative_error_from_real_scheme::needed_reals() const {
 }
 
 proof_scheme *relative_error_from_real_scheme::factory(ast_real const *real) {
-  ast_real_vect holders(2);
-  if (!match(real, relative_error_pattern, holders)) return NULL;
-  real_op const *p = boost::get < real_op const >(holders[1]);
-  if (!p || !p->fun || !(p->fun->theorem_mask & function_class::TH_REL_REA)) return NULL;
-  return new relative_error_from_real_scheme(real, predicated_real(holders[0], PRED_ABS), p->fun);
+  ast_real const *holders[2];
+  function_class const *f = relative_rounding_error(real, holders);
+  if (!f || !(f->theorem_mask & function_class::TH_REL_REA)) return NULL;
+  return new relative_error_from_real_scheme(real, predicated_real(holders[0], PRED_ABS), f);
 }
 
 // RELATIVE_ERROR_FROM_ROUNDED
@@ -155,11 +150,10 @@ preal_vect relative_error_from_rounded_scheme::needed_reals() const {
 }
 
 proof_scheme *relative_error_from_rounded_scheme::factory(ast_real const *real) {
-  ast_real_vect holders(2);
-  if (!match(real, relative_error_pattern, holders)) return NULL;
-  real_op const *p = boost::get < real_op const >(holders[1]);
-  if (!p || !p->fun || !(p->fun->theorem_mask & function_class::TH_REL_RND)) return NULL;
-  return new relative_error_from_rounded_scheme(real, predicated_real(holders[1], PRED_ABS), p->fun);
+  ast_real const *holders[2];
+  function_class const *f = relative_rounding_error(real, holders);
+  if (!f || !(f->theorem_mask & function_class::TH_REL_RND)) return NULL;
+  return new relative_error_from_real_scheme(real, predicated_real(holders[1], PRED_ABS), f);
 }
 
 // ROUNDING_BOUND

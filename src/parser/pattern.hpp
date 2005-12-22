@@ -6,6 +6,9 @@
 bool match(ast_real const *src, ast_real const *dst, ast_real_vect &);
 ast_real const *rewrite(ast_real const *, ast_real_vect const &);
 
+function_class const *absolute_rounding_error(ast_real const *, ast_real const *[2]);
+function_class const *relative_rounding_error(ast_real const *, ast_real const *[2]);
+
 enum condition_type { COND_LT, COND_LE, COND_GT, COND_GE, COND_NE, COND_NZ };
 
 struct pattern_cond {

@@ -135,3 +135,20 @@ pattern_cond pattern::operator~() const {
   res.type = COND_NZ;
   return res;
 }
+
+function_class const *absolute_rounding_error(ast_real const *src, ast_real const *dst[2]) {
+  real_op const *p = boost::get < real_op const >(src);
+  if (!p || p->type != BOP_SUB) return NULL;
+  dst[0] = p->ops[1];
+  dst[1] = p->ops[0];
+  if (dst[1]->accurate != dst[0]) return NULL;
+  real_op const *o = boost::get < real_op const >(dst[1]);
+  return (!o || !o->fun) ? NULL : o->fun;
+}
+
+function_class const *relative_rounding_error(ast_real const *src, ast_real const *dst[2]) {
+  real_op const *p = boost::get < real_op const >(src);
+  if (!p || p->type != BOP_DIV) return NULL;
+  function_class const *f = absolute_rounding_error(p->ops[0], dst);
+  return (!f || p->ops[1] != dst[0]) ? NULL : f;
+}

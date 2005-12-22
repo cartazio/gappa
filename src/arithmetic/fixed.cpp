@@ -144,14 +144,9 @@ preal_vect fixed_of_fix_scheme::needed_reals() const {
   return preal_vect(1, fixval);
 }
 
-extern pattern absolute_error_pattern;
-
 proof_scheme *fixed_of_fix_scheme::factory(ast_real const *real) {
-  ast_real_vect holders(2);
-  if (!match(real, absolute_error_pattern, holders)) return NULL;
-  real_op const *p = boost::get < real_op const >(holders[1]);
-  assert(p);
-  fixed_rounding_class const *f = dynamic_cast< fixed_rounding_class const * >(p->fun);
+  ast_real const *holders[2];
+  fixed_rounding_class const *f = dynamic_cast< fixed_rounding_class const * >(absolute_rounding_error(real, holders));
   if (!f) return NULL;
   return new fixed_of_fix_scheme(real, predicated_real(holders[0], PRED_FIX), f->format.min_exp);
 }
