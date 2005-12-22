@@ -2,6 +2,7 @@
 #include <cassert>
 #include <set>
 #include <sstream>
+#include "numbers/interval_utility.hpp"
 #include "numbers/round.hpp"
 #include "parser/ast.hpp"
 #include "proofs/schemes.hpp"
@@ -104,6 +105,18 @@ std::string dump_real(ast_real const *r, unsigned prio) {
   }
   assert(false);
   return "...";
+}
+
+std::string dump_property(property const &p) {
+  std::stringstream s;
+  std::string r = dump_real(p.real.real());
+  switch (p.real.pred()) {
+  case PRED_BND: s << r << " in " << p.bnd(); break;
+  case PRED_ABS: s << '|' << r << "| in " << p.bnd(); break;
+  case PRED_FIX: s << r << " = K * 2^(" << p.cst() << ')'; break;
+  case PRED_FLT: s << "size(" << r << ") <= " << p.cst(); break;
+  }
+  return s.str();
 }
 
 function_generator::function_generator(char const *name) {

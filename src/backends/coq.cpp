@@ -211,7 +211,7 @@ static std::string display(node *n) {
     prefix = "absurd_";
   } else
     p_res = display(n_res);
-  plouf << p_res << ".\n";
+  plouf << p_res << ". (* " << (!n_res.null() ? dump_property(n_res) : "contradicion") << " *)\n";
   int nb_hyps = n_hyp.size();
   if (nb_hyps) {
     plouf << " intros";

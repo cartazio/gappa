@@ -60,6 +60,8 @@ struct ast_ident {
 };
 
 std::string dump_real(ast_real const *, unsigned = 0);
+struct property;
+std::string dump_property(property const &);
 
 inline ast_ident const *param_ident(unsigned long l) {
   return (l & 1) ? NULL : reinterpret_cast< ast_ident const * >(l);
