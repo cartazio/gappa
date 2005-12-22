@@ -341,13 +341,13 @@ node *computation_abs_scheme::generate_proof() const {
     if (!n2) return NULL;
     property const &res2 = n2->get_result();
     interval const &i2 = res2.bnd();
-    property res(real.real());
+    property res(real);
     interval &i = res.bnd();
     switch (r->type) {
     case BOP_ADD:
     case BOP_SUB:
       i = interval(lower(abs(i1 - i2)), upper(i1 + i2));
-      s = (r->type == BOP_ADD) ? "add" : "sub";
+      s = (r->type == BOP_ADD) ? "add_abs" : "sub_abs";
       break;
     case BOP_MUL:
       i = i1 * i2;
