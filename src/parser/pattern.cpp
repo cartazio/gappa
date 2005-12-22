@@ -143,7 +143,7 @@ function_class const *absolute_rounding_error(ast_real const *src, ast_real cons
   dst[1] = p->ops[0];
   if (dst[1]->accurate != dst[0]) return NULL;
   real_op const *o = boost::get < real_op const >(dst[1]);
-  return (!o || !o->fun) ? NULL : o->fun;
+  return !o ? NULL : o->fun;
 }
 
 function_class const *relative_rounding_error(ast_real const *src, ast_real const *dst[2]) {
