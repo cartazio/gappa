@@ -9,7 +9,7 @@
 extern bool parameter_constrained;
 
 struct relative_function_class: function_class {
-  interval he;
+  interval he, hz;
   int prec, min_exp;
   std::string ident;
   relative_function_class(real_op_type, int, int, std::string const &);
@@ -22,6 +22,8 @@ struct relative_function_class: function_class {
 relative_function_class::relative_function_class(real_op_type t, int p, int e, std::string const &i)
   : function_class(t, TH_RND | TH_REL_REA | TH_REL_RND), prec(p), min_exp(e), ident(i) {
   he = from_exponent(-p, 0);
+  if (min_exp != INT_MIN)
+    hz = from_exponent(min_exp, 0);
 }
 
 interval relative_function_class::round(interval const &i, std::string &name) const {
@@ -30,16 +32,14 @@ interval relative_function_class::round(interval const &i, std::string &name) co
 }
 
 interval relative_function_class::relative_error_from_real(interval const &i, std::string &name) const {
-  if (parameter_constrained &&
-      min_exp != INT_MIN && !is_empty(intersect(i, from_exponent(min_exp, 0))))
+  if (parameter_constrained && !is_empty(intersect(i, hz)))
     return interval();
   name = "rel_error" + ident;
   return he;
 }
 
 interval relative_function_class::relative_error_from_rounded(interval const &i, std::string &name) const {
-  if (parameter_constrained &&
-      min_exp != INT_MIN && !is_empty(intersect(i, from_exponent(min_exp, 0))))
+  if (parameter_constrained && !is_empty(intersect(i, hz)))
     return interval();
   name = "rel_error_inv" + ident;
   return he;

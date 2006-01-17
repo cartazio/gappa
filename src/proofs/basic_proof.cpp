@@ -410,6 +410,7 @@ proof_scheme *bnd_of_abs_scheme::factory(ast_real const *real) {
   return new bnd_of_abs_scheme(real);
 }
 
+/*
 // ABS_OF_BND
 REGISTER_SCHEMEX_BEGIN(abs_of_bnd);
   abs_of_bnd_scheme(predicated_real const &r): proof_scheme(r) {}
@@ -431,6 +432,7 @@ proof_scheme *abs_of_bnd_scheme::factory(predicated_real const &real) {
   if (real.pred() != PRED_ABS) return NULL;
   return new abs_of_bnd_scheme(real);
 }
+*/
 
 // UABS_OF_ABS
 REGISTER_SCHEME_BEGIN(uabs_of_abs);
