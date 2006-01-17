@@ -334,7 +334,7 @@ std::string coq_backend::rewrite(ast_real const *src, ast_real const *dst) {
   static int a_id = 0;
   std::string name = composite('a', ++a_id);
   auto_flush plouf;
-  plouf << "Hypothesis " << name << " : forall zi : FF, IintF zi "
-        << display(dst) << " -> true = true -> IintF zi " << display(src) << ".\n";
+  plouf << "Hypothesis " << name << " : forall zi : FF, BND "
+        << display(dst) << " zi -> true = true -> BND " << display(src) << " zi.\n";
   return name;
 }
