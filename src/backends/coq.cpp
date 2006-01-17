@@ -118,9 +118,10 @@ static std::map< std::string, int > displayed_properties;
 static std::string display(property const &p) {
   std::stringstream s;
   predicate_type t = p.real.pred();
-  if (p.real.pred_bnd()) s << (t == PRED_BND ? "InP " : "AbsInP ") << display(p.bnd());
-  else s << (t == PRED_FIX ? "FixP (" : "FltP (") << p.cst() << ')';
-  s << ' ' << display(p.real.real());
+  if (p.real.pred_bnd())
+    s << (t == PRED_BND ? "BND " : "ABS ") << display(p.real.real()) << ' ' << display(p.bnd());
+  else
+    s << (t == PRED_FIX ? "FIX " : "FLT ") << display(p.real.real()) << " (" << p.cst() << ')';
   std::string s_ = s.str();
   int p_id = map_finder(displayed_properties, s_);
   std::string name = composite('p', p_id);
@@ -312,13 +313,11 @@ static std::string display(node *n) {
 struct coq_backend: backend {
   coq_backend(std::ostream &o): backend(o) {
     ::out = &o;
-    out << "Require Import IA_comput.\n"
-           "Require Import IA_manip.\n"
-           "Require Import IA_float.\n"
-           "Section Gappa_generated.\n";
+    out << "Require Import Gappa_library.\n"
+           "Section Generated_by_Gappa.\n";
   }
   virtual ~coq_backend() {
-    out << "End Gappa_generated.\n";
+    out << "End Generated_by_Gappa.\n";
   }
   virtual std::string rewrite(ast_real const *, ast_real const *);
   virtual void theorem(node *n) {

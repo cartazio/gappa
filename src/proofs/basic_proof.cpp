@@ -322,11 +322,11 @@ node *computation_abs_scheme::generate_proof() const {
     property const &res = n1->get_result();
     switch (r->type) {
     case UOP_NEG:
-      return create_theorem(1, &res, res, "neg_abs");
+      return create_theorem(1, &res, res, "neg_a");
     case UOP_SQRT:
       return NULL;
     case UOP_ABS:
-      return create_theorem(1, &res, res, "abs_abs");
+      return create_theorem(1, &res, res, "abs_a");
     default:
       assert(false);
     }
@@ -347,16 +347,16 @@ node *computation_abs_scheme::generate_proof() const {
     case BOP_ADD:
     case BOP_SUB:
       i = interval(lower(abs(i1 - i2)), upper(i1 + i2));
-      s = (r->type == BOP_ADD) ? "add_abs" : "sub_abs";
+      s = (r->type == BOP_ADD) ? "add_aa" : "sub_aa";
       break;
     case BOP_MUL:
       i = i1 * i2;
-      s = "mul_abs";
+      s = "mul_aa";
       break;
     case BOP_DIV:
       if (contains_zero(i2)) return NULL;
       i = i1 / i2;
-      s = "div_abs";
+      s = "div_aa";
       break;
     default:
       assert(false);
