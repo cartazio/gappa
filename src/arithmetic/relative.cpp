@@ -22,8 +22,7 @@ struct relative_function_class: function_class {
 relative_function_class::relative_function_class(real_op_type t, int p, int e, std::string const &i)
   : function_class(t, TH_RND | TH_REL_REA | TH_REL_RND), prec(p), min_exp(e), ident(i) {
   he = from_exponent(-p, 0);
-  if (min_exp != INT_MIN)
-    hz = from_exponent(min_exp, 0);
+  hz = (min_exp != INT_MIN) ? from_exponent(min_exp, 0) : zero();
 }
 
 interval relative_function_class::round(interval const &i, std::string &name) const {
