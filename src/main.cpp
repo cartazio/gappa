@@ -83,8 +83,6 @@ int main(int argc, char **argv) {
     }
     delete g;
   }
-  #ifdef LEAK_CHECKER
   delete display;
-  #endif
   return globally_proven ? EXIT_SUCCESS : EXIT_FAILURE;
 }
