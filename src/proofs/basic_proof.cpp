@@ -410,30 +410,6 @@ proof_scheme *bnd_of_abs_scheme::factory(ast_real const *real) {
   return new bnd_of_abs_scheme(real);
 }
 
-/*
-// ABS_OF_BND
-REGISTER_SCHEMEX_BEGIN(abs_of_bnd);
-  abs_of_bnd_scheme(predicated_real const &r): proof_scheme(r) {}
-REGISTER_SCHEMEX_END(abs_of_bnd);
-
-node *abs_of_bnd_scheme::generate_proof() const {
-  node *n = find_proof(predicated_real(real.real(), PRED_BND));
-  if (!n) return NULL;
-  property const &res1 = n->get_result();
-  property res(real, abs(res1.bnd()));
-  return create_theorem(1, &res1, res, "abs_of_bnd");
-}
-
-preal_vect abs_of_bnd_scheme::needed_reals() const {
-  return preal_vect(1, predicated_real(real.real(), PRED_BND));
-}
-
-proof_scheme *abs_of_bnd_scheme::factory(predicated_real const &real) {
-  if (real.pred() != PRED_ABS) return NULL;
-  return new abs_of_bnd_scheme(real);
-}
-*/
-
 // UABS_OF_ABS
 REGISTER_SCHEME_BEGIN(uabs_of_abs);
   predicated_real needed;
@@ -457,29 +433,30 @@ proof_scheme *uabs_of_abs_scheme::factory(ast_real const *real) {
   return new uabs_of_abs_scheme(real, predicated_real(p->ops[0], PRED_ABS));
 }
 
-// ABS_OF_UABS
-REGISTER_SCHEMEX_BEGIN(abs_of_uabs);
+// ABS_OF_BND
+REGISTER_SCHEMEX_BEGIN(abs_of_bnd);
   predicated_real needed;
-  abs_of_uabs_scheme(predicated_real const &r, predicated_real const &v): proof_scheme(r), needed(v) {}
-REGISTER_SCHEMEX_END(abs_of_uabs);
+  abs_of_bnd_scheme(predicated_real const &r, predicated_real const &v): proof_scheme(r), needed(v) {}
+REGISTER_SCHEMEX_END(abs_of_bnd);
 
-node *abs_of_uabs_scheme::generate_proof() const {
+node *abs_of_bnd_scheme::generate_proof() const {
   node *n = find_proof(needed);
   if (!n) return NULL;
   property const &res1 = n->get_result();
-  property res(real, abs(res1.bnd()));
-  return create_theorem(1, &res1, res, (real.real() == needed.real()) ? "abs_of_uabs_refl" : "abs_of_uabs");
+  property res(real, res1.bnd());
+  return create_theorem(1, &res1, res, "abs_of_bnd");
 }
 
-preal_vect abs_of_uabs_scheme::needed_reals() const {
+preal_vect abs_of_bnd_scheme::needed_reals() const {
   return preal_vect(1, needed);
 }
 
-proof_scheme *abs_of_uabs_scheme::factory(predicated_real const &real) {
+proof_scheme *abs_of_bnd_scheme::factory(predicated_real const &real) {
   if (real.pred() != PRED_ABS) return NULL;
   real_op const *p = boost::get< real_op const >(real.real());
-  ast_real const *r = (p && p->type == UOP_ABS) ? real.real() : normalize(ast_real(real_op(UOP_ABS, real.real())));
-  return new abs_of_uabs_scheme(real, predicated_real(r, PRED_BND));
+  if (p && p->type == UOP_ABS) return NULL;
+  ast_real const *r = normalize(ast_real(real_op(UOP_ABS, real.real())));
+  return new abs_of_bnd_scheme(real, predicated_real(r, PRED_BND));
 }
 
 // COMPOSE RELATIVE
