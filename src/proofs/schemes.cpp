@@ -260,9 +260,8 @@ bool graph_t::populate(property_tree const &goals, dichotomy_sequence const &dic
       current_goals.remove(n->get_result());
       if (current_goals.empty()) return false;	// now empty, there is nothing left to prove
     }
-    if (dichotomy_it == dichotomy_end || !dichotomize(current_goals, *dichotomy_it))
-      return false;
-    if (contradiction)
+    if (dichotomy_it == dichotomy_end) return false;
+    if (dichotomize(current_goals, *dichotomy_it) && contradiction)
       return true;
   }
 }
