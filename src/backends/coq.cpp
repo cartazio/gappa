@@ -314,6 +314,7 @@ struct coq_backend: backend {
   coq_backend(std::ostream &o): backend(o) {
     ::out = &o;
     out << "Require Import Gappa_library.\n"
+           "Require Import IA_float.\n"
            "Section Generated_by_Gappa.\n";
   }
   virtual ~coq_backend() {

@@ -102,13 +102,14 @@ static int_rounding_generator dummy2;
 
 // FIX_OF_FIXED
 REGISTER_SCHEMEX_BEGIN(fix_of_fixed);
-  long min_exp;
-  fix_of_fixed_scheme(predicated_real const &r, long e)
-    : proof_scheme(r), min_exp(e) {}
+  fixed_rounding_class const *rnd;
+  fix_of_fixed_scheme(predicated_real const &r, fixed_rounding_class const *f)
+    : proof_scheme(r), rnd(f) {}
 REGISTER_SCHEMEX_END(fix_of_fixed);
 
 node *fix_of_fixed_scheme::generate_proof() const {
-  return create_theorem(0, NULL, property(real, min_exp), "fix_of_fixed");
+  return create_theorem(0, NULL, property(real, rnd->format.min_exp),
+                        std::string("fix_of_fixed,") + direction_names[rnd->type]);
 }
 
 preal_vect fix_of_fixed_scheme::needed_reals() const {
@@ -121,7 +122,7 @@ proof_scheme *fix_of_fixed_scheme::factory(predicated_real const &real) {
   if (!r) return NULL;
   fixed_rounding_class const *f = dynamic_cast< fixed_rounding_class const * >(r->fun);
   if (!f) return NULL;
-  return new fix_of_fixed_scheme(real, f->format.min_exp);
+  return new fix_of_fixed_scheme(real, f);
 }
 
 // FIXED_OF_FIX
@@ -155,14 +156,14 @@ proof_scheme *fixed_of_fix_scheme::factory(ast_real const *real) {
 REGISTER_SCHEME_BEGIN(bnd_of_fix_bnd);
   preal_vect needed;
   bnd_of_fix_bnd_scheme(preal_vect const &v)
-    : proof_scheme(v[0]), needed(v) {}
+    : proof_scheme(v[1]), needed(v) {}
 REGISTER_SCHEME_END(bnd_of_fix_bnd);
 
 node *bnd_of_fix_bnd_scheme::generate_proof() const {
   property hyps[2];
   if (!fill_hypotheses(hyps, needed)) return NULL;
-  fixed_format format(hyps[1].cst());
-  interval const &i = hyps[0].bnd();
+  fixed_format format(hyps[0].cst());
+  interval const &i = hyps[1].bnd();
   number a = round_number(lower(i), &format, &fixed_format::roundU);
   number b = round_number(upper(i), &format, &fixed_format::roundD);
   property res(real, interval(a, (a <= b) ? b : a));
@@ -175,7 +176,7 @@ preal_vect bnd_of_fix_bnd_scheme::needed_reals() const {
 
 proof_scheme *bnd_of_fix_bnd_scheme::factory(ast_real const *real) {
   preal_vect hyps;
-  hyps.push_back(predicated_real(real, PRED_BND));
   hyps.push_back(predicated_real(real, PRED_FIX));
+  hyps.push_back(predicated_real(real, PRED_BND));
   return new bnd_of_fix_bnd_scheme(hyps);
 }
