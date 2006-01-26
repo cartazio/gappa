@@ -8,6 +8,8 @@ Version 0.5.6:
  * proof graph
    - fixed premature halt when a case split was a failure
    - fixed case split not noticing newly discovered bounds
+ * main interface
+   - simplified display of hypotheses and sorted display of goals
 
 Version 0.5.5:
  * whole engine
