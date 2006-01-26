@@ -210,7 +210,11 @@ void dichotomy_helper::dichotomize() {
     h = bnd;
     if (graph_t *g = try_hypothesis(&exn)) {
       try_graph(g);
-      if (!gen->next(bnd)) return;
+      if (!gen->next(bnd)) {
+        graphs.push_back(last_graph);
+        last_graph = NULL;
+        return;
+      }
     } else if (!gen->split(bnd)) {
       exn.hyp = tmp_hyp[0];
       throw exn;
@@ -265,15 +269,14 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
     delete h;
     return false;
   }
-  h->graphs.push_back(h->last_graph);
-  h->last_graph = NULL;
   bool only_contradictions = true;
-  preal_vect reals;
+  typedef std::set< predicated_real > preal_set;
+  preal_set reals;
   for(graph_vect::const_iterator i = h->graphs.begin(), i_end = h->graphs.end(); i != i_end; ++i) {
     if ((*i)->contradiction) continue;
     only_contradictions = false;
-    for(node_map::const_iterator j = known_reals.begin(), j_end = known_reals.end(); j != j_end; ++j)
-      reals.push_back(j->first);
+    for(node_map::const_iterator j = (*i)->known_reals.begin(), j_end = (*i)->known_reals.end(); j != j_end; ++j)
+      reals.insert(j->first);
     break;
   }
   assert(!contradiction);
@@ -286,7 +289,7 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
     return true;
   }
   ++h->nb_ref;
-  for(preal_vect::const_iterator i = reals.begin(), end = reals.end(); i != end; ++i) {
+  for(preal_set::const_iterator i = reals.begin(), end = reals.end(); i != end; ++i) {
     property p(*i);
     if (node *n = find_already_known(*i)) p = n->get_result();
     if (node *n = h->generate_node(varn, p)) try_real(n);
