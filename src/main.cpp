@@ -69,10 +69,15 @@ int main(int argc, char **argv) {
     } else {
       node_set nodes;
       bool proven = current_context.goals.get_nodes(g, nodes);
+      typedef std::map< std::string, node * > named_nodes;
+      named_nodes results;
       for(node_set::const_iterator j = nodes.begin(), j_end = nodes.end(); j != j_end; ++j) {
         node *n = *j;
-        property const &p = n->get_result();
-        std::cerr << dump_real(p.real.real()) << " in " << p.bnd() << '\n';
+        results[dump_real(n->get_result().real.real())] = n;
+      }
+      for(named_nodes::const_iterator j = results.begin(), j_end = results.end(); j != j_end; ++j) {
+        node *n = j->second;
+        std::cerr << j->first << " in " << n->get_result().bnd() << '\n';
         display->theorem(n);
       }
       if (!proven) {
