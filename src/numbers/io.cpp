@@ -55,8 +55,14 @@ std::string get_real_split(number const &f, int &exp, bool &zero) {
   return get_real_split(f.data->val, exp, zero);
 }
 
+bool detailed_io = false;
+
 std::ostream &operator<<(std::ostream &stream, number const &value) {
   mpfr_t const &f = value.data->val;
+  if (!detailed_io) {
+    stream << mpfr_get_d(f, GMP_RNDN);
+    return stream;
+  }
   bool zero; int exp;
   std::string s = get_real_split(f, exp, zero);
   bool neg = s[0] == '-';

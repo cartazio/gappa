@@ -10,6 +10,7 @@ extern int yyparse(void);
 extern std::vector< graph_t * > graphs;
 extern bool parse_args(int argc, char **argv);
 extern backend_register const *proof_generator;
+extern bool detailed_io;
 backend *display = NULL;
 dichotomy_sequence dichotomies;
 context_vect contexts;
@@ -75,11 +76,13 @@ int main(int argc, char **argv) {
         node *n = *j;
         results[dump_real(n->get_result().real.real())] = n;
       }
+      detailed_io = true;
       for(named_nodes::const_iterator j = results.begin(), j_end = results.end(); j != j_end; ++j) {
         node *n = j->second;
         std::cerr << j->first << " in " << n->get_result().bnd() << '\n';
         display->theorem(n);
       }
+      detailed_io = false;
       if (!proven) {
         std::cerr << "Warning: some enclosures were not satisfied.\n";
         globally_proven = false;
