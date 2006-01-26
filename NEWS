@@ -1,3 +1,14 @@
+Version 0.5.6:
+ * fact database
+   - cleaned theorems and removed redundant ones
+ * arithmetic
+   - enabled test to zero with relative rounding, it can still be disabled by -Munconstrained
+ * Coq back-end
+   - improved script generation
+ * proof graph
+   - fixed premature halt when a case split was a failure
+   - fixed case split not noticing newly discovered bounds
+
 Version 0.5.5:
  * whole engine
    - added square root (no rule checking though)
@@ -123,5 +134,5 @@ Version 0.4.5:
    - added conditional rules (potentially disruptive)
  * homogen numbers
    - split roundings between initialization and computation
- * Coq backend
+ * Coq back-end
    - implemented union
