@@ -38,6 +38,26 @@ bool fixed_splitter::next(interval &i) {
   return true;
 }
 
+typedef std::vector< interval > interval_vect;
+
+struct point_splitter: splitter {
+  interval bnd;
+  interval_vect const &bnds;
+  unsigned pos;
+  point_splitter(interval const &i, interval_vect const *b): bnd(i), bnds(*b), pos(0) {}
+  virtual bool split(interval &) { return false; }
+  virtual bool next(interval &);
+};
+
+bool point_splitter::next(interval &i) {
+  for(unsigned sz = bnds.size(); pos < sz;) {
+    i = intersect(bnd, bnds[pos++]);
+    if (is_empty(i)) break;
+    return true;
+  }
+  return false;
+}
+
 struct best_splitter: splitter {
   std::stack< interval > stack;
   best_splitter(interval const &i);
@@ -226,23 +246,27 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
   assert(top_graph == this);
   dichotomy_sequence hints;
   assert(hint.src.size() >= 1);
-  ast_real const *var = hint.src[0];
+  dichotomy_var const &var = hint.src[0];
   if (hint.src.size() > 1) {
     dichotomy_hint h;
     h.dst = hint.dst;
-    h.src = ast_real_vect(hint.src.begin() + 1, hint.src.end());
+    h.src = dvar_vect(hint.src.begin() + 1, hint.src.end());
     hints.push_back(h);
   }
-  node *varn = find_proof(var);
+  node *varn = find_proof(var.real);
   if (!varn) return false;
   property_vect hyp2;
   hyp2.push_back(varn->get_result());
   property_vect const &hyp = top_graph->get_hypotheses();
   for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
-    if (i->real.real() != var) hyp2.push_back(*i);
+    if (i->real.real() != var.real) hyp2.push_back(*i);
   splitter *gen;
   property_tree new_goals = goals;
-  if (hint.dst.empty())
+  if (var.splitter & 1)
+    gen = new fixed_splitter(hyp2[0].bnd(), var.splitter / 2);
+  else if (var.splitter)
+    gen = new point_splitter(hyp2[0].bnd(), (interval_vect const *)var.splitter);
+  else if (hint.dst.empty())
     gen = new fixed_splitter(hyp2[0].bnd(), 4);
   else {
     new_goals.restrict(hint.dst);
@@ -259,12 +283,15 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
     if (warning_dichotomy_failure) {
       property const &h = e.hyp;
       std::cerr << "Warning: when " << dump_real(h.real.real()) << " is in "
-                << h.bnd() << ", " << dump_real(e.expected.real.real());
-      if (is_defined(e.found))
-        std::cerr << " is in " << e.found << " potentially outside of "
-                  << e.expected.bnd() << '\n';
+                << h.bnd() << ", ";
+      ast_real const *dst = e.expected.real.real();
+      if (!dst)
+        std::cerr << "nothing is satisfied.\n";
+      else if (is_defined(e.found))
+        std::cerr << dump_real(dst) << " is in " << e.found
+                  << " potentially outside of " << e.expected.bnd() << ".\n";
       else
-        std::cerr << " is not computable\n";
+        std::cerr << dump_real(dst) << " is not computable.\n";
     }
     delete h;
     return false;
@@ -297,8 +324,24 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
   if (--h->nb_ref == 0) {
     delete h;
     if (warning_dichotomy_failure)
-      std::cerr << "Warning: case splitting on " << dump_real(var) << " did not produce any usable result.\n";
+      std::cerr << "Warning: case splitting on " << dump_real(var.real) << " did not produce any usable result.\n";
     return false;
   }
   return true;
+}
+
+interval create_interval(ast_interval const &, bool = true);
+
+unsigned long fill_splitter(unsigned long s, ast_number const *n) {
+  static ast_number const *o;
+  interval_vect *v = (interval_vect *)s;
+  if (!v) {
+    ast_interval i = { NULL, n };
+    v = new interval_vect(1, create_interval(i));
+  } else {
+    ast_interval i = { o, n };
+    v->push_back(create_interval(i));
+  }
+  o = n;
+  return (unsigned long)v;
 }

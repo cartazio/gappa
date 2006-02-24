@@ -28,7 +28,8 @@ static number read_number(ast_number const &n, mp_rnd_t rnd) {
 interval create_interval(ast_interval const &i, bool widen) {
   mp_rnd_t d1 = widen ? GMP_RNDD : GMP_RNDU;
   mp_rnd_t d2 = widen ? GMP_RNDU : GMP_RNDD;
-  return interval(read_number(*i.lower, d1), read_number(*i.upper, d2));
+  return interval(i.lower ? read_number(*i.lower, d1) : number::neg_inf,
+                  i.upper ? read_number(*i.upper, d2) : number::pos_inf);
 }
 
 static std::string signed_lexical(mpz_t const &frac, bool sgn) {

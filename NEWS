@@ -1,3 +1,7 @@
+Version 0.6.0:
+ * syntax
+   - added ways of specifying how interval splitting is done
+
 Version 0.5.6:
  * fact database
    - cleaned theorems and removed redundant ones

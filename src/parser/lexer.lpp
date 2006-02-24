@@ -5,6 +5,7 @@
 #include <string>
 #include <gmp.h>
 #include "parser/ast.hpp"
+#include "proofs/dichotomy.hpp"
 #include "parser/parser.h"
 
 static void read_number(YYSTYPE *yylval) {
