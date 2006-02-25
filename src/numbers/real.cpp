@@ -1,5 +1,6 @@
 #include <cassert>
 #include <ostream>
+#include "utils.hpp"
 #include "numbers/real.hpp"
 
 number_base *empty_mpfr = new number_base();
@@ -44,10 +45,7 @@ number const &min(number const &x, number const &y)
 number const &max(number const &x, number const &y)
 { return (x <= y) ? y : x; }
 
-struct real_loader { real_loader(); };
-static real_loader real_loader_;
-
-real_loader::real_loader() {
+RUN_ONCE(load_infinities) {
   number_base *r = new number_base;
   mpfr_set_inf(r->val, +1);
   number::pos_inf = number(r);

@@ -46,4 +46,5 @@ gappa_SOURCES = \
 	proofs/schemes.hpp \
 	parser/ast.cpp \
 	main.cpp \
-	parameters.cpp
+	parameters.cpp \
+	utils.hpp
