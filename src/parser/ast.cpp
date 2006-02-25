@@ -2,6 +2,7 @@
 #include <cassert>
 #include <set>
 #include <sstream>
+#include "utils.hpp"
 #include "numbers/interval_utility.hpp"
 #include "numbers/round.hpp"
 #include "parser/ast.hpp"
@@ -56,6 +57,14 @@ static cache< ast_number > ast_number_cache;
 ast_number *normalize(ast_number const &v) { return ast_number_cache.find(v); }
 static cache< ast_real > ast_real_cache;
 ast_real *normalize(ast_real const &v) { return ast_real_cache.find(v); }
+
+ast_number const *token_zero;
+RUN_ONCE(load_zero_token) {
+  ast_number num;
+  num.base = 0;
+  num.exponent = 0;
+  token_zero = normalize(num);
+}
 
 ast_real::ast_real(real_op const &v): ast_real_aux(v), name(NULL), accurate(NULL) {
   if (!v.fun || v.fun->type == ROP_UNK) return;

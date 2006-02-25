@@ -40,13 +40,6 @@ static void read_number(YYSTYPE *yylval) {
   yylval->number = normalize(num);
 }
 
-static void read_zero(YYSTYPE *yylval) {
-  ast_number num;
-  num.base = 0;
-  num.exponent = 0;
-  yylval->number = normalize(num);
-}
-
 static void read_ident(YYSTYPE *yylval) {
   yylval->ident = ast_ident::find(yytext);
 }
@@ -101,7 +94,7 @@ zero		((((0+(\.0*)?)|(\.0+))([eE][-+]?{integer})?)|0x(((0+(\.0*)?)|(\.0+))([pP][
 "<="		return LE;
 ">="		return GE;
 "sqrt"		return SQRT;
-{zero}		{ read_zero(yylval);	return NUMBER; }
+{zero}		{ yylval->number = token_zero; return NUMBER; }
 {number}	{ read_number(yylval);	return NUMBER; }
 {ident}		{ read_ident(yylval);	return IDENT;  }
 .		return yytext[0];

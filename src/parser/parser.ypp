@@ -29,7 +29,7 @@ extern void generate_graph(ast_prop const *p);
 extern void test_ringularity(ast_real const *, ast_real const *);
 extern std::set< ast_real const * > free_variables;
 
-ast_number *negative_number(ast_number *nn) {
+ast_number const *negative_number(ast_number const *nn) {
   if (nn->base == 0) return nn;
   ast_number n = *nn;
   char &c = n.mantissa[0];
@@ -57,7 +57,7 @@ static ast_real const *rnd_normalize(ast_real const &real) {
 %token IDENT IN NUMBER SQRT LE GE
 
 %union {
-  ast_number		*number;
+  ast_number const	*number;
   ast_ident		*ident;
   ast_real const	*real;
   ast_real_vect		*reals;
