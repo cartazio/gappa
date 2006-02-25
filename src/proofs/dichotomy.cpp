@@ -330,18 +330,14 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
   return true;
 }
 
-interval create_interval(ast_interval const &, bool = true);
+// FIXME: if a splitting point is not representable, the intervals are much too overlapped
+interval create_interval(ast_number const *, ast_number const *, bool = true);
 
 unsigned long fill_splitter(unsigned long s, ast_number const *n) {
   static ast_number const *o;
   interval_vect *v = (interval_vect *)s;
-  if (!v) {
-    ast_interval i = { NULL, n };
-    v = new interval_vect(1, create_interval(i));
-  } else {
-    ast_interval i = { o, n };
-    v->push_back(create_interval(i));
-  }
+  if (!v) v = new interval_vect(1, create_interval(NULL, n));
+  else v->push_back(create_interval(o, n));
   o = n;
   return (unsigned long)v;
 }

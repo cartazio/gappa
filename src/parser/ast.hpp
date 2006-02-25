@@ -5,14 +5,11 @@
 #include <vector>
 #include "parser/ast_real.hpp"
 
-struct ast_interval {
-  ast_number const *lower, *upper;
-};
-
 struct ast_atom_bound {
   ast_real const *real;
-  ast_interval interval;
-  ast_atom_bound(ast_real const *r, ast_interval i): real(r), interval(i) {}
+  ast_number const *lower, *upper;
+  ast_atom_bound(ast_real const *r, ast_number const *l, ast_number const *u)
+    : real(r), lower(l), upper(u) {}
 };
 
 enum ast_prop_type { PROP_ATOM, PROP_NOT, PROP_AND, PROP_OR, PROP_IMPL };

@@ -98,6 +98,8 @@ zero		((((0+(\.0*)?)|(\.0+))([eE][-+]?{integer})?)|0x(((0+(\.0*)?)|(\.0+))([pP][
 "->"		return IMPL;
 "not"		return NOT;
 "in"		return IN;
+"<="		return LE;
+">="		return GE;
 "sqrt"		return SQRT;
 {zero}		{ read_zero(yylval);	return NUMBER; }
 {number}	{ read_number(yylval);	return NUMBER; }

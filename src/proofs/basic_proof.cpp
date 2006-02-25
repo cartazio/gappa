@@ -509,17 +509,16 @@ REGISTER_SCHEME_BEGIN(number);
   number_scheme(ast_real const *r): proof_scheme(r) {}
 REGISTER_SCHEME_END(number);
 
-interval create_interval(ast_interval const &, bool widen = true);
+interval create_interval(ast_number const *, ast_number const *, bool widen = true);
 
 node *number_scheme::generate_proof() const {
   ast_number const *const *r = boost::get< ast_number const *const >(real.real());
   assert(r);
-  ast_interval _i = { *r, *r };
   char const *s;
   if ((**r).base == 0 || (**r).exponent == 0) s = "constant1";
   else if ((**r).base == 2) s = "constant2";
   else s = "constant10";
-  return create_theorem(0, NULL, property(real, create_interval(_i)), s);
+  return create_theorem(0, NULL, property(real, create_interval(*r, *r)), s);
 }
 
 preal_vect number_scheme::needed_reals() const {

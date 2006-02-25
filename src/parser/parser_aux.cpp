@@ -7,7 +7,7 @@
 typedef std::set< ast_real const * > real_set;
 real_set free_variables, input_reals, output_reals;
 
-interval create_interval(ast_interval const &, bool);
+interval create_interval(ast_number const *, ast_number const *, bool);
 void find_unknown_reals(real_set &, ast_real const *);
 
 extern bool warning_unbound_variable;
@@ -15,14 +15,8 @@ extern bool warning_unbound_variable;
 static property generate_property(ast_atom_bound const &p, bool goal) {
   property r(p.real);
   output_reals.insert(p.real);
-  if (p.interval.lower) {
-    assert(p.interval.upper);
-    r.bnd() = create_interval(p.interval, goal);
-  } else {
-    if (!goal)
-      { std::cerr << "Error: undefined intervals are reserved for conclusions.\n"; exit(1); }
-    assert(!p.interval.upper);
-  }
+  if (p.lower || p.upper) r.bnd() = create_interval(p.lower, p.upper, goal);
+  else if (!goal) { std::cerr << "Error: undefined intervals are restricted to conclusions.\n"; exit(1); }
   return r;
 }
 
@@ -146,7 +140,7 @@ static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
     ast_atom_bound const &atom = *p->atom;
     ctxt.hyp.push_back(generate_property(atom, false));
     inputs.insert(atom.real);
-    input_reals.insert(atom.real);
+    if (atom.lower && atom.upper) input_reals.insert(atom.real);
   }
   if (ctxt.hyp.size() != inputs.size()) // we don't want to encounter: x in [0,2] /\ x in [1,3] -> ...
     { std::cerr << "Error: you don't want to have multiple hypotheses concerning the same real.\n"; exit(1); }

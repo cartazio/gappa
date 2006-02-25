@@ -54,12 +54,11 @@ static ast_real const *rnd_normalize(ast_real const &real) {
 %pure-parser
 %locations
 
-%token IDENT IN NUMBER SQRT
+%token IDENT IN NUMBER SQRT LE GE
 
 %union {
   ast_number		*number;
   ast_ident		*ident;
-  ast_interval		interval;
   ast_real const	*real;
   ast_real_vect		*reals;
   dichotomy_var		dvar;
@@ -73,7 +72,6 @@ static ast_real const *rnd_normalize(ast_real const &real) {
 %type <number>		NUMBER
 %type <number>		SNUMBER
 %type <ident>		IDENT
-%type <interval>	INTERVAL
 %type <real>		REAL
 %type <reals>		REALS
 %type <dvar>		DVAR
@@ -98,7 +96,10 @@ static ast_real const *rnd_normalize(ast_real const &real) {
 BLOB: PROG '{' PROP '}' HINTS		{ generate_graph($3); }
 
 PROP:
-  REAL IN INTERVAL	{ $$ = new ast_prop(new ast_atom_bound($1, $3)); }
+  REAL IN '[' SNUMBER ',' SNUMBER ']'	{ $$ = new ast_prop(new ast_atom_bound($1, $4, $6)); }
+| REAL IN '?'		{ $$ = new ast_prop(new ast_atom_bound($1, NULL, NULL)); }
+| REAL LE SNUMBER	{ $$ = new ast_prop(new ast_atom_bound($1, NULL, $3)); }
+| REAL GE SNUMBER	{ $$ = new ast_prop(new ast_atom_bound($1, $3, NULL)); }
 | PROP AND PROP		{ $$ = new ast_prop($1, PROP_AND,  $3); }
 | PROP OR PROP		{ $$ = new ast_prop($1, PROP_OR,   $3); }
 | PROP IMPL PROP	{ $$ = new ast_prop($1, PROP_IMPL, $3); }
@@ -109,10 +110,6 @@ SNUMBER:
   NUMBER	{ $$ = $1; }
 | '+' NUMBER	{ $$ = $2; }
 | '-' NUMBER	{ $$ = negative_number($2); }
-
-INTERVAL:
-  '[' SNUMBER ',' SNUMBER ']'	{ ast_interval i = { $2, $4 }; $$ = i; }
-| '?'				{ ast_interval i = { NULL, NULL }; $$ = i; }
 
 FUNCTION_PARAM:
   SNUMBER	{ $$ = (unsigned long)(atoi($1->mantissa.c_str()) * 2) | 1; }
