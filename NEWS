@@ -1,6 +1,8 @@
 Version 0.6.0:
  * syntax
    - added ways of specifying how interval splitting is done
+ * whole engine
+   - added inequalities; as hypotheses, they cannot imply theorems but they can restrict computed ranges
 
 Version 0.5.6:
  * fact database

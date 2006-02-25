@@ -190,8 +190,13 @@ graph_t::graph_t(graph_t *f, property_vect const &h)
     for(node_map::iterator i = known_reals.begin(), end = known_reals.end(); i != end; ++i)
       ++i->second->nb_good;
   }
-  for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
-    try_real(new hypothesis_node(*i));
+  for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i) {
+    interval const &bnd = i->bnd();
+    if (lower(bnd) == number::neg_inf || upper(bnd) == number::pos_inf) {
+      if (known_reals.count(i->real) == 0)
+        partial_reals.insert(std::make_pair(i->real, new hypothesis_node(*i)));
+    } else try_real(new hypothesis_node(*i));
+  }
 }
 
 void graph_t::set_contradiction(node *n) {
@@ -201,15 +206,18 @@ void graph_t::set_contradiction(node *n) {
   for(node_map::const_iterator i = known_reals.begin(), end = known_reals.end(); i != end; ++i)
     i->second->remove_known();
   known_reals.clear();
+  for(node_map::const_iterator i = partial_reals.begin(), end = partial_reals.end(); i != end; ++i)
+    delete i->second;
+  partial_reals.clear();
 }
 
 bool graph_t::try_real(node *n) {
-  assert(top_graph == this);
+  assert(top_graph == this && !contradiction);
   assert(n && n->graph && n->graph->dominates(this));
   property const &res2 = n->get_result();
   std::pair< node_map::iterator, bool > ib = known_reals.insert(std::make_pair(res2.real, n));
   node *&dst = ib.first->second;
-  if (!ib.second) { // there was already a known real
+  if (!ib.second) { // there was already a known range
     node *old = dst;
     property const &res1 = old->get_result();
     if (res1.implies(res2)) {
@@ -221,6 +229,17 @@ bool graph_t::try_real(node *n) {
     }
     dst = n;
     old->remove_known();
+  } else {
+    node_map::iterator i = partial_reals.find(res2.real);
+    if (i != partial_reals.end()) { // there is a known inequality
+      property const &res1 = i->second->get_result();
+      if (!res2.implies(res1)) {
+        n = new intersection_node(n, i->second);
+        if (n == contradiction) return true;
+        dst = n;
+      }
+      partial_reals.erase(i);
+    }
   }
   ++n->nb_good;
   return true;
@@ -238,5 +257,7 @@ graph_t::~graph_t() {
   } else
     for(node_map::const_iterator i = known_reals.begin(), end = known_reals.end(); i != end; ++i)
       i->second->remove_known();
+  for(node_map::const_iterator i = partial_reals.begin(), end = partial_reals.end(); i != end; ++i)
+    delete i->second;
   assert(nodes.empty());
 }

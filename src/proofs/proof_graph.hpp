@@ -74,6 +74,7 @@ class graph_t {
   graph_t *father;
   node_set nodes;		// nodes owned by the graph, each node is implied by hyp
   node_map known_reals;		// best node implied by hyp for each real
+  node_map partial_reals;	// never used half hypotheses
   property_vect hyp;		// hypotheses of the graph (they imply the hypotheses from the super-graph)
   node *contradiction;
  public:
