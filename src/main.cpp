@@ -76,13 +76,13 @@ int main(int argc, char **argv) {
         node *n = *j;
         results[dump_real(n->get_result().real.real())] = n;
       }
-      detailed_io = true;
       for(named_nodes::const_iterator j = results.begin(), j_end = results.end(); j != j_end; ++j) {
         node *n = j->second;
+        detailed_io = true;
         std::cerr << j->first << " in " << n->get_result().bnd() << '\n';
+        detailed_io = false;
         display->theorem(n);
       }
-      detailed_io = false;
       if (!proven) {
         std::cerr << "Warning: some enclosures were not satisfied.\n";
         globally_proven = false;
