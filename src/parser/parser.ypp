@@ -96,9 +96,14 @@ static ast_real const *rnd_normalize(ast_real const &real) {
 BLOB: PROG '{' PROP '}' HINTS		{ generate_graph($3); }
 
 PROP:
-  REAL IN '[' SNUMBER ',' SNUMBER ']'	{ $$ = new ast_prop(new ast_atom_bound($1, $4, $6)); }
+  REAL LE SNUMBER
+  {
+    real_op const *p = boost::get< real_op const >($1);
+    $$ = new ast_prop(new ast_atom_bound($1, (!p || p->type != UOP_ABS) ? NULL : token_zero, $3));
+  }
+| REAL IN '[' SNUMBER ',' SNUMBER ']'
+  			{ $$ = new ast_prop(new ast_atom_bound($1, $4, $6)); }
 | REAL IN '?'		{ $$ = new ast_prop(new ast_atom_bound($1, NULL, NULL)); }
-| REAL LE SNUMBER	{ $$ = new ast_prop(new ast_atom_bound($1, NULL, $3)); }
 | REAL GE SNUMBER	{ $$ = new ast_prop(new ast_atom_bound($1, $3, NULL)); }
 | PROP AND PROP		{ $$ = new ast_prop($1, PROP_AND,  $3); }
 | PROP OR PROP		{ $$ = new ast_prop($1, PROP_OR,   $3); }
@@ -200,7 +205,7 @@ REAL:
 | REAL '-' REAL		{ $$ = rnd_normalize(ast_real(real_op($1, BOP_SUB, $3))); }
 | REAL '*' REAL		{ $$ = rnd_normalize(ast_real(real_op($1, BOP_MUL, $3))); }
 | REAL '/' REAL		{ $$ = rnd_normalize(ast_real(real_op($1, BOP_DIV, $3))); }
-| '|' REAL '|'		{ $$ = rnd_normalize(ast_real(real_op(UOP_ABS, $2))); }
+| '|' REAL '|'		{ $$ = normalize(ast_real(real_op(UOP_ABS, $2))); }
 | SQRT '(' REAL ')'	{ $$ = rnd_normalize(ast_real(real_op(UOP_SQRT, $3))); }
 | '(' REAL ')'		{ $$ = $2; }
 | '+' REAL %prec NEG	{ $$ = $2; }
