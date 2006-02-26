@@ -122,6 +122,11 @@ bool is_zero(interval const &u) {
   return singleton(plup) && in_zero(plup);
 }
 
+bool is_bounded(interval const &u) {
+  assert(u.base);
+  return plup.lower() != number::neg_inf && plup.upper() != number::pos_inf;
+}
+
 interval hull(interval const &u, interval const &v) {
   assert(u.base && v.base);
   return plop(hull(plup, plvp));

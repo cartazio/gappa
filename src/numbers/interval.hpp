@@ -24,6 +24,7 @@ bool is_empty(interval const &);
 bool is_singleton(interval const &);
 bool contains_zero(interval const &);
 bool is_zero(interval const &);
+bool is_bounded(interval const &);
 interval zero();
 
 #endif // NUMBERS_INTERVAL_HPP
