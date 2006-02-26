@@ -80,6 +80,8 @@ hexadecimal	0x(({hexa}(\.{hexa}?)?)|(\.{hexa}))([pP][-+]?{integer})?
 number		({binary}|{decimal}|{hexadecimal})
 zero		((((0+(\.0*)?)|(\.0+))([eE][-+]?{integer})?)|0x(((0+(\.0*)?)|(\.0+))([pP][-+]?{integer})?)|(0+([bB][-+]?{integer})?))
 
+%s prop_context hint_context
+
 %%
 
 [ \t]
@@ -92,9 +94,11 @@ zero		((((0+(\.0*)?)|(\.0+))([eE][-+]?{integer})?)|0x(((0+(\.0*)?)|(\.0+))([pP][
 "not"		return NOT;
 "in"		return IN;
 "<="		return LE;
-">="		return GE;
+<prop_context>">="		return GE;
 "sqrt"		return SQRT;
 {zero}		{ yylval->number = token_zero; return NUMBER; }
 {number}	{ read_number(yylval);	return NUMBER; }
 {ident}		{ read_ident(yylval);	return IDENT;  }
+"{"		{ BEGIN(prop_context); return '{'; }
+"}"		{ BEGIN(hint_context); return '}'; }
 .		return yytext[0];
