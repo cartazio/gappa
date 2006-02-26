@@ -107,7 +107,7 @@ static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
     }
     while (idr < s.rhs.size()) {
       ast_prop const *p = s.rhs[idr];
-      if (is_positive(p)) { ++idr; continue; }
+      if (p->type == PROP_ATOM || (p->type == PROP_AND && is_positive(p))) { ++idr; continue; }
       switch (p->type) {
       case PROP_NOT: {
         s.rhs[idr] = s.rhs[s.rhs.size() - 1];
@@ -137,7 +137,12 @@ static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
       }
     }
   }
-  context ctxt;
+  for(ast_prop_vect::const_iterator i = s.rhs.begin(), end = s.rhs.end(); i != end; ++i) {
+    ast_prop const *p = *i;
+    ast_atom_bound const &atom = *p->atom;
+    if (p->type != PROP_ATOM || !atom.lower == !atom.upper) continue;
+    s.lhs.push_back(new ast_prop(new ast_atom_bound(atom.real, atom.upper, atom.lower)));
+  }
   typedef std::map< ast_real const *, property > input_set;
   input_set inputs;
   for(ast_prop_vect::const_iterator i = s.lhs.begin(), end = s.lhs.end(); i != end; ++i) {
@@ -149,6 +154,7 @@ static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
     if (!ib.second) // there was already a known range
       ib.first->second.intersect(q);
   }
+  context ctxt;
   for(input_set::const_iterator i = inputs.begin(), end = inputs.end(); i != end; ++i) {
     interval const &bnd = i->second.bnd();
     if (is_empty(bnd))
