@@ -1,6 +1,8 @@
 Version 0.6.0:
  * syntax
    - added ways of specifying how interval splitting is done
+   - added detection of badly-formed intervals in propositions
+   - removed the limitation on multiple hypotheses about the same expression
  * whole engine
    - added inequalities; as hypotheses, they cannot imply theorems but they can restrict computed ranges
 

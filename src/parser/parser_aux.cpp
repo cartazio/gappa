@@ -15,8 +15,13 @@ extern bool warning_unbound_variable;
 static property generate_property(ast_atom_bound const &p, bool goal) {
   property r(p.real);
   output_reals.insert(p.real);
-  if (p.lower || p.upper) r.bnd() = create_interval(p.lower, p.upper, goal);
-  else if (!goal) { std::cerr << "Error: undefined intervals are restricted to conclusions.\n"; exit(1); }
+  if (p.lower || p.upper) {
+    interval &bnd = r.bnd();
+    bnd = create_interval(p.lower, p.upper, goal);
+    if (is_empty(bnd))
+      { std::cerr << "Error: the range of " << dump_real(p.real) << " is an empty interval.\n"; exit(1); }
+  } else if (!goal)
+    { std::cerr << "Error: undefined intervals are restricted to conclusions.\n"; exit(1); }
   return r;
 }
 
@@ -133,17 +138,25 @@ static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
     }
   }
   context ctxt;
-  real_set inputs;
+  typedef std::map< ast_real const *, property > input_set;
+  input_set inputs;
   for(ast_prop_vect::const_iterator i = s.lhs.begin(), end = s.lhs.end(); i != end; ++i) {
     ast_prop const *p = *i;
     assert(p && p->type == PROP_ATOM);
     ast_atom_bound const &atom = *p->atom;
-    ctxt.hyp.push_back(generate_property(atom, false));
-    inputs.insert(atom.real);
-    if (atom.lower && atom.upper) input_reals.insert(atom.real);
+    property q = generate_property(atom, false);
+    std::pair< input_set::iterator, bool > ib = inputs.insert(std::make_pair(atom.real, q));
+    if (!ib.second) // there was already a known range
+      ib.first->second.intersect(q);
   }
-  if (ctxt.hyp.size() != inputs.size()) // we don't want to encounter: x in [0,2] /\ x in [1,3] -> ...
-    { std::cerr << "Error: you don't want to have multiple hypotheses concerning the same real.\n"; exit(1); }
+  for(input_set::const_iterator i = inputs.begin(), end = inputs.end(); i != end; ++i) {
+    interval const &bnd = i->second.bnd();
+    if (is_empty(bnd))
+      { std::cerr << "Warning: the hypotheses on " << dump_real(i->first) << " are trivially contradictory.\n"; exit(1); }
+    if (is_bounded(bnd))
+      input_reals.insert(i->first);
+    ctxt.hyp.push_back(i->second);
+  }
   if (s.rhs.size() == 1)
     generate_goal(ctxt.goals, s.rhs[0]);
   else if (!s.rhs.empty()) {
