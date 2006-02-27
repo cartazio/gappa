@@ -64,16 +64,34 @@ appears as an hypothesis in the logical formula.</para>
 </section>
 
 <section>
-<title>Error: you don't want to have multiple hypotheses concerning the same real.</title>
-<para>Multiple enclosures of the same real confuse Gappa. For example, the
-script <code>{ x in [0,2] /\ x in [1,3] -&gt; y in ? }</code> will not be
-handled.</para>
+<title>Error: the range of $toto is an empty interval.</title>
+<para>An interval was either written with reversed bounds or it was so tight
+that Gappa needed to replace it with an empty interval. For example, Gappa will
+complain about <code>{ 1.3 in [1.3,1.3] }</code> since 1.3 is not representable
+and the empty set is the biggest representable interval that is a subset of
+the singleton {1.3}.</para>
+</section>
+
+<section>
+<title>Error: a zero appears as a denominator in a rewriting rule.</title>
+<para>Gappa has a detected that a divisor is trivially equal to zero in an
+expression that appears in a rewriting rule. This is most certainly an error.
+For example <code>y -&gt; y * (x - x) / (x - x)</code>.</para>
 </section>
 
 </section>
 
 <section>
 <title>Warning messages</title>
+
+<section>
+<title>Warning: the hypotheses on $toto are trivially contradictory.</title>
+<para>If an expression is enclosed by more than one hypothesis and the
+intersection of these ranges is empty, then the proposition is trivially true.
+As a consequence, Gappa will skip the proposition and not prove it. The script
+<code>{ x &lt;= 2 /\ x &gt;= 3 -&gt; y in ? }</code> is an example of such a
+trivial proposition.</para>
+</section>
 
 <section>
 <title>Warning: proof of triviality will not be generated.</title>
@@ -145,7 +163,7 @@ second one, since it contains an additional hypothesis.</para>
 <para>Gappa has found a contradiction among the hypotheses. So, instead of
 proving the goals, it will just prove <code>False</code>, since it implies any
 possible goal.</para>
-<screen>$ echo "{ x in [1,2] /\ x - 1 in [3,4] -> x in [5,6] }" | src/gappa
+<screen>$ echo "{ x in [1,2] /\ x - 1 in [3,4] -&gt; x in [5,6] }" | src/gappa
 
 Results for x in [1, 1b1 {2, 2^(1)}] and x - 1 in [3, 1b2 {4, 2^(2)}]:
 Warning: hypotheses are in contradiction, any result is true.</screen>
@@ -165,7 +183,7 @@ Warning: no contradiction was found.</screen>
 <title>Warning: some enclosures were not satisfied.</title>
 <para>Only part of a conjunction of goals was proved to be true. Gappa was
 unable to prove some other expressions.</para>
-<screen>$ echo "{ x in [1,2] -> x + 1 in ? /\ x + 2 in [2,3] }" | src/gappa
+<screen>$ echo "{ x in [1,2] -&gt; x + 1 in ? /\ x + 2 in [2,3] }" | src/gappa
 
 Results for x in [1, 1b1 {2, 2^(1)}]:
 x + 1 in [1b1 {2, 2^(1)}, 3]
@@ -179,7 +197,7 @@ the interval of <code>toto</code> until the goal containing <code>titi</code>
 holds true for any sub-interval. If the maximal dichotomy depth has been
 reached and the property still does not hold true, this warning will display
 the first failing sub-interval and the relevant ranges.</para>
-<screen>$ echo "{ x in [1,2] -> x + 1 in [2,2.75] } x + 1 $ x;" | src/gappa
+<screen>$ echo "{ x in [1,2] -&gt; x + 1 in [2,2.75] } x + 1 $ x;" | src/gappa
 
 Results for x in [1, 2]:
 Warning: when x is in [1.75, 1008806316530991105b-59 {1.75}], x + 1 is in [2.75, 792633534417207297b-58 {2.75)}] potentially outside of [2, 2.75]
@@ -194,7 +212,7 @@ displayed if no bound of <code>titi</code> cannot even be computed.</para>
 <para>Gappa displays this warning when it was successful in finding a case
 splitting that satisfies the goals. Yet the obtained results were not
 interesting: they had already been found through simple analysis.</para>
-<screen>$ echo "{ x in [1,2] -> x + 1 in ? } x + 1 $ x;" | src/gappa
+<screen>$ echo "{ x in [1,2] -&gt; x + 1 in ? } x + 1 $ x;" | src/gappa
 
 Results for x in [1, 2]:
 Warning: case splitting on x did not produce any usable result.
