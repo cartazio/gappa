@@ -4,6 +4,7 @@
 #include <sstream>
 #include "backends/backend.hpp"
 #include "numbers/interval_utility.hpp"
+#include "numbers/real.hpp"
 #include "numbers/round.hpp"
 #include "parser/ast.hpp"
 #include "proofs/proof_graph.hpp"
@@ -118,10 +119,17 @@ static std::map< std::string, int > displayed_properties;
 static std::string display(property const &p) {
   std::stringstream s;
   predicate_type t = p.real.pred();
-  if (p.real.pred_bnd())
-    s << (t == PRED_BND ? "BND " : "ABS ") << display(p.real.real()) << ' ' << display(p.bnd());
-  else
-    s << (t == PRED_FIX ? "FIX " : "FLT ") << display(p.real.real()) << " (" << p.cst() << ')';
+  ast_real const *real = p.real.real();
+  if (p.real.pred_bnd()) {
+    interval const &bnd = p.bnd();
+    if (lower(bnd) == number::neg_inf)
+      s << '(' << display(real) << " <= " << display(upper(bnd)) << ")%R";
+    else if (upper(bnd) == number::pos_inf)
+      s << '(' << display(lower(bnd)) << " <= " << display(real) << ")%R";
+    else
+      s << (t == PRED_BND ? "BND " : "ABS ") << display(real) << ' ' << display(bnd);
+  } else
+    s << (t == PRED_FIX ? "FIX " : "FLT ") << display(real) << " (" << p.cst() << ')';
   std::string s_ = s.str();
   int p_id = map_finder(displayed_properties, s_);
   std::string name = composite('p', p_id);
@@ -249,9 +257,11 @@ static std::string display(node *n) {
       pmap.insert(std::make_pair(j->real, std::make_pair(num_hyp, &*j)));
     node_vect const &pred = n->get_subproofs();
     int num[2];
+    std::string suffix;
     for(int i = 0; i < 2; ++i) {
       node *m = pred[i];
       property const &res = m->get_result();
+      if (!is_bounded(res.bnd())) suffix = (i == 0) ? "_hl" : "_hr";
       if (m->type == HYPOTHESIS) {
         property_map::iterator pki = pmap.find(res.real);
         assert(pki != pmap.end());
@@ -262,7 +272,7 @@ static std::string display(node *n) {
       invoke_lemma(plouf, m, pmap);
       num[i] = num_hyp++;
     }
-    plouf << " apply " << prefix << "intersect with"
+    plouf << " apply " << prefix << "intersect" << suffix << " with"
                  " (1 := h" << num[0] << ") (2 := h" << num[1] << ").\n"
              " reflexivity.\nQed.\n";
     break; }
