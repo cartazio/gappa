@@ -1,4 +1,3 @@
-#include <boost/preprocessor/cat.hpp>
 #include "parser/pattern.hpp"
 #include "proofs/basic_proof.hpp"
 #include "proofs/schemes.hpp"
@@ -64,18 +63,17 @@ static pattern a(0), b(1), c(2), d(3), b_a(-1);
 #define abs pattern::abs
 #define sqrt pattern::sqrt
 
-#define REWRITE_NAME BOOST_PP_CAT(rewrite_, __LINE__)
 #define REWRITE(name,lhs,rhs) \
-  static pattern_register REWRITE_NAME \
+  static pattern_register pattern_register_##name \
   (lhs, rhs, #name, pattern_cond_vect(), pattern_excl_vect())
 #define REWRIT3(name,lhs,rhs,cond) \
-  static pattern_register REWRITE_NAME \
+  static pattern_register pattern_register_##name \
   (lhs, rhs, #name, pattern_cond_vect() && cond, pattern_excl_vect())
 #define REWRITe(name,lhs,rhs,excl) \
-  static pattern_register REWRITE_NAME \
+  static pattern_register pattern_register_##name \
   (lhs, rhs, #name, pattern_cond_vect(), pattern_excl_vect() && excl)
 #define REWRIT9(name,lhs,rhs,cond,excl) \
-  static pattern_register REWRITE_NAME \
+  static pattern_register pattern_register_##name \
   (lhs, rhs, #name, pattern_cond_vect() && cond, pattern_excl_vect() && excl)
 
 REWRITE(add_decomposition_rounded_left,
