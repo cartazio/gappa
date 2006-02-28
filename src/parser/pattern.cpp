@@ -25,7 +25,11 @@ bool match_visitor::visit(ast_real const *src, ast_real const *dst) const {
   placeholder const *p = boost::get< placeholder const >(dst);
   if (!p) return boost::apply_visitor(*this, *src, *dst);
   unsigned i = *p;
-  if (i >= holders.size()) holders.resize(i + 1, NULL);
+  if (*p == -1) {
+    // -1 is used to force two holders when only pattern(0) is present
+    i= 0;
+    if (holders.size() < 2) holders.resize(2, NULL);
+  } else if (i >= holders.size()) holders.resize(i + 1, NULL);
   ast_real const *&r1 = holders[i];
   if (!r1) r1 = src;
   else if (r1 != src) return false;
