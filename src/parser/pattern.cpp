@@ -22,31 +22,14 @@ bool match_visitor::operator()(real_op const &r1, real_op const &r2) const {
 
 bool match_visitor::visit(ast_real const *src, ast_real const *dst) const {
   if (src == dst) return true;
-  if (placeholder const *p = boost::get< placeholder const >(dst)) {
-    int i = *p;
-    if (i < -16) return true;
-    unsigned j = (i < 0) ? 1 - i : 1 + i;
-    if (j > holders.size())
-      holders.resize(j, NULL);
-    ast_real const *&r1 = holders[j - 1];
-    if (!r1) r1 = src;
-    else if (r1 != src) return false;
-    if (i >= 0) return true;
-
-    ast_real const *accurate = NULL;
-    link_map::const_iterator it1 = accurates.find(src);
-    if (it1 != accurates.end()) {
-      ast_real_set::const_iterator it2 = it1->second.begin();
-      if (it2 != it1->second.end()) accurate = *it2;
-    }
-
-    if (!accurate) return false;
-    ast_real const *&r2 = holders[j - 2];
-    if (!r2) r2 = accurate;
-    else if (r2 != accurate) return false;
-    return true;
-  }
-  return boost::apply_visitor(*this, *src, *dst);
+  placeholder const *p = boost::get< placeholder const >(dst);
+  if (!p) return boost::apply_visitor(*this, *src, *dst);
+  unsigned i = *p;
+  if (i >= holders.size()) holders.resize(i + 1, NULL);
+  ast_real const *&r1 = holders[i];
+  if (!r1) r1 = src;
+  else if (r1 != src) return false;
+  return true;
 }
 
 bool match(ast_real const *src, ast_real const *dst, ast_real_vect &holders) {

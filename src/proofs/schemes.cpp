@@ -100,6 +100,18 @@ static void delete_scheme(proof_scheme const *s, predicated_real const *restrict
   delete s;
 }
 
+static void add_rewrite_scheme(rewriting_rule const &rw, ast_real const *src,
+                               ast_real_vect const &holders, scheme_set &l) {
+  ast_real const *dst = rewrite(rw.dst, holders);
+  for(pattern_excl_vect::const_iterator i = rw.excl.begin(),
+      end = rw.excl.end(); i != end; ++i)
+    if (rewrite(i->first, holders) == rewrite(i->second, holders)) return;
+  pattern_cond_vect c(rw.cond);
+  for(pattern_cond_vect::iterator i = c.begin(), end = c.end(); i != end; ++i)
+    i->real = rewrite(i->real, holders);
+  l.insert(new rewrite_scheme(src, dst, rw.name, c));
+}
+
 static real_dependency &initialize_dependencies(predicated_real const &real) {
   real_dependencies::iterator it = reals.find(real);
   if (it != reals.end()) return it->second;
@@ -120,20 +132,25 @@ static real_dependency &initialize_dependencies(predicated_real const &real) {
       ast_real const *src = real.real();
       ast_real_vect holders;
       if (!match(src, rw.src, holders)) continue;
-      //std::set< ast_real const * > hold(holders.begin(), holders.end());
-      ast_real const *dst = rewrite(rw.dst, holders);
-      bool excluded = false;
-      for(pattern_excl_vect::const_iterator j = rw.excl.begin(),
-          j_end = rw.excl.end(); j != j_end; ++j)
-        if (rewrite(j->first, holders) == rewrite(j->second, holders)) {
-          excluded = true;
-          break;
+      if (holders.size() >= 2 && (!holders[0] || !holders[1])) {
+        assert(holders[0] || holders[1]);
+        link_map const *lm;
+        int p;
+        if (holders[0]) {
+          lm = &approximates;
+          p = 1;
+        } else {
+          lm = &accurates;
+          p = 0;
         }
-      if (excluded) continue;
-      pattern_cond_vect c(rw.cond);
-      for(pattern_cond_vect::iterator j = c.begin(), j_end = c.end(); j != j_end; ++j)
-        j->real = rewrite(j->real, holders);
-      l.insert(new rewrite_scheme(src, dst, rw.name, c));
+        link_map::const_iterator k = lm->find(holders[1 - p]);
+        if (k == lm->end()) continue;
+        ast_real_set const &s = k->second;
+        for(ast_real_set::const_iterator j = s.begin(), j_end = s.end(); j != j_end; ++j) {
+          holders[p] = *j;
+          add_rewrite_scheme(rw, src, holders, l);
+        }
+      } else add_rewrite_scheme(rw, src, holders, l);
     }
   // create the dependencies
   for(scheme_set::const_iterator i = l.begin(), i_end = l.end(); i != i_end; ++i) {

@@ -20,7 +20,7 @@ pattern_excl_vect operator&&(pattern_excl_vect const &v, pattern_excl const &c) 
   return res;
 }
 
-static pattern a(0), b(1), c(2), d(3), b_a(-1);
+static pattern a(0), b(1), c(2), d(3);
 
 #define abs pattern::abs
 #define sqrt pattern::sqrt
@@ -39,28 +39,28 @@ static pattern a(0), b(1), c(2), d(3), b_a(-1);
   (lhs, rhs, #name, pattern_cond_vect() && cond, pattern_excl_vect() && excl)
 
 REWRITE(add_decomposition_rounded_left,
-	b_a + c,
+	b + c,
 	(b - a) + (a + c));
 
 REWRITE(add_decomposition_rounded_right,
-	c + b_a,
+	c + b,
 	(c + a) + (b - a));
 
 REWRITe(sub_decomposition_rounded_left,
-	b_a - c,
+	b - c,
 	(b - a) + (a - c),
 	a ^ c);
 
 REWRITE(sub_decomposition_rounded_right,
-	c - b_a,
+	c - b,
 	(c - a) + -(b - a));
 
 REWRITE(mul_decomposition_rounded_left,
-	b_a * c,
+	b * c,
 	(b - a) * c + a * c);
 
 REWRITE(mul_decomposition_rounded_right,
-	c * b_a,
+	c * b,
 	c * (b - a) + c * a);
 
 REWRITe(add_decomposition,
@@ -124,7 +124,7 @@ REWRITe(mul_decomposition_full_right,
 	a ^ c && b ^ d);
 
 REWRIT9(relative_transitivity, //relative_error_trans,
-	(b_a - c) / c,
+	(b - c) / c,
 	(b - a) / a + (a - c) / c + ((b - a) / a) * ((a - c) / c),
 	~c && ~a,
 	a ^ c);
