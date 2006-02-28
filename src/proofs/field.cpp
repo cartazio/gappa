@@ -2,14 +2,13 @@
 #include "proofs/basic_proof.hpp"
 #include "proofs/schemes.hpp"
 
+rewriting_vect rewriting_rules;
+
 pattern_cond_vect operator&&(pattern_cond_vect const &v, pattern_cond const &c) {
   pattern_cond_vect res(v);
   res.push_back(c);
   return res;
 }
-
-typedef std::pair< ast_real const *, ast_real const * > pattern_excl;
-typedef std::vector< pattern_excl > pattern_excl_vect;
 
 pattern_excl operator^(pattern const &a, pattern const &b) {
   return pattern_excl(a, b);
@@ -21,59 +20,22 @@ pattern_excl_vect operator&&(pattern_excl_vect const &v, pattern_excl const &c) 
   return res;
 }
 
-struct pattern_factory: scheme_factory {
-  pattern lhs, rhs;
-  std::string name;
-  pattern_cond_vect cond;
-  pattern_excl_vect excl;
-  pattern_factory(pattern const &q1, pattern const &q2, std::string const &n,
-                  pattern_cond_vect const &c, pattern_excl_vect const &e)
-    : lhs(q1), rhs(q2), name(n), cond(c), excl(e) {}
-  virtual proof_scheme *operator()(predicated_real const &) const;
-};
-
-proof_scheme *pattern_factory::operator()(predicated_real const &r) const {
-  if (r.pred() != PRED_BND) return NULL;
-  ast_real const *src = r.real();
-  ast_real_vect holders;
-  if (!match(src, lhs, holders)) return NULL;
-  std::set< ast_real const * > hold(holders.begin(), holders.end());
-  ast_real const *dst = rewrite(rhs, holders);
-  for(pattern_excl_vect::const_iterator i = excl.begin(), end = excl.end(); i != end; ++i)
-    if (rewrite(i->first, holders) == rewrite(i->second, holders))
-      return NULL;
-  pattern_cond_vect c(cond);
-  for(pattern_cond_vect::iterator i = c.begin(), end = c.end(); i != end; ++i)
-    i->real = rewrite(i->real, holders);
-  return new rewrite_scheme(src, dst, name, c);
-}
-
-struct pattern_register {
-  pattern_register(pattern const &, pattern const &, std::string const &,
-                   pattern_cond_vect const &, pattern_excl_vect const &);
-};
-
-pattern_register::pattern_register(pattern const &p1, pattern const &p2, std::string const &n,
-                                   pattern_cond_vect const &c, pattern_excl_vect const &e) {
-  scheme_register dummy(new pattern_factory(p1, p2, n, c, e));
-}
-
 static pattern a(0), b(1), c(2), d(3), b_a(-1);
 
 #define abs pattern::abs
 #define sqrt pattern::sqrt
 
 #define REWRITE(name,lhs,rhs) \
-  static pattern_register pattern_register_##name \
+  static rewriting_rule rewriting_rule_##name \
   (lhs, rhs, #name, pattern_cond_vect(), pattern_excl_vect())
 #define REWRIT3(name,lhs,rhs,cond) \
-  static pattern_register pattern_register_##name \
+  static rewriting_rule rewriting_rule_##name \
   (lhs, rhs, #name, pattern_cond_vect() && cond, pattern_excl_vect())
 #define REWRITe(name,lhs,rhs,excl) \
-  static pattern_register pattern_register_##name \
+  static rewriting_rule rewriting_rule_##name \
   (lhs, rhs, #name, pattern_cond_vect(), pattern_excl_vect() && excl)
 #define REWRIT9(name,lhs,rhs,cond,excl) \
-  static pattern_register pattern_register_##name \
+  static rewriting_rule rewriting_rule_##name \
   (lhs, rhs, #name, pattern_cond_vect() && cond, pattern_excl_vect() && excl)
 
 REWRITE(add_decomposition_rounded_left,

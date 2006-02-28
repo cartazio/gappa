@@ -4,6 +4,7 @@
 #include <vector>
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
+#include "parser/pattern.hpp"
 #include "proofs/basic_proof.hpp"
 #include "proofs/schemes.hpp"
 
@@ -111,6 +112,29 @@ static real_dependency &initialize_dependencies(predicated_real const &real) {
     if (!s) continue;
     l.insert(s);
   }
+  // add rewriting schemes
+  if (real.pred() == PRED_BND)
+    for(rewriting_vect::const_iterator i = rewriting_rules.begin(),
+        i_end = rewriting_rules.end(); i != i_end; ++i) {
+      rewriting_rule const &rw = **i;
+      ast_real const *src = real.real();
+      ast_real_vect holders;
+      if (!match(src, rw.src, holders)) continue;
+      //std::set< ast_real const * > hold(holders.begin(), holders.end());
+      ast_real const *dst = rewrite(rw.dst, holders);
+      bool excluded = false;
+      for(pattern_excl_vect::const_iterator j = rw.excl.begin(),
+          j_end = rw.excl.end(); j != j_end; ++j)
+        if (rewrite(j->first, holders) == rewrite(j->second, holders)) {
+          excluded = true;
+          break;
+        }
+      if (excluded) continue;
+      pattern_cond_vect c(rw.cond);
+      for(pattern_cond_vect::iterator j = c.begin(), j_end = c.end(); j != j_end; ++j)
+        j->real = rewrite(j->real, holders);
+      l.insert(new rewrite_scheme(src, dst, rw.name, c));
+    }
   // create the dependencies
   for(scheme_set::const_iterator i = l.begin(), i_end = l.end(); i != i_end; ++i) {
     proof_scheme const *s = *i;
