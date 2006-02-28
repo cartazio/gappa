@@ -259,14 +259,6 @@ HINTS:
   }
 | HINTS REAL '~' REAL ';'
   {
-    ast_real const *r1 = $2, *r2 = $4;
-    if (r1->accurate) {
-      real_op const *p = boost::get < real_op const >(r1);
-      if (!p || !p->fun || p->fun->type == ROP_UNK)
-        failure("the accurate expression of " << dump_real(r1) << " is modified");
-      else if (r1->accurate->accurate)
-        failure("the accurate expression of " << dump_real(r1->accurate) << " is modified");
-      r1 = r1->accurate;
-    }
-    r1->accurate = r2;
+    accurates[$2].insert($4);
+    approximates[$4].insert($2);
   }

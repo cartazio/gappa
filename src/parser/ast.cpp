@@ -8,6 +8,8 @@
 #include "parser/ast.hpp"
 #include "proofs/schemes.hpp"
 
+link_map accurates, approximates;
+
 template< class T >
 class cache {
   struct less_t {
@@ -16,15 +18,17 @@ class cache {
   typedef std::set< T *, less_t > store_t;
   store_t store;
  public:
-  T *find(T const &);
+  T *find(T const &, bool * = NULL);
   ~cache();
 };
 
 template< class T >
-T *cache< T >::find(T const &v) {
+T *cache< T >::find(T const &v, bool *b) {
   typename store_t::iterator i = store.find(const_cast< T * >(&v));
   T *ptr;
-  if (i == store.end()) {
+  bool c = i == store.end();
+  if (b) *b = c;
+  if (c) {
     ptr = new T(v);
     store.insert(ptr);
   } else ptr = *i;
@@ -56,7 +60,17 @@ ast_ident *ast_ident::find(std::string const &s) { return ast_ident_cache.find(a
 static cache< ast_number > ast_number_cache;
 ast_number *normalize(ast_number const &v) { return ast_number_cache.find(v); }
 static cache< ast_real > ast_real_cache;
-ast_real *normalize(ast_real const &v) { return ast_real_cache.find(v); }
+ast_real *normalize(ast_real const &v) {
+  bool b;
+  ast_real *p = ast_real_cache.find(v, &b);
+  if (!b) return p;
+  real_op *o = boost::get< real_op >(p);
+  if (!o || !o->fun || o->fun->type == ROP_UNK) return p;
+  ast_real const *a = (o->fun->type == UOP_ID) ? o->ops[0] : normalize(ast_real(real_op(o->fun->type, o->ops)));
+  accurates[p].insert(a);
+  approximates[a].insert(p);
+  return p;
+}
 
 ast_number const *token_zero;
 RUN_ONCE(load_zero_token) {
@@ -64,12 +78,6 @@ RUN_ONCE(load_zero_token) {
   num.base = 0;
   num.exponent = 0;
   token_zero = normalize(num);
-}
-
-ast_real::ast_real(real_op const &v): ast_real_aux(v), name(NULL), accurate(NULL) {
-  if (!v.fun || v.fun->type == ROP_UNK) return;
-  if (v.fun->type == UOP_ID) accurate = v.ops[0];
-  else accurate = normalize(ast_real(real_op(v.fun->type, v.ops)));
 }
 
 std::string dump_real(ast_real const *r, unsigned prio) {

@@ -1,6 +1,8 @@
 #ifndef PARSER_AST_REAL_HPP
 #define PARSER_AST_REAL_HPP
 
+#include <map>
+#include <set>
 #include <string>
 #include <vector>
 #include <boost/blank.hpp>
@@ -42,6 +44,7 @@ struct function_class {
 struct ast_real;
 
 typedef std::vector< ast_real const * > ast_real_vect;
+typedef std::set < ast_real const * > ast_real_set;
 
 struct real_op {
   ast_real_vect ops;
@@ -73,11 +76,10 @@ typedef boost::variant
 
 struct ast_real: ast_real_aux {
   mutable ast_ident const *name;
-  mutable ast_real const *accurate;
-  ast_real(ast_ident const *v): ast_real_aux(undefined_real()), name(v), accurate(NULL) {}
-  ast_real(ast_number const *v): ast_real_aux(v), name(NULL), accurate(NULL) {}
-  ast_real(real_op const &v);
-  ast_real(placeholder v): ast_real_aux(v), name(NULL), accurate(NULL) {}
+  ast_real(ast_ident const *v): ast_real_aux(undefined_real()), name(v) {}
+  ast_real(ast_number const *v): ast_real_aux(v), name(NULL) {}
+  ast_real(real_op const &v): ast_real_aux(v), name(NULL) {};
+  ast_real(placeholder v): ast_real_aux(v), name(NULL) {}
   bool operator==(ast_real const &v) const;
   bool operator<(ast_real const &v) const;
 };
@@ -85,5 +87,8 @@ struct ast_real: ast_real_aux {
 ast_real *normalize(ast_real const &);
 bool match(ast_real const *, ast_real const *, ast_real_vect &);
 ast_real const *rewrite(ast_real const *, ast_real_vect const &);
+
+typedef std::map< ast_real const *, ast_real_set > link_map;
+extern link_map accurates, approximates;
 
 #endif // PARSER_AST_REAL_HPP

@@ -32,10 +32,18 @@ bool match_visitor::visit(ast_real const *src, ast_real const *dst) const {
     if (!r1) r1 = src;
     else if (r1 != src) return false;
     if (i >= 0) return true;
-    if (!src->accurate) return false;
+
+    ast_real const *accurate = NULL;
+    link_map::const_iterator it1 = accurates.find(src);
+    if (it1 != accurates.end()) {
+      ast_real_set::const_iterator it2 = it1->second.begin();
+      if (it2 != it1->second.end()) accurate = *it2;
+    }
+
+    if (!accurate) return false;
     ast_real const *&r2 = holders[j - 2];
-    if (!r2) r2 = src->accurate;
-    else if (r2 != src->accurate) return false;
+    if (!r2) r2 = accurate;
+    else if (r2 != accurate) return false;
     return true;
   }
   return boost::apply_visitor(*this, *src, *dst);
@@ -141,9 +149,8 @@ function_class const *absolute_rounding_error(ast_real const *src, ast_real cons
   if (!p || p->type != BOP_SUB) return NULL;
   dst[0] = p->ops[1];
   dst[1] = p->ops[0];
-  if (dst[1]->accurate != dst[0]) return NULL;
   real_op const *o = boost::get < real_op const >(dst[1]);
-  return !o ? NULL : o->fun;
+  return (!o || dst[0] != o->ops[0]) ? NULL : o->fun;
 }
 
 function_class const *relative_rounding_error(ast_real const *src, ast_real const *dst[2]) {
