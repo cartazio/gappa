@@ -1,2 +1,3 @@
 * complimentary rewriting rules for "a ~ A", e.g. "A -> a / (1 + (a - A) / A)"
 * exclusion ranges "not a in [1,2]" as hypotheses
+* theorem on intersection between BND and ABS
