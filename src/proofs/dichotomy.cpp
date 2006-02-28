@@ -44,7 +44,7 @@ struct point_splitter: splitter {
   interval bnd;
   interval_vect const &bnds;
   unsigned pos;
-  point_splitter(interval const &i, interval_vect const *b): bnd(i), bnds(*b), pos(0) {}
+  point_splitter(interval const &i, interval_vect const *b): bnd(i), bnds(*b), pos(0) { merge = false; }
   virtual bool split(interval &) { return false; }
   virtual bool next(interval &);
 };
@@ -52,7 +52,7 @@ struct point_splitter: splitter {
 bool point_splitter::next(interval &i) {
   for(unsigned sz = bnds.size(); pos < sz;) {
     i = intersect(bnd, bnds[pos++]);
-    if (is_empty(i)) break;
+    if (is_empty(i)) continue;
     return true;
   }
   return false;
@@ -331,6 +331,7 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
 }
 
 // FIXME: if a splitting point is not representable, the intervals are much too overlapped
+// FIXME: if the points are not correctly ordered by the user, chaos presumably ensues
 interval create_interval(ast_number const *, ast_number const *, bool = true);
 
 unsigned long fill_splitter(unsigned long s, ast_number const *n) {
