@@ -52,32 +52,13 @@ bounded.</para>
 <section>
 <title>Adding hints</title>
 
-<para>On the previous script, Gappa is not even able to compute
-<code>r2 - R</code>, so an intermediate result must be missing. Let us
-start by unrolling the iterations. And first, the seed <code>r0</code>.</para>
+<para>With the previous script, Gappa computes a range so wide for
+<code>r2 - R</code> that it is useless. This is not surprising: the tool
+does not know what Newton's iteration is, and in particular Gappa cannot
+guess that such an iteration has a quadratic convergence. Testing for
+<code>r1 - R</code> will not give results any better.</para>
 
-<programlisting><![CDATA[{ r0 - R in [-1b-8,1b-8] /\ d in [0.5,1] ->
-  r0 in ? /\ r0 - R in ? /\ r2 - R in ?}]]>
-</programlisting>
-
-<para>As it appears, Gappa is unable to bound <code>r0</code>. The tool
-does not know that <code>r0</code> is supposed to approximate
-<code>R</code>. In particular, it does not see that <code>r0 - R</code>
-is known and <code>R</code> is computable. So we have to add a hint to
-express this fact.</para>
-
-<programlisting><![CDATA[r0 -> (r0 - R) + R;]]>
-</programlisting>
-
-<para>Now Gappa can compute the range of <code>r0</code>, and then the
-range of <code>r2 - R</code>. This range is so wide that it is unusable
-though. So let us go to the next iteration.</para>
-
-<programlisting><![CDATA[{ r0 - R in [-1b-8,1b-8] /\ d in [0.5,1] ->
-  r1 in ? /\ r1 - R in ? /\ r2 - R in ? }]]>
-</programlisting>
-
-<para>Gappa does not find what relation stands between <code>r1</code>
+<para>Gappa does not know what relation holds between <code>r1</code>
 and <code>R</code>. So we have to split the absolute error between two
 terms: a rounding error we expect Gappa to compute, and the convergence
 due to Newton's iteration.</para>
@@ -86,20 +67,18 @@ due to Newton's iteration.</para>
   r1 - r0 * (2 - d * r0) in ? /\ r0 * (2 - d * r0) - R in ? }]]>
 </programlisting>
 
-<para>The rounding error almost corresponds to the precision of the
-computations, so it is fine. As for the second term, we have to help
-Gappa by directly providing an expression of this difference. This will
-be done by adding a rule describing the quadratic convergence of Newton's
-iteration. And since we also have to split <code>r1 - R</code>, we will
-do it in one single rewriting rule.</para>
+<para>The range of the rounding error almost corresponds to the
+precision of the computations, so it is tight enough. As for the second
+term, we have to help Gappa by directly providing an expression of this
+difference. This will be done by adding a rule describing the quadratic
+convergence of Newton's iteration. And since we also have to split
+<code>r1 - R</code>, we will do both operations in one single rewriting
+rule.</para>
 
-<programlisting><![CDATA[1 - R -> (r1 - r0 * (2 - d * r0)) - (r0 - R) * (r0 - R) * d;]]>
+<programlisting><![CDATA[r1 - R -> (r1 - r0 * (2 - d * r0)) - (r0 - R) * (r0 - R) * d;]]>
 </programlisting>
 
-<para>A similar rule will work for <code>r2 - R</code>. And we can also
-use the same trick than for <code>r0</code> to improve the ranges on
-<code>r1</code> and <code>r2</code> (and consequently any range that
-depends on these ranges).</para>
+<para>A similar rule will be used for <code>r2 - R</code>.</para>
 </section>
 
 <section>
@@ -115,11 +94,7 @@ r2 fixed<-30,dn>= r1 * (2 - d * r1);
 { r0 - R in [-1b-8,1b-8] /\ d in [0.5,1] -> r2 - R in ? }
 
 r1 - R -> (r1 - r0 * (2 - d * r0)) - (r0 - R) * (r0 - R) * d;
-r2 - R -> (r2 - r1 * (2 - d * r1)) - (r1 - R) * (r1 - R) * d;
-
-r0 -> (r0 - R) + R;
-r1 -> (r1 - R) + R;
-r2 -> (r2 - R) + R;]]>
+r2 - R -> (r2 - r1 * (2 - d * r1)) - (r1 - R) * (r1 - R) * d;]]>
 </programlisting>
 
 <para>Gappa will answer that <texinline>r_2 = R \pm 2^{-24.7}</texinline>.</para>
