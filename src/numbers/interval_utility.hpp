@@ -1,9 +1,9 @@
 #ifndef NUMBERS_INTERVAL_UTILITY_HPP
 #define NUMBERS_INTERVAL_UTILITY_HPP
 
-#include "interval.hpp"
 #include <algorithm>
 #include <iosfwd>
+#include "interval.hpp"
 
 struct number;
 
