@@ -2,9 +2,15 @@ Version 0.6.0:
  * syntax
    - added ways of specifying how interval splitting is done
    - added detection of badly-formed intervals in propositions
-   - removed the limitation on multiple hypotheses about the same expression
+   - removed limitation on multiple hypotheses about the same expression
+   - improved heuristic for detecting pairs of approx/accurate pairs
+   - removed limitation on number of accurate expressions for a given approximate;
+   - removed hack for accurate expressions of rounded expressions (potentially disruptive)
  * whole engine
    - added inequalities; as hypotheses, they cannot imply theorems but they can restrict computed ranges
+ * proof paths
+   - put rewriting schemes to a higher level to remove constraints on approx/accurate pairs
+   - added rewriting rules for replacing an accurate expression by an approximate and an error
 
 Version 0.5.6:
  * fact database

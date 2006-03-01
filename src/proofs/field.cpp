@@ -18,7 +18,7 @@ pattern_excl_vect operator&&(pattern_excl_vect const &v, pattern_excl const &c) 
   return res;
 }
 
-static pattern a(0), b(1), c(2), d(3), a_b(-1);
+static pattern a(0), b(1), c(2), d(3), a_b(-1), one(token_one);
 
 #define abs pattern::abs
 #define sqrt pattern::sqrt
@@ -163,3 +163,13 @@ REWRITE(approx_to_accura_abs,
 REWRITE(accura_to_approx_abs,
         a_b,
         b + -(b - a));
+
+REWRIT3(approx_to_accura_rel,
+	b,
+	a * (one + (b - a) / a),
+	~a);
+
+REWRIT3(accura_to_approx_rel,
+	a_b,
+	b / (one + (b - a) / a),
+	~a && ~(one + (b - a) / a));
