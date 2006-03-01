@@ -72,12 +72,17 @@ ast_real *normalize(ast_real const &v) {
   return p;
 }
 
-ast_number const *token_zero;
-RUN_ONCE(load_zero_token) {
+ast_number const *token_zero, *token_one;
+
+RUN_ONCE(load_numbers) {
   ast_number num;
   num.base = 0;
   num.exponent = 0;
   token_zero = normalize(num);
+  num.base = 10;
+  num.exponent = 0;
+  num.mantissa = "+1";
+  token_one = normalize(num);
 }
 
 std::string dump_real(ast_real const *r, unsigned prio) {

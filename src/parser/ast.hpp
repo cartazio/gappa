@@ -5,8 +5,6 @@
 #include <vector>
 #include "parser/ast_real.hpp"
 
-extern ast_number const *token_zero;
-
 struct ast_atom_bound {
   ast_real const *real;
   ast_number const *lower, *upper;
