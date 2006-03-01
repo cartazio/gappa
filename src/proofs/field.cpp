@@ -1,6 +1,4 @@
 #include "parser/pattern.hpp"
-#include "proofs/basic_proof.hpp"
-#include "proofs/schemes.hpp"
 
 rewriting_vect rewriting_rules;
 
