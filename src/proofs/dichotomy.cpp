@@ -1,6 +1,7 @@
 #include <iostream>
 #include <stack>
 #include "numbers/interval_utility.hpp"
+#include "numbers/real.hpp"
 #include "numbers/round.hpp"
 #include "parser/ast.hpp"
 #include "proofs/dichotomy.hpp"
@@ -38,20 +39,21 @@ bool fixed_splitter::next(interval &i) {
   return true;
 }
 
-typedef std::vector< interval > interval_vect;
+typedef std::vector< number > number_vect;
 
 struct point_splitter: splitter {
   interval bnd;
-  interval_vect const &bnds;
-  unsigned pos;
-  point_splitter(interval const &i, interval_vect const *b): bnd(i), bnds(*b), pos(0) { merge = false; }
+  number_vect const &bnds;
+  int pos;
+  point_splitter(interval const &i, number_vect const *b): bnd(i), bnds(*b), pos(-1) { merge = false; }
   virtual bool split(interval &) { return false; }
   virtual bool next(interval &);
 };
 
 bool point_splitter::next(interval &i) {
-  for(unsigned sz = bnds.size(); pos < sz;) {
-    i = intersect(bnd, bnds[pos++]);
+  for(int sz = bnds.size(); pos++ < sz;) {
+    i = intersect(bnd, interval(pos == 0  ? number::neg_inf : bnds[pos - 1],
+                                pos == sz ? number::pos_inf : bnds[pos]));
     if (is_empty(i)) continue;
     return true;
   }
@@ -265,7 +267,7 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
   if (var.splitter & 1)
     gen = new fixed_splitter(hyp2[0].bnd(), var.splitter / 2);
   else if (var.splitter)
-    gen = new point_splitter(hyp2[0].bnd(), (interval_vect const *)var.splitter);
+    gen = new point_splitter(hyp2[0].bnd(), (number_vect const *)var.splitter);
   else if (hint.dst.empty())
     gen = new fixed_splitter(hyp2[0].bnd(), 4);
   else {
@@ -330,15 +332,12 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
   return true;
 }
 
-// FIXME: if a splitting point is not representable, the intervals are much too overlapped
-// FIXME: if the points are not correctly ordered by the user, chaos presumably ensues
-interval create_interval(ast_number const *, ast_number const *, bool = true);
+interval create_interval(ast_number const *, ast_number const * = NULL, bool = true);
 
 unsigned long fill_splitter(unsigned long s, ast_number const *n) {
-  static ast_number const *o;
-  interval_vect *v = (interval_vect *)s;
-  if (!v) v = new interval_vect(1, create_interval(NULL, n));
-  else v->push_back(create_interval(o, n));
-  o = n;
+  number_vect *v = (number_vect *)s;
+  number m = lower(create_interval(n));
+  if (!v) v = new number_vect(1, m);
+  else v->push_back(m);
   return (unsigned long)v;
 }
