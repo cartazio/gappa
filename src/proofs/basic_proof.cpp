@@ -349,6 +349,8 @@ node *computation_abs_scheme::generate_proof() const {
     case BOP_SUB:
       i = interval(lower(abs(i1 - i2)), upper(i1 + i2));
       s = (r->type == BOP_ADD) ? "add_aa" : "sub_aa";
+      if (lower(i) > 0) s += (lower(i1) > upper(i2)) ? "_p" : "_n";
+      else s += "_o";
       break;
     case BOP_MUL:
       i = i1 * i2;
@@ -460,7 +462,7 @@ proof_scheme *abs_of_bnd_scheme::factory(predicated_real const &real) {
   return new abs_of_bnd_scheme(real, predicated_real(r, PRED_BND));
 }
 
-// COMPOSE RELATIVE
+// COMPOSE_RELATIVE
 REGISTER_SCHEME_BEGIN(compose_relative);
   compose_relative_scheme(ast_real const *r): proof_scheme(r) {}
 REGISTER_SCHEME_END(compose_relative);
