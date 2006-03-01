@@ -310,7 +310,7 @@ static std::string display(node *n) {
       if (i + 1 != i_end)
         plouf << " apply " << prefix << "union with (1 := u). reflexivity. clear u.\n";
       else
-        plouf << " apply u.\n";
+        plouf << " exact u.\n";
     }
     plouf << "Qed.\n";
     break; }
