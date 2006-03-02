@@ -1,5 +1,9 @@
 <section>
-<title>Preferred expressions and rewriting</title>
+<title>Input sections</title>
+</section>
+
+<section>
+<title>Preferred expressions</title>
 
 <para>Gappa rewrites expressions by matching them with well-known patterns. The
 enclosure of an unmatchable expression will necessarily have to be computed
@@ -43,26 +47,4 @@ a user rewriting rule will have to be added in order to put them in a suitable
 state.</para>
 </section>
 
-</section>
-
-<section>
-<title>Common user rewriting rules</title>
-
-<para>User rewriting rules are mainly needed to decompose errors between
-truncation errors and rounding errors. Let us now consider that <code>exact</code>
-was itself a mathematical approximation of the <code>real</code> expression.
-For example, <code>exact</code> may be the usable truncation of an infinite
-series <code>real</code>. The total error between the computed value and the
-real value is <code>approx - real</code>.</para>
-
-<para>A rewriting rule is needed to indicate how to decompose the error. For an
-absolute error, it will be:
-<code>approx - real -&gt; (approx - exact) + (exact - real)</code>. In the case
-of the relative error, it may be preferable to explicitly name the errors:</para>
-<programlisting><![CDATA[eps = (approx - real) / real;
-eps1 = (approx - exact) / exact;
-eps2 = (exact - real) / real;
-{...}
-eps -> eps1 + eps2 + eps1 * eps2;]]>
-</programlisting>
 </section>

@@ -5,6 +5,7 @@
   <!ENTITY gappa-customizing SYSTEM "manual/customizing.xml">
   <!ENTITY gappa-expressions SYSTEM "manual/expressions.xml">
   <!ENTITY gappa-grammar     SYSTEM "manual/grammar.xml">
+  <!ENTITY gappa-hints       SYSTEM "manual/hints.xml">
   <!ENTITY gappa-invoking    SYSTEM "manual/invoking.xml">
   <!ENTITY gappa-roundings   SYSTEM "manual/roundings.xml">
   <!ENTITY gappa-warnings    SYSTEM "manual/warnings.xml">
@@ -60,6 +61,7 @@ errors due to floating-point arithmetic.</para>
 <chapter>
 <title>Formalizing a problem</title>
 &gappa-expressions;
+&gappa-hints;
 </chapter>
 
 <chapter>
