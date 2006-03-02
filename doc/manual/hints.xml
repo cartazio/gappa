@@ -67,4 +67,15 @@ enables a rewriting rule that completes the proof.</para>
 
 <section>
 <title>Bisection</title>
+
+<para>The last kind of hint can be used when Gappa is unable to prove a formula
+but would be able to prove it if the hypothesis ranges were not so wide. Such a
+failure is usually caused by a bad correlation between the sub-terms of the
+expressions. This can be solved by rewriting the expressions. But the failure
+can also happen when the proof of the formula is not the same everywhere on the
+domain. In both cases, the user can ask Gappa to split the ranges into tighter
+ranges and see if it helps proving the formula.</para>
+
+<para>a</para>
+
 </section>
