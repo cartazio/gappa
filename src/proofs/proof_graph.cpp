@@ -241,7 +241,7 @@ bool graph_t::try_real(node *n) {
         n = new intersection_node(n, i->second);
         if (n == contradiction) return true;
         dst = n;
-      }
+      } else delete i->second;
       partial_reals.erase(i);
     }
   }
