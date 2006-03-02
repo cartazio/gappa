@@ -31,11 +31,38 @@ consequence, if a common rule does not apply, this may mean that such a divisor
 exists. In order to test whether it is the case or not, the
 <code>-Munconstrained</code> option allows to skip these checks. If Gappa is
 happy when this option is provided, the input should be checked for null
-divisors. Note that this option prevents the proof generation obviously.</para>
+divisors. Note that this option obviously prevents the proof generation.</para>
 </section>
 
 <section>
 <title>Approximations</title>
+
+<para>As mentioned before, Gappa has an internal database of rewriting rules.
+Some of these rules need to know about accurate and approximate terms. Without
+this information, they do not match any expression. For example, Gappa will
+replace the term <code>B</code> by <code>b + -(b - B)</code> only it knows a
+term <code>b</code> that is an approximation of the term <code>B</code>.</para>
+
+<para>Gappa has two heuristics to detect terms that are approximations of other
+terms. First, rounded values are approximations of their non-rounded
+counterparts. Second, any absolute or relative error that appears as a
+hypothesis of a logical sub-formula will define a pair of accurate and
+approximate terms.</para>
+
+<para>Since these pairs create lots of already proved rewriting rules, it is
+helpful for the user to define its own pairs. This can be done with the
+following syntax.</para>
+
+<programlisting><![CDATA[approximate ~ accurate;]]></programlisting>
+
+<para>In the following example, the comments show two hints that could be added
+if they had not already been guessed by Gappa. In particular, the second one
+enables a rewriting rule that completes the proof.</para>
+
+<programlisting><![CDATA[@floor = int<dn>;
+{ x - y in [-0.1,0.1] -> floor(x) - y in ? }
+# floor(x) ~ x;
+# x ~ y;]]></programlisting>
 </section>
 
 <section>
