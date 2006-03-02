@@ -87,4 +87,46 @@ z = x * (rnd(y) - y);
 that <code>rnd(y) - y</code> is always zero when <texinline>\frac{1}{2} \le x
 \le 3</texinline>. The user needs to ask for a bisection with respect to the
 expression <code>rnd(x_)</code>.</para>
+
+<para>There are three types of bisection. The first one splits an interval in
+as many equally wide sub-intervals as asked by the user. The second one splits
+an interval along the points provided by the user.</para>
+
+<programlisting><![CDATA[$ x in 6;       # split the range of "x" in six sub-intervals
+$ x in (0.5,2); # split the range of "x" in three sub-intervals, the middle one being [0.5,2]
+$ x;            # equivalent to: $ x in 4;]]></programlisting>
+
+<para>The third kind of bisection tries to find by dichotomy the best range
+split such that a goal of the logical formula holds true. This requires the
+range of this goal to be specified, and the enclosed expression has to be
+indicated on the left of the <code>$</code> symbol.</para>
+
+<programlisting><![CDATA[{ x in [0,3] -> |z| <= 1b-26 }
+|z| $ x;]]></programlisting>
+
+<para>Contrarily to the first two kinds of bisection, this third one keeps the
+range improvements only if the goal was finally reached. If there was a failure
+in doing so, all the improvements are discarded. Gappa will display the
+sub-range on which the goal was not proved. There is a failure when Gappa
+cannot prove the goal on a range and this range cannot be split into two half
+ranges, either because its internal precision is not enough anymore or because
+the maximum depth of dichotomy has been reached. This depth can be set with the
+<code>-Edichotomy=999</code> option.</para>
+
+<para>More than one bisection hint can be used. And hints of the third kind can
+try to satisfy more than one goal at once.</para>
+
+<programlisting><![CDATA[a, b, c $ u;
+a, d $ v;]]></programlisting>
+
+<para>These two hints will be used one after the other. In particular, none
+will be used when Gappa is doing a bisection with the other one. By adding
+terms on the right of the <code>$</code> symbol, more complex hints can be
+built. Beware of combinatorial explosions though. The following hint is an
+example of a complex bisection: it asks Gappa to find a set of sub-ranges on
+<code>u</code> such that the goal on <code>b</code> is satisfied when the range
+on <code>v</code> is split into three sub-intervals.</para>
+
+<programlisting><![CDATA[b $ u, v in 3]]></programlisting>
+
 </section>
