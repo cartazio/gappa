@@ -7,16 +7,20 @@ command-line options. All these comments are no different from a space
 character.</para>
 
 <para>Space, tabulation, and line-break characters are not significant, they
-at most act as identifier separators.</para>
+at most act as identifier separators. In the definition part of a script, the
+<code>GE</code> is never matched, so no separator is needed between operators
+<code>&gt;</code> and <code>=</code>.</para>
 </section>
 
 <section>
 <title>Tokens and operator priority</title>
 
-<para>There are three composite operators: <code>/\</code> (<code>AND</code>)
-and <code>\/</code> (<code>OR</code>) and <code>-&gt;</code> (<code>IMPL</code>).
-And two keywords: <code>in</code> (<code>IN</code>) and <code>not</code>
-(<code>NOT</code>).</para>
+<para>There are five composite operators: <code>/\</code> (<code>AND</code>)
+and <code>\/</code> (<code>OR</code>) and <code>-&gt;</code>
+(<code>IMPL</code>) and <code>&lt;=</code> (<code>LE</code>) and
+<code>&gt;=</code> (<code>GE</code>). And three keywords: <code>in</code>
+(<code>IN</code>) and <code>not</code> (<code>NOT</code>) and <code>sqrt</code>
+(<code>SQRT</code>).</para>
 
 <para>Numbers are either written with a binary representation, or with a
 decimal representation. In both representations, the <code>{integer}</code>
@@ -31,20 +35,27 @@ number        ({binary}|{decimal}|{hexadecimal})]]></programlisting>
 <code>23b-2</code>, <code>0x5.Cp0</code>. They do not have the same semantic
 for Gappa though and a different property will be proved in the decimal case.
 Indeed, some decimal numbers cannot be expressed as a dyadic number and Gappa
-will have to harden the proof and add a layer to take this into account.</para>
+will have to harden the proof and add a layer to take this into account. In
+particular, the user should refrain from being inventive with the constant 1.
+For example, writing this constant as <code>00100.000e-2</code> may prevent
+some rewriting rules to be applied.</para>
 
 <para>Identifiers (<code>IDENT</code>) are matched by
 <code>{alpha}({alpha}|{digit}|_)*</code>.</para>
 
-<para>The associativity and priority of the operators is as follows. It is
-meant to match the usual conventions. <code>NEG</code> is the priority of the
-unary minus; this is the operator with the highest precedence.</para>
+<para>The associativity and priority of the operators in logical formulas is as
+follows. It is meant to match the usual conventions.</para>
 
 <programlisting><![CDATA[%right IMPL
 %left OR
 %left AND
-%left NOT
-%left '+' '-'
+%left NOT]]></programlisting>
+
+<para>For the mathematical expressions, the priority are as follows. Note that
+<code>NEG</code> is the priority of the unary minus; this is the operator with
+the highest precedence.</para>
+
+<programlisting><![CDATA[%left '+' '-'
 %left '*' '/'
 %left NEG]]></programlisting>
 </section>
@@ -54,56 +65,70 @@ unary minus; this is the operator with the highest precedence.</para>
 
 <programlisting><![CDATA[    0 $accept: BLOB $end
 
-    1 BLOB: PROG '{' PROP '}' REWRITE
+    1 BLOB: PROG '{' PROP '}' HINTS
 
-    2 PROP: REAL IN INTERVAL
-    3     | PROP AND PROP
-    4     | PROP OR PROP
-    5     | PROP IMPL PROP
-    6     | NOT PROP
-    7     | '(' PROP ')'
+    2 PROP: REAL LE SNUMBER
+    3     | REAL IN '[' SNUMBER ',' SNUMBER ']'
+    4     | REAL IN '?'
+    5     | REAL GE SNUMBER
+    6     | PROP AND PROP
+    7     | PROP OR PROP
+    8     | PROP IMPL PROP
+    9     | NOT PROP
+   10     | '(' PROP ')'
 
-    8 SNUMBER: NUMBER
-    9        | '+' NUMBER
-   10        | '-' NUMBER
+   11 SNUMBER: NUMBER
+   12        | '+' NUMBER
+   13        | '-' NUMBER
 
-   11 INTERVAL: '[' SNUMBER ',' SNUMBER ']'
-   12         | '?'
+   14 FUNCTION_PARAM: SNUMBER
+   15               | IDENT
 
-   13 FUNCTION_PARAM: SNUMBER
-   14               | IDENT
+   16 FUNCTION_PARAMS_AUX: FUNCTION_PARAM
+   17                    | FUNCTION_PARAMS_AUX ',' FUNCTION_PARAM
 
-   15 FUNCTION_PARAMS_AUX: FUNCTION_PARAM
-   16                    | FUNCTION_PARAMS_AUX ',' FUNCTION_PARAM
+   18 FUNCTION_PARAMS: /* empty */
+   19                | '<' FUNCTION_PARAMS_AUX '>'
 
-   17 FUNCTION_PARAMS: /* vide */
-   18                | '<' FUNCTION_PARAMS_AUX '>'
+   20 FUNCTION: IDENT FUNCTION_PARAMS
 
-   19 FUNCTION: IDENT FUNCTION_PARAMS
+   21 EQUAL: '='
+   22      | FUNCTION '='
 
-   20 EQUAL: '='
-   21      | FUNCTION '='
+   23 PROG: /* empty */
+   24     | PROG IDENT EQUAL REAL ';'
+   25     | PROG '@' IDENT '=' FUNCTION ';'
 
-   22 PROG: /* vide */
-   23     | PROG IDENT EQUAL REAL ';'
-   24     | PROG '@' IDENT '=' FUNCTION ';'
+   26 REAL: SNUMBER
+   27     | IDENT
+   28     | FUNCTION '(' REALS ')'
+   29     | REAL '+' REAL
+   30     | REAL '-' REAL
+   31     | REAL '*' REAL
+   32     | REAL '/' REAL
+   33     | '|' REAL '|'
+   34     | SQRT '(' REAL ')'
+   35     | '(' REAL ')'
+   36     | '+' REAL
+   37     | '-' REAL
 
-   25 REAL: SNUMBER
-   26     | IDENT
-   27     | FUNCTION '(' OPERANDS ')'
-   28     | REAL '+' REAL
-   29     | REAL '-' REAL
-   30     | REAL '*' REAL
-   31     | REAL '/' REAL
-   32     | '|' REAL '|'
-   33     | '(' REAL ')'
-   34     | '+' REAL
-   35     | '-' REAL
+   38 REALS: REAL
+   39      | REALS ',' REAL
 
-   36 OPERANDS: REAL
-   37         | OPERANDS ',' REAL
+   40 DPOINTS: '(' SNUMBER
+   41        | DPOINTS ',' SNUMBER
+   42        | DPOINTS ')'
 
-   38 REWRITE: /* vide */
-   39        | REWRITE REAL IMPL REAL ';'
-   40        | REWRITE REAL '$' REAL ';']]></programlisting>
+   43 DVAR: REAL
+   44     | REAL IN NUMBER
+   45     | REAL IN DPOINTS
+
+   46 DVARS: DVAR
+   47      | DVARS ',' DVAR
+
+   48 HINTS: /* empty */
+   49      | HINTS REAL IMPL REAL ';'
+   50      | HINTS REALS '$' DVARS ';'
+   51      | HINTS '$' DVARS ';'
+   52      | HINTS REAL '~' REAL ';']]></programlisting>
 </section>
