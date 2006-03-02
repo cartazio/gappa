@@ -73,9 +73,18 @@ but would be able to prove it if the hypothesis ranges were not so wide. Such a
 failure is usually caused by a bad correlation between the sub-terms of the
 expressions. This can be solved by rewriting the expressions. But the failure
 can also happen when the proof of the formula is not the same everywhere on the
-domain. In both cases, the user can ask Gappa to split the ranges into tighter
-ranges and see if it helps proving the formula.</para>
+domain, as in the following example. In both cases, the user can ask Gappa to
+split the ranges into tighter ranges and see if it helps proving the formula.</para>
 
-<para>a</para>
+<programlisting><![CDATA[@rnd = float< ieee_32, ne >;
+x = rnd(x_);
+y = x - 1;
+z = x * (rnd(y) - y);
+{ x in [0,3] -> |z| in ? }]]></programlisting>
 
+<para>With this script, Gappa will answer that <texinline>|z| \le 3 \cdot
+2^{-24}</texinline>. This is not the best answer because Gappa does not notice
+that <code>rnd(y) - y</code> is always zero when <texinline>\frac{1}{2} \le x
+\le 3</texinline>. The user needs to ask for a bisection with respect to the
+expression <code>rnd(x_)</code>.</para>
 </section>
