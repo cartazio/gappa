@@ -1,5 +1,83 @@
 <section>
 <title>Input sections</title>
+
+<section>
+<title>Logical formula</title>
+
+<para>This is the fundamental part of the script, it contains the logical
+formula Gappa is expected to prove. This formula is written between brackets
+and can contain any implication, disjunction, conjunction of enclosures of
+mathematical expressions. Enclosures are either bounded ranges or
+inequalities. Any identifier without definition is assumed to be universally
+quantified over the set of real numbers.</para>
+
+<programlisting><![CDATA[{ x - 2 in [-2,0] /\ (x + 1 in [0,2] -> y in [3,4]) -> not x <= 1 \/ x + y in ? }]]></programlisting>
+
+<para>The logical formula is first modified and loosely broken according to
+the rules of sequent calculus. Each of the new formulas will then be verified
+by Gappa. Ranges on the right of these sub-formulas can be left unspecified.
+Gappa will then suggest a range such that the logical formula is verified.</para>
+
+<programlisting><![CDATA[(1) x <= 1 /\ x - 2 in [-2,0] -> x + 1 in [0,2] \/ x + y in ?
+(2) x <= 1 /\ x - 2 in [-2,0] /\ y in [3,4] -> x + y in ?]]></programlisting>
+
+<para>In order to be useful in the proof of the whole formula, the second
+sub-formula requires the first one to hold true. If Gappa cannot verify the
+first sub-formula, it will skip the verification of the second one.</para>
+
+<para>Inequalities can be present on both sides of a sub-formula. On the left,
+it will be used only if Gappa is already able to compute an enclosure of the
+expression by another way. On the right, Gappa will put a reverted copy on the
+left if allowed by classical logic, in order to increase the number of
+available hypotheses.</para>
+
+<para>When proving a disjunction in a sub-formula, one of the sub-terms of this
+disjunction has to always hold with respect to the set of hypotheses. If this
+is not always the same sub-term that holds, Gappa will be unable to prove that
+the whole disjunction holds.</para>
+</section>
+
+<section>
+<title>Definitions</title>
+
+<para>Typing the whole expressions in the logical formula can soon become
+annoying and error-prone, especially if they contain rounding operators. To
+ease this work, the user can define in another section beforehand the
+expressions that will be used more than once. A special syntax also allows to
+avoid embedding rounding operators everywhere.</para>
+
+<para>First, rounding operators can be given a shorter name by using the
+<code>@name = definition&lt;parameters&gt;</code> syntax. <code>name</code> can
+then be used wherever the whole definition would have been used.</para>
+
+<para>Next, common sub-terms of a mathematical expression can be shared by
+giving them a name with the <code>name = term</code> syntax. This name can then
+be used in later definitions or in the logical formula or in the hints. The
+equality itself does not hold any semantic meaning. Gappa will only use the
+name as a shorter expression when displaying the sub-term, and in the generated
+proof instead of a randomly generated name.</para>
+
+<para>Finally, when all the arithmetic operations on the right side of a
+definition are followed by the same rounding operator, this operator can be
+put once and for all on the left of the equal symbol. For example, with the
+following script, Gappa will complain that <code>y</code> and <code>z</code>
+are two different names for the same expression.</para>
+
+<programlisting><![CDATA[@rnd = float< ieee_32, ne>;
+y = rnd(x * rnd(1 - x));
+z rnd= x * (1 - x);]]></programlisting>
+</section>
+
+<section>
+<title>Hints</title>
+
+<para>Hints for Gappa's engine can be added in this last section, if the tool
+is not able to prove the logical formula. These hints are either rewriting
+rules or bisection directives. Approximate and accurate expressions can also
+be provided in this section in order to generate lots of safe rewriting
+rules. Hints will be described in depth later.</para>
+</section>
+
 </section>
 
 <section>
