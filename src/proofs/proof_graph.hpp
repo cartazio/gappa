@@ -90,6 +90,7 @@ class graph_t {
   bool dichotomize(property_tree const &, dichotomy_hint const &);	// apply a dichotomy hint, return true if nodes were added
   node *get_contradiction() const { return contradiction; }
   void set_contradiction(node *);
+  void purge();		// remove any unused nodes and free maps
 };
 
 struct graph_loader {
