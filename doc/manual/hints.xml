@@ -1,9 +1,41 @@
 <section>
-<title>Approximations</title>
+<title>Rewriting</title>
+
+<para>Internally, Gappa tries to compute the range of mathematical terms. For
+example, if the tool has to bound the product of two factors, it will check if
+it knows the ranges of both factors. If it does, it will apply the theorem
+about real multiplication in order to compute the range of the product.</para>
+
+<para>Unfortunately, there may be some expressions that Gappa cannot bound
+correctly. This usually happens because it has no result on a sub-term or
+because the expression is badly correlated. In this case, the user can provide
+an alternate expression. If Gappa finds an enclosure for this secondary
+expression, it will use its range in an enclosure for the primary expression.</para>
+
+<programlisting><![CDATA[primary -> secondary;]]></programlisting>
+
+<para>In order for this transformation to be valid, any evaluation of the
+primary expression must be contained in the enclosure of the secondary
+expression. Gappa will generate the corresponding theorem in the final proof
+script and its proof will be left as an exercise for the user.</para>
+
+<para>This transformation is generally valid if both expressions are equal.
+To detect mistyping early, Gappa will try to check if they are indeed equal and
+warn if they are not. It will not generate a proof of their equality though and
+it is still up to the user to do it. Note that Gappa does not check if the
+divisor are always different from zero in the expressions. Instead it warn about
+such potentially bad divisors.</para>
+
+<para>The internal database of rules check for null divisors though. As a
+consequence, if a common rule does not apply, this may mean that such a divisor
+exists. In order to test whether it is the case or not, the
+<code>-Munconstrained</code> option allows to skip these checks. If Gappa is
+happy when this option is provided, the input should be checked for null
+divisors. Note that this option prevents the proof generation obviously.</para>
 </section>
 
 <section>
-<title>Rewriting</title>
+<title>Approximations</title>
 </section>
 
 <section>
