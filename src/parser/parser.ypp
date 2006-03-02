@@ -222,7 +222,7 @@ REALS:
 DPOINTS:
   '(' SNUMBER		{ $$ = fill_splitter(0, $2); }
 | DPOINTS ',' SNUMBER	{ $$ = fill_splitter($1, $3); }
-| DPOINTS ')'		{ $$ = fill_splitter($1, NULL); }
+| DPOINTS ')'		{ $$ = $1; }
 
 DVAR:
   REAL			{ dichotomy_var v = { $1, 0 }; $$ = v; }
