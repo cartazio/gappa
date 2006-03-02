@@ -1,10 +1,10 @@
 <section>
 <title>Input and output</title>
 <para>Gappa reads a script on its standard input. Such a script is made of
-three parts: the definitions, the logical property, and the hints. Warning
+three parts: the definitions, the logical formula, and the hints. Warning
 messages, error messages, and results are displayed on the standard error
 output. Gappa send to the standard output a formal proof of the logical
-property; its format depends on the selected back-end.</para>
+formula; its format depends on the selected back-end.</para>
 </section>
 
 <!-- ###### -->
@@ -15,7 +15,16 @@ property; its format depends on the selected back-end.</para>
 <section>
 <title>Selecting a back-end</title>
 
-<para>To be written.</para>
+<para>These options are mutually exclusive and cannot be embedded into the
+scripts.</para>
+
+<para>Option: <code>-Bnull</code>. Do not enable any back-end. This is the
+default. This is also the only back-end compatible with the
+<code>-Munconstrained</code> option.</para>
+
+<para>Option: <code>-Bcoq</code>. When this back-end is selected, Gappa will
+generate a proof script of its results and this script can be automatically
+machine-checked by the Coq proof-checker.</para>
 </section>
 
 <section>
@@ -37,6 +46,12 @@ a higher setting would probably be dubious.</para>
 2^100 intervals of width 2^-100.</para>
 </section>
 
+</section>
+
+<section>
+<title>Setting modes</title>
+
+<para>To be written.</para>
 </section>
 
 <section>
