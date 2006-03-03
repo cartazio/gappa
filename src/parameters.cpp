@@ -6,6 +6,7 @@
 int parameter_internal_precision = 60;
 int parameter_dichotomy_depth = 100;
 bool parameter_constrained = true;
+bool parameter_statistics = false;
 bool warning_dichotomy_failure = true;
 bool warning_hint_difference = true;
 bool warning_null_denominator = true;
@@ -26,6 +27,7 @@ static void help() {
     "\n"
     "Engine modes:\n"
     "  -Munconstrained                 do not check for theorem constraints\n"
+    "  -Mstatistics                    display statistics at the end\n"
     "\n"
     "Warnings: (default: all)\n"
     "  -W[no-]dichotomy-failure\n"
@@ -55,6 +57,7 @@ bool parse_option(std::string const &s, bool internal) {
   case 'M': {
     std::string ss = s.substr(2);
     if (ss == "unconstrained") parameter_constrained = false; else
+    if (ss == "statistics")    parameter_statistics  = true;  else
     return false;
     break;
   }

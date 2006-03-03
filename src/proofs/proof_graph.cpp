@@ -215,19 +215,24 @@ void graph_t::set_contradiction(node *n) {
   purge();
 }
 
+int stat_successful_th = 0, stat_discarded_pred = 0, stat_intersected_pred = 0;
+
 bool graph_t::try_real(node *n) {
   assert(top_graph == this && !contradiction);
   assert(n && n->graph && n->graph->dominates(this));
   property const &res2 = n->get_result();
+  ++stat_successful_th;
   std::pair< node_map::iterator, bool > ib = known_reals.insert(std::make_pair(res2.real, n));
   node *&dst = ib.first->second;
   if (!ib.second) { // there was already a known range
     node *old = dst;
     property const &res1 = old->get_result();
     if (res1.implies(res2)) {
+      ++stat_discarded_pred;
       delete n;
       return false;
     } else if (!res2.strict_implies(res1)) {
+      ++stat_intersected_pred;
       n = new intersection_node(old, n);
       if (n == contradiction) return true;
     }

@@ -112,10 +112,13 @@ static void add_rewrite_scheme(rewriting_rule const &rw, ast_real const *src,
   l.insert(new rewrite_scheme(src, dst, rw.name, c));
 }
 
+int stat_tested_real = 0, stat_discarded_real = 0;
+
 static real_dependency &initialize_dependencies(predicated_real const &real) {
   real_dependencies::iterator it = reals.find(real);
   if (it != reals.end()) return it->second;
   // no dependencies yet, let's generate them
+  ++stat_tested_real;
   it = reals.insert(std::make_pair(real, real_dependency())).first;
   real_dependency &dep = it->second;
   scheme_set &l = dep.schemes;
@@ -220,6 +223,7 @@ ast_real_vect generate_proof_paths() {
           delete_scheme(p, NULL);
       }
       reals.erase(real);
+      ++stat_discarded_real;
     }
     missing_reals.erase(real);
   }
@@ -275,6 +279,8 @@ bool fill_hypotheses(property *hyp, preal_vect const &v) {
   return true;
 }
 
+int stat_tested_th = 0;
+
 bool graph_t::populate(property_tree const &goals, dichotomy_sequence const &dichotomy) {
   if (contradiction)
     return true;
@@ -292,6 +298,7 @@ bool graph_t::populate(property_tree const &goals, dichotomy_sequence const &dic
       proof_scheme const *s = missing_schemes.front();
       missing_schemes.pop_front();
       s->scanned = false;
+      ++stat_tested_th;
       node *n = s->generate_proof();
       if (!n || !try_real(n)) continue;		// the scheme did not find anything useful
       if (contradiction) return true;		// we have got a contradiction, everything is true
