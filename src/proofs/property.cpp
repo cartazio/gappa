@@ -5,53 +5,54 @@
 #include "proofs/property.hpp"
 #include "proofs/schemes.hpp"
 
-typedef int long_is_not_long_enough[2 * (sizeof(long) >= sizeof(void *)) - 1];
+typedef int long_is_not_long_enough_1[2 * (sizeof(long) >= sizeof(void *)) - 1];
+typedef int long_is_not_long_enough_2[2 * (sizeof(long) >= sizeof(interval)) - 1];
 
-property::property(): d(0), real() {}
+property::property(): store_int(0), real() {}
 
 property::property(ast_real const *r): real(r, PRED_BND) {
-  new(&d) interval;
+  new(&store_bnd) interval;
 }
 
 property::property(ast_real const *r, interval const &i): real(r, PRED_BND) {
-  new(&d) interval(i);
+  new(&store_bnd) interval(i);
 }
 
 property::property(predicated_real const &r): real(r) {
   switch (real.pred()) {
   case PRED_ABS:
-  case PRED_BND: new(&d) interval; break;
-  case PRED_FIX: d = INT_MIN;
-  case PRED_FLT: d = INT_MAX;
+  case PRED_BND: new(&store_bnd) interval; break;
+  case PRED_FIX: store_int = INT_MIN;
+  case PRED_FLT: store_int = INT_MAX;
   }
 }
 
 property::property(predicated_real const &r, interval const &i): real(r) {
   assert(r.pred_bnd());
-  new(&d) interval(i);
+  new(&store_bnd) interval(i);
 }
 
-property::property(predicated_real const &r, long i): d(i), real(r) {
+property::property(predicated_real const &r, long i): store_int(i), real(r) {
   assert(r.pred_cst());
 }
 
 property::property(property const &p): real(p.real) {
-  if (p.real.pred_bnd()) new(&d) interval(p.bnd());
-  else d = p.d;
+  if (p.real.pred_bnd()) new(&store_bnd) interval(p._bnd());
+  else store_int = p.store_int;
 }
 
 property::~property() {
-  if (real.pred_bnd()) bnd().~interval();
+  if (real.pred_bnd()) _bnd().~interval();
 }
 
 property &property::operator=(property const &p) {
   if (p.real.pred_bnd()) {
-    interval const &pb = p.bnd();
-    if (real.pred_bnd()) bnd() = pb;
-    else new(&d) interval(pb);
+    interval const &pb = p._bnd();
+    if (real.pred_bnd()) _bnd() = pb;
+    else new(&store_bnd) interval(pb);
   } else {
-    if (real.pred_bnd()) bnd().~interval();
-    d = p.d;
+    if (real.pred_bnd()) _bnd().~interval();
+    store_int = p.store_int;
   }
   real = p.real;
   return *this;
@@ -61,9 +62,9 @@ bool property::implies(property const &p) const {
   if (real != p.real) return false;
   switch (real.pred()) {
   case PRED_BND:
-  case PRED_ABS: return bnd() <= p.bnd();
-  case PRED_FIX: return d >= p.d;
-  case PRED_FLT: return d <= p.d;
+  case PRED_ABS: return _bnd() <= p._bnd();
+  case PRED_FIX: return store_int >= p.store_int;
+  case PRED_FLT: return store_int <= p.store_int;
   }
   assert(false);
   return false;
@@ -74,8 +75,8 @@ bool property::strict_implies(property const &p) const {
   switch (real.pred()) {
   case PRED_ABS:
   case PRED_BND: return bnd() < p.bnd();
-  case PRED_FIX: return d > p.d;
-  case PRED_FLT: return d < p.d;
+  case PRED_FIX: return store_int > p.store_int;
+  case PRED_FLT: return store_int < p.store_int;
   }
   assert(false);
   return false;
@@ -85,9 +86,9 @@ void property::intersect(property const &p) {
   assert(real == p.real);
   switch (real.pred()) {
   case PRED_ABS:
-  case PRED_BND: { interval &i = bnd(); i = ::intersect(i, p.bnd()); break; }
-  case PRED_FIX: d = std::max(d, p.d); break;
-  case PRED_FLT: d = std::min(d, p.d); break;
+  case PRED_BND: _bnd() = ::intersect(_bnd(), p._bnd()); break;
+  case PRED_FIX: store_int = std::max(store_int, p.store_int); break;
+  case PRED_FLT: store_int = std::min(store_int, p.store_int); break;
   }
 }
 
@@ -96,9 +97,9 @@ void property::hull(property const &p) {
   assert(real == p.real);
   switch (real.pred()) {
   case PRED_ABS:
-  case PRED_BND: { interval &i = bnd(); i = ::hull(i, p.bnd()); break; }
-  case PRED_FIX: d = std::min(d, p.d); break;
-  case PRED_FLT: d = std::max(d, p.d); break;
+  case PRED_BND: _bnd() = ::hull(_bnd(), p.bnd()); break;
+  case PRED_FIX: store_int = std::min(store_int, p.store_int); break;
+  case PRED_FLT: store_int = std::max(store_int, p.store_int); break;
   }
 }
 

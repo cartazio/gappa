@@ -25,17 +25,22 @@ class predicated_real {
 };
 
 class property {
-  long d;
+  union {
+    char store_bnd[sizeof(interval)];
+    long store_int;
+  };
+  interval       &_bnd()       { return *reinterpret_cast< interval       * >(&store_bnd); }
+  interval const &_bnd() const { return *reinterpret_cast< interval const * >(&store_bnd); }
  public:
   predicated_real real;
   interval &bnd()
-  { assert(real.pred_bnd()); return *reinterpret_cast< interval * >(&d); }
+  { assert(real.pred_bnd()); return _bnd(); }
   interval const &bnd() const
-  { assert(real.pred_bnd()); return *reinterpret_cast< interval const * >(&d); }
+  { assert(real.pred_bnd()); return _bnd(); }
   long &cst()
-  { assert(real.pred_cst()); return d; }
+  { assert(real.pred_cst()); return store_int; }
   long const &cst() const
-  { assert(real.pred_cst()); return d; }
+  { assert(real.pred_cst()); return store_int; }
   property();
   property(ast_real const *);
   property(ast_real const *, interval const &);
