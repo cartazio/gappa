@@ -92,9 +92,9 @@ expression <code>rnd(x_)</code>.</para>
 as many equally wide sub-intervals as asked by the user. The second one splits
 an interval along the points provided by the user.</para>
 
-<programlisting><![CDATA[$ x in 6;       # split the range of "x" in six sub-intervals
-$ x in (0.5,2); # split the range of "x" in three sub-intervals, the middle one being [0.5,2]
-$ x;            # equivalent to: $ x in 4;]]></programlisting>
+<programlisting><![CDATA[$ x in 6;               # split the range of "x" in six sub-intervals
+$ x in (0.5,1.9999999); # split the range of "x" in three sub-intervals, the middle one being [0.5,~2]
+$ x;                    # equivalent to: $ x in 4;]]></programlisting>
 
 <para>The third kind of bisection tries to find by dichotomy the best range
 split such that a goal of the logical formula holds true. This requires the
