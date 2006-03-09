@@ -29,7 +29,7 @@ extern void generate_graph(ast_prop const *p);
 extern void test_ringularity(ast_real const *, ast_real const *);
 extern std::set< ast_real const * > free_variables;
 
-ast_number const *negative_number(ast_number const *nn) {
+static ast_number const *negative_number(ast_number const *nn) {
   if (nn->base == 0) return nn;
   ast_number n = *nn;
   char &c = n.mantissa[0];
@@ -45,6 +45,10 @@ static ast_real const *rnd_normalize(ast_real const &real) {
   if (!rounding_mode) return r;
   return normalize(ast_real(real_op(rounding_mode, r)));
 }
+
+#define scan_integer(n,res) \
+  if (n->exponent != 0 || n->mantissa.size() >= 7) failure("the number does not look like an integer"); \
+  unsigned long res = (unsigned long)(atoi(n->mantissa.c_str()) * 2) | 1;
 
 #define YYINCLUDED_STDLIB_H
 
@@ -117,8 +121,8 @@ SNUMBER:
 | '-' NUMBER	{ $$ = negative_number($2); }
 
 FUNCTION_PARAM:
-  SNUMBER	{ $$ = (unsigned long)(atoi($1->mantissa.c_str()) * 2) | 1; }
-| IDENT		{ $$ = (unsigned long)($1); }
+  SNUMBER	{ scan_integer($1, v); $$ = v; }
+| IDENT		{ $$ = reinterpret_cast< unsigned long >($1); }
 
 FUNCTION_PARAMS_AUX:
   FUNCTION_PARAM	{ $$ = new function_params(1, $1); }
@@ -226,7 +230,7 @@ DPOINTS:
 
 DVAR:
   REAL			{ dichotomy_var v = { $1, 0 }; $$ = v; }
-| REAL IN NUMBER	{ dichotomy_var v = { $1, (unsigned long)(atoi($3->mantissa.c_str()) * 2) | 1 }; $$ = v; }
+| REAL IN NUMBER	{ scan_integer($3, w); dichotomy_var v = { $1, w }; $$ = v; }
 | REAL IN DPOINTS	{ dichotomy_var v = { $1, $3 }; $$ = v; }
 
 DVARS:
