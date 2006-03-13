@@ -66,6 +66,8 @@ int main(int argc, char **argv) {
     if (g->populate(current_context.goals, dichotomies)) {
       if (!current_context.goals.empty())
         std::cerr << "Warning: hypotheses are in contradiction, any result is true.\n";
+      else
+        std::cerr << "a contradiction was built from the hypotheses.\n";
       display->theorem(g->get_contradiction());
       proven_contexts.push_back(true);
     } else if (current_context.goals.empty()) {
