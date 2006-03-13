@@ -413,6 +413,34 @@ proof_scheme *bnd_of_abs_scheme::factory(ast_real const *real) {
   return new bnd_of_abs_scheme(real);
 }
 
+// BND_OF_BND_ABS
+REGISTER_SCHEME_BEGIN(bnd_of_bnd_abs);
+  preal_vect needed;
+  bnd_of_bnd_abs_scheme(preal_vect const &v) : proof_scheme(v[0]), needed(v) {}
+REGISTER_SCHEME_END(bnd_of_bnd_abs);
+
+node *bnd_of_bnd_abs_scheme::generate_proof() const {
+  property hyps[2];
+  if (!fill_hypotheses(hyps, needed)) return NULL;
+  interval const &ib = hyps[0].bnd(), &ia = hyps[1].bnd();
+  number const &iba = lower(ib), &ibb = upper(ib), &iab = lower(ia), &iaa = -iab;
+  bool b1 = iba <= iaa, b2 = iab <= ibb;
+  if (b1 && b2) return NULL;
+  property res(real, b1 ? interval(iba, iaa) : interval(iab, b2 ? ibb : iab));
+  return create_theorem(2, hyps, res, b1 ? "bnd_of_bnd_abs_n" : "bnd_of_bnd_abs_p");
+}
+
+preal_vect bnd_of_bnd_abs_scheme::needed_reals() const {
+  return needed;
+}
+
+proof_scheme *bnd_of_bnd_abs_scheme::factory(ast_real const *real) {
+  preal_vect hyps;
+  hyps.push_back(predicated_real(real, PRED_BND));
+  hyps.push_back(predicated_real(real, PRED_ABS));
+  return new bnd_of_bnd_abs_scheme(hyps);
+}
+
 // UABS_OF_ABS
 REGISTER_SCHEME_BEGIN(uabs_of_abs);
   predicated_real needed;
