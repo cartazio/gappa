@@ -53,6 +53,7 @@ typedef std::set< proof_scheme const * > scheme_set;
 struct real_dependency {
   scheme_set dependent;
   scheme_set schemes;
+  bool found;
 };
 typedef std::map< predicated_real, real_dependency > real_dependencies;
 static real_dependencies reals;
@@ -74,14 +75,30 @@ static void initialize_scheme_list(scheme_list &v) {
 }
 
 static void insert_dependent(scheme_list &v, predicated_real const &real) {
-  real_dependencies::const_iterator i = reals.find(real);
-  if (i == reals.end()) return;
-  scheme_set const &dep = i->second.dependent;
+  scheme_set const &dep = reals[real].dependent;
   for(scheme_set::const_iterator i = dep.begin(), end = dep.end(); i != end; ++i) {
     proof_scheme const *s = *i;
-    if (!s || s->scanned) continue;
+    if (s->scanned) continue;
     s->scanned = true;
     v.push_back(s);
+  }
+}
+
+static void insert_dependent_init(scheme_list &v, predicated_real const &real) {
+  scheme_set const &dep = reals[real].dependent;
+  for(scheme_set::const_iterator i = dep.begin(), i_end = dep.end(); i != i_end; ++i) {
+    proof_scheme const *s = *i;
+    if (!s || s->scanned) continue;
+    preal_vect w = s->needed_reals();
+    bool good = true;
+    for(preal_vect::const_iterator j = w.begin(), j_end = w.end(); j != j_end; ++j)
+      if (!reals[*j].found) { good = false; break; }
+    if (!good) continue;
+    bool &found = reals[s->real].found;
+    if (w.size() > 0 && w[0] == s->real && !found) continue;
+    s->scanned = true;
+    v.push_back(s);
+    found = true;
   }
 }
 
@@ -121,6 +138,7 @@ static real_dependency &initialize_dependencies(predicated_real const &real) {
   ++stat_tested_real;
   it = reals.insert(std::make_pair(real, real_dependency())).first;
   real_dependency &dep = it->second;
+  dep.found = false;
   scheme_set &l = dep.schemes;
   for(scheme_factories::iterator i = factories.begin(), i_end = factories.end(); i != i_end; ++i) {
     proof_scheme *s = (**i)(real);
@@ -174,25 +192,29 @@ ast_real_vect generate_proof_paths() {
     real_dependency &r = initialize_dependencies(predicated_real(*i, PRED_BND));
     r.schemes.insert(NULL);
     r.dependent.insert(NULL);
+    r.found = true;
   }
   // setup the source schemes
   for(real_dependencies::iterator i = reals.begin(), i_end = reals.end(); i != i_end; ++i) {
     real_dependency &r = i->second;
     for(scheme_set::iterator j = r.schemes.begin(), j_end = r.schemes.end(); j != j_end; ++j) {
       proof_scheme const *s = *j;
-      if (s && s->needed_reals().empty())
+      if (s && s->needed_reals().empty()) {
         source_schemes.push_back(s);
+        r.found = true;
+      }
     }
   }
   // find reachable schemes starting from sources and inputs
   scheme_list missing_schemes;
   initialize_scheme_list(missing_schemes);
-  for(ast_real_set::const_iterator i = input_reals.begin(), i_end = input_reals.end(); i != i_end; ++i)
-    insert_dependent(missing_schemes, predicated_real(*i, PRED_BND));
+  for(ast_real_set::const_iterator i = input_reals.begin(),
+      i_end = input_reals.end(); i != i_end; ++i)
+    insert_dependent_init(missing_schemes, predicated_real(*i, PRED_BND));
   while (!missing_schemes.empty()) {
     proof_scheme const *s = missing_schemes.front();
     missing_schemes.pop_front();
-    insert_dependent(missing_schemes, s->real);
+    insert_dependent_init(missing_schemes, s->real);
   }
   // remove unreachable schemes
   for(real_dependencies::iterator i = reals.begin(), i_end = reals.end(); i != i_end; ++i) {
