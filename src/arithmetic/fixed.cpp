@@ -152,31 +152,31 @@ proof_scheme *fixed_of_fix_scheme::factory(ast_real const *real) {
   return new fixed_of_fix_scheme(real, predicated_real(holders[0], PRED_FIX), f->format.min_exp);
 }
 
-// BND_OF_FIX_BND
-REGISTER_SCHEME_BEGIN(bnd_of_fix_bnd);
+// BND_OF_BND_FIX
+REGISTER_SCHEME_BEGIN(bnd_of_bnd_fix);
   preal_vect needed;
-  bnd_of_fix_bnd_scheme(preal_vect const &v)
-    : proof_scheme(v[1]), needed(v) {}
-REGISTER_SCHEME_END(bnd_of_fix_bnd);
+  bnd_of_bnd_fix_scheme(preal_vect const &v)
+    : proof_scheme(v[0]), needed(v) {}
+REGISTER_SCHEME_END(bnd_of_bnd_fix);
 
-node *bnd_of_fix_bnd_scheme::generate_proof() const {
+node *bnd_of_bnd_fix_scheme::generate_proof() const {
   property hyps[2];
   if (!fill_hypotheses(hyps, needed)) return NULL;
-  fixed_format format(hyps[0].cst());
-  interval const &i = hyps[1].bnd();
+  fixed_format format(hyps[1].cst());
+  interval const &i = hyps[0].bnd();
   number a = round_number(lower(i), &format, &fixed_format::roundU);
   number b = round_number(upper(i), &format, &fixed_format::roundD);
   property res(real, interval(a, (a <= b) ? b : a));
-  return create_theorem(2, hyps, res, "bnd_of_fix_bnd");
+  return create_theorem(2, hyps, res, "bnd_of_bnd_fix");
 }
 
-preal_vect bnd_of_fix_bnd_scheme::needed_reals() const {
+preal_vect bnd_of_bnd_fix_scheme::needed_reals() const {
   return needed;
 }
 
-proof_scheme *bnd_of_fix_bnd_scheme::factory(ast_real const *real) {
+proof_scheme *bnd_of_bnd_fix_scheme::factory(ast_real const *real) {
   preal_vect hyps;
-  hyps.push_back(predicated_real(real, PRED_FIX));
   hyps.push_back(predicated_real(real, PRED_BND));
-  return new bnd_of_fix_bnd_scheme(hyps);
+  hyps.push_back(predicated_real(real, PRED_FIX));
+  return new bnd_of_bnd_fix_scheme(hyps);
 }
