@@ -1,3 +1,7 @@
+Version 0.6.1:
+ * fact database
+   - fixed patterns for generalized rounding operators
+
 Version 0.6.0:
  * syntax
    - added ways of specifying how interval splitting is done

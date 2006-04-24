@@ -137,7 +137,9 @@ function_class const *absolute_rounding_error(ast_real const *src, ast_real cons
   dst[0] = p->ops[1];
   dst[1] = p->ops[0];
   real_op const *o = boost::get < real_op const >(dst[1]);
-  return (!o || dst[0] != o->ops[0]) ? NULL : o->fun;
+  if (!o || !o->fun) return NULL;
+  ast_real const *a = (o->fun->type == UOP_ID) ? o->ops[0] : normalize(ast_real(real_op(o->fun->type, o->ops)));
+  return (dst[0] != a) ? NULL : o->fun;
 }
 
 function_class const *relative_rounding_error(ast_real const *src, ast_real const *dst[2]) {
