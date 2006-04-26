@@ -1,13 +1,17 @@
 Version 0.6.1:
+ * proof paths
+   - improved detection of dead paths
  * fact database
    - fixed patterns for generalized rounding operators
+   - improved rewriting rules for approx/accurate pairs
+   - renamed rewriting rules
 
 Version 0.6.0:
  * syntax
    - added ways of specifying how interval splitting is done
    - added detection of badly-formed intervals in propositions
    - removed limitation on multiple hypotheses about the same expression
-   - improved heuristic for detecting pairs of approx/accurate pairs
+   - improved heuristic for detecting approx/accurate pairs
    - removed limitation on number of accurate expressions for a given approximate;
    - removed hack for accurate expressions of rounded expressions (potentially disruptive)
  * whole engine
