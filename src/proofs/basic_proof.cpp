@@ -492,36 +492,21 @@ proof_scheme *abs_of_bnd_scheme::factory(predicated_real const &real) {
 
 // COMPOSE_RELATIVE
 REGISTER_SCHEME_BEGIN(compose_relative);
-  compose_relative_scheme(ast_real const *r): proof_scheme(r) {}
+  preal_vect needed;
+  compose_relative_scheme(ast_real const *r, preal_vect const &v)
+    : proof_scheme(r), needed(v) {}
 REGISTER_SCHEME_END(compose_relative);
 
 node *compose_relative_scheme::generate_proof() const {
-  real_op const *r = boost::get< real_op const >(real.real());
-  assert(r && r->type == BOP_ADD);
-  real_op const *r1 = boost::get< real_op const >(r->ops[0]),
-                *r2 = boost::get< real_op const >(r->ops[1]);
-  assert(r1 && r2 && r1->type == BOP_ADD && r2->type == BOP_MUL
-         && r1->ops[0] == r2->ops[0] && r1->ops[1] == r2->ops[1]);
-  node *n1 = find_proof(r1->ops[0]), *n2 = find_proof(r1->ops[1]);
-  if (!n1 || !n2) return NULL;
-  property const &res1 = n1->get_result(), &res2 = n2->get_result();
-  property res(real, compose_relative(res1.bnd(), res2.bnd()));
+  property hyps[2];
+  if (!fill_hypotheses(hyps, needed)) return NULL;
+  property res(real, compose_relative(hyps[0].bnd(), hyps[1].bnd()));
   if (!is_defined(res.bnd())) return NULL;
-  property hyps[2] = { res1, res2 };
   return create_theorem(2, hyps, res, "compose");
 }
 
 preal_vect compose_relative_scheme::needed_reals() const {
-  real_op const *r = boost::get< real_op const >(real.real());
-  assert(r && r->type == BOP_ADD);
-  real_op const *r1 = boost::get< real_op const >(r->ops[0]),
-                *r2 = boost::get< real_op const >(r->ops[1]);
-  assert(r1 && r2 && r1->type == BOP_ADD && r2->type == BOP_MUL
-         && r1->ops[0] == r2->ops[0] && r1->ops[1] == r2->ops[1]);
-  preal_vect res;
-  res.push_back(predicated_real(r1->ops[0], PRED_BND));
-  res.push_back(predicated_real(r1->ops[1], PRED_BND));
-  return res;
+  return needed;
 }
 
 proof_scheme *compose_relative_scheme::factory(ast_real const *real) {
@@ -532,7 +517,10 @@ proof_scheme *compose_relative_scheme::factory(ast_real const *real) {
   if (!r1 || !r2 || r1->type != BOP_ADD || r2->type != BOP_MUL
       || r1->ops[0] != r2->ops[0] || r1->ops[1] != r2->ops[1])
     return NULL;
-  return new compose_relative_scheme(real);
+  preal_vect hyps;
+  hyps.push_back(predicated_real(r1->ops[0], PRED_BND));
+  hyps.push_back(predicated_real(r1->ops[1], PRED_BND));
+  return new compose_relative_scheme(real, hyps);
 }
 
 // NUMBER
@@ -620,7 +608,7 @@ void register_user_rewrite(ast_real const *r1, ast_real const *r2) {
 REGISTER_SCHEMEX_BEGIN(add_sub_fix);
   preal_vect needed;
   char const *name;
-  add_sub_fix_scheme(predicated_real const &r, preal_vect &v, char const *n)
+  add_sub_fix_scheme(predicated_real const &r, preal_vect const &v, char const *n)
     : proof_scheme(r), needed(v), name(n) {}
 REGISTER_SCHEMEX_END(add_sub_fix);
 
@@ -648,7 +636,7 @@ proof_scheme *add_sub_fix_scheme::factory(predicated_real const &real) {
 REGISTER_SCHEMEX_BEGIN(mul_fix_flt);
   preal_vect needed;
   char const *name;
-  mul_fix_flt_scheme(predicated_real const &r, preal_vect &v, char const *n)
+  mul_fix_flt_scheme(predicated_real const &r, preal_vect const &v, char const *n)
     : proof_scheme(r), needed(v), name(n) {}
 REGISTER_SCHEMEX_END(mul_fix_flt);
 
@@ -676,7 +664,7 @@ proof_scheme *mul_fix_flt_scheme::factory(predicated_real const &real) {
 // FIX_OF_FLT_BND
 REGISTER_SCHEMEX_BEGIN(fix_of_flt_bnd);
   preal_vect needed;
-  fix_of_flt_bnd_scheme(predicated_real const &r, preal_vect &v)
+  fix_of_flt_bnd_scheme(predicated_real const &r, preal_vect const &v)
     : proof_scheme(r), needed(v) {}
 REGISTER_SCHEMEX_END(fix_of_flt_bnd);
 
@@ -708,7 +696,7 @@ proof_scheme *fix_of_flt_bnd_scheme::factory(predicated_real const &real) {
 // FLT_OF_FIX_BND
 REGISTER_SCHEMEX_BEGIN(flt_of_fix_bnd);
   preal_vect needed;
-  flt_of_fix_bnd_scheme(predicated_real const &r, preal_vect &v)
+  flt_of_fix_bnd_scheme(predicated_real const &r, preal_vect const &v)
     : proof_scheme(r), needed(v) {}
 REGISTER_SCHEMEX_END(flt_of_fix_bnd);
 
