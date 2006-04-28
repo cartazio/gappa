@@ -21,6 +21,8 @@ pattern_excl_vect operator&&(pattern_excl_vect const &v, pattern_excl const &c) 
 
 static pattern a(0), b(1), c(2), d(3), a_b(-1), one(token_one);
 
+pattern relative_add_helper((c * a + d * b) / (a + b));
+
 #define abs pattern::abs
 #define sqrt pattern::sqrt
 
@@ -62,6 +64,11 @@ REWRITe(add_mibs,
 	(a - c) + (b - d),
 	a ^ c && b ^ d);
 
+REWRIT3(add_mibq,
+	((a + b) - (c + b)) / (c + d),
+	((a - c) / c * c + (b - d) / d * d) / (c + d),
+	~c && ~d && ~(c + d));
+
 REWRITe(add_fils,
 	(a + b) - (a + c),
 	b - c,
@@ -87,6 +94,11 @@ REWRITe(sub_mibs,
 	(a - b) - (c - d),
 	(a - c) + -(b - d),
 	a ^ c && b ^ d);
+
+REWRIT3(sub_mibq,
+	((a - b) - (c - b)) / (c - d),
+	((a - c) / c * c + -((b - d) / d) * d) / (c - d),
+	~c && ~d && ~(c + d));
 
 REWRITe(sub_fils,
 	(a - b) - (a - c),

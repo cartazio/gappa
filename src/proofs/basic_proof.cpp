@@ -523,6 +523,46 @@ proof_scheme *compose_relative_scheme::factory(ast_real const *real) {
   return new compose_relative_scheme(real, hyps);
 }
 
+// RELATIVE_ADD
+REGISTER_SCHEME_BEGIN(relative_add);
+  preal_vect needed;
+  relative_add_scheme(ast_real const *r, preal_vect const &v)
+    : proof_scheme(r), needed(v) {}
+REGISTER_SCHEME_END(relative_add);
+
+static interval relative_add(interval a, interval b, interval c, interval d) {
+  interval res;
+  return res; // dummy
+}
+
+node *relative_add_scheme::generate_proof() const {
+  property hyps[5];
+  if (!fill_hypotheses(hyps, needed)) return NULL;
+  interval const &i0 = hyps[0].bnd(), &i1 = hyps[1].bnd();
+  if (contains_zero(i0) || contains_zero(i1) || contains_zero(hyps[4].bnd())) return NULL;
+  property res(real, relative_add(i0, i1, hyps[2].bnd(), hyps[3].bnd()));
+  if (!is_defined(res.bnd())) return NULL;
+  return create_theorem(5, hyps, res, "relative_add");
+}
+
+preal_vect relative_add_scheme::needed_reals() const {
+  return needed;
+}
+
+extern pattern relative_add_helper;
+
+proof_scheme *relative_add_scheme::factory(ast_real const *real) {
+  ast_real_vect holders;
+  if (!match(real, relative_add_helper, holders)) return NULL;
+  preal_vect hyps;
+  hyps.push_back(predicated_real(holders[0], PRED_BND));
+  hyps.push_back(predicated_real(holders[1], PRED_BND));
+  hyps.push_back(predicated_real(holders[2], PRED_BND));
+  hyps.push_back(predicated_real(holders[3], PRED_BND));
+  hyps.push_back(predicated_real(normalize(ast_real(real_op(holders[0], BOP_ADD, holders[1]))), PRED_BND));
+  return new relative_add_scheme(real, hyps);
+}
+
 // NUMBER
 REGISTER_SCHEME_BEGIN(number);
   number_scheme(ast_real const *r): proof_scheme(r) {}
