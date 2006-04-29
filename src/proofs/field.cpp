@@ -97,7 +97,7 @@ REWRITe(sub_mibs,
 
 REWRIT3(sub_mibq,
 	((a - b) - (c - d)) / (c - d),
-	((a - c) / c * c + -((b - d) / d) * d) / (c + -d),
+	((a - c) / c * c + (b - d) / d * -d) / (c + -d),
 	~c && ~d && ~(c - d));
 
 REWRITe(sub_fils,
