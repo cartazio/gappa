@@ -65,7 +65,7 @@ REWRITe(add_mibs,
 	a ^ c && b ^ d);
 
 REWRIT3(add_mibq,
-	((a + b) - (c + b)) / (c + d),
+	((a + b) - (c + d)) / (c + d),
 	((a - c) / c * c + (b - d) / d * d) / (c + d),
 	~c && ~d && ~(c + d));
 
@@ -96,9 +96,9 @@ REWRITe(sub_mibs,
 	a ^ c && b ^ d);
 
 REWRIT3(sub_mibq,
-	((a - b) - (c - b)) / (c - d),
-	((a - c) / c * c + -((b - d) / d) * d) / (c - d),
-	~c && ~d && ~(c + d));
+	((a - b) - (c - d)) / (c - d),
+	((a - c) / c * c + -((b - d) / d) * d) / (c + -d),
+	~c && ~d && ~(c - d));
 
 REWRITe(sub_fils,
 	(a - b) - (a - c),
