@@ -586,7 +586,7 @@ preal_vect rewrite_scheme::needed_reals() const {
   preal_vect res = one_needed(rewritten);
   for(pattern_cond_vect::const_iterator i = conditions.begin(), end = conditions.end();
       i != end; ++i)
-    res.push_back(predicated_real(i->real, PRED_BND));
+    res.push_back(predicated_real(i->real, i->type == COND_NZ ? PRED_ABS : PRED_BND));
   return res;
 }
 
