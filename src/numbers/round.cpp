@@ -28,15 +28,32 @@ void rnd::shr(int d) {
   mpz_tdiv_q_2exp(m, m, d);
 }
 
-bool gs_rounding::rndU(rnd const &r) const {
+// The lower bit of the mantissa is not necessarily the ulp bit. But testing
+// for it in conjunction with the guard bit or the sticky bit works. Otherwise
+// the number was not truncated and it does not have to be changed.
+
+bool gs_rounding::rndAW(rnd const &r) const {
   return r.g || r.s;
 }
 
 bool gs_rounding::rndNE(rnd const &r) const {
-  // the lower bit of the mantissa is not necessarily the ulp bit
-  // but testing for it works since the guard bit can only be 1 if
-  // the number was to precise and got truncated
   return r.g && (r.s || mpz_tstbit(r.m, 0));
+}
+
+bool gs_rounding::rndNO(rnd const &r) const {
+  return r.g && (r.s || !mpz_tstbit(r.m, 0));
+}
+
+bool gs_rounding::rndNZ(rnd const &r) const {
+  return r.g && r.s;
+}
+
+bool gs_rounding::rndNA(rnd const &r) const {
+  return r.g;
+}
+
+bool gs_rounding::rndOD(rnd const &r) const {
+  return (r.g || r.s) && !mpz_tstbit(r.m, 0);
 }
 
 void gs_rounding::succ(mpz_t &m, int &e) const {
@@ -62,12 +79,12 @@ void gs_rounding::trunc(mpfr_t const &f, rnd &r, int &sign) const {
   r.shr(dec);
 }
 
-void gs_rounding::round(mpfr_t &f, rnd_fun g1, rnd_fun g2) const {
+void gs_rounding::round(mpfr_t &f, rnd_fun g_neg, rnd_fun g_pos) const {
   rnd r;
   int s;
   trunc(f, r, s);
   if (s == 0) return;
-  if ((this->*(s > 0 ? g1 : g2))(r)) succ(r.m, r.e);
+  if ((this->*(s > 0 ? g_pos : g_neg))(r)) succ(r.m, r.e);
   mpfr_set_prec(f, std::max<int>(mpz_sizeinbase(r.m, 2), 2));
   int v = mpfr_set_z(f, r.m, GMP_RNDN);
   assert(v == 0);
