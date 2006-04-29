@@ -129,14 +129,26 @@ std::string dump_real(ast_real const *r, unsigned prio) {
   return "...";
 }
 
+std::string dump_real(predicated_real const &r) {
+  std::stringstream s;
+  std::string v = dump_real(r.real());
+  switch (r.pred()) {
+  case PRED_BND: s << "BND(" << v << ')'; break;
+  case PRED_ABS: s << "ABS(" << v << ')'; break;
+  case PRED_FIX: s << "FIX(" << v << ')'; break;
+  case PRED_FLT: s << "FLT(" << v << ')'; break;
+  }
+  return s.str();
+}
+
 std::string dump_property(property const &p) {
   std::stringstream s;
   std::string r = dump_real(p.real.real());
   switch (p.real.pred()) {
-  case PRED_BND: s << r << " in " << p.bnd(); break;
-  case PRED_ABS: s << '|' << r << "| in " << p.bnd(); break;
-  case PRED_FIX: s << r << " = K * 2^(" << p.cst() << ')'; break;
-  case PRED_FLT: s << "size(" << r << ") <= " << p.cst(); break;
+  case PRED_BND: s << "BND(" << r << ", " << p.bnd() << ')'; break;
+  case PRED_ABS: s << "ABS(" << r << ", " << p.bnd() << ')'; break;
+  case PRED_FIX: s << "FIX(" << r << ", " << p.cst() << ')'; break;
+  case PRED_FLT: s << "FLT(" << r << ", " << p.cst() << ')'; break;
   }
   return s.str();
 }

@@ -57,6 +57,8 @@ struct ast_ident {
 };
 
 std::string dump_real(ast_real const *, unsigned = 0);
+struct predicated_real;
+std::string dump_real(predicated_real const &);
 struct property;
 std::string dump_property(property const &);
 
