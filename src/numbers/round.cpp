@@ -83,26 +83,21 @@ number round_number(number const &f, gs_rounding const *t, rounding_fun r) {
   return res;
 }
 
-rounding_fun direction_functions[4] = {
-  &gs_rounding::roundU,
-  &gs_rounding::roundD,
-  &gs_rounding::roundZ,
-  &gs_rounding::roundNE
-};
-
-char const *direction_names[4] = { "up", "dn", "zr", "ne" };
-
 typedef std::map< ast_ident const *, direction_type > rounding_directions;
 static rounding_directions directions;
+rounding_fun direction_functions[nb_directions];
+char const *direction_names[nb_directions];
 
-#define REGISTER_DIRECTION(name, t) \
-  directions.insert(std::make_pair(ast_ident::find(#name), t))
+#define REGISTER_DIRECTION(name, type) \
+  directions.insert(std::make_pair(ast_ident::find(#name), ROUND_##type)); \
+  direction_functions[ROUND_##type] = &gs_rounding::round##type; \
+  direction_names[ROUND_##type] = #name
 
 RUN_ONCE(register_directions) {
-  REGISTER_DIRECTION(up, ROUND_UP);
-  REGISTER_DIRECTION(dn, ROUND_DN);
-  REGISTER_DIRECTION(zr, ROUND_ZR);
-  REGISTER_DIRECTION(ne, ROUND_NE);
+  REGISTER_DIRECTION(up, UP);
+  REGISTER_DIRECTION(dn, DN);
+  REGISTER_DIRECTION(zr, ZR);
+  REGISTER_DIRECTION(ne, NE);
 }
 
 direction_type get_direction(unsigned long u) {

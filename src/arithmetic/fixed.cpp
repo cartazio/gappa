@@ -164,8 +164,8 @@ node *bnd_of_bnd_fix_scheme::generate_proof() const {
   if (!fill_hypotheses(hyps, needed)) return NULL;
   fixed_format format(hyps[1].cst());
   interval const &i = hyps[0].bnd();
-  number a = round_number(lower(i), &format, &fixed_format::roundU);
-  number b = round_number(upper(i), &format, &fixed_format::roundD);
+  number a = round_number(lower(i), &format, &fixed_format::roundUP);
+  number b = round_number(upper(i), &format, &fixed_format::roundDN);
   property res(real, interval(a, (a <= b) ? b : a));
   return create_theorem(2, hyps, res, "bnd_of_bnd_fix");
 }

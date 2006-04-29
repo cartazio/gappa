@@ -61,8 +61,8 @@ struct floatx_format: gs_rounding {
 
 interval floatx_rounding_class::round(interval const &i, std::string &name) const {
   static floatx_format format;
-  number a = round_number(lower(i), &format, &floatx_format::roundD);
-  number b = round_number(upper(i), &format, &floatx_format::roundU);
+  number a = round_number(lower(i), &format, &floatx_format::roundDN);
+  number b = round_number(upper(i), &format, &floatx_format::roundUP);
   name = "float80x_round";
   return interval(a, b);
 }

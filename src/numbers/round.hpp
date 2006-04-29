@@ -27,9 +27,9 @@ class gs_rounding {
  protected:
   virtual int shift_val(int, int) const = 0;
  public:
-  void roundZ(mpfr_t &f) const { round(f, &gs_rounding::rndZ, &gs_rounding::rndZ); }
-  void roundU(mpfr_t &f) const { round(f, &gs_rounding::rndU, &gs_rounding::rndZ); }
-  void roundD(mpfr_t &f) const { round(f, &gs_rounding::rndZ, &gs_rounding::rndU); }
+  void roundZR(mpfr_t &f) const { round(f, &gs_rounding::rndZ, &gs_rounding::rndZ); }
+  void roundUP(mpfr_t &f) const { round(f, &gs_rounding::rndU, &gs_rounding::rndZ); }
+  void roundDN(mpfr_t &f) const { round(f, &gs_rounding::rndZ, &gs_rounding::rndU); }
   void roundNE(mpfr_t &f) const { round(f, &gs_rounding::rndNE, &gs_rounding::rndNE); }
   virtual ~gs_rounding() {}
 };
@@ -41,8 +41,9 @@ typedef void (gs_rounding::*rounding_fun)(mpfr_t &) const;
 number round_number(number const &, gs_rounding const *, rounding_fun);
 
 enum direction_type { ROUND_UP, ROUND_DN, ROUND_ZR, ROUND_NE, ROUND_ARGL = -1 };
-extern char const *direction_names[4];
-extern rounding_fun direction_functions[4];
+static int const nb_directions = 4;
+extern char const *direction_names[nb_directions];
+extern rounding_fun direction_functions[nb_directions];
 direction_type get_direction(unsigned long);
 
 #endif // NUMBERS_ROUND_HPP
