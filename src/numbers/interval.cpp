@@ -5,6 +5,7 @@
 #include <cassert>
 #include <boost/numeric/interval/arith.hpp>
 #include <boost/numeric/interval/arith2.hpp>
+#include <boost/numeric/interval/arith3.hpp>
 #include <boost/numeric/interval/checking.hpp>
 #include <boost/numeric/interval/interval.hpp>
 #include <boost/numeric/interval/policies.hpp>
@@ -243,6 +244,7 @@ int sign(interval const &u) {
   return is_neg(plup.upper()) ? -1 : is_pos(plup.lower()) ? 1 : 0;
 }
 
+// compute u + v + u * v
 interval compose_relative(interval const &u, interval const &v) {
   assert(u.base && v.base);
   typedef real_policies::rounding rnd;
@@ -251,4 +253,20 @@ interval compose_relative(interval const &u, interval const &v) {
   if (ul < -1 || vl < -1) return interval();
   return interval(rnd::add_down(rnd::add_down(ul, vl), rnd::mul_down(ul, vl)),
                   rnd::add_up  (rnd::add_up  (uu, vu), rnd::mul_up  (uu, vu)));
+}
+
+// compute (u * x + v * y) / (x + y)
+interval add_relative(interval const &x, interval const &y, interval const &u, interval const &v) {
+  assert(x.base && y.base && u.base && v.base);
+  number const &xl = plip(x).lower(), &xu = plip(x).upper(),
+               &yl = plip(y).lower(), &yu = plip(y).upper();
+  if (!((xl > 0 || xu < 0) && (yl > 0 || yu < 0) && !in_zero(plip(x) + plip(y)))) return interval();
+  #define add(a,b) boost::numeric::interval_lib::add< _interval_base >(a,b)
+  _interval_base i(
+              (plup * xl + plvp * yl) / add(xl, yl));
+  i = hull(i, (plup * xl + plvp * yu) / add(xl, yu));
+  i = hull(i, (plup * xu + plvp * yl) / add(xu, yl));
+  i = hull(i, (plup * xu + plvp * yu) / add(xu, yu));
+  #undef add
+  return plop(i);
 }
