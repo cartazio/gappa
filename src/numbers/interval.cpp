@@ -1,7 +1,3 @@
-#include "interval.hpp"
-#include "interval_arith.hpp"
-#include "interval_utility.hpp"
-#include "real.hpp"
 #include <cassert>
 #include <boost/numeric/interval/arith.hpp>
 #include <boost/numeric/interval/arith2.hpp>
@@ -11,6 +7,10 @@
 #include <boost/numeric/interval/policies.hpp>
 #include <boost/numeric/interval/rounded_arith.hpp>
 #include <boost/numeric/interval/utility.hpp>
+#include "numbers/interval.hpp"
+#include "numbers/interval_arith.hpp"
+#include "numbers/interval_utility.hpp"
+#include "numbers/real.hpp"
 
 class real_policies {
   typedef number T;
