@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cassert>
 #include <map>
+#include "utils.hpp"
 #include "numbers/interval.hpp"
 #include "numbers/real.hpp"
 #include "numbers/round.hpp"
@@ -94,19 +95,15 @@ char const *direction_names[4] = { "up", "dn", "zr", "ne" };
 typedef std::map< ast_ident const *, direction_type > rounding_directions;
 static rounding_directions directions;
 
-struct rounding_direction_register {
-  rounding_direction_register(char const *name, direction_type t) {
-    directions.insert(std::make_pair(ast_ident::find(name), t));
-  }
-};
-
 #define REGISTER_DIRECTION(name, t) \
-  static rounding_direction_register name##_direction_register(#name, t)
+  directions.insert(std::make_pair(ast_ident::find(#name), t))
 
-REGISTER_DIRECTION(up, ROUND_UP);
-REGISTER_DIRECTION(dn, ROUND_DN);
-REGISTER_DIRECTION(zr, ROUND_ZR);
-REGISTER_DIRECTION(ne, ROUND_NE);
+RUN_ONCE(register_directions) {
+  REGISTER_DIRECTION(up, ROUND_UP);
+  REGISTER_DIRECTION(dn, ROUND_DN);
+  REGISTER_DIRECTION(zr, ROUND_ZR);
+  REGISTER_DIRECTION(ne, ROUND_NE);
+}
 
 direction_type get_direction(unsigned long u) {
   rounding_directions::const_iterator i = directions.find(param_ident(u));
