@@ -5,17 +5,31 @@
 templated by a rounding direction. This is the direction chosen when converting
 a real number that cannot be exactly represented in the destination format.</para>
 
-<para>There are four directions:</para>
+<para>There are eleven directions:</para>
 
 <variablelist>
 <varlistentry><term><code>zr</code></term>
   <listitem><para>toward zero</para></listitem></varlistentry>
+<varlistentry><term><code>aw</code></term>
+  <listitem><para>away from zero</para></listitem></varlistentry>
 <varlistentry><term><code>dn</code></term>
   <listitem><para>toward minus infinity (down)</para></listitem></varlistentry>
 <varlistentry><term><code>up</code></term>
   <listitem><para>toward plus infinity</para></listitem></varlistentry>
+<varlistentry><term><code>od</code></term>
+  <listitem><para>to odd mantissas</para></listitem></varlistentry>
 <varlistentry><term><code>ne</code></term>
   <listitem><para>to nearest, tie breaking to even mantissas</para></listitem></varlistentry>
+<varlistentry><term><code>no</code></term>
+  <listitem><para>to nearest, tie breaking to odd mantissas</para></listitem></varlistentry>
+<varlistentry><term><code>nz</code></term>
+  <listitem><para>to nearest, tie breaking toward zero</para></listitem></varlistentry>
+<varlistentry><term><code>na</code></term>
+  <listitem><para>to nearest, tie breaking away from zero</para></listitem></varlistentry>
+<varlistentry><term><code>nd</code></term>
+  <listitem><para>to nearest, tie breaking toward minus infinity</para></listitem></varlistentry>
+<varlistentry><term><code>nu</code></term>
+  <listitem><para>to nearest, tie breaking toward plus infinity</para></listitem></varlistentry>
 </variablelist>
 </section>
 
