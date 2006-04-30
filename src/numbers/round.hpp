@@ -34,13 +34,14 @@ class gs_rounding {
   void roundUP(mpfr_t &f) const { round(f, &gs_rounding::rndZR, &gs_rounding::rndAW); }
   void roundDN(mpfr_t &f) const { round(f, &gs_rounding::rndAW, &gs_rounding::rndZR); }
   void roundZR(mpfr_t &f) const { round(f, &gs_rounding::rndZR, &gs_rounding::rndZR); }
+  void roundAW(mpfr_t &f) const { round(f, &gs_rounding::rndAW, &gs_rounding::rndAW); }
+  void roundOD(mpfr_t &f) const { round(f, &gs_rounding::rndOD, &gs_rounding::rndOD); }
   void roundNE(mpfr_t &f) const { round(f, &gs_rounding::rndNE, &gs_rounding::rndNE); }
   void roundNO(mpfr_t &f) const { round(f, &gs_rounding::rndNO, &gs_rounding::rndNO); }
   void roundNZ(mpfr_t &f) const { round(f, &gs_rounding::rndNZ, &gs_rounding::rndNZ); }
   void roundNA(mpfr_t &f) const { round(f, &gs_rounding::rndNA, &gs_rounding::rndNA); }
   void roundNU(mpfr_t &f) const { round(f, &gs_rounding::rndNZ, &gs_rounding::rndNA); }
   void roundND(mpfr_t &f) const { round(f, &gs_rounding::rndNA, &gs_rounding::rndNZ); }
-  void roundOD(mpfr_t &f) const { round(f, &gs_rounding::rndOD, &gs_rounding::rndOD); }
   virtual ~gs_rounding() {}
 };
 
@@ -50,10 +51,19 @@ struct interval;
 typedef void (gs_rounding::*rounding_fun)(mpfr_t &) const;
 number round_number(number const &, gs_rounding const *, rounding_fun);
 
-enum direction_type { ROUND_UP, ROUND_DN, ROUND_ZR, ROUND_NE, ROUND_ARGL = -1 };
-static int const nb_directions = 4;
+enum direction_type { ROUND_UP, ROUND_DN, ROUND_ZR, ROUND_AW, ROUND_OD,
+                      ROUND_NE, ROUND_NO, ROUND_NZ, ROUND_NA, ROUND_NU, ROUND_ND,
+                      ROUND_ARGL = -1 };
+static int const nb_directions = 11;
 extern char const *direction_names[nb_directions];
 extern rounding_fun direction_functions[nb_directions];
 direction_type get_direction(unsigned long);
+
+int rnd_global_direction_abs(direction_type);
+int rnd_global_direction_rel(direction_type);
+int rnd_global_direction_abs(direction_type, interval const &);
+int rnd_global_direction_rel(direction_type, interval const &);
+inline bool rnd_to_nearest(direction_type type) { return type >= ROUND_NE; }
+int rnd_influence_direction(direction_type, bool);
 
 #endif // NUMBERS_ROUND_HPP

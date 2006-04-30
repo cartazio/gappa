@@ -2,6 +2,10 @@ Version 0.6.2:
  * fact database
    - fixed dependencies of rewriting rules relying on non-zero values; a race could lead to failed theorems
    - added formulas to compute the relative error of a sum
+ * arithmetic
+   - added new directed rounding: to odd, away from zero
+   - added new rounding to nearest with tie breaking: to odd, to zero, away from zero, up, down
+   - fixed influence zone for floating-point absolute error
 
 Version 0.6.1:
  * proof paths

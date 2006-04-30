@@ -118,11 +118,12 @@ static int exponent(number const &n, float_format const &f) {
   return e;
 }
 
-static bool influenced(number const &n, int e, int e_infl, bool infl) {
-  mpfr_t x, y;
+static bool influenced(number const &n, int e, int e_infl, int infl) {
+  mpfr_t x;
   mpfr_init2(x, 150);
   mpfr_set_ui_2exp(x, 1, e, GMP_RNDN);
-  if (infl) {
+  if (infl > 0) {
+    mpfr_t y;
     mpfr_init(y);
     mpfr_set_ui_2exp(y, 1, e_infl, GMP_RNDN);
     mpfr_add(x, x, y, GMP_RNDD);
@@ -130,7 +131,7 @@ static bool influenced(number const &n, int e, int e_infl, bool infl) {
   }
   int cmp = mpfr_cmpabs(n.data->val, x);
   mpfr_clear(x);
-  return cmp <= 0;
+  return (infl != 1) ? cmp <= 0 : cmp < 0;
 }
 
 interval float_rounding_class::absolute_error_from_real(interval const &i, std::string &name) const {
@@ -139,25 +140,25 @@ interval float_rounding_class::absolute_error_from_real(interval const &i, std::
   int e1 = exponent(round_number(v1, &format, f), format),
       e2 = exponent(round_number(v2, &format, f), format);
   int e = std::max(e1, e2);
-  int e_err = type == ROUND_NE ? e - 1 : e;
+  int e_err = rnd_to_nearest(type) ? e - 1 : e;
   e += format.prec - 1;
   name = "float_absolute";
-  if (influenced(v1, e, e_err - 1, type != ROUND_DN || mpfr_sgn(v1.data->val) >= 0) &&
-      influenced(v2, e, e_err - 1, type != ROUND_UP || mpfr_sgn(v1.data->val) <= 0)) {
+  if (std::max(e1, e2) > format.min_exp &&
+      v1 >= 0 || influenced(v1, e, e_err - 1, rnd_influence_direction(type, true )) &&
+      v2 <= 0 || influenced(v2, e, e_err - 1, rnd_influence_direction(type, false))) {
     name += "_wide";
     --e_err;
   }
   name += ident;
-  return from_exponent(e_err, type == ROUND_UP ? 1 : (type == ROUND_DN ? -1 : 0));
+  return from_exponent(e_err, rnd_global_direction_abs(type, i));
 }
 
 interval float_rounding_class::absolute_error_from_rounded(interval const &i, std::string &name) const {
   int e1 = exponent(lower(i), format), e2 = exponent(upper(i), format);
   int e_err = std::max(e1, e2);
   name = "float_absolute_inv" + ident;
-  if (type == ROUND_DN || type == ROUND_ZR && lower(i) > 0) return from_exponent(e_err, -1);
-  if (type == ROUND_UP || type == ROUND_ZR && upper(i) < 0) return from_exponent(e_err, +1);
-  return from_exponent(type == ROUND_ZR ? e_err : e_err - 1, 0);
+  if (rnd_to_nearest(type)) return from_exponent(e_err - 1, 0);
+  return from_exponent(e_err, rnd_global_direction_abs(type, i));
 }
 
 interval float_rounding_class::relative_error_from_real(interval const &i, std::string &name) const {
@@ -165,8 +166,8 @@ interval float_rounding_class::relative_error_from_real(interval const &i, std::
       !is_empty(intersect(i, from_exponent(format.min_exp + format.prec - 1, 0))))
     return interval();
   name = "float_relative" + ident;
-  return from_exponent(type == ROUND_NE ? -format.prec : 1 - format.prec,
-                       type == ROUND_ZR ? -1 : 0);
+  if (rnd_to_nearest(type)) return from_exponent(-format.prec, 0);
+  return from_exponent(1 - format.prec, rnd_global_direction_rel(type)); // cannot use i since it is ABS
 }
 
 interval float_rounding_class::relative_error_from_rounded(interval const &i, std::string &name) const {
@@ -174,8 +175,8 @@ interval float_rounding_class::relative_error_from_rounded(interval const &i, st
       !is_empty(intersect(i, from_exponent(format.min_exp + format.prec - 1, 0))))
     return interval();
   name = "float_relative_inv" + ident;
-  return from_exponent(type == ROUND_NE ? -format.prec : 1 - format.prec,
-                       type == ROUND_ZR ? -1 : 0);
+  if (rnd_to_nearest(type)) return from_exponent(-format.prec, 0);
+  return from_exponent(1 - format.prec, rnd_global_direction_rel(type)); // cannot use i since it is ABS
 }
 
 // FIX_OF_FLOAT
