@@ -2,6 +2,7 @@
 #include <cassert>
 #include <map>
 #include <sstream>
+#include "utils.hpp"
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
 #include "numbers/round.hpp"
@@ -21,19 +22,15 @@ struct float_format: gs_rounding {
 typedef std::map< ast_ident const *, float_format > float_formats;
 static float_formats formats;
 
-struct float_format_register {
-  float_format_register(char const *name, int e, int p) {
-    formats.insert(std::make_pair(ast_ident::find(name), float_format(e, p)));
-  }
-};
-
 #define REGISTER_FORMAT(name, e, p) \
-  static float_format_register name##_format_register(#name, e, p)
+  formats.insert(std::make_pair(ast_ident::find(#name), float_format(e, p)))
 
-REGISTER_FORMAT(ieee_32 ,   -149,  24);
-REGISTER_FORMAT(ieee_64 ,  -1074,  53);
-REGISTER_FORMAT(ieee_128, -16494, 113);
-REGISTER_FORMAT(x86_80  , -16445,  64);
+RUN_ONCE(register_formats) {
+  REGISTER_FORMAT(ieee_32 ,   -149,  24);
+  REGISTER_FORMAT(ieee_64 ,  -1074,  53);
+  REGISTER_FORMAT(ieee_128, -16494, 113);
+  REGISTER_FORMAT(x86_80  , -16445,  64);
+}
 
 struct float_rounding_class: function_class {
   float_format format;
