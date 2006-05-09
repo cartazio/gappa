@@ -112,7 +112,6 @@ struct dichotomy_helper {
   void try_graph(graph_t *);
   void dichotomize();
   dichotomy_node *generate_node(node *, property const &);
-  void purge();
   dichotomy_helper(property_vect &v, property_tree const &g, dichotomy_sequence const &h, splitter *s)
     : tmp_hyp(v), depth(0), nb_ref(0), goals(g), hints(h), last_graph(NULL), gen(s) {}
   ~dichotomy_helper();
