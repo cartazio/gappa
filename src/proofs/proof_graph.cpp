@@ -158,10 +158,10 @@ intersection_node::intersection_node(node *n1, node *n2)
     : dependent_node(INTERSECTION) {
   assert(dominates(n1, this) && dominates(n2, this));
   property const &res1 = n1->get_result(), &res2 = n2->get_result();
-  assert(res1.real == res2.real);
+  assert(res1.real == res2.real && res1.real.pred() == PRED_BND);
   res = res1;
   res.intersect(res2);
-  if (res.real.pred() == PRED_BND && lower(res1.bnd()) > lower(res2.bnd())) std::swap(n1, n2);
+  if (lower(res1.bnd()) > lower(res2.bnd())) std::swap(n1, n2);
   // to simplify the graph, no intersection should be nested
   if (n1->type == INTERSECTION) n1 = n1->get_subproofs()[0];
   if (n2->type == INTERSECTION) n2 = n2->get_subproofs()[1];
@@ -174,7 +174,7 @@ intersection_node::intersection_node(node *n1, node *n2)
   char *v = new_hyps(hyps, ghyp);
   fill_hyps(v, ghyp, n1);
   fill_hyps(v, ghyp, n2);
-  if (res.real.pred() == PRED_BND && is_empty(res.bnd())) {
+  if (is_empty(res.bnd())) {
     res = property();
     top_graph->set_contradiction(this);
   }
@@ -241,13 +241,14 @@ bool graph_t::try_real(node *n) {
   } else {
     node_map::iterator i = partial_reals.find(res2.real);
     if (i != partial_reals.end()) { // there is a known inequality
-      property const &res1 = i->second->get_result();
+      node *m = i->second;
+      partial_reals.erase(i);
+      property const &res1 = m->get_result();
       if (!res2.implies(res1)) {
-        n = new intersection_node(n, i->second);
+        n = new intersection_node(n, m);
         if (n == contradiction) return true;
         dst = n;
-      } else delete i->second;
-      partial_reals.erase(i);
+      } else delete m;
     }
   }
   ++n->nb_good;
