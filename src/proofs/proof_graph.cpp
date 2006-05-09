@@ -56,6 +56,7 @@ node::~node() {
 }
 
 void node::remove_known() {
+  assert(nb_good > 0);
   if (--nb_good == 0 && succ.empty()) delete this;
 }
 
@@ -245,9 +246,12 @@ bool graph_t::try_real(node *n) {
       partial_reals.erase(i);
       property const &res1 = m->get_result();
       if (!res2.implies(res1)) {
+        ++n->nb_good;
+        node *old = n;
         n = new intersection_node(n, m);
         if (n == contradiction) return true;
         dst = n;
+        --old->nb_good;
       } else delete m;
     }
   }
