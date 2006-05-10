@@ -1,3 +1,7 @@
+Version 0.6.3:
+ * proof graph
+   - fixed failure when an inequality leads to a contradiction
+
 Version 0.6.2:
  * fact database
    - fixed dependencies of rewriting rules relying on non-zero values; a race could lead to failed theorems
@@ -21,7 +25,7 @@ Version 0.6.0:
    - added detection of badly-formed intervals in propositions
    - removed limitation on multiple hypotheses about the same expression
    - improved heuristic for detecting approx/accurate pairs
-   - removed limitation on number of accurate expressions for a given approximate;
+   - removed limitation on number of accurate expressions for a given approximate
    - removed hack for accurate expressions of rounded expressions (potentially disruptive)
  * whole engine
    - added inequalities; as hypotheses, they cannot imply theorems but they can restrict computed ranges
