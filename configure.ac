@@ -20,8 +20,10 @@ AC_SUBST([DVI2BITMAP])
 
 
 AC_LANG(C++)
-AC_CHECK_LIB(gmp, __gmpz_init)
-AC_CHECK_LIB(mpfr, mpfr_greater_p)
+AC_CHECK_LIB(gmp, __gmpz_init, ,
+AC_MSG_ERROR([ *** Unable to find GMP library (http://www.swox.com/gmp/)]))
+AC_CHECK_LIB(mpfr, mpfr_greater_p, ,
+AC_MSG_ERROR([ *** Unable to find MPFR library (http://www.mpfr.org/)]))
 
 AC_MSG_CHECKING([for Boost (>=1.32)])
 AC_TRY_COMPILE([#include <boost/version.hpp>], [
@@ -29,7 +31,7 @@ AC_TRY_COMPILE([#include <boost/version.hpp>], [
 #else
 #  error Boost version is too old
 #endif], [AC_MSG_RESULT(yes)], [AC_MSG_RESULT([no])
-AC_MSG_ERROR([Boost not found, bailing out])])
+AC_MSG_ERROR([ *** Unable to find Boost library (http://www.boost.org/)])])
 
 AC_CONFIG_HEADER(config.h)
 AC_CONFIG_FILES([Makefile doc/Makefile src/Makefile testsuite/Makefile])
