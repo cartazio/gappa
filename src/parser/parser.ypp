@@ -264,6 +264,8 @@ HINTS:
   }
 | HINTS REAL '~' REAL ';'
   {
-    accurates[$2].insert($4);
-    approximates[$4].insert($2);
+    if (accurates[$2].insert($4).second)
+      approximates[$4].insert($2);
+    else
+      warning("relation already known");
   }
