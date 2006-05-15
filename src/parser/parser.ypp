@@ -97,7 +97,8 @@ static ast_real const *rnd_normalize(ast_real const &real) {
 
 %%
 
-BLOB: PROG '{' PROP '}' HINTS		{ generate_graph($3); }
+BLOB: BLOB1 HINTS
+BLOB1: PROG '{' PROP '}'	{ generate_graph($3); }
 
 PROP:
   REAL LE SNUMBER
