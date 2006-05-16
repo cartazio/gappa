@@ -261,7 +261,8 @@ static std::string display(node *n) {
     for(int i = 0; i < 2; ++i) {
       node *m = pred[i];
       property const &res = m->get_result();
-      if (!is_bounded(res.bnd())) suffix = (i == 0) ? "_hl" : "_hr";
+      if (!is_bounded(res.bnd())) suffix = (i == 0) ? "_hb" : "_bh";
+      else if (!res.real.pred() == PRED_BND) suffix = "_aa";
       if (m->type == HYPOTHESIS) {
         property_map::iterator pki = pmap.find(res.real);
         assert(pki != pmap.end());

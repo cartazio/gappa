@@ -159,7 +159,7 @@ intersection_node::intersection_node(node *n1, node *n2)
     : dependent_node(INTERSECTION) {
   assert(dominates(n1, this) && dominates(n2, this));
   property const &res1 = n1->get_result(), &res2 = n2->get_result();
-  assert(res1.real == res2.real && res1.real.pred() == PRED_BND);
+  assert(res1.real == res2.real && res1.real.pred_bnd());
   res = res1;
   res.intersect(res2);
   if (lower(res1.bnd()) > lower(res2.bnd())) std::swap(n1, n2);
