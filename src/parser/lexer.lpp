@@ -33,8 +33,12 @@ static void read_number(YYSTYPE *yylval) {
   mpz_t m;
   mpz_init(m);
   mpz_set_str(m, num.mantissa.c_str(), hexa ? 16 : 10);
+  while (num.exponent < 0 && mpz_divisible_ui_p(m, num.base)) {
+    mpz_divexact_ui(m, m, num.base);
+    ++num.exponent;
+  }
   char *s = mpz_get_str(NULL, 10, m);
-  num.mantissa = s[0] == '-' ? std::string(s) : std::string(1, '+') + s;
+  num.mantissa = std::string(1, '+') + s;
   free(s);
   mpz_clear(m);
   yylval->number = normalize(num);

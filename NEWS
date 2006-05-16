@@ -4,6 +4,8 @@ Version 0.6.3:
    - added support for intersecting ABS predicates
  * hint parser
    - added detection of useless hints
+ * parser
+   - normalized numbers with fractional part ending by zero
 
 Version 0.6.2:
  * fact database
