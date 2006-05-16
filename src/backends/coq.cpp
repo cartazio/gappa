@@ -134,7 +134,7 @@ static std::string display(property const &p) {
   int p_id = map_finder(displayed_properties, s_);
   std::string name = composite('p', p_id);
   if (p_id >= 0)
-    *out << "Notation " << name << " := (" << s_ << ").\n";
+    *out << "Notation " << name << " := (" << s_ << "). (* " << dump_property(p) << " *)\n";
   return name;
 }
 
