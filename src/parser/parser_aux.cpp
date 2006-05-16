@@ -1,6 +1,8 @@
 #include <cassert>
 #include <iostream>
+#include <sstream>
 #include "parser/ast.hpp"
+#include "parser/pattern.hpp"
 #include "proofs/proof_graph.hpp"
 #include "proofs/property.hpp"
 
@@ -228,4 +230,43 @@ void generate_graph(ast_prop const *p) {
     check_unbound();
   free_variables.clear();
   delete_prop(p);
+}
+
+// 0: no rule, 1: a rule but a missing relation, 2: a rule
+int test_rewriting(ast_real const *src, ast_real const *dst, std::string &res) {
+  std::ostringstream info;
+  for(rewriting_vect::const_iterator i = rewriting_rules.begin(),
+      i_end = rewriting_rules.end(); i != i_end; ++i) {
+    rewriting_rule const &rw = **i;
+    ast_real_vect holders;
+    if (!match(src, rw.src, holders)) continue;
+    bool b = holders.size() >= 2 && (!holders[0] || !holders[1]);
+    if (!match(dst, rw.dst, holders)) continue;
+    for(pattern_excl_vect::const_iterator j = rw.excl.begin(),
+        j_end = rw.excl.end(); j != j_end; ++j)
+      if (rewrite(j->first, holders) == rewrite(j->second, holders)) goto next_rule;
+    if (b) {
+      assert(holders[0] && holders[1]);
+      link_map::const_iterator k = approximates.find(holders[0]);
+      if (k != approximates.end() && k->second.find(holders[1]) != k->second.end())
+        goto found_rule;
+      info << "  " << dump_real(holders[1]) << " ~ " << dump_real(holders[0]) << '\n';
+    } else {
+      found_rule:
+      info.str(std::string());
+      for(pattern_cond_vect::const_iterator j = rw.cond.begin(),
+          j_end = rw.cond.end(); j != j_end; ++j) {
+        info << "  " << dump_real(rewrite(j->real, holders));
+        char const *ops[] = { " < ", " <= ", " > ", " >= ", " != " };
+        if (j->type == COND_NZ) info << " != 0 ";
+        else info << ops[j->type] << j->value;
+        info << '\n';
+      }
+      res = info.str();
+      return 2;
+    }
+    next_rule: ;
+  }
+  res = info.str();
+  return !res.empty();
 }

@@ -1,6 +1,8 @@
 Version 0.6.3:
  * proof graph
    - fixed failure when an inequality leads to a contradiction
+ * hint parser
+   - added detection of useless hints
 
 Version 0.6.2:
  * fact database

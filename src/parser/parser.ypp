@@ -27,6 +27,7 @@ int my_yyerror(YYLTYPE &yylloc, char const *errstr) {
 
 extern void generate_graph(ast_prop const *p);
 extern void test_ringularity(ast_real const *, ast_real const *);
+extern int test_rewriting(ast_real const *, ast_real const *, std::string &);
 extern std::set< ast_real const * > free_variables;
 
 static ast_number const *negative_number(ast_number const *nn) {
@@ -247,6 +248,16 @@ HINTS:
   {
     ast_real const *r1 = $2, *r2 = $4;
     test_ringularity(r1, r2);
+    std::string info;
+    int t = test_rewriting(r1, r2, info);
+    if (t == 1) {
+      warning("no need for the rewriting");
+      std::cerr << "  if one of the following relations is present\n" << info;
+    } else if (t == 2) {
+      warning("no need for the rewriting");
+      if (!info.empty())
+        std::cerr << "  if all the following properties can be proved\n" << info;
+    }
     register_user_rewrite(r1, r2);
   }
 | HINTS REALS '$' DVARS ';'
