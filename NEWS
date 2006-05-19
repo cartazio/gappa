@@ -1,3 +1,7 @@
+Version 0.6.4:
+ * arithmetic
+   - fixed influence zone again for floating-point absolute error
+
 Version 0.6.3:
  * proof graph
    - fixed failure when an inequality leads to a contradiction
