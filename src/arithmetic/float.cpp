@@ -141,8 +141,8 @@ interval float_rounding_class::absolute_error_from_real(interval const &i, std::
   e += format.prec - 1;
   name = "float_absolute";
   if (std::max(e1, e2) > format.min_exp &&
-      v1 >= 0 || influenced(v1, e, e_err - 1, rnd_influence_direction(type, true )) &&
-      v2 <= 0 || influenced(v2, e, e_err - 1, rnd_influence_direction(type, false))) {
+      (v1 >= 0 || influenced(v1, e, e_err - 1, rnd_influence_direction(type, true ))) &&
+      (v2 <= 0 || influenced(v2, e, e_err - 1, rnd_influence_direction(type, false)))) {
     name += "_wide";
     --e_err;
   }

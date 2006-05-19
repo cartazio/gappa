@@ -299,7 +299,7 @@ static std::string display(node *n) {
       property_vect const &m_hyp = m->graph->get_hypotheses();
       hcase.second = &m_hyp[0];
       plouf << " assert (u : " << display(m_hyp[0]) << " -> " << p_res << ")."
-               " intro h" << hcase.first << ".\n";
+               " intro h" << hcase.first << ". (* " << m_hyp[0].bnd() << " *)\n";
       property const &res = m->get_result();
       interval const &mb = res.bnd(), &nb = n_res.bnd();
       if (!res.null()) { // not a contradictory result
