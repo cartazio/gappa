@@ -55,6 +55,14 @@ bool ast_real::operator<(ast_real const &v) const {
   return ast_real_aux::operator<(static_cast< ast_real_aux const & >(v));
 }
 
+ast_real const *unround(real_op_type type, ast_real_vect const &v) {
+  switch (type) {
+  case UOP_ID: return v[0];
+  case COP_FMA: return normalize(ast_real(real_op(normalize(ast_real(real_op(v[0], BOP_MUL, v[1]))), BOP_ADD, v[2])));
+  default: return normalize(ast_real(real_op(type, v)));
+  }  
+}
+
 static cache< ast_ident > ast_ident_cache;
 ast_ident *ast_ident::find(std::string const &s) { return ast_ident_cache.find(ast_ident(s)); }
 static cache< ast_number > ast_number_cache;
@@ -66,7 +74,7 @@ ast_real *normalize(ast_real const &v) {
   if (!b) return p;
   real_op *o = boost::get< real_op >(p);
   if (!o || !o->fun || o->fun->type == ROP_UNK) return p;
-  ast_real const *a = (o->fun->type == UOP_ID) ? o->ops[0] : normalize(ast_real(real_op(o->fun->type, o->ops)));
+  ast_real const *a = unround(o->fun->type, o->ops);
   accurates[p].insert(a);
   approximates[a].insert(p);
   return p;

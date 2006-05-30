@@ -22,7 +22,7 @@ ast_number *normalize(ast_number const &);
 
 extern ast_number const *token_zero, *token_one;
 
-enum real_op_type { UOP_ID, UOP_NEG, UOP_SQRT, UOP_ABS, BOP_ADD, BOP_SUB, BOP_MUL, BOP_DIV, ROP_FUN, ROP_UNK };
+enum real_op_type { UOP_ID, UOP_NEG, UOP_SQRT, UOP_ABS, BOP_ADD, BOP_SUB, BOP_MUL, BOP_DIV, COP_FMA, ROP_FUN, ROP_UNK };
 
 struct interval;
 
@@ -87,6 +87,7 @@ struct ast_real: ast_real_aux {
 };
 
 ast_real *normalize(ast_real const &);
+ast_real const *unround(real_op_type, ast_real_vect const &);
 bool match(ast_real const *, ast_real const *, ast_real_vect &);
 ast_real const *rewrite(ast_real const *, ast_real_vect const &);
 

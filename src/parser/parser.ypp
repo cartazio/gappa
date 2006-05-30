@@ -59,7 +59,7 @@ static ast_real const *rnd_normalize(ast_real const &real) {
 %pure-parser
 %locations
 
-%token IDENT IN NUMBER SQRT LE GE
+%token IDENT IN NUMBER SQRT FMA LE GE
 
 %union {
   ast_number const	*number;
@@ -213,6 +213,8 @@ REAL:
 | REAL '/' REAL		{ $$ = rnd_normalize(ast_real(real_op($1, BOP_DIV, $3))); }
 | '|' REAL '|'		{ $$ = normalize(ast_real(real_op(UOP_ABS, $2))); }
 | SQRT '(' REAL ')'	{ $$ = rnd_normalize(ast_real(real_op(UOP_SQRT, $3))); }
+| FMA '(' REAL ',' REAL ',' REAL ')'
+  { $$ = rnd_normalize(ast_real(real_op(normalize(ast_real(real_op($3, BOP_MUL, $5))), BOP_ADD, $7))); }
 | '(' REAL ')'		{ $$ = $2; }
 | '+' REAL %prec NEG	{ $$ = $2; }
 | '-' REAL %prec NEG	{ $$ = rnd_normalize(ast_real(real_op(UOP_NEG, $2))); }

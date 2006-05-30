@@ -100,6 +100,7 @@ zero		((((0+(\.0*)?)|(\.0+))([eE][-+]?{integer})?)|0x(((0+(\.0*)?)|(\.0+))([pP][
 "<="		return LE;
 <prop_context>">="		return GE;
 "sqrt"		return SQRT;
+"fma"		return FMA;
 {zero}		{ yylval->number = token_zero; return NUMBER; }
 {number}	{ read_number(yylval);	return NUMBER; }
 {ident}		{ read_ident(yylval);	return IDENT;  }

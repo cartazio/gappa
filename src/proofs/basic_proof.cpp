@@ -181,8 +181,7 @@ preal_vect rounding_bound_scheme::needed_reals() const {
 proof_scheme *rounding_bound_scheme::factory(ast_real const *real) {
   real_op const *p = boost::get < real_op const >(real);
   if (!p || !p->fun || !(p->fun->theorem_mask & function_class::TH_RND)) return NULL;
-  ast_real const *a = (p->fun->type == UOP_ID) ? p->ops[0] : normalize(ast_real(real_op(p->fun->type, p->ops)));
-  return new rounding_bound_scheme(real, a, p->fun);
+  return new rounding_bound_scheme(real, unround(p->fun->type, p->ops), p->fun);
 }
 
 // ENFORCE_BOUND

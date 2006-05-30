@@ -71,3 +71,4 @@ function_class const *relative_function_generator::operator()(function_params co
 static relative_function_generator dummy_add("add_rel", BOP_ADD);
 static relative_function_generator dummy_sub("sub_rel", BOP_SUB);
 static relative_function_generator dummy_mul("mul_rel", BOP_MUL);
+static relative_function_generator dummy_fma("fma_rel", COP_FMA);
