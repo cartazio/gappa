@@ -202,7 +202,9 @@ REAL:
   {
     function_class const *f = $1;
     ast_real_vect *ops = $3;
-    if (f->type == UOP_ID && ops->size() != 1 || f->type != UOP_ID && ops->size() != 2)
+    if (f->type == UOP_ID && ops->size() != 1 ||
+        f->type != UOP_ID && f->type != COP_FMA && ops->size() != 2 ||
+        f->type == COP_FMA && ops->size() != 3)
       failure("incorrect number of arguments when calling " << f->name());
     $$ = normalize(ast_real(real_op(f, *ops)));
     delete ops;
