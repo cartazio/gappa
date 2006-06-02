@@ -33,6 +33,7 @@ static std::string composite(char prefix, int num) {
 }
 
 static std::string convert_name(std::string const &name) {
+  if (name == "sqrt") return "sqrtG";
   std::string::size_type p2 = name.find(',');
   if (p2 == std::string::npos) return name;
   std::ostringstream res;
@@ -105,7 +106,7 @@ static std::string display(ast_real const *r) {
     } else if (o->ops.size() == 1) {
       std::string s(1, op[o->type]);
       if (o->type == UOP_ABS) s = "Rabs";
-      else if (o->type == UOP_SQRT) s = "Rsqrt";
+      else if (o->type == UOP_SQRT) s = "sqrt";
       plouf << '(' << s << ' ' << display(o->ops[0]) << ")%R";
     } else
       plouf << '(' << display(o->ops[0]) << ' ' << op[o->type] << ' ' << display(o->ops[1]) << ")%R";
