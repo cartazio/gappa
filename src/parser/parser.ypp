@@ -29,6 +29,7 @@ extern void generate_graph(ast_prop const *p);
 extern void test_ringularity(ast_real const *, ast_real const *);
 extern int test_rewriting(ast_real const *, ast_real const *, std::string &);
 extern std::set< ast_real const * > free_variables;
+extern bool parameter_rfma;
 
 static ast_number const *negative_number(ast_number const *nn) {
   if (nn->base == 0) return nn;
@@ -216,7 +217,12 @@ REAL:
 | '|' REAL '|'		{ $$ = normalize(ast_real(real_op(UOP_ABS, $2))); }
 | SQRT '(' REAL ')'	{ $$ = rnd_normalize(ast_real(real_op(UOP_SQRT, $3))); }
 | FMA '(' REAL ',' REAL ',' REAL ')'
-  { $$ = rnd_normalize(ast_real(real_op(normalize(ast_real(real_op($3, BOP_MUL, $5))), BOP_ADD, $7))); }
+  {
+    if (!parameter_rfma)
+      $$ = rnd_normalize(ast_real(real_op(normalize(ast_real(real_op($3, BOP_MUL, $5))), BOP_ADD, $7)));
+    else
+      $$ = rnd_normalize(ast_real(real_op($7, BOP_ADD, normalize(ast_real(real_op($3, BOP_MUL, $5))))));
+  }
 | '(' REAL ')'		{ $$ = $2; }
 | '+' REAL %prec NEG	{ $$ = $2; }
 | '-' REAL %prec NEG	{ $$ = rnd_normalize(ast_real(real_op(UOP_NEG, $2))); }

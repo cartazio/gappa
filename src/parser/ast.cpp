@@ -8,6 +8,7 @@
 #include "parser/ast.hpp"
 #include "proofs/schemes.hpp"
 
+extern bool parameter_rfma;
 link_map accurates, approximates;
 
 template< class T >
@@ -58,7 +59,11 @@ bool ast_real::operator<(ast_real const &v) const {
 ast_real const *unround(real_op_type type, ast_real_vect const &v) {
   switch (type) {
   case UOP_ID: return v[0];
-  case COP_FMA: return normalize(ast_real(real_op(normalize(ast_real(real_op(v[0], BOP_MUL, v[1]))), BOP_ADD, v[2])));
+  case COP_FMA:
+    if (!parameter_rfma)
+      return normalize(ast_real(real_op(normalize(ast_real(real_op(v[0], BOP_MUL, v[1]))), BOP_ADD, v[2])));
+    else
+      return normalize(ast_real(real_op(v[2], BOP_ADD, normalize(ast_real(real_op(v[0], BOP_MUL, v[1]))))));
   default: return normalize(ast_real(real_op(type, v)));
   }  
 }

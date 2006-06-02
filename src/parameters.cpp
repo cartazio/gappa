@@ -5,6 +5,7 @@
 
 int parameter_internal_precision = 60;
 int parameter_dichotomy_depth = 100;
+bool parameter_rfma = false;
 bool parameter_constrained = true;
 bool parameter_statistics = false;
 bool warning_dichotomy_failure = true;
@@ -24,6 +25,7 @@ static void help() {
     "Engine parameters:\n"
     "  -Eprecision=int                 internal precision (default: " << parameter_internal_precision << ")\n"
     "  -Edichotomy=int                 dichotomy depth (default: " << parameter_dichotomy_depth << ")\n"
+    "  -E[no-]reverted-fma             change fma(a,b,c) from a*b+c to c+a*b\n"
     "\n"
     "Engine modes:\n"
     "  -Munconstrained                 do not check for theorem constraints\n"
@@ -46,36 +48,43 @@ bool parse_option(std::string const &s, bool internal) {
   switch (s[1]) {
   case 'E': {
     std::string::size_type p = s.find('=');
-    if (p == std::string::npos) return false;
-    std::string e = s.substr(2, p - 2), v = s.substr(p + 1);
-    int *param = NULL;
-    if (e == "precision") param = &parameter_internal_precision; else
-    if (e == "dichotomy") param = &parameter_dichotomy_depth; else
-    return false;
-    *param = atoi(v.c_str()); 
+    if (p == std::string::npos) {
+      bool yes = s.size() <= 6 || s.substr(2, 3) != "no-";
+      std::string o = s.substr(yes ? 2 : 5);
+      if (o == "reverted-fma") parameter_rfma = yes;
+      else return false;
+    } else {
+      std::string o = s.substr(2, p - 2), v = s.substr(p + 1);
+      int *param;
+      if (o == "precision") param = &parameter_internal_precision; else
+      if (o == "dichotomy") param = &parameter_dichotomy_depth;
+      else return false;
+      *param = atoi(v.c_str()); 
+    }
     break; }
   case 'M': {
-    std::string ss = s.substr(2);
-    if (ss == "unconstrained") parameter_constrained = false; else
-    if (ss == "statistics")    parameter_statistics  = true;  else
-    return false;
+    if (internal) return false;
+    std::string o = s.substr(2);
+    if (o == "unconstrained") parameter_constrained = false; else
+    if (o == "statistics")    parameter_statistics  = true;
+    else return false;
     break;
   }
   case 'W': {
     bool yes = s.size() <= 6 || s.substr(2, 3) != "no-";
-    std::string w = s.substr(yes ? 2 : 5);
-    if (w == "dichotomy-failure") warning_dichotomy_failure = yes; else
-    if (w == "hint-difference"  ) warning_hint_difference   = yes; else
-    if (w == "null-denominator" ) warning_null_denominator  = yes; else
-    if (w == "unbound-variable" ) warning_unbound_variable  = yes;
+    std::string o = s.substr(yes ? 2 : 5);
+    if (o == "dichotomy-failure") warning_dichotomy_failure = yes; else
+    if (o == "hint-difference"  ) warning_hint_difference   = yes; else
+    if (o == "null-denominator" ) warning_null_denominator  = yes; else
+    if (o == "unbound-variable" ) warning_unbound_variable  = yes;
     else return false;
     break; }
   case 'B': {
     if (internal) return false;
-    std::string ss = s.substr(2);
-    if (ss == "null") proof_generator = NULL;
+    std::string o = s.substr(2);
+    if (o == "null") proof_generator = NULL;
     else {
-      proof_generator = backend_register::find(ss);
+      proof_generator = backend_register::find(o);
       if (!proof_generator) return false;
     }
     break; }
