@@ -229,6 +229,7 @@ node *computation_scheme::generate_proof() const {
     case UOP_NEG:
       return create_theorem(1, &res, property(real, -i), "neg");
     case UOP_SQRT:
+      if (lower(i) < 0) return NULL;
       return create_theorem(1, &res, property(real, sqrt(i)), "sqrt");
     case UOP_ABS:
       return create_theorem(1, &res, property(real, abs(i)), std::string("abs_") += ('o' + sign(i)));
