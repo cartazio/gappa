@@ -1,3 +1,15 @@
+Version 0.6.5:
+ * Coq back-end
+   - fixed square root generation
+ * fact database
+   - disabled square root of negative numbers
+ * syntax
+   - added fma(a,b,c) as a synonym for a*b+c
+ * arithmetic
+   - added fma_rel
+ * main interface
+   - added -Ereverted-fma option to change the meaning of fma(a,b,c) to c+a*b
+
 Version 0.6.4:
  * arithmetic
    - fixed influence zone again for floating-point absolute error
@@ -62,7 +74,7 @@ Version 0.5.5:
    - added ABS predicate to workaround abuse of absolute values in theorems
  * syntax
    - added syntax to define user approximates
- * proof graph
+ * fact database
    - added option to disable constraint checking around zero
  * arithmetic
    - generalized fixed-point range enforcing to any expression
