@@ -160,7 +160,7 @@ static std::string display(theorem_node *t) {
     plouf << " with";
     for(int i = 0; i < nb_hyps; ++i) plouf << " (" << i + 1 << " := h" << i << ')';
   }
-  plouf << ".\n reflexivity.\nQed.\n";
+  plouf << " ; finalize.\nQed.\n";
   return name;  
 }
 
@@ -178,14 +178,14 @@ static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_m
       if (ii <= i)
         plouf << " exact h" << h << '.';
       else
-        plouf << " apply " << (t == PRED_ABS ? "abs_" : "") << "subset with (1 := h" << h << "). reflexivity.";
+        plouf << " apply " << (t == PRED_ABS ? "abs_" : "") << "subset with (1 := h" << h << "). finalize.";
     } else {
       long c = pki->second.second->cst(), cc = j->cst();
       assert(t == PRED_FIX && c >= cc || t == PRED_FLT && c <= cc);
       if (c == c)
         plouf << " exact h" << h << '.';
       else
-        plouf << " apply " << (t == PRED_FIX ? "fix" : "flt") << "_subset with (1 := h" << h << "). reflexivity.";
+        plouf << " apply " << (t == PRED_FIX ? "fix" : "flt") << "_subset with (1 := h" << h << "). finalize.";
     }
   }
   plouf << '\n';
@@ -275,8 +275,8 @@ static std::string display(node *n) {
       num[i] = num_hyp++;
     }
     plouf << " apply " << prefix << "intersect" << suffix << " with"
-                 " (1 := h" << num[0] << ") (2 := h" << num[1] << ").\n"
-             " reflexivity.\nQed.\n";
+                 " (1 := h" << num[0] << ") (2 := h" << num[1] << ")."
+             " finalize.\nQed.\n";
     break; }
   case UNION: {
     property_map pmap;
@@ -306,11 +306,11 @@ static std::string display(node *n) {
       if (!res.null()) { // not a contradictory result
         assert(mb <= nb);
         if (!(nb <= mb))
-          plouf << " apply subset with " << display(mb) << ". 2: reflexivity.\n";
+          plouf << " apply subset with " << display(mb) << ". 2: finalize.\n";
       }
       invoke_lemma(plouf, m, pmap);
       if (i + 1 != i_end)
-        plouf << " apply " << prefix << "union with (1 := u). reflexivity. clear u.\n";
+        plouf << " apply " << prefix << "union with (1 := u). finalize. clear u.\n";
       else
         plouf << " exact u.\n";
     }
