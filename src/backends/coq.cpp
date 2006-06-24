@@ -61,7 +61,7 @@ static std::string display(number const &f) {
   int f_id = map_finder(displayed_floats, s_);
   std::string name = composite('f', f_id);
   if (f_id >= 0)
-    *out << "Definition " << name << " := Float " << s_ << ".\n";
+    *out << "Definition " << name << " := Float2 " << s_ << ".\n";
   return name;
 }
 
@@ -326,7 +326,7 @@ struct coq_backend: backend {
   coq_backend(std::ostream &o): backend(o) {
     ::out = &o;
     out << "Require Import Gappa_library.\n"
-           "Require Import IA_float.\n"
+           "(*Require Import IA_float.*)\n"
            "Section Generated_by_Gappa.\n";
   }
   virtual ~coq_backend() {
