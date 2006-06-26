@@ -310,7 +310,7 @@ static std::string display(node *n) {
       }
       invoke_lemma(plouf, m, pmap);
       if (i + 1 != i_end)
-        plouf << " apply " << prefix << "union with (1 := u). finalize. clear u.\n";
+        plouf << " next_interval (" << prefix << "union) u.\n";
       else
         plouf << " exact u.\n";
     }
