@@ -271,3 +271,15 @@ graph_t::~graph_t() {
   } else purge();
   assert(nodes.empty());
 }
+
+void graph_t::replace_known(node_vect const &v) {
+  node_map old;
+  old.swap(known_reals);
+  for(node_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i) {
+    node *n = *i;
+    ++n->nb_good;
+    known_reals.insert(std::make_pair(n->get_result().real, n));
+  }
+  for(node_map::const_iterator i = old.begin(), end = old.end(); i != end; ++i)
+    i->second->remove_known();
+}

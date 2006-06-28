@@ -7,7 +7,7 @@
 #include "proofs/dichotomy.hpp"
 #include "proofs/property.hpp"
 
-enum node_id { HYPOTHESIS, MODUS, UNION, INTERSECTION };
+enum node_id { HYPOTHESIS, MODUS, UNION, INTERSECTION, GOAL };
 
 struct node;
 struct graph_t;
@@ -91,6 +91,7 @@ class graph_t {
   node *get_contradiction() const { return contradiction; }
   void set_contradiction(node *);
   void purge();		// remove any unused nodes and free maps
+  void replace_known(node_vect const &);
 };
 
 struct graph_loader {

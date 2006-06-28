@@ -209,32 +209,70 @@ bool property_tree::verify(graph_t *g, property *p) const {
   return b;
 }
 
-bool property_tree::get_nodes(graph_t *g, node_set &goals) const {
-  assert(ptr);
-  graph_loader loader(g);
+typedef std::vector< std::pair< node *, interval > > goal_vect;
+bool property_tree::get_nodes_aux(goal_vect &goals) const {
   bool all = true;
   for(std::vector< property >::const_iterator i = ptr->leafs.begin(),
-      end = ptr->leafs.end(); i != end; ++i) {
-    node *n = find_proof(*i);
-    if (!n) { all = false; continue; }
-    goals.insert(n);
-    if (!ptr->conjonction) return true;
-  }
+      end = ptr->leafs.end(); i != end; ++i)
+    if (node *n = find_proof(*i)) {
+      goals.push_back(std::make_pair(n, i->bnd()));
+      if (!ptr->conjonction) return true;
+    } else all = false;
   if (ptr->conjonction) {
     for(std::vector< property_tree >::const_iterator i = ptr->subtrees.begin(),
         end = ptr->subtrees.end(); i != end; ++i)
-      if (!i->get_nodes(g, goals)) all = false;
+      if (!i->get_nodes_aux(goals)) all = false;
     return all;
   } else {
+    unsigned sz = goals.size();
     for(std::vector< property_tree >::const_iterator i = ptr->subtrees.begin(),
         end = ptr->subtrees.end(); i != end; ++i) {
-      node_set tmp;
-      if (!i->get_nodes(g, tmp)) continue;
-      goals.insert(tmp.begin(), tmp.end());
-      return true;
+      if (i->get_nodes_aux(goals)) return true;
+      goals.erase(goals.begin() + sz, goals.end());
     }
     return false;
   }
+}
+
+struct goal_node: node {
+  property res;
+  node *pred;
+  goal_node(property const &p, node *n): node(GOAL, top_graph), res(p), pred(n)
+  { n->succ.insert(this); }
+  virtual property const &get_result() const { return res; }
+  virtual long get_hyps() const { return pred->get_hyps(); }
+  virtual node_vect const &get_subproofs() const {
+    static node_vect v(1);
+    v[0] = pred;
+    return v;
+  }
+  virtual ~goal_node() { pred->remove_succ(this); }
+};
+
+bool property_tree::get_nodes(graph_t *g, node_vect &goals) const {
+  assert(ptr);
+  graph_loader loader(g);
+  goal_vect gs;
+  bool all = get_nodes_aux(gs);
+  typedef std::map< node *, interval > node_map;
+  node_map m;
+  for(goal_vect::const_iterator i = gs.begin(), end = gs.end(); i != end; ++i) {
+    node_map::iterator j = m.find(i->first);
+    if (j == m.end())
+      m.insert(*i);
+    else if (is_defined(i->second)) {
+      if (!is_defined(j->second)) j->second = i->second;
+      else j->second = intersect(i->second, j->second);
+    }
+  }
+  goals.clear();
+  for(node_map::const_iterator i = m.begin(), end = m.end(); i != end; ++i) {
+    property p(i->first->get_result());
+    if (is_defined(i->second)) p.bnd() = i->second;
+    goals.push_back(new goal_node(p, i->first));
+  }
+  g->replace_known(goals);
+  return all;
 }
 
 struct remove_pred3 {

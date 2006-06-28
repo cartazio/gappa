@@ -75,11 +75,11 @@ int main(int argc, char **argv) {
       globally_proven = false;
       proven_contexts.push_back(false);
     } else {
-      node_set nodes;
+      node_vect nodes;
       bool proven = current_context.goals.get_nodes(g, nodes);
       typedef std::map< std::string, node * > named_nodes;
       named_nodes results;
-      for(node_set::const_iterator j = nodes.begin(), j_end = nodes.end(); j != j_end; ++j) {
+      for(node_vect::const_iterator j = nodes.begin(), j_end = nodes.end(); j != j_end; ++j) {
         node *n = *j;
         results[dump_real(n->get_result().real.real())] = n;
       }

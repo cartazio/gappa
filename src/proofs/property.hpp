@@ -2,7 +2,6 @@
 #define PROOFS_PROPERTY_HPP
 
 #include <cassert>
-#include <set>
 #include <vector>
 #include "numbers/interval.hpp"
 #include "parser/ast_real.hpp"
@@ -78,6 +77,7 @@ struct property_tree {
   void incr() { if (ptr) ++ptr->ref; }
   void decr() { if (ptr && --ptr->ref == 0) delete ptr; }
   void flatten();
+  bool get_nodes_aux(std::vector< std::pair< node *, interval > > &) const;
  public:
   property_tree(): ptr(NULL) {}
   property_tree(data *p): ptr(p) { incr(); }
@@ -94,7 +94,7 @@ struct property_tree {
   bool empty() const { return !ptr; }
   bool remove(property const &);		// false if the tree is not yet fully satisfied
   bool verify(graph_t *, property *) const;	// false if some branches are not satisfied
-  bool get_nodes(graph_t *, std::set< node * > &) const;
+  bool get_nodes(graph_t *, std::vector< node * > &) const;
 };
 
 struct context {

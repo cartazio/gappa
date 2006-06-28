@@ -212,8 +212,21 @@ static std::string display(node *n) {
   auto_flush plouf;
   plouf << "Lemma " << name << " : ";
   property_vect const &n_hyp = n->get_hypotheses();
-  for(property_vect::const_iterator i = n_hyp.begin(), end = n_hyp.end(); i != end; ++i)
-    plouf << display(*i) << " -> ";
+  property_map pmap;
+  int num_hyp = 0;
+  for(property_vect::const_iterator i = n_hyp.begin(), end = n_hyp.end();
+      i != end; ++i) {
+    property const &p = *i;
+    plouf << display(p) << " -> ";
+    pmap.insert(std::make_pair(p.real, std::make_pair(num_hyp++, &p)));
+  }
+  node_vect const &pred = n->get_subproofs();
+  if (n->type == GOAL && pred[0]->type == HYPOTHESIS) {
+    property const &p = pred[0]->get_result();
+    plouf << display(p) << " -> ";
+    assert(num_hyp == 0);
+    pmap.insert(std::make_pair(p.real, std::make_pair(num_hyp++, &p)));
+  }
   property const &n_res = n->get_result();
   std::string p_res, prefix;
   if (n_res.null()) {
@@ -222,20 +235,13 @@ static std::string display(node *n) {
   } else
     p_res = display(n_res);
   plouf << p_res << ". (* " << (!n_res.null() ? dump_property(n_res) : "contradiction") << " *)\n";
-  int nb_hyps = n_hyp.size();
-  if (nb_hyps) {
+  if (num_hyp) {
     plouf << " intros";
-    for(int i = 0; i < nb_hyps; ++i) plouf << " h" << i;
+    for(int i = 0; i < num_hyp; ++i) plouf << " h" << i;
     plouf << ".\n";
   }
   switch (n->type) {
   case MODUS: {
-    property_map pmap;
-    int num_hyp = 0;
-    for(property_vect::const_iterator j = n_hyp.begin(), j_end = n_hyp.end();
-        j != j_end; ++j, ++num_hyp)
-      pmap.insert(std::make_pair(j->real, std::make_pair(num_hyp, &*j)));
-    node_vect const &pred = n->get_subproofs();
     for(node_vect::const_iterator i = pred.begin(), i_end = pred.end();
         i != i_end; ++i, ++num_hyp) {
       node *m = *i;
@@ -251,12 +257,6 @@ static std::string display(node *n) {
     plouf << "Qed.\n";
     break; }
   case INTERSECTION: {
-    property_map pmap;
-    int num_hyp = 0;
-    for(property_vect::const_iterator j = n_hyp.begin(), j_end = n_hyp.end();
-        j != j_end; ++j, ++num_hyp)
-      pmap.insert(std::make_pair(j->real, std::make_pair(num_hyp, &*j)));
-    node_vect const &pred = n->get_subproofs();
     int num[2];
     std::string suffix;
     for(int i = 0; i < 2; ++i) {
@@ -279,12 +279,6 @@ static std::string display(node *n) {
              " finalize.\nQed.\n";
     break; }
   case UNION: {
-    property_map pmap;
-    int num_hyp = 0;
-    for(property_vect::const_iterator j = n_hyp.begin(), j_end = n_hyp.end();
-        j != j_end; ++j, ++num_hyp)
-      pmap.insert(std::make_pair(j->real, std::make_pair(num_hyp, &*j)));
-    node_vect const &pred = n->get_subproofs();
     assert(pred.size() >= 2);
     node *mcase = pred[0];
     property const &pcase = mcase->get_result();
@@ -316,6 +310,14 @@ static std::string display(node *n) {
     }
     plouf << "Qed.\n";
     break; }
+  case GOAL: {
+    node *m = pred[0];
+    interval const &mb = m->get_result().bnd(), &nb = n_res.bnd();
+    if (!(nb <= mb))
+      plouf << " apply subset with " << display(mb) << ". 2: finalize.\n";
+    invoke_lemma(plouf, m, pmap);
+    plouf << "Qed.\n";
+    break; }
   default:
     assert(false);
   }
@@ -335,9 +337,7 @@ struct coq_backend: backend {
   virtual std::string rewrite(ast_real const *, ast_real const *);
   virtual void theorem(node *n) {
     assert(n);
-    if (n->type == HYPOTHESIS)
-      std::cerr << "Warning: proof of triviality will not be generated.\n";
-    else display(n);
+    display(n);
   }
 };
 
