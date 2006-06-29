@@ -44,6 +44,8 @@ gappa_SOURCES = \
 	proofs/property.hpp \
 	proofs/schemes.cpp \
 	proofs/schemes.hpp \
+	proofs/updater.cpp \
+	proofs/updater.hpp \
 	parser/ast.cpp \
 	main.cpp \
 	parameters.cpp \

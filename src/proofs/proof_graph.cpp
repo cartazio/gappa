@@ -368,16 +368,6 @@ void enlarger(node_vect const &nodes) {
     property max_res = n->maximal();
     if (!old_res.strict_implies(max_res)) continue;
     n->enlarge(max_res);
-    /*
-    if (m != n) {
-      node_set v = n->succ;
-      for(node_set::const_iterator i = v.begin(), end = v.end(); i != end; ++i) {
-        (*i)->substitute_pred(n, m);
-        nodes.insert(*i);
-      }
-      n = m;
-    }
-    */
     if (!old_res.strict_implies(n->get_result())) continue;
     node_vect const &v = n->get_subproofs();
     for(node_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i)
