@@ -360,7 +360,7 @@ void enlarger(node_vect const &nodes) {
   node_list pending(whole.begin(), whole.end());
   whole.clear();
   while (!pending.empty()) {
-    node *n = *pending.begin();
+    node *n = pending.front();
     n->scanned = false;
     pending.pop_front();
     property old_res = n->get_result();
