@@ -76,11 +76,12 @@ bool graph_t::dominates(graph_t const *g) const {
 
 property node::maximal() const {
   property res;
+  property const &current = get_result();
   for(node_set::const_iterator i = succ.begin(), end = succ.end(); i != end; ++i) {
     property p = (*i)->maximal_for(this);
     if (res.null()) res = p;
     else res.intersect(p);
-    if (!p.strict_implies(res)) break;
+    if (!current.strict_implies(res)) break;
   }
   return res.null() ? get_result() : res;
 }
