@@ -14,11 +14,19 @@ struct graph_t;
 
 extern graph_t *top_graph;
 
+struct theorem_updater;
+
 struct theorem_node {
   property res;
   property_vect hyp;
   std::string name;
-  theorem_node(int, property const [], property const &, std::string const &);
+  theorem_updater *updater;
+  theorem_node(int, property const [], property const &, std::string const &, theorem_updater *);
+};
+
+struct theorem_updater {
+  virtual void expand(theorem_node *, property const &) = 0;
+  virtual ~theorem_updater() {}
 };
 
 typedef std::vector< node * > node_vect;
@@ -38,6 +46,10 @@ struct node {
   void remove_known();
   void remove_succ(node const *);
   virtual long get_hyps() const { return 0; }
+  virtual property maximal() const;
+  virtual property maximal_for(node const *) const = 0;
+  virtual void enlarge(property const &) = 0;
+  mutable bool scanned;
 };
 
 class hypothesis_node: public node {
@@ -45,6 +57,9 @@ class hypothesis_node: public node {
  public:
   hypothesis_node(property const &p): node(HYPOTHESIS, top_graph), res(p) {}
   virtual property const &get_result() const { return res; }
+  virtual property maximal() const { return res; }
+  virtual property maximal_for(node const *) const { assert(false); }
+  virtual void enlarge(property const &) { assert(false); }
 };
 
 class dependent_node: public node {
@@ -58,7 +73,7 @@ class dependent_node: public node {
   virtual ~dependent_node() { clean_dependencies(); }
 };
 
-node *create_theorem(int, property const [], property const &, std::string const &);
+node *create_theorem(int, property const [], property const &, std::string const &, theorem_updater * = NULL);
 
 class modus_node: public dependent_node {
   long hyps;
@@ -68,6 +83,8 @@ class modus_node: public dependent_node {
   virtual property const &get_result() const { return target->res; }
   virtual long get_hyps() const { return hyps; }
   virtual ~modus_node();
+  virtual property maximal_for(node const *) const;
+  virtual void enlarge(property const &);
 };
 
 class graph_t {
@@ -99,5 +116,7 @@ struct graph_loader {
   graph_loader(graph_t *g): old_graph(top_graph) { top_graph = g; }
   ~graph_loader() { top_graph = old_graph; }
 };
+
+void enlarger(node_vect const &);
 
 #endif // PROOFS_PROOF_GRAPH_HPP

@@ -209,6 +209,26 @@ bool property_tree::verify(graph_t *g, property *p) const {
   return b;
 }
 
+struct goal_node: node {
+  property res;
+  node *pred;
+  goal_node(property const &p, node *n): node(GOAL, top_graph), res(p), pred(n)
+  { n->succ.insert(this); }
+  virtual property const &get_result() const { return res; }
+  virtual long get_hyps() const { return pred->get_hyps(); }
+  virtual node_vect const &get_subproofs() const;
+  virtual void enlarge(property const &) { assert(false); }
+  virtual property maximal() const { return res; }
+  virtual property maximal_for(node const *) const { return res; }
+  virtual ~goal_node() { pred->remove_succ(this); }
+};
+
+node_vect const &goal_node::get_subproofs() const {
+  static node_vect v(1);
+  v[0] = pred;
+  return v;
+}
+
 typedef std::vector< std::pair< node *, interval > > goal_vect;
 bool property_tree::get_nodes_aux(goal_vect &goals) const {
   bool all = true;
@@ -233,21 +253,6 @@ bool property_tree::get_nodes_aux(goal_vect &goals) const {
     return false;
   }
 }
-
-struct goal_node: node {
-  property res;
-  node *pred;
-  goal_node(property const &p, node *n): node(GOAL, top_graph), res(p), pred(n)
-  { n->succ.insert(this); }
-  virtual property const &get_result() const { return res; }
-  virtual long get_hyps() const { return pred->get_hyps(); }
-  virtual node_vect const &get_subproofs() const {
-    static node_vect v(1);
-    v[0] = pred;
-    return v;
-  }
-  virtual ~goal_node() { pred->remove_succ(this); }
-};
 
 bool property_tree::get_nodes(graph_t *g, node_vect &goals) const {
   assert(ptr);

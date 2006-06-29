@@ -68,7 +68,9 @@ int main(int argc, char **argv) {
         std::cerr << "Warning: hypotheses are in contradiction, any result is true.\n";
       else
         std::cerr << "a contradiction was built from the hypotheses.\n";
-      display->theorem(g->get_contradiction());
+      node *n = g->get_contradiction();
+      enlarger(node_vect(1, n));
+      display->theorem(n);
       proven_contexts.push_back(true);
     } else if (current_context.goals.empty()) {
       std::cerr << "Warning: no contradiction was found.\n";
@@ -79,8 +81,10 @@ int main(int argc, char **argv) {
       bool proven = current_context.goals.get_nodes(g, nodes);
       typedef std::map< std::string, node * > named_nodes;
       named_nodes results;
+      enlarger(nodes);
       for(node_vect::const_iterator j = nodes.begin(), j_end = nodes.end(); j != j_end; ++j) {
         node *n = *j;
+        assert(n->type == GOAL);
         results[dump_real(n->get_result().real.real())] = n;
       }
       for(named_nodes::const_iterator j = results.begin(), j_end = results.end(); j != j_end; ++j) {

@@ -127,7 +127,14 @@ class dichotomy_node: public dependent_node {
   virtual property const &get_result() const { return res; }
   using dependent_node::insert_pred;
   virtual long get_hyps() const;
+  virtual void enlarge(property const &p) { res = p; }
+  virtual property maximal_for(node const *) const;
 };
+
+property dichotomy_node::maximal_for(node const *n) const {
+  if (n == get_subproofs()[0]) return n->get_result();
+  return res;
+}
 
 static char const *all_one() {
   static char v[256];
@@ -328,6 +335,8 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
       std::cerr << "Warning: case splitting on " << dump_real(var.real) << " did not produce any usable result.\n";
     return false;
   }
+  for(graph_vect::const_iterator i = h->graphs.begin(), i_end = h->graphs.end(); i != i_end; ++i)
+    (*i)->purge();
   return true;
 }
 

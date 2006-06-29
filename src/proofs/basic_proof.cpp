@@ -15,6 +15,106 @@ static preal_vect one_needed(ast_real const *r) {
   return preal_vect(1, predicated_real(r, PRED_BND));
 }
 
+struct unary_interval_updater: theorem_updater {
+  typedef void (*fn)(interval const &, interval &);
+  fn compute;
+  unary_interval_updater(fn c): compute(c) {}
+  virtual void expand(theorem_node *, property const &);
+};
+
+void unary_interval_updater::expand(theorem_node *n, property const &p) {
+  int b = 3;
+  property res = p;
+  interval &ih = n->hyp[0].bnd(), &ir = res.bnd();
+  interval hyp = ih;
+  while (b != 0) {
+    if (b & 1) {
+      number const &old = lower(ih);
+      number m = old;
+      simplify(m, -1);
+      if (m != old) {
+        hyp = interval(m, upper(ih));
+        (*compute)(hyp, ir);
+        if (!(ir <= p.bnd())) { hyp = ih; b &= ~1; }
+        else ih = hyp;
+      } else b &= ~1;
+    }
+    if (b & 2) {
+      number const &old = upper(ih);
+      number m = old;
+      simplify(m, 1);
+      if (m != old) {
+        hyp = interval(upper(ih), m);
+        (*compute)(hyp, ir);
+        if (!(ir <= p.bnd())) { hyp = ih; b &= ~2; }
+        else ih = hyp;
+      } else b &= ~2;
+    }
+  }
+  n->res = p;
+}
+
+struct binary_interval_updater: theorem_updater {
+  typedef void (*fn)(interval const [], interval &);
+  fn compute;
+  binary_interval_updater(fn c): compute(c) {}
+  virtual void expand(theorem_node *, property const &);
+};
+
+void binary_interval_updater::expand(theorem_node *n, property const &p) {
+  int b = 15;
+  property res = p;
+  interval &i1 = n->hyp[0].bnd(), &i2 = n->hyp[1].bnd(), &ir = res.bnd();
+  interval hyps[] = { i1, i2 };
+  while (b != 0) {
+    if (b & 1) {
+      number const &old = lower(i1);
+      number m = old;
+      simplify(m, -1);
+      if (m != old) {
+        hyps[0] = interval(m, upper(i1));
+        (*compute)(hyps, ir);
+        if (!(ir <= p.bnd())) { hyps[0] = i1; b &= ~1; }
+        else i1 = hyps[0];
+      } else b &= ~1;
+    }
+    if (b & 2) {
+      number const &old = upper(i1);
+      number m = old;
+      simplify(m, 1);
+      if (m != old) {
+        hyps[0] = interval(upper(i1), m);
+        (*compute)(hyps, ir);
+        if (!(ir <= p.bnd())) { hyps[0] = i1; b &= ~2; }
+        else i1 = hyps[0];
+      } else b &= ~2;
+    }
+    if (b & 4) {
+      number const &old = lower(i2);
+      number m = old;
+      simplify(m, -1);
+      if (m != old) {
+        hyps[0] = interval(m, upper(i2));
+        (*compute)(hyps, ir);
+        if (!(ir <= p.bnd())) { hyps[1] = i2; b &= ~4; }
+        else i2 = hyps[1];
+      } else b &= ~4;
+    }
+    if (b & 8) {
+      number const &old = upper(i2);
+      number m = old;
+      simplify(m, 1);
+      if (m != old) {
+        hyps[1] = interval(lower(i2), m);
+        (*compute)(hyps, ir);
+        if (!(ir <= p.bnd())) { hyps[1] = i2; b &= ~8; }
+        else i2 = hyps[1];
+      } else b &= ~8;
+    }
+  }
+  n->res = p;
+}
+
 // ABSOLUTE_ERROR
 REGISTER_SCHEME_BEGIN(absolute_error);
   function_class const *function;
@@ -216,6 +316,24 @@ REGISTER_SCHEME_BEGIN(computation);
   computation_scheme(ast_real const *r): proof_scheme(r) {}
 REGISTER_SCHEME_END(computation);
 
+static void abs_enlarger_f(interval const &h, interval &r) { r = abs(h); }
+static unary_interval_updater abs_enlarger(&abs_enlarger_f);
+static void neg_enlarger_f(interval const &h, interval &r) { r = -h; }
+static unary_interval_updater neg_enlarger(&neg_enlarger_f);
+static void sqrt_enlarger_f(interval const &h, interval &r) { r = sqrt(h); }
+static unary_interval_updater sqrt_enlarger(&sqrt_enlarger_f);
+static void square_enlarger_f(interval const &h, interval &r) { r = square(h); }
+static unary_interval_updater square_enlarger(&square_enlarger_f);
+
+static void add_enlarger_f(interval const h[], interval &r) { r = h[0] + h[1]; }
+static binary_interval_updater add_enlarger(&add_enlarger_f);
+static void sub_enlarger_f(interval const h[], interval &r) { r = h[0] - h[1]; }
+static binary_interval_updater sub_enlarger(&sub_enlarger_f);
+static void mul_enlarger_f(interval const h[], interval &r) { r = h[0] * h[1]; }
+static binary_interval_updater mul_enlarger(&mul_enlarger_f);
+static void div_enlarger_f(interval const h[], interval &r) { r = h[0] / h[1]; }
+static binary_interval_updater div_enlarger(&div_enlarger_f);
+
 node *computation_scheme::generate_proof() const {
   real_op const *r = boost::get< real_op const >(real.real());
   assert(r);
@@ -227,12 +345,12 @@ node *computation_scheme::generate_proof() const {
     interval const &i = res.bnd();
     switch (r->type) {
     case UOP_NEG:
-      return create_theorem(1, &res, property(real, -i), "neg");
+      return create_theorem(1, &res, property(real, -i), "neg", &neg_enlarger);
     case UOP_SQRT:
       if (lower(i) < 0) return NULL;
-      return create_theorem(1, &res, property(real, sqrt(i)), "sqrt");
+      return create_theorem(1, &res, property(real, sqrt(i)), "sqrt", &sqrt_enlarger);
     case UOP_ABS:
-      return create_theorem(1, &res, property(real, abs(i)), std::string("abs_") += ('o' + sign(i)));
+      return create_theorem(1, &res, property(real, abs(i)), std::string("abs_") += ('o' + sign(i)), &abs_enlarger);
     default:
       assert(false);
     }
@@ -249,7 +367,7 @@ node *computation_scheme::generate_proof() const {
     if (same_ops && r->type == BOP_MUL) {
       s = "square_";
       s += 'o' + sign(i1);
-      return create_theorem(1, &res1, property(real, square(i1)), s);
+      return create_theorem(1, &res1, property(real, square(i1)), s, &square_enlarger);
     } else if (same_ops && r->type == BOP_DIV) {
       if (contains_zero(i1)) return NULL;
       number one(1);
@@ -261,14 +379,16 @@ node *computation_scheme::generate_proof() const {
     interval const &i2 = res2.bnd();
     property res(real.real());
     interval &i = res.bnd();
+    theorem_updater *u = NULL;
     switch (r->type) {
-    case BOP_ADD: i = i1 + i2; s = "add"; break;
-    case BOP_SUB: i = i1 - i2; s = "sub"; break;
+    case BOP_ADD: i = i1 + i2; s = "add"; u = &add_enlarger; break;
+    case BOP_SUB: i = i1 - i2; s = "sub"; u = &sub_enlarger; break;
     case BOP_MUL:
       i = i1 * i2;
       s = "mul_";
       s += 'o' + sign(i1);
       s += 'o' + sign(i2);
+      u = &mul_enlarger;
       break;
     case BOP_DIV:
       if (contains_zero(i2)) return NULL;
@@ -276,13 +396,14 @@ node *computation_scheme::generate_proof() const {
       s = "div_";
       s += 'o' + sign(i1);
       s += 'o' + sign(i2);
+      u = &div_enlarger;
       break;
     default:
       assert(false);
       return NULL;
     }
     property hyps[2] = { res1, res2 };
-    return create_theorem(2, hyps, res, s); }
+    return create_theorem(2, hyps, res, s, u); }
   default:
     assert(false);
   }

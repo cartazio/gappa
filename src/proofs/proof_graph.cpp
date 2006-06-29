@@ -1,3 +1,4 @@
+#include <list>
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
 #include "proofs/proof_graph.hpp"
@@ -73,13 +74,24 @@ bool graph_t::dominates(graph_t const *g) const {
   return false;
 }
 
+property node::maximal() const {
+  property res;
+  for(node_set::const_iterator i = succ.begin(), end = succ.end(); i != end; ++i) {
+    property p = (*i)->maximal_for(this);
+    if (res.null()) res = p;
+    else res.intersect(p);
+    if (!p.strict_implies(res)) break;
+  }
+  return res.null() ? get_result() : res;
+}
+
 static bool dominates(node const *n1, node const *n2) {
   assert(n1 && n1->graph && n2);
   return n1->graph->dominates(n2->graph);
 }
 
-theorem_node::theorem_node(int nb, property const h[], property const &p, std::string const &n)
-    : res(p), name(n) {
+theorem_node::theorem_node(int nb, property const h[], property const &p, std::string const &n, theorem_updater *u)
+    : res(p), name(n), updater(u) {
   for(int i = 0; i < nb; ++i) hyp.push_back(h[i]);
 }
 
@@ -141,8 +153,27 @@ modus_node::~modus_node() {
   delete_hyps(hyps, graph->get_hypotheses());
 }
 
-node *create_theorem(int nb, property const h[], property const &p, std::string const &n) {
-  return new modus_node(new theorem_node(nb, h, p, n));
+property modus_node::maximal_for(node const *n) const {
+  if (!target->updater) return n->get_result();
+  predicated_real r = n->get_result().real;
+  property res;
+  for(property_vect::const_iterator i = target->hyp.begin(),
+      end = target->hyp.end(); i != end; ++i) {
+    if (r != i->real) continue;
+    if (res.null()) res = *i;
+    else res.intersect(*i);
+  }
+  assert(!res.null());
+  return res;
+}
+
+void modus_node::enlarge(property const &p) {
+  if (!target->updater) return;
+  target->updater->expand(target, p);
+}
+
+node *create_theorem(int nb, property const h[], property const &p, std::string const &n, theorem_updater *u) {
+  return new modus_node(new theorem_node(nb, h, p, n, u));
 }
 
 class intersection_node: public dependent_node {
@@ -153,6 +184,9 @@ class intersection_node: public dependent_node {
   ~intersection_node() { delete_hyps(hyps, graph->get_hypotheses()); }
   virtual property const &get_result() const { return res; }
   virtual long get_hyps() const { return hyps; }
+  virtual property maximal() const { return res.null() ? res : node::maximal(); }
+  virtual property maximal_for(node const *) const;
+  virtual void enlarge(property const &p) { res = p; }
 };
 
 intersection_node::intersection_node(node *n1, node *n2)
@@ -179,6 +213,22 @@ intersection_node::intersection_node(node *n1, node *n2)
     res = property();
     top_graph->set_contradiction(this);
   }
+}
+
+property intersection_node::maximal_for(node const *n) const {
+  node_vect const &v = get_subproofs();
+  number l = number::neg_inf, u = number::pos_inf;
+  if (res.null()) {
+    // TODO: improve bounds
+    if (n == v[0]) u = upper(v[0]->get_result().bnd());
+    else l = lower(v[1]->get_result().bnd());
+  } else {
+    if (n == v[0])
+      u = upper(res.bnd());
+    else
+      l = lower(res.bnd());
+  }
+  return property(n->get_result().real, interval(l, u));
 }
 
 graph_t::graph_t(graph_t *f, property_vect const &h)
@@ -282,4 +332,55 @@ void graph_t::replace_known(node_vect const &v) {
   }
   for(node_map::const_iterator i = old.begin(), end = old.end(); i != end; ++i)
     i->second->remove_known();
+}
+
+static void initialize_status(node_set &pending, node_set &whole) {
+  while (!pending.empty()) {
+    node *n = *pending.begin();
+    pending.erase(n);
+    if (!whole.insert(n).second) continue;
+    n->scanned = true;
+    node_vect const &v = n->get_subproofs();
+    for(node_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i)
+      pending.insert(*i);
+  }
+}
+
+typedef std::list< node * > node_list;
+
+static void update_status(node_list &pending, node *n) {
+  if (n->scanned) return;
+  n->scanned = true;
+  pending.push_back(n);
+}
+
+void enlarger(node_vect const &nodes) {
+  node_set whole, tmp(nodes.begin(), nodes.end());
+  initialize_status(tmp, whole);
+  node_list pending(whole.begin(), whole.end());
+  whole.clear();
+  while (!pending.empty()) {
+    node *n = *pending.begin();
+    n->scanned = false;
+    pending.pop_front();
+    property old_res = n->get_result();
+    if (old_res.null()) continue;
+    property max_res = n->maximal();
+    if (!old_res.strict_implies(max_res)) continue;
+    n->enlarge(max_res);
+    /*
+    if (m != n) {
+      node_set v = n->succ;
+      for(node_set::const_iterator i = v.begin(), end = v.end(); i != end; ++i) {
+        (*i)->substitute_pred(n, m);
+        nodes.insert(*i);
+      }
+      n = m;
+    }
+    */
+    if (!old_res.strict_implies(n->get_result())) continue;
+    node_vect const &v = n->get_subproofs();
+    for(node_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i)
+      update_status(pending, *i);
+  }
 }
