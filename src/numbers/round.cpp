@@ -195,6 +195,7 @@ static void simplify(mpfr_t &f, int dir) {
   int v = mpfr_set_z(f, m, GMP_RNDN);
   assert(v == 0);
   mpfr_mul_2si(f, f, e, GMP_RNDN);
+  mpz_clear(m);
 }
 
 number simplify(number const &f, int dir) {
