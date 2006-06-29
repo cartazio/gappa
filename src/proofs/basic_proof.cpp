@@ -251,7 +251,7 @@ node *computation_scheme::generate_proof() const {
   case 2: {
     bool same_ops = r->ops[0] == r->ops[1];
     if (same_ops && r->type == BOP_SUB)
-      return create_theorem(0, NULL, property(real, zero()), "sub_refl");
+      return create_theorem(0, NULL, property(real, zero()), "sub_refl", trivial_updater);
     std::string s;
     node *n1 = find_proof(r->ops[0]);
     if (!n1) return NULL;
@@ -264,7 +264,7 @@ node *computation_scheme::generate_proof() const {
     } else if (same_ops && r->type == BOP_DIV) {
       if (contains_zero(i1)) return NULL;
       number one(1);
-      return create_theorem(1, &res1, property(real, interval(one, one)), "div_refl");
+      return create_theorem(1, &res1, property(real, interval(one, one)), "div_refl", identity_updater);
     }
     node *n2 = find_proof(r->ops[1]);
     if (!n2) return NULL;
@@ -337,11 +337,11 @@ node *computation_abs_scheme::generate_proof() const {
     property const &res = n1->get_result();
     switch (r->type) {
     case UOP_NEG:
-      return create_theorem(1, &res, res, "neg_a");
+      return create_theorem(1, &res, res, "neg_a", identity_updater);
     case UOP_SQRT:
       return NULL;
     case UOP_ABS:
-      return create_theorem(1, &res, res, "abs_a");
+      return create_theorem(1, &res, res, "abs_a", identity_updater);
     default:
       assert(false);
     }
@@ -413,13 +413,15 @@ REGISTER_SCHEME_BEGIN(bnd_of_abs);
   bnd_of_abs_scheme(ast_real const *r): proof_scheme(r) {}
 REGISTER_SCHEME_END(bnd_of_abs);
 
+UNARY_INTERVAL(bnd_of_abs_updater) { number const &num = upper(h); r = interval(-num, num); }
+
 node *bnd_of_abs_scheme::generate_proof() const {
   node *n = find_proof(predicated_real(real.real(), PRED_ABS));
   if (!n) return NULL;
   property const &res1 = n->get_result();
   number const &num = upper(res1.bnd());
   property res(real, interval(-num, num));
-  return create_theorem(1, &res1, res, "bnd_of_abs");
+  return create_theorem(1, &res1, res, "bnd_of_abs", &bnd_of_abs_updater);
 }
 
 preal_vect bnd_of_abs_scheme::needed_reals() const {
@@ -468,7 +470,7 @@ node *uabs_of_abs_scheme::generate_proof() const {
   node *n = find_proof(needed);
   if (!n) return NULL;
   property const &res = n->get_result();
-  return create_theorem(1, &res, res, "uabs_of_abs");
+  return create_theorem(1, &res, res, "uabs_of_abs", identity_updater);
 }
 
 preal_vect uabs_of_abs_scheme::needed_reals() const {
@@ -492,7 +494,7 @@ node *abs_of_bnd_scheme::generate_proof() const {
   if (!n) return NULL;
   property const &res1 = n->get_result();
   property res(real, res1.bnd());
-  return create_theorem(1, &res1, res, "abs_of_bnd");
+  return create_theorem(1, &res1, res, "abs_of_bnd", identity_updater);
 }
 
 preal_vect abs_of_bnd_scheme::needed_reals() const {
@@ -514,12 +516,14 @@ REGISTER_SCHEME_BEGIN(compose_relative);
     : proof_scheme(r), needed(v) {}
 REGISTER_SCHEME_END(compose_relative);
 
+BINARY_INTERVAL(compose_updater) { r = compose_relative(h[0], h[1]); }
+
 node *compose_relative_scheme::generate_proof() const {
   property hyps[2];
   if (!fill_hypotheses(hyps, needed)) return NULL;
   property res(real, compose_relative(hyps[0].bnd(), hyps[1].bnd()));
   if (!is_defined(res.bnd())) return NULL;
-  return create_theorem(2, hyps, res, "compose");
+  return create_theorem(2, hyps, res, "compose", &compose_updater);
 }
 
 preal_vect compose_relative_scheme::needed_reals() const {
