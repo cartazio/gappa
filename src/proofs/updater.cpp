@@ -38,7 +38,7 @@ void unary_interval_updater::expand(theorem_node *n, property const &p) {
       number m = old;
       simplify(m, 1);
       if (m != old) {
-        hyp = interval(upper(ih), m);
+        hyp = interval(lower(ih), m);
         (*compute)(hyp, ir);
         if (!(ir <= p.bnd())) { hyp = ih; b &= ~2; }
         else ih = hyp;
@@ -70,7 +70,7 @@ void binary_interval_updater::expand(theorem_node *n, property const &p) {
       number m = old;
       simplify(m, 1);
       if (m != old) {
-        hyps[0] = interval(upper(i1), m);
+        hyps[0] = interval(lower(i1), m);
         (*compute)(hyps, ir);
         if (!(ir <= p.bnd())) { hyps[0] = i1; b &= ~2; }
         else i1 = hyps[0];
