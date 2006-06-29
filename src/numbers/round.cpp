@@ -183,6 +183,7 @@ static void simplify(mpfr_t &f, int dir) {
   split_exact(f, m, e, s);
   if (mpz_cmp_ui(m, 1) == 0) {
     if (e < 0 && dir > 0) ++e;
+    else if (e > 0 && dir < 0) --e;
   } else {
     (dir < 0 ? mpz_sub_ui : mpz_add_ui)(m, m, 1);
     int d = mpz_scan1(m, 0);
