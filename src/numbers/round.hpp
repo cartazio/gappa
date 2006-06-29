@@ -50,6 +50,7 @@ struct interval;
 
 typedef void (gs_rounding::*rounding_fun)(mpfr_t &) const;
 number round_number(number const &, gs_rounding const *, rounding_fun);
+number simplify(number const &, int);
 
 enum direction_type { ROUND_UP, ROUND_DN, ROUND_ZR, ROUND_AW, ROUND_OD,
                       ROUND_NE, ROUND_NO, ROUND_NZ, ROUND_NA, ROUND_NU, ROUND_ND,

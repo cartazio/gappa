@@ -175,3 +175,32 @@ int rnd_influence_direction(direction_type type, bool neg) {
   }
   return -1;
 }
+
+static void simplify(mpfr_t &f, int dir) {
+  mpz_t m;
+  int e, s;
+  mpz_init(m);
+  split_exact(f, m, e, s);
+  if (mpz_cmp_ui(m, 1) == 0) {
+    if (e * dir < 0) e += dir;
+  } else {
+    (dir < 0 ? mpz_sub_ui : mpz_add_ui)(m, m, 1);
+    int d = mpz_scan1(m, 0);
+    assert(d > 0);
+    mpz_fdiv_q_2exp(m, m, d);
+    e += d;
+  }
+  mpfr_set_prec(f, std::max<int>(mpz_sizeinbase(m, 2), 2));
+  if (s < 0) mpz_neg(m, m);
+  int v = mpfr_set_z(f, m, GMP_RNDN);
+  assert(v == 0);
+  mpfr_mul_2si(f, f, e, GMP_RNDN);
+}
+
+number simplify(number const &f, int dir) {
+  number res = f;
+  if (f == 0) return res;
+  number_base *d = res.unique();
+  simplify(d->val, f < 0 ? -dir : dir);
+  return res;
+}
