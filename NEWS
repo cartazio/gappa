@@ -1,3 +1,9 @@
+Version 0.7.0:
+ * Coq back-end
+   - added support for native dyadic library
+ * proof graph
+   - added optimization pass for bound precision
+
 Version 0.6.5:
  * Coq back-end
    - fixed square root generation
