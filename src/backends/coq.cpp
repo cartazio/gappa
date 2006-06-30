@@ -13,8 +13,8 @@ extern std::string get_real_split(number const &f, int &exp, bool &zero);
 
 static std::ostream *out;
 
-struct auto_flush: std::stringstream {
-  ~auto_flush() { *::out << this->str(); }
+struct auto_flush: std::ostringstream {
+  ~auto_flush() { *::out << str(); }
 };
 
 template< class T >
@@ -27,7 +27,7 @@ int map_finder(std::map< T, int > &m, T const &k) {
 }
 
 static std::string composite(char prefix, int num) {
-  std::stringstream s;
+  std::ostringstream s;
   s << prefix << (num < 0 ? -num : num);
   return s.str();
 }
@@ -52,7 +52,7 @@ static std::string convert_name(std::string const &name) {
 static std::map< std::string, int > displayed_floats;
 
 static std::string display(number const &f) {
-  std::stringstream s;
+  std::ostringstream s;
   bool zero;
   int exp;
   s << '(' << get_real_split(f, exp, zero);
@@ -68,7 +68,7 @@ static std::string display(number const &f) {
 static std::map< std::string, int > displayed_intervals;
 
 static std::string display(interval const &i) {
-  std::stringstream s;
+  std::ostringstream s;
   s << display(lower(i)) << ' ' << display(upper(i));
   std::string const &s_ = s.str();
   int i_id = map_finder(displayed_intervals, s_);
@@ -118,7 +118,7 @@ static std::string display(ast_real const *r) {
 static std::map< std::string, int > displayed_properties;
 
 static std::string display(property const &p) {
-  std::stringstream s;
+  std::ostringstream s;
   predicate_type t = p.real.pred();
   ast_real const *real = p.real.real();
   if (p.real.pred_bnd()) {
