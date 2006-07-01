@@ -3,18 +3,6 @@
 #include "numbers/round.hpp"
 #include "proofs/updater.hpp"
 
-struct trivial_updater1: theorem_updater {
-  virtual void expand(theorem_node *n, property const &p) { n->res = p; }
-};
-static trivial_updater1 trivial_updater2;
-theorem_updater *trivial_updater = &trivial_updater2; 
-
-struct identity_updater1: theorem_updater {
-  virtual void expand(theorem_node *n, property const &p) { n->res = p; n->hyp[0] = p; }
-};
-static identity_updater1 identity_updater2;
-theorem_updater *identity_updater = &identity_updater2;
-
 static property boundify(property const &opt, property const &cur) {
   property res = opt;
   interval const &bopt = opt.bnd(), &bcur = cur.bnd();
@@ -24,6 +12,20 @@ static property boundify(property const &opt, property const &cur) {
     interval(lower(bopt), upper(bcur));
   return res;
 }
+
+struct trivial_updater1: theorem_updater {
+  virtual void expand(theorem_node *n, property const &p)
+  { n->res = boundify(p, n->res); }
+};
+static trivial_updater1 trivial_updater2;
+theorem_updater *trivial_updater = &trivial_updater2; 
+
+struct identity_updater1: theorem_updater {
+  virtual void expand(theorem_node *n, property const &p)
+  { n->res = boundify(p, n->res); n->hyp[0] = n->res; }
+};
+static identity_updater1 identity_updater2;
+theorem_updater *identity_updater = &identity_updater2;
 
 void unary_interval_updater::expand(theorem_node *n, property const &p) {
   int b = 3;
