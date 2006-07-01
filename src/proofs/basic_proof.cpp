@@ -250,8 +250,18 @@ node *computation_scheme::generate_proof() const {
     break; }
   case 2: {
     bool same_ops = r->ops[0] == r->ops[1];
-    if (same_ops && r->type == BOP_SUB)
-      return create_theorem(0, NULL, property(real, zero()), "sub_refl", trivial_updater);
+    if (same_ops) {
+      if (r->type == BOP_SUB)
+        return create_theorem(0, NULL, property(real, zero()), "sub_refl", trivial_updater);
+      if (r->type == BOP_DIV) {
+        node *n = find_proof(predicated_real(r->ops[0], PRED_ABS));
+        if (!n) return NULL;
+        property const &res = n->get_result();
+        if (contains_zero(res.bnd())) return NULL;
+        number one(1);
+        return create_theorem(1, &res, property(real, interval(one, one)), "div_refl", trivial_updater);
+      }
+    }
     std::string s;
     node *n1 = find_proof(r->ops[0]);
     if (!n1) return NULL;
@@ -261,10 +271,6 @@ node *computation_scheme::generate_proof() const {
       s = "square_";
       s += 'o' + sign(i1);
       return create_theorem(1, &res1, property(real, square(i1)), s, &square_updater);
-    } else if (same_ops && r->type == BOP_DIV) {
-      if (contains_zero(i1)) return NULL;
-      number one(1);
-      return create_theorem(1, &res1, property(real, interval(one, one)), "div_refl", identity_updater);
     }
     node *n2 = find_proof(r->ops[1]);
     if (!n2) return NULL;
@@ -307,8 +313,11 @@ preal_vect computation_scheme::needed_reals() const {
   real_op const *r = boost::get< real_op const >(real.real());
   assert(r);
   ast_real_vect const &ops = r->ops;
-  if (r->type == BOP_SUB && ops[0] == ops[1])
-    return preal_vect(); // special case, x-x is always 0
+  if (ops.size() == 2 && ops[0] == ops[1]) {
+    if (r->type == BOP_SUB) return preal_vect();
+    if (r->type == BOP_DIV) return preal_vect(1, predicated_real(ops[0], PRED_ABS));
+    return preal_vect(1, predicated_real(ops[0], PRED_BND));
+  }
   preal_vect res;
   res.reserve(ops.size());
   for(ast_real_vect::const_iterator i = ops.begin(), end = ops.end(); i != end; ++i)
