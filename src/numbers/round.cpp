@@ -181,6 +181,7 @@ static void simplify(mpfr_t &f, int dir) {
   int e, s;
   mpz_init(m);
   split_exact(f, m, e, s);
+  assert(s != 0);
   if (mpz_cmp_ui(m, 1) == 0) {
     if (e < 0 && dir > 0) ++e;
     else if (e > 0 && dir < 0) --e;
