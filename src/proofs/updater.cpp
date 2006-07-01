@@ -15,6 +15,16 @@ struct identity_updater1: theorem_updater {
 static identity_updater1 identity_updater2;
 theorem_updater *identity_updater = &identity_updater2;
 
+static property boundify(property const &opt, property const &cur) {
+  property res = opt;
+  interval const &bopt = opt.bnd(), &bcur = cur.bnd();
+  if (is_bounded(bopt)) return res;
+  res.bnd() = (lower(bopt) == number::neg_inf) ?
+    interval(lower(bcur), upper(bopt)) :
+    interval(lower(bopt), upper(bcur));
+  return res;
+}
+
 void unary_interval_updater::expand(theorem_node *n, property const &p) {
   int b = 3;
   property res = p;
@@ -43,7 +53,8 @@ void unary_interval_updater::expand(theorem_node *n, property const &p) {
       } else b &= ~2;
     }
   }
-  n->res = p;
+  (*compute)(hyp, ir);
+  n->res = boundify(p, res);
 }
 
 void binary_interval_updater::expand(theorem_node *n, property const &p) {
@@ -94,5 +105,6 @@ void binary_interval_updater::expand(theorem_node *n, property const &p) {
       } else b &= ~8;
     }
   }
-  n->res = p;
+  (*compute)(hyps, ir);
+  n->res = boundify(p, res);
 }
