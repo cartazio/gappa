@@ -599,7 +599,7 @@ node *number_scheme::generate_proof() const {
   if ((**r).base == 0 || (**r).exponent == 0) s = "constant1";
   else if ((**r).base == 2) s = "constant2";
   else s = "constant10";
-  return create_theorem(0, NULL, property(real, create_interval(*r, *r)), s);
+  return create_theorem(0, NULL, property(real, create_interval(*r, *r)), s, trivial_updater);
 }
 
 preal_vect number_scheme::needed_reals() const {
