@@ -646,7 +646,7 @@ node *rewrite_scheme::generate_proof() const {
   }
   property const &res = n->get_result();
   hyps.push_back(res);
-  return create_theorem(hyps.size(), &*hyps.begin(), property(real, res.bnd()), name);
+  return create_theorem(hyps.size(), &*hyps.begin(), property(real, res.bnd()), name, identity_updater);
 }
 
 struct rewrite_factory: scheme_factory {

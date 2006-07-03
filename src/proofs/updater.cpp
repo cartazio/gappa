@@ -21,8 +21,11 @@ static trivial_updater1 trivial_updater2;
 theorem_updater *trivial_updater = &trivial_updater2; 
 
 struct identity_updater1: theorem_updater {
-  virtual void expand(theorem_node *n, property const &p)
-  { n->res = boundify(p, n->res); n->hyp[0] = n->res; }
+  virtual void expand(theorem_node *n, property const &p) {
+    n->res = boundify(p, n->res);
+    unsigned sz = n->hyp.size();
+    if (sz > 0) n->hyp[sz - 1].bnd() = n->res.bnd();
+  }
 };
 static identity_updater1 identity_updater2;
 theorem_updater *identity_updater = &identity_updater2;
