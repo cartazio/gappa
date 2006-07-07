@@ -12,7 +12,7 @@ bool warning_dichotomy_failure = true;
 bool warning_hint_difference = true;
 bool warning_null_denominator = true;
 bool warning_unbound_variable = true;
-backend_register const *proof_generator = NULL;
+backend *proof_generator = NULL;
 
 static void help() {
   std::cerr <<
@@ -84,7 +84,7 @@ bool parse_option(std::string const &s, bool internal) {
     std::string o = s.substr(2);
     if (o == "null") proof_generator = NULL;
     else {
-      proof_generator = backend_register::find(o);
+      proof_generator = backend::find(o);
       if (!proof_generator) return false;
     }
     break; }

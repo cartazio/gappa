@@ -2,6 +2,7 @@
 #include <iostream>
 #include <ostream>
 #include <sstream>
+#include "utils.hpp"
 #include "backends/backend.hpp"
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
@@ -325,23 +326,17 @@ static std::string display(node *n) {
 }
 
 struct coq_backend: backend {
-  coq_backend(std::ostream &o): backend(o) {
-    ::out = &o;
-    out << "Require Import Gappa_library.\n"
-           "(*Require Import IA_float.*)\n"
-           "Section Generated_by_Gappa.\n";
+  coq_backend(): backend("coq") {}
+  void initialize(std::ostream &o) {
+    out = &o;
+    o << "Require Import Gappa_library.\n"
+         "(*Require Import IA_float.*)\n"
+         "Section Generated_by_Gappa.\n";
   }
-  virtual ~coq_backend() {
-    out << "End Generated_by_Gappa.\n";
-  }
+  void finalize() { *out << "End Generated_by_Gappa.\n"; }
   virtual std::string rewrite(ast_real const *, ast_real const *);
-  virtual void theorem(node *n) {
-    assert(n);
-    display(n);
-  }
+  virtual std::string theorem(node *n) { return display(n); }
 };
-
-REGISTER_BACKEND(coq);
 
 std::string coq_backend::rewrite(ast_real const *src, ast_real const *dst) {
   static int a_id = 0;
@@ -351,3 +346,5 @@ std::string coq_backend::rewrite(ast_real const *src, ast_real const *dst) {
         << display(dst) << " zi -> true = true -> BND " << display(src) << " zi.\n";
   return name;
 }
+
+static struct coq_backend dummy;

@@ -9,9 +9,8 @@ extern bool parameter_constrained, parameter_statistics;
 extern int yyparse(void);
 extern std::vector< graph_t * > graphs;
 extern bool parse_args(int argc, char **argv);
-extern backend_register const *proof_generator;
 extern bool detailed_io;
-backend *display = NULL;
+extern backend *proof_generator;
 dichotomy_sequence dichotomies;
 context_vect contexts;
 property_tree current_goals;
@@ -21,12 +20,6 @@ extern int
   stat_tested_real, stat_discarded_real,
   stat_intersected_pred, stat_discarded_pred;
 
-struct null_backend: backend {
-  null_backend(): backend(std::cout) {}
-  virtual std::string rewrite(ast_real const *, ast_real const *) { return std::string(); }
-  virtual void theorem(node *) {}
-};
-
 int main(int argc, char **argv) {
   if (!parse_args(argc, argv)) return 0;
   if (proof_generator) {
@@ -34,8 +27,8 @@ int main(int argc, char **argv) {
       std::cerr << "Error: unconstrained mode is not compatible with script generation, since proofs are left incomplete.\n";
       return EXIT_FAILURE;
     }
-    display = proof_generator->create(std::cout);
-  } else display = new null_backend;
+    proof_generator->initialize(std::cout);
+  }
   if (yyparse()) return EXIT_FAILURE;
   ast_real_vect missing_paths = generate_proof_paths();
   for(ast_real_vect::const_iterator i = missing_paths.begin(), i_end = missing_paths.end(); i != i_end; ++i)
@@ -68,9 +61,11 @@ int main(int argc, char **argv) {
         std::cerr << "Warning: hypotheses are in contradiction, any result is true.\n";
       else
         std::cerr << "a contradiction was built from the hypotheses.\n";
-      node *n = g->get_contradiction();
-      enlarger(node_vect(1, n));
-      display->theorem(n);
+      if (proof_generator) {
+        node *n = g->get_contradiction();
+        enlarger(node_vect(1, n));
+        proof_generator->theorem(n);
+      }
       proven_contexts.push_back(true);
     } else if (current_context.goals.empty()) {
       std::cerr << "Warning: no contradiction was found.\n";
@@ -92,7 +87,7 @@ int main(int argc, char **argv) {
         detailed_io = true;
         std::cerr << j->first << " in " << n->get_result().bnd() << '\n';
         detailed_io = false;
-        display->theorem(n);
+        if (proof_generator) proof_generator->theorem(n);
       }
       if (!proven) {
         std::cerr << "Warning: some enclosures were not satisfied.\n";
@@ -102,7 +97,7 @@ int main(int argc, char **argv) {
     }
     delete g;
   }
-  delete display;
+  if (proof_generator) proof_generator->finalize();
   if (parameter_statistics) {
     std::cerr <<
       "Statistics:\n"

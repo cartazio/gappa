@@ -9,7 +9,7 @@
 #include "proofs/proof_graph.hpp"
 #include "proofs/updater.hpp"
 
-extern backend *display;
+extern backend *proof_generator;
 extern bool parameter_constrained;
 
 static preal_vect one_needed(ast_real const *r) {
@@ -653,7 +653,7 @@ struct rewrite_factory: scheme_factory {
   ast_real const *src, *dst;
   std::string name;
   rewrite_factory(ast_real const *q1, ast_real const *q2)
-    : src(q1), dst(q2), name(display->rewrite(src, dst)) {}
+    : src(q1), dst(q2), name(proof_generator ? proof_generator->rewrite(src, dst) : "none") {}
   virtual proof_scheme *operator()(predicated_real const &) const;
 };
 
