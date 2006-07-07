@@ -1,8 +1,10 @@
 Version 0.7.0:
  * Coq back-end
-   - added support for native dyadic library
+   - updated to support Gappa library version 0.1
  * proof graph
    - added optimization pass for bound precision
+ * whole engine
+   - simplified back-end handling
 
 Version 0.6.5:
  * Coq back-end
