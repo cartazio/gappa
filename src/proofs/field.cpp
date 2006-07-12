@@ -49,6 +49,19 @@ Naming convention: operator name followed by
   s (absolute error)   q (relative error)
 */
 
+// OPP
+
+REWRITe(opp_mibs,
+	-a - -b,
+	-(a - b),
+	a ^ b);
+
+REWRIT9(opp_mibs,
+	(-a - -b) / -b,
+	(a - b) / b,
+	~b,
+	a ^ b);
+
 // ADD
 
 REWRITE(add_xals,
@@ -168,6 +181,34 @@ REWRIT9(mul_firq,
 	~b && ~c,
 	a ^ c);
 
+// DIV
+
+REWRIT9(div_mibq,
+	(a / b - c / d) / (c / d),
+	((a - c) / c - (b - d) / d) / (one + (b - d) / d),
+	~b && ~c && ~d,
+	b ^ d);
+
+REWRIT9(div_firq,
+	(a / b - c / b) / (c / b),
+	(a - c) / c,
+	~b && ~c,
+	a ^ c);
+
+// SQRT
+
+REWRIT9(sqrt_mibs,
+	sqrt(a) - sqrt(b),
+	(a - b) / (sqrt(a) + sqrt(b)),
+	a >= 0 && b >= 0,
+	a ^ b);
+
+REWRIT9(sqrt_mibq,
+	(sqrt(a) - sqrt(b)) / sqrt(b),
+	sqrt(one + (a - b) / b) - one,
+	a >= 0 && b > 0,
+	a ^ b);
+
 // ERR
 
 REWRITe(sub_xals, //actually err_xers
@@ -190,6 +231,20 @@ REWRIT9(err_xalq, //actually err_xerq
 REWRIT9(err_xibq,
 	a - b,
 	((a - b) / b) * b,
+	~b,
+	a ^ b);
+
+/* bad bad Zoot
+REWRIT9(err_xabq,
+	a / b,
+	one + (a - b) / b,
+	~b,
+	a ^ b);
+*/
+
+REWRIT9(err_fabq,
+	one + (a - b) / b,
+	a / b,
 	~b,
 	a ^ b);
 
