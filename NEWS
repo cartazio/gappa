@@ -1,3 +1,7 @@
+Version 0.7.1:
+ * fact database
+   - added error propagation through opposite, division and square root
+
 Version 0.7.0:
  * Coq back-end
    - updated to support Gappa library version 0.1
