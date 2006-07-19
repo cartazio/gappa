@@ -33,23 +33,23 @@ interval fixed_rounding_class::round(interval const &i, std::string &name) const
   rounding_fun f = direction_functions[type];
   number a = round_number(lower(i), &format, f);
   number b = round_number(upper(i), &format, f);
-  name = "fixed_round" + ident;
+  name = "fixed_round";
   return interval(a, b);
 }
 
 interval fixed_rounding_class::absolute_error(std::string &name) const {
-  name = "fixed_error" + ident;
+  name = "fixed_error";
   if (rnd_to_nearest(type)) return from_exponent(format.min_exp - 1, 0);
   return from_exponent(format.min_exp, rnd_global_direction_abs(type));
 }
 
 interval fixed_rounding_class::absolute_error_from_real(interval const &i, std::string &name) const {
-  name = "fixed_error_dir" + ident;
+  name = "fixed_error_dir";
   return from_exponent(format.min_exp, rnd_global_direction_abs(type, i));
 }
 
 interval fixed_rounding_class::absolute_error_from_rounded(interval const &i, std::string &name) const {
-  name = "fixed_error_inv" + ident;
+  name = "fixed_error_inv";
   return from_exponent(format.min_exp, rnd_global_direction_abs(type, i));
 }
 
