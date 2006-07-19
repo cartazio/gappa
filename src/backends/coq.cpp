@@ -39,13 +39,14 @@ static std::string convert_name(std::string const &name) {
   if (p2 == std::string::npos) return name;
   std::ostringstream res;
   res << '(' << name.substr(0, p2);
-  while (p2 != std::string::npos) {
+  do {
     std::string::size_type p1 = p2 + 1;
     p2 = name.find(',', p1);
     std::string s(name, p1, p2 == std::string::npos ? p2 : p2 - p1);
-    if (std::isalpha(s[0])) res << '_' << s;
-    else res << " (" << s << ')';
-  }
+    if (!std::isalpha(s[0])) res << " (" << s << ')';
+    else if (s.length() != 2) res << '_' << s;
+    else res << " round" << (char)std::toupper(s[0]) << (char)std::toupper(s[1]);
+  } while (p2 != std::string::npos);
   res << ')';
   return res.str();
 }
@@ -330,7 +331,6 @@ struct coq_backend: backend {
   void initialize(std::ostream &o) {
     out = &o;
     o << "Require Import Gappa_library.\n"
-         "(*Require Import IA_float.*)\n"
          "Section Generated_by_Gappa.\n";
   }
   void finalize() { *out << "End Generated_by_Gappa.\n"; }

@@ -101,8 +101,7 @@ REGISTER_SCHEMEX_BEGIN(fix_of_fixed);
 REGISTER_SCHEMEX_END(fix_of_fixed);
 
 node *fix_of_fixed_scheme::generate_proof() const {
-  return create_theorem(0, NULL, property(real, rnd->format.min_exp),
-                        std::string("fix_of_fixed,") + direction_names[rnd->type]);
+  return create_theorem(0, NULL, property(real, rnd->format.min_exp), "fix_of_fixed");
 }
 
 preal_vect fix_of_fixed_scheme::needed_reals() const {
