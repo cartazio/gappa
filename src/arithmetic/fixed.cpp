@@ -38,7 +38,7 @@ interval fixed_rounding_class::round(interval const &i, std::string &name) const
 }
 
 interval fixed_rounding_class::absolute_error(std::string &name) const {
-  name = "fixed_error";
+  name = std::string("fixed_error,") + direction_names[type];
   if (rnd_to_nearest(type)) return from_exponent(format.min_exp - 1, 0);
   return from_exponent(format.min_exp, rnd_global_direction_abs(type));
 }

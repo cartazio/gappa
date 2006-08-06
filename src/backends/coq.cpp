@@ -37,18 +37,26 @@ static std::string convert_name(std::string const &name) {
   if (name == "sqrt") return "sqrtG";
   std::string::size_type p2 = name.find(',');
   if (p2 == std::string::npos) return name;
+  std::string prefix = name.substr(0, p2);
+  bool rounding = prefix == "rounding_fixed" || prefix == "rounding_float";
+  bool fragile = false;
   std::ostringstream res;
-  res << '(' << name.substr(0, p2);
+  res << prefix;
   do {
     std::string::size_type p1 = p2 + 1;
     p2 = name.find(',', p1);
     std::string s(name, p1, p2 == std::string::npos ? p2 : p2 - p1);
-    if (!std::isalpha(s[0])) res << " (" << s << ')';
-    else if (s.length() != 2) res << '_' << s;
-    else res << " round" << (char)std::toupper(s[0]) << (char)std::toupper(s[1]);
+    if (!std::isalpha(s[0])) {
+      res << " (" << s << ')';
+      fragile = true;
+    } else if (!rounding || s.length() != 2) res << '_' << s;
+    else {
+      res << " round" << (char)std::toupper(s[0]) << (char)std::toupper(s[1]);
+      fragile = true;
+    }
   } while (p2 != std::string::npos);
-  res << ')';
-  return res.str();
+  if (!fragile) return res.str();
+  return '(' + res.str() + ')';
 }
 
 static std::map< std::string, int > displayed_floats;
