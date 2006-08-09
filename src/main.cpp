@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
     } else {
       node_vect nodes;
       bool proven = current_context.goals.get_nodes(g, nodes);
-      enlarger(nodes);
+      if (proof_generator) enlarger(nodes);
       typedef std::map< std::string, node * > named_nodes;
       named_nodes results;
       for(node_vect::const_iterator j = nodes.begin(), j_end = nodes.end(); j != j_end; ++j) {

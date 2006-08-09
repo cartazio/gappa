@@ -252,13 +252,12 @@ static std::string display(node *n) {
   }
   switch (n->type) {
   case MODUS: {
-    for(node_vect::const_iterator i = pred.begin(), i_end = pred.end();
-        i != i_end; ++i, ++num_hyp) {
+    for(node_vect::const_iterator i = pred.begin(), i_end = pred.end(); i != i_end; ++i) {
       node *m = *i;
       property const &res = m->get_result();
       plouf << " assert (h" << num_hyp << " : " << display(res) << ").";
       invoke_lemma(plouf, m, pmap);
-      pmap[res.real] = std::make_pair(num_hyp, &res);
+      pmap[res.real] = std::make_pair(num_hyp++, &res);
     }
     modus_node *mn = dynamic_cast< modus_node * >(n);
     assert(mn && mn->target);
@@ -273,7 +272,7 @@ static std::string display(node *n) {
       node *m = pred[i];
       property const &res = m->get_result();
       if (!is_bounded(res.bnd())) suffix = (i == 0) ? "_hb" : "_bh";
-      else if (!res.real.pred() == PRED_BND) suffix = "_aa";
+      else if (res.real.pred() != PRED_BND) suffix = "_aa";
       if (m->type == HYPOTHESIS) {
         property_map::iterator pki = pmap.find(res.real);
         assert(pki != pmap.end());
