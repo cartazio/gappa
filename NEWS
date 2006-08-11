@@ -1,6 +1,9 @@
 Version 0.7.1:
  * fact database
    - added error propagation through opposite, division and square root
+ * Coq back-end
+   - fixed confusion between nodes from different proof graphs
+   - optimized away trivial goal nodes
 
 Version 0.7.0:
  * Coq back-end
