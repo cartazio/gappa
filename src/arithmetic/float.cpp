@@ -88,7 +88,7 @@ static float_rounding_generator dummy;
 interval float_rounding_class::enforce(interval const &i, std::string &name) const {
   number a = round_number(lower(i), &format, &float_format::roundUP);
   number b = round_number(upper(i), &format, &float_format::roundDN);
-  name = "float_enforce" + ident;
+  name = "float_enforce";
   return interval(a, (a <= b) ? b : a);
 }
 
