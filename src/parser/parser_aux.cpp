@@ -19,7 +19,7 @@ static property generate_property(ast_atom_bound const &p, bool goal) {
   output_reals.insert(p.real);
   if (p.lower || p.upper) {
     interval &bnd = r.bnd();
-    bnd = create_interval(p.lower, p.upper, goal);
+    bnd = create_interval(p.lower, p.upper, !goal);
     if (is_empty(bnd))
       { std::cerr << "Error: the range of " << dump_real(p.real) << " is an empty interval.\n"; exit(1); }
   } else if (!goal)
