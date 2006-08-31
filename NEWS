@@ -1,6 +1,6 @@
 Version 0.7.2:
  * parser
-   - fixed incorrectly rounded intervals
+   - fixed incorrectly rounded intervals on input
 
 Version 0.7.1:
  * fact database
