@@ -97,11 +97,12 @@ REWRITe(add_firs,
 REWRITe(sub_xals,
 	b - c,
 	(b - a) + (a - c),
-	a ^ c);
+	a ^ c && b ^ c);
 
-REWRITE(sub_xars,
+REWRITe(sub_xars,
 	c - b,
-	(c - a) + -(b - a));
+	(c - a) + -(b - a),
+	b ^ c); // no a^c so that the rule can be used to revert a-b
 
 REWRITe(sub_mibs,
 	(a - b) - (c - d),
@@ -214,19 +215,19 @@ REWRIT9(sqrt_mibq,
 REWRITe(sub_xals, //actually err_xers
 	c - a,
 	(c - b) + (b - a),
-	b ^ c);
+	a ^ c && b ^ c);
 
 REWRIT9(err_xalq,
 	(b - c) / c,
 	(b - a) / a + (a - c) / c + ((b - a) / a) * ((a - c) / c),
 	~c && ~a,
-	a ^ c);
+	a ^ c && b ^ c);
 
 REWRIT9(err_xalq, //actually err_xerq
 	(c - a) / a,
 	(c - b) / b + (b - a) / a + ((c - b) / b) * ((b - a) / a),
 	~a && ~b,
-	b ^ c);
+	a ^ c && b ^ c);
 
 REWRIT9(err_xibq,
 	a - b,
