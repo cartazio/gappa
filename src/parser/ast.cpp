@@ -177,10 +177,14 @@ function_class const *default_function_generator::operator()(function_params con
   return p.empty() ? fun : NULL;
 }
 
-interval function_class::round                      (interval const &, std::string &) const { assert(false); }
-interval function_class::enforce                    (interval const &, std::string &) const { assert(false); }
-interval function_class::absolute_error                               (std::string &) const { assert(false); }
-interval function_class::absolute_error_from_real   (interval const &, std::string &) const { assert(false); }
-interval function_class::relative_error_from_real   (interval const &, std::string &) const { assert(false); }
-interval function_class::absolute_error_from_rounded(interval const &, std::string &) const { assert(false); }
-interval function_class::relative_error_from_rounded(interval const &, std::string &) const { assert(false); }
+interval function_class::round                         (interval const &, std::string &) const { assert(false); }
+interval function_class::enforce                       (interval const &, std::string &) const { assert(false); }
+interval function_class::absolute_error                                  (std::string &) const { assert(false); }
+interval function_class::absolute_error_from_exact_bnd (interval const &, std::string &) const { assert(false); }
+interval function_class::absolute_error_from_exact_abs (interval const &, std::string &) const { assert(false); }
+interval function_class::absolute_error_from_approx_bnd(interval const &, std::string &) const { assert(false); }
+interval function_class::absolute_error_from_approx_abs(interval const &, std::string &) const { assert(false); }
+interval function_class::relative_error_from_exact_bnd (interval const &, std::string &) const { assert(false); }
+interval function_class::relative_error_from_exact_abs (interval const &, std::string &) const { assert(false); }
+interval function_class::relative_error_from_approx_bnd(interval const &, std::string &) const { assert(false); }
+interval function_class::relative_error_from_approx_abs(interval const &, std::string &) const { assert(false); }

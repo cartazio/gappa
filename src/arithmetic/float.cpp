@@ -37,14 +37,14 @@ struct float_rounding_class: function_class {
   direction_type type;
   std::string ident;
   float_rounding_class(float_format const &f, direction_type t, std::string const &i)
-    : function_class(UOP_ID, TH_RND | TH_ENF | TH_ABS_REA | TH_ABS_RND | TH_REL_REA | TH_REL_RND),
+    : function_class(UOP_ID, TH_RND | TH_ENF | TH_ABS_EXA_BND | TH_ABS_APX_BND | TH_REL_EXA_ABS | TH_REL_APX_ABS),
       format(f), type(t), ident(i) {}
-  virtual interval round                      (interval const &, std::string &) const;
-  virtual interval enforce                    (interval const &, std::string &) const;
-  virtual interval absolute_error_from_real   (interval const &, std::string &) const;
-  virtual interval relative_error_from_real   (interval const &, std::string &) const;
-  virtual interval absolute_error_from_rounded(interval const &, std::string &) const;
-  virtual interval relative_error_from_rounded(interval const &, std::string &) const;
+  virtual interval round                         (interval const &, std::string &) const;
+  virtual interval enforce                       (interval const &, std::string &) const;
+  virtual interval absolute_error_from_exact_bnd (interval const &, std::string &) const;
+  virtual interval absolute_error_from_approx_bnd(interval const &, std::string &) const;
+  virtual interval relative_error_from_exact_abs (interval const &, std::string &) const;
+  virtual interval relative_error_from_approx_abs(interval const &, std::string &) const;
   virtual std::string name() const { return "rounding_float" + ident; }
 };
 
@@ -131,7 +131,7 @@ static bool influenced(number const &n, int e, int e_infl, int infl) {
   return (infl != 1) ? cmp <= 0 : cmp < 0;
 }
 
-interval float_rounding_class::absolute_error_from_real(interval const &i, std::string &name) const {
+interval float_rounding_class::absolute_error_from_exact_bnd(interval const &i, std::string &name) const {
   rounding_fun f = direction_functions[type];
   number const &v1 = lower(i), &v2 = upper(i);
   int e1 = exponent(round_number(v1, &format, f), format),
@@ -150,7 +150,7 @@ interval float_rounding_class::absolute_error_from_real(interval const &i, std::
   return from_exponent(e_err, rnd_global_direction_abs(type, i));
 }
 
-interval float_rounding_class::absolute_error_from_rounded(interval const &i, std::string &name) const {
+interval float_rounding_class::absolute_error_from_approx_bnd(interval const &i, std::string &name) const {
   int e1 = exponent(lower(i), format), e2 = exponent(upper(i), format);
   int e_err = std::max(e1, e2);
   name = "float_absolute_inv" + ident;
@@ -158,7 +158,7 @@ interval float_rounding_class::absolute_error_from_rounded(interval const &i, st
   return from_exponent(e_err, rnd_global_direction_abs(type, i));
 }
 
-interval float_rounding_class::relative_error_from_real(interval const &i, std::string &name) const {
+interval float_rounding_class::relative_error_from_exact_abs(interval const &i, std::string &name) const {
   if (parameter_constrained &&
       !is_empty(intersect(i, from_exponent(format.min_exp + format.prec - 1, 0))))
     return interval();
@@ -167,7 +167,7 @@ interval float_rounding_class::relative_error_from_real(interval const &i, std::
   return from_exponent(1 - format.prec, rnd_global_direction_rel(type)); // cannot use i since it is ABS
 }
 
-interval float_rounding_class::relative_error_from_rounded(interval const &i, std::string &name) const {
+interval float_rounding_class::relative_error_from_approx_abs(interval const &i, std::string &name) const {
   if (parameter_constrained &&
       !is_empty(intersect(i, from_exponent(format.min_exp + format.prec - 1, 0))))
     return interval();

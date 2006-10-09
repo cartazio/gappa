@@ -8,16 +8,16 @@ struct homogen_rounding_class: function_class {
   default_function_generator generator;
   interval he;
   homogen_rounding_class();
-  virtual interval absolute_error_from_real(interval const &, std::string &) const;
+  virtual interval absolute_error_from_exact_bnd(interval const &, std::string &) const;
   virtual std::string name() const { return "homogen80x"; }
 };
 
 homogen_rounding_class::homogen_rounding_class()
-  : function_class(UOP_ID, TH_ABS_REA), generator("homogen80x", this) {
+  : function_class(UOP_ID, TH_ABS_EXA_BND), generator("homogen80x", this) {
   he = from_exponent(-53, 0) + from_exponent(-64, 0);
 }
 
-interval homogen_rounding_class::absolute_error_from_real(interval const &i, std::string &name) const {
+interval homogen_rounding_class::absolute_error_from_exact_bnd(interval const &i, std::string &name) const {
   name = "homogen80x_error";
   return i * he;
 }
@@ -28,16 +28,16 @@ struct homogen_init_rounding_class: function_class {
   default_function_generator generator;
   interval he;
   homogen_init_rounding_class();
-  virtual interval absolute_error_from_rounded(interval const &, std::string &) const;
+  virtual interval absolute_error_from_approx_bnd(interval const &, std::string &) const;
   virtual std::string name() const { return "homogen80x_init"; }
 };
 
 homogen_init_rounding_class::homogen_init_rounding_class()
-  : function_class(UOP_ID, TH_ABS_RND), generator("homogen80x_init", this) {
+  : function_class(UOP_ID, TH_ABS_APX_BND), generator("homogen80x_init", this) {
   he = from_exponent(-53, 0) + from_exponent(-64, 0);
 }
 
-interval homogen_init_rounding_class::absolute_error_from_rounded(interval const &i, std::string &name) const {
+interval homogen_init_rounding_class::absolute_error_from_approx_bnd(interval const &i, std::string &name) const {
   name = "homogen80x_init_error";
   return i * he;
 }

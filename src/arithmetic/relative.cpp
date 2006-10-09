@@ -13,14 +13,14 @@ struct relative_function_class: function_class {
   int prec, min_exp;
   std::string ident;
   relative_function_class(real_op_type, int, int, std::string const &);
-  virtual interval round                      (interval const &, std::string &) const;
-  virtual interval relative_error_from_real   (interval const &, std::string &) const;
-  virtual interval relative_error_from_rounded(interval const &, std::string &) const;
+  virtual interval round                         (interval const &, std::string &) const;
+  virtual interval relative_error_from_exact_abs (interval const &, std::string &) const;
+  virtual interval relative_error_from_approx_abs(interval const &, std::string &) const;
   virtual std::string name() const { return "relative_" + ident; }
 };
 
 relative_function_class::relative_function_class(real_op_type t, int p, int e, std::string const &i)
-  : function_class(t, TH_RND | TH_REL_REA | TH_REL_RND), prec(p), min_exp(e), ident(i) {
+  : function_class(t, TH_RND | TH_REL_EXA_ABS | TH_REL_APX_ABS), prec(p), min_exp(e), ident(i) {
   he = from_exponent(-p, 0);
   hz = (min_exp != INT_MIN) ? from_exponent(min_exp, 0) : zero();
 }
@@ -30,14 +30,14 @@ interval relative_function_class::round(interval const &i, std::string &name) co
   return i * (interval(number(1), number(1)) + he);
 }
 
-interval relative_function_class::relative_error_from_real(interval const &i, std::string &name) const {
+interval relative_function_class::relative_error_from_exact_abs(interval const &i, std::string &name) const {
   if (parameter_constrained && !is_empty(intersect(i, hz)))
     return interval();
   name = "rel_error" + ident;
   return he;
 }
 
-interval relative_function_class::relative_error_from_rounded(interval const &i, std::string &name) const {
+interval relative_function_class::relative_error_from_approx_abs(interval const &i, std::string &name) const {
   if (parameter_constrained && !is_empty(intersect(i, hz)))
     return interval();
   name = "rel_error_inv" + ident;

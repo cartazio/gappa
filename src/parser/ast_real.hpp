@@ -29,16 +29,22 @@ struct interval;
 struct function_class {
   real_op_type type;
   int theorem_mask;
-  static const int TH_RND = 1, TH_ENF = 2, TH_ABS = 4, TH_ABS_REA = 8,
-                   TH_ABS_RND = 16, TH_REL_REA = 32, TH_REL_RND = 64;
+  static const int
+    TH_RND = 1, TH_ENF = 2, TH_ABS = 4,
+    TH_ABS_EXA_BND = 8,   TH_ABS_EXA_ABS = 16,  TH_ABS_APX_BND = 32,  TH_ABS_APX_ABS = 64,
+    TH_REL_EXA_BND = 128, TH_REL_EXA_ABS = 256, TH_REL_APX_BND = 512, TH_REL_APX_ABS = 1024;
   function_class(real_op_type t, int m): type(t), theorem_mask(m) {}
-  virtual interval round                      (interval const &, std::string &) const;
-  virtual interval enforce                    (interval const &, std::string &) const;
-  virtual interval absolute_error                               (std::string &) const;
-  virtual interval absolute_error_from_real   (interval const &, std::string &) const;
-  virtual interval absolute_error_from_rounded(interval const &, std::string &) const;
-  virtual interval relative_error_from_real   (interval const &, std::string &) const;
-  virtual interval relative_error_from_rounded(interval const &, std::string &) const;
+  virtual interval round                         (interval const &, std::string &) const;
+  virtual interval enforce                       (interval const &, std::string &) const;
+  virtual interval absolute_error                                  (std::string &) const;
+  virtual interval absolute_error_from_exact_bnd (interval const &, std::string &) const;
+  virtual interval absolute_error_from_exact_abs (interval const &, std::string &) const;
+  virtual interval absolute_error_from_approx_bnd(interval const &, std::string &) const;
+  virtual interval absolute_error_from_approx_abs(interval const &, std::string &) const;
+  virtual interval relative_error_from_exact_bnd (interval const &, std::string &) const;
+  virtual interval relative_error_from_exact_abs (interval const &, std::string &) const;
+  virtual interval relative_error_from_approx_bnd(interval const &, std::string &) const;
+  virtual interval relative_error_from_approx_abs(interval const &, std::string &) const;
   virtual std::string name() const = 0;
   virtual ~function_class() {}
 };

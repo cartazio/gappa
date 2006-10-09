@@ -41,120 +41,236 @@ proof_scheme *absolute_error_scheme::factory(ast_real const *real) {
   return new absolute_error_scheme(real, f);
 }
 
-// ABSOLUTE_ERROR_FROM_REAL
-REGISTER_SCHEME_BEGIN(absolute_error_from_real);
-  ast_real const *rounded;
+// ABSOLUTE_ERROR_FROM_EXACT_BND
+REGISTER_SCHEME_BEGIN(absolute_error_from_exact_bnd);
+  ast_real const *exact;
   function_class const *function;
-  absolute_error_from_real_scheme(ast_real const *r, ast_real const *rr, function_class const *f)
-    : proof_scheme(r), rounded(rr), function(f) {}
-REGISTER_SCHEME_END(absolute_error_from_real);
+  absolute_error_from_exact_bnd_scheme(ast_real const *r, ast_real const *e, function_class const *f)
+    : proof_scheme(r), exact(e), function(f) {}
+REGISTER_SCHEME_END(absolute_error_from_exact_bnd);
 
-node *absolute_error_from_real_scheme::generate_proof() const {
-  node *n = find_proof(rounded);
+node *absolute_error_from_exact_bnd_scheme::generate_proof() const {
+  node *n = find_proof(exact);
   if (!n) return NULL;
   property const &res1 = n->get_result();
   std::string name;
-  property res(real, function->absolute_error_from_real(res1.bnd(), name));
+  property res(real, function->absolute_error_from_exact_bnd(res1.bnd(), name));
   if (!is_defined(res.bnd())) return NULL;
   return create_theorem(1, &res1, res, name);
 }
 
-preal_vect absolute_error_from_real_scheme::needed_reals() const {
-  return one_needed(rounded);
+preal_vect absolute_error_from_exact_bnd_scheme::needed_reals() const {
+  return one_needed(exact);
 }
 
-proof_scheme *absolute_error_from_real_scheme::factory(ast_real const *real) {
+proof_scheme *absolute_error_from_exact_bnd_scheme::factory(ast_real const *real) {
   ast_real const *holders[2];
   function_class const *f = absolute_rounding_error(real, holders);
-  if (!f || !(f->theorem_mask & function_class::TH_ABS_REA)) return NULL;
-  return new absolute_error_from_real_scheme(real, holders[0], f);
+  if (!f || !(f->theorem_mask & function_class::TH_ABS_EXA_BND)) return NULL;
+  return new absolute_error_from_exact_bnd_scheme(real, holders[0], f);
 }
 
-// ABSOLUTE_ERROR_FROM_ROUNDED
-REGISTER_SCHEME_BEGIN(absolute_error_from_rounded);
+// ABSOLUTE_ERROR_FROM_EXACT_ABS
+REGISTER_SCHEME_BEGIN(absolute_error_from_exact_abs);
+  predicated_real exact;
+  function_class const *function;
+  absolute_error_from_exact_abs_scheme(ast_real const *r, predicated_real const &e, function_class const *f)
+    : proof_scheme(r), exact(e), function(f) {}
+REGISTER_SCHEME_END(absolute_error_from_exact_abs);
+
+node *absolute_error_from_exact_abs_scheme::generate_proof() const {
+  node *n = find_proof(exact);
+  if (!n) return NULL;
+  property const &res1 = n->get_result();
+  std::string name;
+  property res(real, function->absolute_error_from_exact_bnd(res1.bnd(), name));
+  if (!is_defined(res.bnd())) return NULL;
+  return create_theorem(1, &res1, res, name);
+}
+
+preal_vect absolute_error_from_exact_abs_scheme::needed_reals() const {
+  return preal_vect(1, exact);
+}
+
+proof_scheme *absolute_error_from_exact_abs_scheme::factory(ast_real const *real) {
+  ast_real const *holders[2];
+  function_class const *f = absolute_rounding_error(real, holders);
+  if (!f || !(f->theorem_mask & function_class::TH_ABS_EXA_ABS)) return NULL;
+  return new absolute_error_from_exact_abs_scheme(real, predicated_real(holders[0], PRED_ABS), f);
+}
+
+// ABSOLUTE_ERROR_FROM_APPROX_BND
+REGISTER_SCHEME_BEGIN(absolute_error_from_approx_bnd);
   ast_real const *approx;
   function_class const *function;
-  absolute_error_from_rounded_scheme(ast_real const *r, ast_real const *a, function_class const *f)
+  absolute_error_from_approx_bnd_scheme(ast_real const *r, ast_real const *a, function_class const *f)
     : proof_scheme(r), approx(a), function(f) {}
-REGISTER_SCHEME_END(absolute_error_from_rounded);
+REGISTER_SCHEME_END(absolute_error_from_approx_bnd);
 
-node *absolute_error_from_rounded_scheme::generate_proof() const {
+node *absolute_error_from_approx_bnd_scheme::generate_proof() const {
   node *n = find_proof(approx);
   if (!n) return NULL;
   property const &res1 = n->get_result();
   std::string name;
-  property res(real, function->absolute_error_from_rounded(res1.bnd(), name));
+  property res(real, function->absolute_error_from_approx_bnd(res1.bnd(), name));
   if (!is_defined(res.bnd())) return NULL;
   return create_theorem(1, &res1, res, name);
 }
 
-preal_vect absolute_error_from_rounded_scheme::needed_reals() const {
+preal_vect absolute_error_from_approx_bnd_scheme::needed_reals() const {
   return one_needed(approx);
 }
 
-proof_scheme *absolute_error_from_rounded_scheme::factory(ast_real const *real) {
+proof_scheme *absolute_error_from_approx_bnd_scheme::factory(ast_real const *real) {
   ast_real const *holders[2];
   function_class const *f = absolute_rounding_error(real, holders);
-  if (!f || !(f->theorem_mask & function_class::TH_ABS_RND)) return NULL;
-  return new absolute_error_from_rounded_scheme(real, holders[1], f);
+  if (!f || !(f->theorem_mask & function_class::TH_ABS_APX_BND)) return NULL;
+  return new absolute_error_from_approx_bnd_scheme(real, holders[1], f);
 }
 
-// RELATIVE_ERROR_FROM_REAL
-REGISTER_SCHEME_BEGIN(relative_error_from_real);
-  predicated_real absval;
+// ABSOLUTE_ERROR_FROM_APPROX_ABS
+REGISTER_SCHEME_BEGIN(absolute_error_from_approx_abs);
+  predicated_real approx;
   function_class const *function;
-  relative_error_from_real_scheme(ast_real const *r, predicated_real const &a, function_class const *f)
-    : proof_scheme(r), absval(a), function(f) {}
-REGISTER_SCHEME_END(relative_error_from_real);
+  absolute_error_from_approx_abs_scheme(ast_real const *r, predicated_real const &a, function_class const *f)
+    : proof_scheme(r), approx(a), function(f) {}
+REGISTER_SCHEME_END(absolute_error_from_approx_abs);
 
-node *relative_error_from_real_scheme::generate_proof() const {
-  node *n = find_proof(absval);
+node *absolute_error_from_approx_abs_scheme::generate_proof() const {
+  node *n = find_proof(approx);
   if (!n) return NULL;
   property const &res1 = n->get_result();
   std::string name;
-  property res(real, function->relative_error_from_real(res1.bnd(), name));
+  property res(real, function->absolute_error_from_approx_abs(res1.bnd(), name));
   if (!is_defined(res.bnd())) return NULL;
   return create_theorem(1, &res1, res, name);
 }
 
-preal_vect relative_error_from_real_scheme::needed_reals() const {
-  return preal_vect(1, absval);
+preal_vect absolute_error_from_approx_abs_scheme::needed_reals() const {
+  return preal_vect(1, approx);
 }
 
-proof_scheme *relative_error_from_real_scheme::factory(ast_real const *real) {
+proof_scheme *absolute_error_from_approx_abs_scheme::factory(ast_real const *real) {
   ast_real const *holders[2];
-  function_class const *f = relative_rounding_error(real, holders);
-  if (!f || !(f->theorem_mask & function_class::TH_REL_REA)) return NULL;
-  return new relative_error_from_real_scheme(real, predicated_real(holders[0], PRED_ABS), f);
+  function_class const *f = absolute_rounding_error(real, holders);
+  if (!f || !(f->theorem_mask & function_class::TH_ABS_APX_ABS)) return NULL;
+  return new absolute_error_from_approx_abs_scheme(real, predicated_real(holders[1], PRED_ABS), f);
 }
 
-// RELATIVE_ERROR_FROM_ROUNDED
-REGISTER_SCHEME_BEGIN(relative_error_from_rounded);
-  predicated_real absval;
+// RELATIVE_ERROR_FROM_EXACT_BND
+REGISTER_SCHEME_BEGIN(relative_error_from_exact_bnd);
+  ast_real const *exact;
   function_class const *function;
-  relative_error_from_rounded_scheme(ast_real const *r, predicated_real const &a, function_class const *f)
-    : proof_scheme(r), absval(a), function(f) {}
-REGISTER_SCHEME_END(relative_error_from_rounded);
+  relative_error_from_exact_bnd_scheme(ast_real const *r, ast_real const *e, function_class const *f)
+    : proof_scheme(r), exact(e), function(f) {}
+REGISTER_SCHEME_END(relative_error_from_exact_bnd);
 
-node *relative_error_from_rounded_scheme::generate_proof() const {
-  node *n = find_proof(absval);
+node *relative_error_from_exact_bnd_scheme::generate_proof() const {
+  node *n = find_proof(exact);
   if (!n) return NULL;
   property const &res1 = n->get_result();
   std::string name;
-  property res(real, function->relative_error_from_rounded(res1.bnd(), name));
+  property res(real, function->relative_error_from_exact_abs(res1.bnd(), name));
   if (!is_defined(res.bnd())) return NULL;
   return create_theorem(1, &res1, res, name);
 }
 
-preal_vect relative_error_from_rounded_scheme::needed_reals() const {
-  return preal_vect(1, absval);
+preal_vect relative_error_from_exact_bnd_scheme::needed_reals() const {
+  return one_needed(exact);
 }
 
-proof_scheme *relative_error_from_rounded_scheme::factory(ast_real const *real) {
+proof_scheme *relative_error_from_exact_bnd_scheme::factory(ast_real const *real) {
   ast_real const *holders[2];
   function_class const *f = relative_rounding_error(real, holders);
-  if (!f || !(f->theorem_mask & function_class::TH_REL_RND)) return NULL;
-  return new relative_error_from_real_scheme(real, predicated_real(holders[1], PRED_ABS), f);
+  if (!f || !(f->theorem_mask & function_class::TH_REL_EXA_BND)) return NULL;
+  return new relative_error_from_exact_bnd_scheme(real, holders[0], f);
+}
+
+// RELATIVE_ERROR_FROM_EXACT_ABS
+REGISTER_SCHEME_BEGIN(relative_error_from_exact_abs);
+  predicated_real exact;
+  function_class const *function;
+  relative_error_from_exact_abs_scheme(ast_real const *r, predicated_real const &e, function_class const *f)
+    : proof_scheme(r), exact(e), function(f) {}
+REGISTER_SCHEME_END(relative_error_from_exact_abs);
+
+node *relative_error_from_exact_abs_scheme::generate_proof() const {
+  node *n = find_proof(exact);
+  if (!n) return NULL;
+  property const &res1 = n->get_result();
+  std::string name;
+  property res(real, function->relative_error_from_exact_abs(res1.bnd(), name));
+  if (!is_defined(res.bnd())) return NULL;
+  return create_theorem(1, &res1, res, name);
+}
+
+preal_vect relative_error_from_exact_abs_scheme::needed_reals() const {
+  return preal_vect(1, exact);
+}
+
+proof_scheme *relative_error_from_exact_abs_scheme::factory(ast_real const *real) {
+  ast_real const *holders[2];
+  function_class const *f = relative_rounding_error(real, holders);
+  if (!f || !(f->theorem_mask & function_class::TH_REL_EXA_ABS)) return NULL;
+  return new relative_error_from_exact_abs_scheme(real, predicated_real(holders[0], PRED_ABS), f);
+}
+
+// RELATIVE_ERROR_FROM_APPROX_BND
+REGISTER_SCHEME_BEGIN(relative_error_from_approx_bnd);
+  ast_real const *approx;
+  function_class const *function;
+  relative_error_from_approx_bnd_scheme(ast_real const *r, ast_real const *a, function_class const *f)
+    : proof_scheme(r), approx(a), function(f) {}
+REGISTER_SCHEME_END(relative_error_from_approx_bnd);
+
+node *relative_error_from_approx_bnd_scheme::generate_proof() const {
+  node *n = find_proof(approx);
+  if (!n) return NULL;
+  property const &res1 = n->get_result();
+  std::string name;
+  property res(real, function->relative_error_from_approx_bnd(res1.bnd(), name));
+  if (!is_defined(res.bnd())) return NULL;
+  return create_theorem(1, &res1, res, name);
+}
+
+preal_vect relative_error_from_approx_bnd_scheme::needed_reals() const {
+  return one_needed(approx);
+}
+
+proof_scheme *relative_error_from_approx_bnd_scheme::factory(ast_real const *real) {
+  ast_real const *holders[2];
+  function_class const *f = relative_rounding_error(real, holders);
+  if (!f || !(f->theorem_mask & function_class::TH_REL_APX_BND)) return NULL;
+  return new relative_error_from_approx_bnd_scheme(real, holders[1], f);
+}
+
+// RELATIVE_ERROR_FROM_APPROX_ABS
+REGISTER_SCHEME_BEGIN(relative_error_from_approx_abs);
+  predicated_real approx;
+  function_class const *function;
+  relative_error_from_approx_abs_scheme(ast_real const *r, predicated_real const &a, function_class const *f)
+    : proof_scheme(r), approx(a), function(f) {}
+REGISTER_SCHEME_END(relative_error_from_approx_abs);
+
+node *relative_error_from_approx_abs_scheme::generate_proof() const {
+  node *n = find_proof(approx);
+  if (!n) return NULL;
+  property const &res1 = n->get_result();
+  std::string name;
+  property res(real, function->relative_error_from_approx_abs(res1.bnd(), name));
+  if (!is_defined(res.bnd())) return NULL;
+  return create_theorem(1, &res1, res, name);
+}
+
+preal_vect relative_error_from_approx_abs_scheme::needed_reals() const {
+  return preal_vect(1, approx);
+}
+
+proof_scheme *relative_error_from_approx_abs_scheme::factory(ast_real const *real) {
+  ast_real const *holders[2];
+  function_class const *f = relative_rounding_error(real, holders);
+  if (!f || !(f->theorem_mask & function_class::TH_REL_APX_ABS)) return NULL;
+  return new relative_error_from_approx_abs_scheme(real, predicated_real(holders[1], PRED_ABS), f);
 }
 
 // ROUNDING_BOUND

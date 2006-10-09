@@ -20,12 +20,12 @@ struct fixed_rounding_class: function_class {
   direction_type type;
   std::string ident;
   fixed_rounding_class(fixed_format const &f, direction_type t, std::string const &i)
-    : function_class(UOP_ID, TH_RND | TH_ABS | (t == ROUND_ZR || t == ROUND_AW ? TH_ABS_REA | TH_ABS_RND : 0)),
+    : function_class(UOP_ID, TH_RND | TH_ABS | (t == ROUND_ZR || t == ROUND_AW ? TH_ABS_EXA_BND | TH_ABS_APX_BND : 0)),
       format(f), type(t), ident(i) {}
-  virtual interval round                      (interval const &, std::string &) const;
-  virtual interval absolute_error                               (std::string &) const;
-  virtual interval absolute_error_from_real   (interval const &, std::string &) const;
-  virtual interval absolute_error_from_rounded(interval const &, std::string &) const;
+  virtual interval round                         (interval const &, std::string &) const;
+  virtual interval absolute_error                                  (std::string &) const;
+  virtual interval absolute_error_from_exact_bnd (interval const &, std::string &) const;
+  virtual interval absolute_error_from_approx_bnd(interval const &, std::string &) const;
   virtual std::string name() const { return "rounding_fixed" + ident; }
 };
 
@@ -43,12 +43,12 @@ interval fixed_rounding_class::absolute_error(std::string &name) const {
   return from_exponent(format.min_exp, rnd_global_direction_abs(type));
 }
 
-interval fixed_rounding_class::absolute_error_from_real(interval const &i, std::string &name) const {
+interval fixed_rounding_class::absolute_error_from_exact_bnd(interval const &i, std::string &name) const {
   name = "fixed_error_dir";
   return from_exponent(format.min_exp, rnd_global_direction_abs(type, i));
 }
 
-interval fixed_rounding_class::absolute_error_from_rounded(interval const &i, std::string &name) const {
+interval fixed_rounding_class::absolute_error_from_approx_bnd(interval const &i, std::string &name) const {
   name = "fixed_error_inv";
   return from_exponent(format.min_exp, rnd_global_direction_abs(type, i));
 }
