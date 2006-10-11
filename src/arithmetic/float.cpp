@@ -38,7 +38,7 @@ struct float_rounding_class: function_class {
   std::string ident;
   float_rounding_class(float_format const &f, direction_type t, std::string const &i)
     : function_class(UOP_ID, TH_RND | TH_ENF | TH_REL_EXA_ABS | TH_REL_APX_ABS |
-        (rnd_to_nearest(t) ?  TH_ABS_EXA_ABS | TH_ABS_APX_ABS : TH_ABS_EXA_BND | TH_ABS_APX_BND)),
+        (rnd_symmetric(t) ?  TH_ABS_EXA_ABS | TH_ABS_APX_ABS : TH_ABS_EXA_BND | TH_ABS_APX_BND)),
       format(f), type(t), ident(i) {}
   virtual interval round                         (interval const &, std::string &) const;
   virtual interval enforce                       (interval const &, std::string &) const;
@@ -138,12 +138,12 @@ interval float_rounding_class::absolute_error_from_exact_bnd(interval const &i, 
   rounding_fun f = direction_functions[type];
   number const &v1 = lower(i), &v2 = upper(i);
   int e1 = exponent(round_number(v1, &format, f), format),
-      e2 = exponent(round_number(v2, &format, f), format);
-  int e = std::max(e1, e2);
-  int e_err = rnd_to_nearest(type) ? e - 1 : e;
-  e += format.prec - 1;
+      e2 = exponent(round_number(v2, &format, f), format),
+      e0 = std::max(e1, e2);
+  int e_err = rnd_to_nearest(type) ? e0 - 1 : e0;
+  int e = e0 + format.prec - 1;
   name = "float_absolute";
-  if (std::max(e1, e2) > format.min_exp &&
+  if (e0 > format.min_exp &&
       (v1 >= 0 || influenced(v1, e, e_err - 1, rnd_influence_direction(type, true ))) &&
       (v2 <= 0 || influenced(v2, e, e_err - 1, rnd_influence_direction(type, false)))) {
     name += "_wide";
@@ -157,7 +157,7 @@ interval float_rounding_class::absolute_error_from_exact_abs(interval const &i, 
   rounding_fun f = direction_functions[type];
   number const &v = upper(i);
   int e0 = exponent(round_number(v, &format, f), format);
-  int e_err = e0 - 1;
+  int e_err = rnd_to_nearest(type) ? e0 - 1 : e0;
   int e = e0 + format.prec - 1;
   name = "float_absolute";
   if (e0 > format.min_exp &&
@@ -180,7 +180,8 @@ interval float_rounding_class::absolute_error_from_approx_bnd(interval const &i,
 interval float_rounding_class::absolute_error_from_approx_abs(interval const &i, std::string &name) const {
   int e_err = exponent(upper(i), format);
   name = "float_absolute_inv" + ident;
-  return from_exponent(e_err - 1, 0);
+  if (rnd_to_nearest(type)) return from_exponent(e_err - 1, 0);
+  return from_exponent(e_err, 0);
 }
 
 interval float_rounding_class::relative_error_from_exact_abs(interval const &i, std::string &name) const {

@@ -65,6 +65,7 @@ int rnd_global_direction_rel(direction_type);
 int rnd_global_direction_abs(direction_type, interval const &);
 int rnd_global_direction_rel(direction_type, interval const &);
 inline bool rnd_to_nearest(direction_type type) { return type >= ROUND_NE; }
+bool rnd_symmetric(direction_type type);
 int rnd_influence_direction(direction_type, bool);
 
 #endif // NUMBERS_ROUND_HPP

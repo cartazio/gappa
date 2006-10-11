@@ -176,6 +176,24 @@ int rnd_influence_direction(direction_type type, bool neg) {
   return -1;
 }
 
+bool rnd_symmetric(direction_type type) {
+  switch (type) {
+  case ROUND_AW:
+  case ROUND_OD:
+  case ROUND_ZR:
+  case ROUND_NE:
+  case ROUND_NZ:
+  case ROUND_NO:
+  case ROUND_NA: return true;
+  case ROUND_NU:
+  case ROUND_ND:
+  case ROUND_UP:
+  case ROUND_DN: return false;
+  case ROUND_ARGL: assert(false);
+  }
+  return false;
+}
+
 static void simplify(mpfr_t &f, int dir) {
   mpz_t m;
   int e, s;
