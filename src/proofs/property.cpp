@@ -22,8 +22,8 @@ property::property(predicated_real const &r): real(r) {
   switch (real.pred()) {
   case PRED_ABS:
   case PRED_BND: new(&store_bnd) interval; break;
-  case PRED_FIX: store_int = INT_MIN;
-  case PRED_FLT: store_int = INT_MAX;
+  case PRED_FIX: store_int = INT_MIN; break;
+  case PRED_FLT: store_int = INT_MAX; break;
   }
 }
 
@@ -197,14 +197,15 @@ bool property_tree::verify(graph_t *g, property *p) const {
   graph_loader loader(g);
   bool b = ptr->conjonction;
   for(std::vector< property >::const_iterator i = ptr->leafs.begin(),
-      end = ptr->leafs.end(); i != end; ++i)
+      end = ptr->leafs.end(); i != end; ++i) {
     if (b == !find_proof(*i)) {
       if (b && p) *p = *i;
       return !b;
     }
+  }
   for(std::vector< property_tree >::const_iterator i = ptr->subtrees.begin(),
       end = ptr->subtrees.end(); i != end; ++i)
-    if (b == !i->verify(g, NULL))
+    if (b == !i->verify(g, b ? p : NULL))
       return !b;
   return b;
 }

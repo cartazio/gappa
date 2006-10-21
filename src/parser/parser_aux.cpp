@@ -65,7 +65,6 @@ static void generate_goal(property_tree &tree, ast_prop const *p) {
 
 struct sequent {
   ast_prop_vect lhs, rhs;
-  std::vector< int > deps;
 };
 
 static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
@@ -92,15 +91,12 @@ static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
         break;
       }
       case PROP_IMPL: {
-        sequent t;
-        t.lhs = s.lhs;
-        t.rhs = s.rhs;
+        sequent t = s;
         s.lhs[idl] = p->rhs;
-        t.lhs[idl] = s.lhs[s.lhs.size() - 1];
+        t.lhs[idl] = t.lhs[t.lhs.size() - 1];
         t.lhs.pop_back();
         t.rhs.push_back(p->lhs);
         parse_sequent(t, idl, idr);
-        s.deps.push_back(contexts.size() - 1);
         break;
       }
       case PROP_ATOM:
@@ -172,8 +168,10 @@ static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
   context ctxt;
   for(input_set::const_iterator i = inputs.begin(), end = inputs.end(); i != end; ++i) {
     interval const &bnd = i->second.bnd();
-    if (is_empty(bnd))
-      { std::cerr << "Warning: the hypotheses on " << dump_real(i->first) << " are trivially contradictory.\n"; exit(1); }
+    if (is_empty(bnd)) {
+      std::cerr << "Warning: the hypotheses on " << dump_real(i->first) << " are trivially contradictory, skipping.\n";
+      return;
+    }
     if (is_bounded(bnd))
       input_reals.insert(i->first);
     ctxt.hyp.push_back(i->second);
@@ -185,7 +183,6 @@ static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
     for(ast_prop_vect::const_iterator i = s.rhs.begin(), end = s.rhs.end(); i != end; ++i)
       generate_goal(ctxt.goals, *i);
   }
-  ctxt.deps = s.deps;
   contexts.push_back(ctxt);
 }
 

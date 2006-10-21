@@ -100,7 +100,6 @@ struct property_tree {
 struct context {
   property_vect hyp;
   property_tree goals;
-  std::vector< int > deps;
 };
 
 typedef std::vector< context > context_vect;

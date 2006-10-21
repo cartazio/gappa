@@ -47,14 +47,6 @@ int main(int argc, char **argv) {
       }
     }
     std::cerr << ":\n";
-    bool deps_satisfied = true;
-    for(std::vector< int >::const_iterator j = current_context.deps.begin(),
-        j_end = current_context.deps.end(); j != j_end; ++j)
-      if (!proven_contexts[*j]) { deps_satisfied = false; break; }
-    if (!deps_satisfied) {
-      std::cerr << "Warning: generated hypotheses were not proved, skipping.\n";
-      continue;
-    }
     graph_t *g = new graph_t(NULL, hyp);
     if (g->populate(current_context.goals, dichotomies)) {
       if (!current_context.goals.empty())
