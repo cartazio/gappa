@@ -5,6 +5,7 @@ Version 0.7.3:
    - removed dependencies between sequents
  * parser
    - removed automatic rounding of negated expressions
+   - equated numbers with exponent zero but different radices
 
 Version 0.7.2:
  * parser

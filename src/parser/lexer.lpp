@@ -41,6 +41,7 @@ static void read_number(YYSTYPE *yylval) {
   num.mantissa = std::string(1, '+') + s;
   free(s);
   mpz_clear(m);
+  if (num.exponent == 0) num.base = 1;
   yylval->number = normalize(num);
 }
 
