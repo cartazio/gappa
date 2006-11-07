@@ -16,6 +16,9 @@ static number read_number(ast_number const &n, mp_rnd_t rnd) {
     mpfr_set_str(res->val, n.mantissa.c_str(), 10, rnd);
     mpfr_mul_2si(res->val, res->val, n.exponent, rnd);
     break; }
+  case 1: {
+    mpfr_set_str(res->val, n.mantissa.c_str(), 10, rnd);
+    break; }
   case 0: {
     mpfr_set_ui(res->val, 0, rnd);
     break; }
