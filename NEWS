@@ -1,3 +1,11 @@
+Version 0.7.3:
+ * fact database
+   - generalized rounding theorems to any combination of errors and predicates
+ * whole engine
+   - removed dependencies between sequents
+ * parser
+   - removed automatic rounding of negated expressions
+
 Version 0.7.2:
  * parser
    - fixed incorrectly rounded intervals on input

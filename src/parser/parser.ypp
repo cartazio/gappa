@@ -225,7 +225,7 @@ REAL:
   }
 | '(' REAL ')'		{ $$ = $2; }
 | '+' REAL %prec NEG	{ $$ = $2; }
-| '-' REAL %prec NEG	{ $$ = rnd_normalize(ast_real(real_op(UOP_NEG, $2))); }
+| '-' REAL %prec NEG	{ $$ = normalize(ast_real(real_op(UOP_NEG, $2))); }
 
 REALS:
   REAL		{ $$ = new ast_real_vect(1, $1); }
