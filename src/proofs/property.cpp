@@ -286,7 +286,7 @@ struct remove_pred3 {
   remove_pred3(ast_real_vect const &v): dst(v) {}
   bool operator()(property const &p) {
     for(ast_real_vect::const_iterator i = dst.begin(), end = dst.end(); i != end; ++i)
-      if (p.real.pred() == PRED_BND && p.real.real() == *i) return false;
+      if (p.real.pred() == PRED_BND && p.real.real() == *i && is_defined(p.bnd())) return false;
     return true;
   }
 };
