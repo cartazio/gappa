@@ -19,23 +19,22 @@ struct splitter {
 };
 
 struct fixed_splitter: splitter {
-  interval bnd;
-  unsigned steps;
-  fixed_splitter(interval const &i, unsigned nb): bnd(i), steps(nb) { merge = false; }
+  interval bnd, left;
+  unsigned pos, nb;
+  fixed_splitter(interval const &i, unsigned n): bnd(i), left(i), pos(0), nb(n) { merge = false; }
   virtual bool split(interval &) { return false; }
   virtual bool next(interval &);
 };
 
 bool fixed_splitter::next(interval &i) {
-  if (steps == 0) return false;
-  if (steps == 1) {
-    i = bnd;
-    steps = 0;
+  if (pos++ == nb) return false;
+  if (pos == nb) {
+    i = left;
     return true;
   }
-  std::pair< interval, interval > ii = ::split(bnd, 1. / steps--);
-  i = ii.first;
-  bnd = ii.second;
+  std::pair< interval, interval > ii = ::split(bnd, (double)pos / nb);
+  i = intersect(left, ii.first);
+  left = ii.second;
   return true;
 }
 
