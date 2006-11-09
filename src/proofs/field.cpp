@@ -267,7 +267,7 @@ REWRIT3(val_xabq,
 REWRIT3(val_xebq,
 	a_b,
 	b / (one + (b - a) / a),
-	~a && ~(one + (b - a) / a));
+	~a && ~b);
 
 // BLI
 
