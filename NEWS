@@ -6,6 +6,7 @@ Version 0.7.3:
  * parser
    - removed automatic rounding of negated expressions
    - equated numbers with exponent zero but different radices
+   - fixed grammar for multiple splits
  * proof graph
    - improved quality of fixed split
 
