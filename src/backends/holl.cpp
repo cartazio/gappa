@@ -1,12 +1,9 @@
-#include <cctype>
+#include <map>
 #include <iostream>
-#include <ostream>
 #include <sstream>
-#include "utils.hpp"
 #include "backends/backend.hpp"
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
-#include "numbers/round.hpp"
 #include "parser/ast.hpp"
 #include "proofs/proof_graph.hpp"
 
@@ -59,13 +56,20 @@ static std::string display(number const &f) {
   std::ostringstream s;
   bool zero;
   int exp;
-  s << '(' << get_real_split(f, exp, zero);
-  s << ") (" << (zero ? 0 : exp) << ')';
+  std::string t = get_real_split(f, exp, zero);
+  if (zero)
+    s << "&0";
+  else if (t[0] == '-') {
+    t[0] = '&';
+    s << "--(" << t << ')';
+  } else s << '&' << t;
+  if (!zero && exp != 0)
+    s << (exp < 0 ? " / &2 pow " : " * &2 pow ") << std::abs(exp);
   std::string const &s_ = s.str();
   int f_id = map_finder(displayed_floats, s_);
   std::string name = composite('f', f_id);
   if (f_id >= 0)
-    *out << "Definition " << name << " := Float2 " << s_ << ".\n";
+    *out << "NOTATION `" << name << " = " << s_ << "`;;\n";
   return name;
 }
 
@@ -73,12 +77,12 @@ static std::map< std::string, int > displayed_intervals;
 
 static std::string display(interval const &i) {
   std::ostringstream s;
-  s << display(lower(i)) << ' ' << display(upper(i));
+  s << display(lower(i)) << ", " << display(upper(i));
   std::string const &s_ = s.str();
   int i_id = map_finder(displayed_intervals, s_);
   std::string name = composite('i', i_id);
   if (i_id >= 0)
-    *out << "Definition " << name << " := makepairF " << s_ << ".\n";
+    *out << "NOTATION `" << name << " = (" << s_ << ")`;;\n";
   return name;
 }
 
@@ -90,17 +94,24 @@ static std::string display(ast_real const *r) {
   if (r_id < 0)
     return name;
   if (boost::get< undefined_real const >(r)) {
-    *out << "Variable " << name << " : R.\n";
+    *out << "VARIABLE `" << name << " : real`;;\n";
     return name;
   }
   auto_flush plouf;
-  plouf << "Notation " << name << " := (";
+  plouf << "NOTATION `" << name << " = ";
   if (ast_number const *const *nn = boost::get< ast_number const *const >(r)) {
     ast_number const &n = **nn;
-    std::string m = (n.mantissa.size() > 0 && n.mantissa[0] == '+') ? n.mantissa.substr(1) : n.mantissa;
-    if (n.base == 0) plouf << "Float1 0";
-    else if (n.exponent == 0) plouf << "Float1 (" << m << ')';
-    else plouf << "Float" << n.base << " (" << m << ") (" << n.exponent << ')';
+    if (n.base == 0) plouf << "&0";
+    else {
+      std::string t = n.mantissa;
+      assert(t.size() > 0 && (t[0] == '+' || t[0] == '-'));
+      bool neg = t[0] == '-';
+      t[0] = '&';
+      if (neg) plouf << "--(" << t << ')';
+      else plouf << t;
+      if (n.exponent != 0)
+        plouf << ' ' << (n.exponent < 0 ? '/' : '*') << " &" << n.base << " pow " << std::abs(n.exponent);
+    }
   } else if (real_op const *o = boost::get< real_op const >(r)) {
     static char const op[] = "X-XX+-*/XX";
     if (o->type == ROP_FUN) {
@@ -109,13 +120,17 @@ static std::string display(ast_real const *r) {
         plouf << " (" << display(*i) << ')';
     } else if (o->ops.size() == 1) {
       std::string s(1, op[o->type]);
-      if (o->type == UOP_ABS) s = "Rabs";
-      else if (o->type == UOP_SQRT) s = "sqrt";
-      plouf << '(' << s << ' ' << display(o->ops[0]) << ")%R";
+      switch (o->type) {
+      case UOP_NEG: s = "--"; break;
+      case UOP_ABS: s = "abs"; break;
+      case UOP_SQRT: s = "sqrt"; break;
+      default: assert(false);
+      }
+      plouf << '(' << s << ' ' << display(o->ops[0]) << ')';
     } else
-      plouf << '(' << display(o->ops[0]) << ' ' << op[o->type] << ' ' << display(o->ops[1]) << ")%R";
+      plouf << '(' << display(o->ops[0]) << ' ' << op[o->type] << ' ' << display(o->ops[1]) << ')';
   } else assert(false);
-  plouf << ").\n";
+  plouf << "`;;\n";
   return name;
 }
 
@@ -128,9 +143,9 @@ static std::string display(property const &p) {
   if (p.real.pred_bnd()) {
     interval const &bnd = p.bnd();
     if (lower(bnd) == number::neg_inf)
-      s << '(' << display(real) << " <= " << display(upper(bnd)) << ")%R";
+      s << '(' << display(real) << " <= " << display(upper(bnd)) << ')';
     else if (upper(bnd) == number::pos_inf)
-      s << '(' << display(lower(bnd)) << " <= " << display(real) << ")%R";
+      s << '(' << display(lower(bnd)) << " <= " << display(real) << ')';
     else
       s << (t == PRED_BND ? "BND " : "ABS ") << display(real) << ' ' << display(bnd);
   } else
@@ -139,7 +154,7 @@ static std::string display(property const &p) {
   int p_id = map_finder(displayed_properties, s_);
   std::string name = composite('p', p_id);
   if (p_id >= 0)
-    *out << "Notation " << name << " := (" << s_ << "). (* " << dump_property(p) << " *)\n";
+    *out << "NOTATION `" << name << " = " << s_ << "`;; (* " << dump_property(p) << " *)\n";
   return name;
 }
 
@@ -149,22 +164,21 @@ static std::string display(theorem_node *t) {
   static int t_id = 0;
   std::string name = composite('t', ++t_id);
   auto_flush plouf;
-  plouf << "Lemma " << name << " : ";
+  plouf << "LEMMA \"" << name << "\" `";
   for(property_vect::const_iterator i = t->hyp.begin(), end = t->hyp.end(); i != end; ++i)
-    plouf << display(*i) << " -> ";
-  plouf << display(t->res) << ".\n";
+    plouf << display(*i) << " ==> ";
+  plouf << display(t->res) << "`;;\n";
   int nb_hyps = t->hyp.size();
   if (nb_hyps) {
-    plouf << " intros";
-    for(int i = 0; i < nb_hyps; ++i) plouf << " h" << i;
-    plouf << ".\n";
+    plouf << " INTROS [\"h0\"";
+    for(int i = 1; i < nb_hyps; ++i) plouf << "; \"h" << i << '"';
+    plouf << "];;\n";
   }
-  plouf << " apply " << convert_name(t->name);
+  plouf << " APPLY " << convert_name(t->name) << " [";
   if (nb_hyps) {
-    plouf << " with";
-    for(int i = 0; i < nb_hyps; ++i) plouf << " (" << i + 1 << " := h" << i << ')';
+    for(int i = 0; i < nb_hyps; ++i) plouf << (i > 0 ? "; \"h" : "\"h") << i << '"';
   }
-  plouf << " ; finalize.\nQed.\n";
+  plouf << "] THEN FINALIZE;;\nQED;;\n";
   return name;  
 }
 
@@ -180,16 +194,16 @@ static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_m
       interval const &i = pki->second.second->bnd(), &ii = j->bnd();
       assert(i <= ii);
       if (ii <= i)
-        plouf << " exact h" << h << '.';
+        plouf << " EXACT \"h" << h << "\";;";
       else
-        plouf << " apply " << (t == PRED_ABS ? "abs_" : "") << "subset with (1 := h" << h << "). finalize.";
+        plouf << " APPLY " << (t == PRED_ABS ? "abs_" : "") << "subset [\"h" << h << "\"] THEN FINALIZE;;";
     } else {
       long c = pki->second.second->cst(), cc = j->cst();
       assert(t == PRED_FIX && c >= cc || t == PRED_FLT && c <= cc);
       if (c == c)
-        plouf << " exact h" << h << '.';
+        plouf << " EXACT \"h" << h << "\";;";
       else
-        plouf << " apply " << (t == PRED_FIX ? "fix" : "flt") << "_subset with (1 := h" << h << "). finalize.";
+        plouf << " APPLY " << (t == PRED_FIX ? "fix" : "flt") << "_subset [\"h" << h << "\"] THEN FINALIZE;;";
     }
   }
   plouf << '\n';
@@ -197,7 +211,7 @@ static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_m
 
 static void invoke_lemma(auto_flush &plouf, node *n, property_map const &pmap) {
   if (n->type != HYPOTHESIS) {
-    plouf << " apply " << display(n) << '.';
+    plouf << " PARTIAL_APPLY \"" << display(n) << "\";;";
     invoke_lemma(plouf, n->get_hypotheses(), pmap);
   } else {
     property_vect hyp;
@@ -214,16 +228,17 @@ static std::string display(node *n) {
   property_vect const &n_hyp = n->get_hypotheses();
   property_map pmap;
   int num_hyp = 0;
+  plouf << '`';
   for(property_vect::const_iterator i = n_hyp.begin(), end = n_hyp.end();
       i != end; ++i) {
     property const &p = *i;
-    plouf << display(p) << " -> ";
+    plouf << display(p) << " ==> ";
     pmap.insert(std::make_pair(p.real, std::make_pair(num_hyp++, &p)));
   }
   node_vect const &pred = n->get_subproofs();
   if (n->type == GOAL && pred[0]->type == HYPOTHESIS) {
     property const &p = pred[0]->get_result();
-    plouf << display(p) << " -> ";
+    plouf << display(p) << " ==> ";
     assert(num_hyp == 0);
     pmap.insert(std::make_pair(p.real, std::make_pair(num_hyp++, &p)));
   }
@@ -236,26 +251,26 @@ static std::string display(node *n) {
     p_res = display(n_res);
   plouf << p_res;
   std::string sig = plouf.str();
-  plouf << ". (* " << (!n_res.null() ? dump_property(n_res) : "contradiction") << " *)\n";
+  plouf << "`;; (* " << (!n_res.null() ? dump_property(n_res) : "contradiction") << " *)\n";
   if (num_hyp) {
-    plouf << " intros";
-    for(int i = 0; i < num_hyp; ++i) plouf << " h" << i;
-    plouf << ".\n";
+    plouf << " INTROS [\"h0\"";
+    for(int i = 1; i < num_hyp; ++i) plouf << "; \"h" << i << '"';
+    plouf << "];;\n";
   }
   switch (n->type) {
   case MODUS: {
     for(node_vect::const_iterator i = pred.begin(), i_end = pred.end(); i != i_end; ++i) {
       node *m = *i;
       property const &res = m->get_result();
-      plouf << " assert (h" << num_hyp << " : " << display(res) << ").";
+      plouf << " ASSERT \"h" << num_hyp << "\" `" << display(res) << "`;;";
       invoke_lemma(plouf, m, pmap);
       pmap[res.real] = std::make_pair(num_hyp++, &res);
     }
     modus_node *mn = dynamic_cast< modus_node * >(n);
     assert(mn && mn->target);
-    plouf << " apply " << display(mn->target) << '.';
+    plouf << " PARTIAL_APPLY \"" << display(mn->target) << "\";;";
     invoke_lemma(plouf, mn->target->hyp, pmap);
-    plouf << "Qed.\n";
+    plouf << "QED;;\n";
     break; }
   case INTERSECTION: {
     int num[2];
@@ -271,13 +286,13 @@ static std::string display(node *n) {
         num[i] = pki->second.first;
         continue;
       }
-      plouf << " assert (h" << num_hyp << " : " << display(res) << ").";
+      plouf << " ASSERT \"h" << num_hyp << "\" `" << display(res) << "`;;";
       invoke_lemma(plouf, m, pmap);
       num[i] = num_hyp++;
     }
-    plouf << " apply " << prefix << "intersect" << suffix << " with"
-                 " (1 := h" << num[0] << ") (2 := h" << num[1] << ")."
-             " finalize.\nQed.\n";
+    plouf << " APPLY \"" << prefix << "intersect" << suffix <<
+             "\" [\"h" << num[0] << "\"; \"h" << num[1] << "\"] THEN"
+             " FINALIZE;;\nQED;;\n";
     break; }
   case UNION: {
     assert(pred.size() >= 2);
@@ -325,29 +340,29 @@ static std::string display(node *n) {
   int n_id = map_finder(displayed_nodes, sig);
   std::string name = composite('l', n_id);
   if (n_id < 0) plouf.str(std::string());
-  else std::cout << "Lemma " << name << " : ";
+  else std::cout << "LEMMA \"" << name << "\" ";
   return name;
 }
 
-struct coq_backend: backend {
-  coq_backend(): backend("coq") {}
+struct holl_backend: backend {
+  holl_backend(): backend("holl") {}
   void initialize(std::ostream &o) {
     out = &o;
-    o << "Require Import Gappa_library.\n"
-         "Section Generated_by_Gappa.\n";
+    o << "(*Require Import Gappa_library.\n"
+         "Section Generated_by_Gappa.*)\n";
   }
-  void finalize() { *out << "End Generated_by_Gappa.\n"; }
+  void finalize() { *out << "(*End Generated_by_Gappa.*)\n"; }
   virtual std::string rewrite(ast_real const *, ast_real const *);
   virtual std::string theorem(node *n) { return display(n); }
 };
 
-std::string coq_backend::rewrite(ast_real const *src, ast_real const *dst) {
+std::string holl_backend::rewrite(ast_real const *src, ast_real const *dst) {
   static int a_id = 0;
   std::string name = composite('a', ++a_id);
   auto_flush plouf;
-  plouf << "Hypothesis " << name << " : forall zi : FF, BND "
-        << display(dst) << " zi -> true = true -> BND " << display(src) << " zi.\n";
+  plouf << "HYPOTHESIS \"" << name << "\" `!zi:interval. BND "
+        << display(dst) << " zi ==> BND " << display(src) << " zi`;;\n";
   return name;
 }
 
-static struct coq_backend dummy;
+static struct holl_backend dummy;

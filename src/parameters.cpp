@@ -39,7 +39,8 @@ static void help() {
     "\n"
     "Backend:\n"
     "  -Bnull                          do not generate a proof (default)\n"
-    "  -Bcoq                           produce a script for the Coq proof checker\n";
+    "  -Bcoq                           produce a script for the Coq proof checker\n"
+    "  -Bholl                          produce a script for the HOL Light checker\n";
 }
 
 // return false for an unrecognized option

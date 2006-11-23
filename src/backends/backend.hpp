@@ -2,6 +2,7 @@
 #define BACKENDS_BACKEND_HPP
 
 #include <ostream>
+#include <sstream>
 #include <string>
 
 struct node;
@@ -15,6 +16,12 @@ struct backend {
   virtual void finalize() = 0;
   virtual ~backend() {}
   static backend *find(std::string const &);
+};
+
+extern std::ostream *out;
+
+struct auto_flush: std::ostringstream {
+  ~auto_flush() { *::out << str(); }
 };
 
 #endif // BACKENDS_BACKEND_HPP

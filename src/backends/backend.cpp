@@ -1,6 +1,8 @@
 #include <map>
 #include "backends/backend.hpp"
 
+std::ostream *out;
+
 typedef std::map< std::string, backend * > backend_map;
 static backend_map backends;
 

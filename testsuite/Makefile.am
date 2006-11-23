@@ -1,7 +1,7 @@
 EXTRA_DIST = $(wildcard *.g)
 CLEANFILES = $(wildcard failures-*.log)
 
-check: check-indep check-coq
+check: check-indep check-coq check-holl
 
 check-backend:
 	logfile="failures-$(BACKEND)-$$(date -Idate).log"; \
@@ -30,3 +30,6 @@ check-indep:
 
 check-coq:
 	$(MAKE) check-backend BACKEND=coq
+
+check-holl:
+	$(MAKE) check-backend BACKEND=holl
