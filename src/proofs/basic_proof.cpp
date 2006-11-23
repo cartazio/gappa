@@ -563,6 +563,14 @@ REGISTER_SCHEME_BEGIN(bnd_of_bnd_abs);
   bnd_of_bnd_abs_scheme(preal_vect const &v) : proof_scheme(v[0]), needed(v) {}
 REGISTER_SCHEME_END(bnd_of_bnd_abs);
 
+BINARY_INTERVAL(bnd_of_bnd_abs_updater) {
+  interval const &ib = h[0], &ia = h[1];
+  number const &iba = lower(ib), &ibb = upper(ib), &iab = lower(ia), &iaa = -iab;
+  bool b1 = iba <= iaa, b2 = iab <= ibb;
+  if (b1 && b2) r = interval();
+  else r = b1 ? interval(iba, iaa) : interval(iab, b2 ? ibb : iab);
+}
+
 node *bnd_of_bnd_abs_scheme::generate_proof() const {
   property hyps[2];
   if (!fill_hypotheses(hyps, needed)) return NULL;
@@ -571,7 +579,8 @@ node *bnd_of_bnd_abs_scheme::generate_proof() const {
   bool b1 = iba <= iaa, b2 = iab <= ibb;
   if (b1 && b2) return NULL;
   property res(real, b1 ? interval(iba, iaa) : interval(iab, b2 ? ibb : iab));
-  return create_theorem(2, hyps, res, b1 ? "bnd_of_bnd_abs_n" : "bnd_of_bnd_abs_p");
+  return create_theorem(2, hyps, res, b1 ? "bnd_of_bnd_abs_n" : "bnd_of_bnd_abs_p",
+                        &bnd_of_bnd_abs_updater);
 }
 
 preal_vect bnd_of_bnd_abs_scheme::needed_reals() const {
