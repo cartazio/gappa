@@ -1,3 +1,7 @@
+Version 0.8.0:
+ * HOL Light back-end:
+   - added new back-end
+
 Version 0.7.3:
  * fact database
    - generalized rounding theorems to any combination of errors and predicates
@@ -165,7 +169,7 @@ Version 0.4.12:
  * syntax
    - added a way to define new names for rounding operators
    - simplified the handling of negative numbers
- * Coq backend
+ * Coq back-end
    - fixed representation of relative rounding
 
 Version 0.4.11:

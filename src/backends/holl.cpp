@@ -36,13 +36,13 @@ static std::string convert_name(std::string const &name) {
     std::string dir = name.substr(p1, p2 - p1);
     if (dir == "ne") dir = "Nearest";
     else if (dir == "zr") dir = "Zero";
-    else if (dir == "up") dir = "Upward";
-    else if (dir == "dn") dir = "Downward";
+    else if (dir == "up") dir = "Up";
+    else if (dir == "dn") dir = "Down";
     p2 = name.find(',', p1 = p2 + 1);
     int prec = std::atoi(name.substr(p1, p2 - p1).c_str());
-    p2 = name.find(',', p2 + 1);
+    p2 = name.find(',', p1 = p2 + 1);
     int exp = std::atoi(name.substr(p1, std::string::npos).c_str());
-    res << "round (" << (exp - prec) * 2 + 4 << ',' << exp << ',' << prec << ") " << dir;
+    res << "round (" << (exp - prec) * 2 + 4 << ',' << prec << ',' << exp << ") " << dir;
     return res.str();
   }
   bool fragile = false;
@@ -125,8 +125,8 @@ static std::string display(ast_real const *r) {
   } else if (real_op const *o = boost::get< real_op const >(r)) {
     static char const op[] = "X-XX+-*/XX";
     if (o->type == ROP_FUN) {
-      plouf << convert_name(o->fun->name()) << " (" << display(o->ops[0]) << ')';
-      for(ast_real_vect::const_iterator i = ++(o->ops.begin()), end = o->ops.end(); i != end; ++i)
+      plouf << convert_name(o->fun->name());
+      for(ast_real_vect::const_iterator i = o->ops.begin(), end = o->ops.end(); i != end; ++i)
         plouf << " (" << display(*i) << ":real)";
     } else if (o->ops.size() == 1) {
       std::string s(1, op[o->type]);
@@ -374,8 +374,8 @@ std::string holl_backend::rewrite(ast_real const *src, ast_real const *dst) {
   std::ostringstream name;
   name << ++a_id;
   auto_flush plouf;
-  plouf << "HYPOTHESIS \"a" << name.str() << "\" `!zi:interval. BND "
-        << display(dst) << " zi ==> BND " << display(src) << " zi`;;\n";
+  plouf << "HYPOTHESIS \"a" << name.str() << "\" `!(zi:real#real). BND ("
+        << display(dst) << ":real) zi ==> BND (" << display(src) << ":real) zi`;;\n";
   return name.str();
 }
 
