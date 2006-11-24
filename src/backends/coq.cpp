@@ -43,11 +43,10 @@ static std::string convert_name(std::string const &name) {
     if (!std::isalpha(s[0])) {
       res << " (" << s << ')';
       fragile = true;
-    } else if (!rounding || s.length() != 2) res << '_' << s;
-    else {
+    } else if (rounding && s.length() == 2) {
       res << " round" << (char)std::toupper(s[0]) << (char)std::toupper(s[1]);
       fragile = true;
-    }
+    } else res << '_' << s;
   } while (p2 != std::string::npos);
   if (!fragile) return res.str();
   return '(' + res.str() + ')';
