@@ -148,7 +148,7 @@ std::string dump_real(predicated_real const &r) {
   switch (r.pred()) {
   case PRED_BND: s << "BND(" << v << ')'; break;
   case PRED_ABS: s << "ABS(" << v << ')'; break;
-  case PRED_REL: s << "REL(" << v << ')'; break;
+  case PRED_REL: s << "REL(" << v << ", " << dump_real(r.real2()) << ')'; break;
   case PRED_FIX: s << "FIX(" << v << ')'; break;
   case PRED_FLT: s << "FLT(" << v << ')'; break;
   }
@@ -161,7 +161,7 @@ std::string dump_property(property const &p) {
   switch (p.real.pred()) {
   case PRED_BND: s << "BND(" << r << ", " << p.bnd() << ')'; break;
   case PRED_ABS: s << "ABS(" << r << ", " << p.bnd() << ')'; break;
-  case PRED_REL: s << "REL(" << r << ", " << p.bnd() << ')'; break;
+  case PRED_REL: s << "REL(" << r << ", " << dump_real(p.real.real2()) << ", " << p.bnd() << ')'; break;
   case PRED_FIX: s << "FIX(" << r << ", " << p.cst() << ')'; break;
   case PRED_FLT: s << "FLT(" << r << ", " << p.cst() << ')'; break;
   }
