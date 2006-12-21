@@ -976,3 +976,31 @@ proof_scheme *flt_of_singleton_bnd_scheme::factory(predicated_real const &real) 
   if (real.pred() != PRED_FLT) return NULL;
   return new flt_of_singleton_bnd_scheme(real, predicated_real(real.real(), PRED_BND));
 }
+
+// BND_OF_ABS_REL
+REGISTER_SCHEME_BEGIN(bnd_of_abs_rel);
+  preal_vect needed;
+  bnd_of_abs_rel_scheme(ast_real const *r, preal_vect const &v): proof_scheme(r), needed(v) {}
+REGISTER_SCHEME_END(bnd_of_abs_rel);
+
+node *bnd_of_abs_rel_scheme::generate_proof() const {
+  property hyps[2];
+  if (!fill_hypotheses(hyps, needed)) return NULL;
+  if (contains_zero(hyps[0].bnd())) return NULL;
+  return create_theorem(2, hyps, property(real, hyps[1].bnd()), "bnd_of_abs_rel", identity_updater);
+}
+
+preal_vect bnd_of_abs_rel_scheme::needed_reals() const {
+  return needed;
+}
+
+extern pattern relative_helper;
+
+proof_scheme *bnd_of_abs_rel_scheme::factory(ast_real const *real) {
+  ast_real_vect holders;
+  if (!match(real, relative_helper, holders)) return NULL;
+  preal_vect hyps;
+  hyps.push_back(predicated_real(holders[0], PRED_ABS));
+  hyps.push_back(predicated_real(holders[1], holders[0], PRED_REL));
+  return new bnd_of_abs_rel_scheme(real, hyps);
+}

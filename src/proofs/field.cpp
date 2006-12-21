@@ -22,6 +22,7 @@ pattern_excl_vect operator&&(pattern_excl_vect const &v, pattern_excl const &c) 
 static pattern a(0), b(1), c(2), d(3), a_b(-1), one(token_one);
 
 pattern add_relative_helper((c * a + d * b) / (a + b));
+pattern relative_helper((b - a) / a);
 
 #define abs pattern::abs
 #define sqrt pattern::sqrt

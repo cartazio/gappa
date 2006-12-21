@@ -14,6 +14,8 @@ class predicated_real {
   predicated_real(): d1(0), d2(0) {}
   predicated_real(ast_real const *r, predicate_type p)
     : d1(reinterpret_cast< long >(r) | (p & 3)), d2(p >> 2) {}
+  predicated_real(ast_real const *r1, ast_real const *r2, predicate_type p)
+    : d1(reinterpret_cast< long >(r1) | (p & 3)), d2(reinterpret_cast< long >(r2) | (p >> 2)) {}
   predicate_type pred() const { return (predicate_type)((d1 & 3) | ((d2 & 3) << 2)); }
   bool pred_bnd() const { return (d2 & 1) == 0; }
   bool pred_cst() const { return (d2 & 1) != 0; }

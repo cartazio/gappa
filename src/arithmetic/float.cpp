@@ -37,7 +37,7 @@ struct float_rounding_class: function_class {
   direction_type type;
   std::string ident;
   float_rounding_class(float_format const &f, direction_type t, std::string const &i)
-    : function_class(UOP_ID, TH_RND | TH_ENF | TH_REL_EXA_ABS | TH_REL_APX_ABS |
+    : function_class(UOP_ID, TH_RND | TH_ENF |
         (rnd_symmetric(t) ?  TH_ABS_EXA_ABS | TH_ABS_APX_ABS : TH_ABS_EXA_BND | TH_ABS_APX_BND)),
       format(f), type(t), ident(i) {}
   virtual interval round                         (interval const &, std::string &) const;
@@ -46,8 +46,6 @@ struct float_rounding_class: function_class {
   virtual interval absolute_error_from_exact_abs (interval const &, std::string &) const;
   virtual interval absolute_error_from_approx_bnd(interval const &, std::string &) const;
   virtual interval absolute_error_from_approx_abs(interval const &, std::string &) const;
-  virtual interval relative_error_from_exact_abs (interval const &, std::string &) const;
-  virtual interval relative_error_from_approx_abs(interval const &, std::string &) const;
   virtual std::string name() const { return "rounding_float" + ident; }
 };
 
@@ -184,24 +182,6 @@ interval float_rounding_class::absolute_error_from_approx_abs(interval const &i,
   return from_exponent(e_err, 0);
 }
 
-interval float_rounding_class::relative_error_from_exact_abs(interval const &i, std::string &name) const {
-  if (parameter_constrained &&
-      !is_empty(intersect(i, from_exponent(format.min_exp + format.prec - 1, 0))))
-    return interval();
-  name = "float_relative" + ident;
-  if (rnd_to_nearest(type)) return from_exponent(-format.prec, 0);
-  return from_exponent(1 - format.prec, rnd_global_direction_rel(type)); // cannot use i since it is ABS
-}
-
-interval float_rounding_class::relative_error_from_approx_abs(interval const &i, std::string &name) const {
-  if (parameter_constrained &&
-      !is_empty(intersect(i, from_exponent(format.min_exp + format.prec - 1, 0))))
-    return interval();
-  name = "float_relative_inv" + ident;
-  if (rnd_to_nearest(type)) return from_exponent(-format.prec, 0);
-  return from_exponent(1 - format.prec, rnd_global_direction_rel(type)); // cannot use i since it is ABS
-}
-
 // FIX_OF_FLOAT
 
 REGISTER_SCHEMEX_BEGIN(fix_of_float);
@@ -280,4 +260,37 @@ proof_scheme *float_of_fix_flt_scheme::factory(ast_real const *real) {
   needed.push_back(predicated_real(holders[0], PRED_FIX));
   needed.push_back(predicated_real(holders[0], PRED_FLT));
   return new float_of_fix_flt_scheme(real, needed, f->format.min_exp, f->format.prec);
+}
+
+// REL_OF_FIX_FLOAT
+
+REGISTER_SCHEMEX_BEGIN(rel_of_fix_float);
+  property cond;
+  long prec;
+  direction_type type;
+  rel_of_fix_float_scheme(predicated_real const &r, property const &c, long p, direction_type t)
+    : proof_scheme(r), cond(c), prec(p), type(t) {}
+REGISTER_SCHEMEX_END(rel_of_fix_float);
+
+node *rel_of_fix_float_scheme::generate_proof() const {
+  node *n = find_proof(cond);
+  if (!n) return NULL;
+  property const &res = n->get_result();
+  interval bnd = rnd_to_nearest(type) ? from_exponent(-prec, 0)
+                                      : from_exponent(1 - prec, rnd_global_direction_rel(type));
+  return create_theorem(1, &res, property(real, bnd), "rel_of_fix_float");
+}
+
+preal_vect rel_of_fix_float_scheme::needed_reals() const {
+  return preal_vect(1, cond.real);
+}
+
+proof_scheme *rel_of_fix_float_scheme::factory(predicated_real const &real) {
+  if (real.pred() != PRED_REL) return NULL;
+  real_op const *r = boost::get< real_op const >(real.real());
+  if (!r) return NULL;
+  float_rounding_class const *f = dynamic_cast< float_rounding_class const * >(r->fun);
+  if (!f || r->ops[0] != real.real2()) return NULL;
+  return new rel_of_fix_float_scheme(real, property(predicated_real(real.real2(), PRED_FIX), f->format.min_exp),
+                                     f->format.prec, f->type);
 }
