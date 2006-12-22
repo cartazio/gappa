@@ -132,18 +132,18 @@ pattern_cond pattern::operator~() const {
 }
 
 function_class const *absolute_rounding_error(ast_real const *src, ast_real const *dst[2]) {
-  real_op const *p = boost::get < real_op const >(src);
+  real_op const *p = boost::get< real_op const >(src);
   if (!p || p->type != BOP_SUB) return NULL;
   dst[0] = p->ops[1];
   dst[1] = p->ops[0];
-  real_op const *o = boost::get < real_op const >(dst[1]);
+  real_op const *o = boost::get< real_op const >(dst[1]);
   if (!o || !o->fun) return NULL;
   return (dst[0] != unround(o->fun->type, o->ops)) ? NULL : o->fun;
 }
 
-function_class const *relative_rounding_error(ast_real const *src, ast_real const *dst[2]) {
-  real_op const *p = boost::get < real_op const >(src);
-  if (!p || p->type != BOP_DIV) return NULL;
-  function_class const *f = absolute_rounding_error(p->ops[0], dst);
-  return (!f || p->ops[1] != dst[0]) ? NULL : f;
+function_class const *relative_rounding_error(predicated_real const &src) {
+  if (src.pred() != PRED_REL) return NULL;
+  real_op const *o = boost::get< real_op const >(src.real());
+  if (!o || !o->fun) return NULL;
+  return (src.real2() != unround(o->fun->type, o->ops)) ? NULL : o->fun;
 }
