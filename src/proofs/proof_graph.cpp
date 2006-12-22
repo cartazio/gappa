@@ -6,6 +6,8 @@
 
 graph_t *top_graph = NULL;
 
+unsigned visit_counter = 0;
+
 static char *new_hyps(long &h, property_vect const &hyp) {
   unsigned nb = hyp.size();
   if (nb <= sizeof(long) * 8) {
@@ -40,12 +42,18 @@ property_vect node::get_hypotheses() const {
   return res;
 }
 
+bool node::can_visit() const {
+  if (visited == visit_counter) return false;
+  visited = visit_counter;
+  return true;
+}
+
 node_vect const &node::get_subproofs() const {
   static node_vect dummy;
   return dummy;
 }
 
-node::node(node_id t, graph_t *g): type(t), graph(g), nb_good(0) {
+node::node(node_id t, graph_t *g): type(t), graph(g), nb_good(0), visited(0) {
   if (g)
     g->insert(this);
 }
@@ -335,34 +343,21 @@ void graph_t::replace_known(node_vect const &v) {
     i->second->remove_known();
 }
 
-static void initialize_status(node_set &pending, node_set &whole) {
-  while (!pending.empty()) {
-    node *n = *pending.begin();
-    pending.erase(n);
-    if (!whole.insert(n).second) continue;
-    n->scanned = true;
-    node_vect const &v = n->get_subproofs();
-    for(node_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i)
-      pending.insert(*i);
-  }
-}
-
 typedef std::list< node * > node_list;
 
-static void update_status(node_list &pending, node *n) {
-  if (n->scanned) return;
-  n->scanned = true;
-  pending.push_back(n);
-}
-
 void enlarger(node_vect const &nodes) {
-  node_set whole, tmp(nodes.begin(), nodes.end());
-  initialize_status(tmp, whole);
-  node_list pending(whole.begin(), whole.end());
-  whole.clear();
+  ++visit_counter;
+  node_list pending(nodes.begin(), nodes.end());
+  for (node_list::iterator i = pending.begin(); i != pending.end(); ++i) {
+    node *n = *i;
+    if (!n->can_visit()) continue;
+    node_vect const &v = n->get_subproofs();
+    for(node_vect::const_iterator j = v.begin(), end = v.end(); j != end; ++j)
+      pending.push_back(*j);
+  }
   while (!pending.empty()) {
     node *n = pending.front();
-    n->scanned = false;
+    n->visited = 0;
     pending.pop_front();
     property old_res = n->get_result();
     if (old_res.null()) continue;
@@ -372,6 +367,6 @@ void enlarger(node_vect const &nodes) {
     if (!old_res.strict_implies(n->get_result())) continue;
     node_vect const &v = n->get_subproofs();
     for(node_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i)
-      update_status(pending, *i);
+      if (n->can_visit()) pending.push_back(n);
   }
 }

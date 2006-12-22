@@ -38,6 +38,8 @@ struct node {
   node_set succ;
   graph_t *graph;
   unsigned nb_good;
+  mutable unsigned visited;
+  bool can_visit() const; // update visited
   node(node_id, graph_t *);
   virtual property const &get_result() const = 0;
   property_vect get_hypotheses() const;
@@ -49,7 +51,6 @@ struct node {
   virtual property maximal() const;
   virtual property maximal_for(node const *) const = 0;
   virtual void enlarge(property const &) = 0;
-  mutable bool scanned;
 };
 
 class hypothesis_node: public node {
