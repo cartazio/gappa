@@ -48,12 +48,37 @@ bool node::can_visit() const {
   return true;
 }
 
+typedef std::list< node * > node_list;
+
+void node::compute_weight() {
+  if (weight > 0) return;
+  node_vect const &v = get_subproofs();
+  weight = local_weight;
+  switch (v.size()) {
+  case 0: break;
+  case 1: weight += v[0]->weight; break;
+  default:
+    ++visit_counter;
+    node_list pending;
+    for (node_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i)
+      if ((*i)->can_visit()) pending.push_back(*i);
+    while (!pending.empty()) {
+      node *n = pending.front();
+      pending.pop_front();
+      weight += n->local_weight;
+      node_vect const &w = n->get_subproofs();
+      for(node_vect::const_iterator i = w.begin(), end = w.end(); i != end; ++i)
+        if ((*i)->can_visit()) pending.push_back(*i);
+    }
+  }
+}
+
 node_vect const &node::get_subproofs() const {
   static node_vect dummy;
   return dummy;
 }
 
-node::node(node_id t, graph_t *g): type(t), graph(g), nb_good(0), visited(0) {
+node::node(node_id t, graph_t *g): type(t), graph(g), nb_good(0), visited(0), local_weight(1), weight(0) {
   if (g)
     g->insert(this);
 }
@@ -287,28 +312,39 @@ bool graph_t::try_real(node *n) {
   if (!ib.second) { // there was already a known range
     node *old = dst;
     property const &res1 = old->get_result();
-    if (res1.implies(res2)) {
+    if (res1.strict_implies(res2)) {
       ++stat_discarded_pred;
       delete n;
       return false;
+    }
+    n->compute_weight();
+    if (res1.implies(res2)) {
+      if (n->weight >= old->weight) {
+        ++stat_discarded_pred;
+        delete n;
+        return false;
+      }
     } else if (!res2.strict_implies(res1)) {
       ++stat_intersected_pred;
       n = new intersection_node(old, n);
       if (n == contradiction) return true;
+      n->compute_weight();
     }
     dst = n;
     old->remove_known();
   } else {
+    n->compute_weight();
     node_map::iterator i = partial_reals.find(res2.real);
     if (i != partial_reals.end()) { // there is a known inequality
       node *m = i->second;
       partial_reals.erase(i);
       property const &res1 = m->get_result();
       if (!res2.implies(res1)) {
-        ++n->nb_good;
         node *old = n;
+        ++n->nb_good; // n has just become a known real, this data is needed in case a contradiction is found
         n = new intersection_node(n, m);
         if (n == contradiction) return true;
+        n->compute_weight();
         dst = n;
         --old->nb_good;
       } else delete m;
@@ -343,22 +379,20 @@ void graph_t::replace_known(node_vect const &v) {
     i->second->remove_known();
 }
 
-typedef std::list< node * > node_list;
-
 void enlarger(node_vect const &nodes) {
   ++visit_counter;
-  node_list pending(nodes.begin(), nodes.end());
+  node_list pending;
+  for (node_vect::const_iterator i = nodes.begin(), end = nodes.end(); i != end; ++i)
+    if ((*i)->can_visit()) pending.push_back(*i);
   for (node_list::iterator i = pending.begin(); i != pending.end(); ++i) {
-    node *n = *i;
-    if (!n->can_visit()) continue;
-    node_vect const &v = n->get_subproofs();
+    node_vect const &v = (*i)->get_subproofs();
     for(node_vect::const_iterator j = v.begin(), end = v.end(); j != end; ++j)
-      pending.push_back(*j);
+      if ((*j)->can_visit()) pending.push_back(*j);
   }
   while (!pending.empty()) {
     node *n = pending.front();
-    n->visited = 0;
     pending.pop_front();
+    n->visited = 0;
     property old_res = n->get_result();
     if (old_res.null()) continue;
     property max_res = n->maximal();
@@ -367,6 +401,6 @@ void enlarger(node_vect const &nodes) {
     if (!old_res.strict_implies(n->get_result())) continue;
     node_vect const &v = n->get_subproofs();
     for(node_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i)
-      if (n->can_visit()) pending.push_back(n);
+      if ((*i)->can_visit()) pending.push_back(*i);
   }
 }
