@@ -77,7 +77,7 @@ bool property::strict_implies(property const &p) const {
   switch (real.pred()) {
   case PRED_ABS:
   case PRED_REL:
-  case PRED_BND: return bnd() < p.bnd();
+  case PRED_BND: return _bnd() < p._bnd();
   case PRED_FIX: return store_int > p.store_int;
   case PRED_FLT: return store_int < p.store_int;
   }
@@ -102,7 +102,7 @@ void property::hull(property const &p) {
   switch (real.pred()) {
   case PRED_ABS:
   case PRED_REL:
-  case PRED_BND: _bnd() = ::hull(_bnd(), p.bnd()); break;
+  case PRED_BND: _bnd() = ::hull(_bnd(), p._bnd()); break;
   case PRED_FIX: store_int = std::min(store_int, p.store_int); break;
   case PRED_FLT: store_int = std::max(store_int, p.store_int); break;
   }
