@@ -37,7 +37,7 @@ struct float_rounding_class: function_class {
   direction_type type;
   std::string ident;
   float_rounding_class(float_format const &f, direction_type t, std::string const &i)
-    : function_class(UOP_ID, TH_RND | TH_ENF |
+    : function_class(UOP_ID, TH_RND | TH_ENF | TH_REL_EXA_ABS | TH_REL_APX_ABS |
         (rnd_symmetric(t) ?  TH_ABS_EXA_ABS | TH_ABS_APX_ABS : TH_ABS_EXA_BND | TH_ABS_APX_BND)),
       format(f), type(t), ident(i) {}
   virtual interval round                         (interval const &, std::string &) const;
@@ -46,6 +46,8 @@ struct float_rounding_class: function_class {
   virtual interval absolute_error_from_exact_abs (interval const &, std::string &) const;
   virtual interval absolute_error_from_approx_bnd(interval const &, std::string &) const;
   virtual interval absolute_error_from_approx_abs(interval const &, std::string &) const;
+  virtual interval relative_error_from_exact_abs (interval const &, std::string &) const;
+  virtual interval relative_error_from_approx_abs(interval const &, std::string &) const;
   virtual std::string name() const { return "rounding_float" + ident; }
 };
 
@@ -182,6 +184,24 @@ interval float_rounding_class::absolute_error_from_approx_abs(interval const &i,
   return from_exponent(e_err, 0);
 }
 
+interval float_rounding_class::relative_error_from_exact_abs(interval const &i, std::string &name) const {
+  if (parameter_constrained &&
+      !is_empty(intersect(i, from_exponent(format.min_exp + format.prec - 1, 0))))
+    return interval();
+  name = "float_relative" + std::string(1, ',') + direction_names[type];
+  if (rnd_to_nearest(type)) return from_exponent(-format.prec, 0);
+  return from_exponent(1 - format.prec, rnd_global_direction_rel(type)); // cannot use i since it is ABS
+}
+
+interval float_rounding_class::relative_error_from_approx_abs(interval const &i, std::string &name) const {
+  if (parameter_constrained &&
+      !is_empty(intersect(i, from_exponent(format.min_exp + format.prec - 1, 0))))
+    return interval();
+  name = "float_relative_inv" + std::string(1, ',') + direction_names[type];
+  if (rnd_to_nearest(type)) return from_exponent(-format.prec, 0);
+  return from_exponent(1 - format.prec, rnd_global_direction_rel(type)); // cannot use i since it is ABS
+}
+
 // FIX_OF_FLOAT
 
 REGISTER_SCHEMEX_BEGIN(fix_of_float);
@@ -287,11 +307,8 @@ preal_vect rel_of_fix_float_scheme::needed_reals() const {
 }
 
 proof_scheme *rel_of_fix_float_scheme::factory(predicated_real const &real) {
-  if (real.pred() != PRED_REL) return NULL;
-  real_op const *r = boost::get< real_op const >(real.real());
-  if (!r) return NULL;
-  float_rounding_class const *f = dynamic_cast< float_rounding_class const * >(r->fun);
-  if (!f || r->ops[0] != real.real2()) return NULL;
+  float_rounding_class const *f = dynamic_cast< float_rounding_class const * >(relative_rounding_error(real));
+  if (!f) return NULL;
   return new rel_of_fix_float_scheme(real, property(predicated_real(real.real2(), PRED_FIX), f->format.min_exp),
                                      f->format.prec, f->type);
 }
