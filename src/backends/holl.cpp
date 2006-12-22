@@ -152,14 +152,28 @@ static std::string display(property const &p) {
   ast_real const *real = p.real.real();
   if (p.real.pred_bnd()) {
     interval const &bnd = p.bnd();
-    if (lower(bnd) == number::neg_inf)
+    if (lower(bnd) == number::neg_inf) {
+      assert(t == PRED_BND);
       s << "((" << display(real) << ":real) <= (" << display(upper(bnd)) << ":real))";
-    else if (upper(bnd) == number::pos_inf)
+    } else if (upper(bnd) == number::pos_inf) {
+      assert(t == PRED_BND);
       s << "((" << display(lower(bnd)) << ":real) <= (" << display(real) << ":real))";
-    else
-      s << (t == PRED_BND ? "BND (" : "ABS (") << display(real) << ":real) (" << display(bnd) << ":real#real)";
-  } else
-    s << (t == PRED_FIX ? "FIX (" : "FLT (") << display(real) << ":real) (" << p.cst() << ')';
+    } else {
+      switch (t) {
+      case PRED_BND: s << "BND (" << display(real) << ":real) (" << display(bnd) << ":real#real)"; break;
+      case PRED_ABS: s << "ABS (" << display(real) << ":real) (" << display(bnd) << ":real#real)"; break;
+      case PRED_REL: s << "REL (" << display(real) << ":real) (" << display(p.real.real2())
+                       << ":real) (" << display(bnd) << ":real#real)"; break;
+      default: assert(false);
+      }
+    }
+  } else {
+    switch (t) {
+    case PRED_FIX: s << "FIX (" << display(real) << ":real) (" << p.cst() << ')'; break;
+    case PRED_FLT: s << "FLT (" << display(real) << ":real) (" << p.cst() << ')'; break;
+    default: assert(false);
+    }
+  }
   std::string s_ = s.str();
   int p_id = map_finder(displayed_properties, s_);
   std::string name = composite('p', p_id);

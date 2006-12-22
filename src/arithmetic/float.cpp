@@ -278,7 +278,8 @@ node *rel_of_fix_float_scheme::generate_proof() const {
   property const &res = n->get_result();
   interval bnd = rnd_to_nearest(type) ? from_exponent(-prec, 0)
                                       : from_exponent(1 - prec, rnd_global_direction_rel(type));
-  return create_theorem(1, &res, property(real, bnd), "rel_of_fix_float");
+  return create_theorem(1, &res, property(real, bnd),
+                        "rel_of_fix_float" + std::string(1, ',') + direction_names[type]);
 }
 
 preal_vect rel_of_fix_float_scheme::needed_reals() const {
