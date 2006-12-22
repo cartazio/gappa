@@ -170,12 +170,13 @@ modus_node::modus_node(theorem_node *n)
   target = n;
   property_vect const &ghyp = graph->get_hypotheses();
   char *v = new_hyps(hyps, ghyp);
+  node_set nodes;
   for(property_vect::const_iterator i = n->hyp.begin(), i_end = n->hyp.end();
       i != i_end; ++i) {
     node *m = find_proof(*i);
     assert(m && dominates(m, this));
     fill_hyps(v, ghyp, m);
-    if (m->type != HYPOTHESIS)
+    if (m->type != HYPOTHESIS && nodes.insert(m).second)
       insert_pred(m);
   }
 }
