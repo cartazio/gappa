@@ -16,7 +16,7 @@ struct relative_function_class: function_class {
   virtual interval round                         (interval const &, std::string &) const;
   virtual interval relative_error_from_exact_abs (interval const &, std::string &) const;
   virtual interval relative_error_from_approx_abs(interval const &, std::string &) const;
-  virtual std::string name() const { return "relative_" + ident; }
+  virtual std::string name() const { return "relative" + ident; }
 };
 
 relative_function_class::relative_function_class(real_op_type t, int p, int e, std::string const &i)
