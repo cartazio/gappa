@@ -247,11 +247,15 @@ static void invoke_lemma(auto_flush &plouf, node *n, property_map const &pmap) {
   }
 }
 
-static std::map< std::string, int > displayed_nodes;
+static std::map< node *, int > displayed_nodes;
 
 static std::string display(node *n) {
   assert(n);
+  int n_id = map_finder(displayed_nodes, n);
+  std::string name = composite('l', n_id);
+  if (n_id < 0) return name;
   auto_flush plouf;
+  plouf << "LEMMA \"" << name << "\" `";
   property_vect const &n_hyp = n->get_hypotheses();
   property_map pmap;
   plouf << '(';
@@ -277,7 +281,6 @@ static std::string display(node *n) {
   } else
     p_res = display(n_res);
   plouf << p_res;
-  std::string sig = plouf.str();
   plouf << ":bool)`;; (* " << (!n_res.null() ? dump_property(n_res) : "contradiction") << " *)\n";
   if (num_hyp) {
     plouf << " INTROS [\"h0\"";
@@ -364,10 +367,6 @@ static std::string display(node *n) {
   default:
     assert(false);
   }
-  int n_id = map_finder(displayed_nodes, sig);
-  std::string name = composite('l', n_id);
-  if (n_id < 0) plouf.str(std::string());
-  else std::cout << "LEMMA \"" << name << "\" `";
   return name;
 }
 
