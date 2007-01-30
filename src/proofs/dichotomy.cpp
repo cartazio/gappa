@@ -261,7 +261,12 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
     hints.push_back(h);
   }
   node *varn = find_proof(var.real);
-  if (!varn) return false;
+  if (!varn) {
+    if (warning_dichotomy_failure)
+      std::cerr << "Warning: case split on " << dump_real(var.real)
+                << " has no range to split.\n";
+    return false;
+  }
   property_vect hyp2;
   hyp2.push_back(varn->get_result());
   property_vect const &hyp = top_graph->get_hypotheses();
@@ -278,7 +283,9 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
   else {
     new_goals.restrict(hint.dst);
     if (new_goals.empty()) {
-      std::cerr << "Warning: case split is not goal-driven anymore.\n";
+      if (warning_dichotomy_failure)
+        std::cerr << "Warning: case split on " << dump_real(var.real)
+                  << " is not goal-driven anymore.\n";
       return false;
     }
     gen = new best_splitter(hyp2[0].bnd());
@@ -331,7 +338,8 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
   if (--h->nb_ref == 0) {
     delete h;
     if (warning_dichotomy_failure)
-      std::cerr << "Warning: case splitting on " << dump_real(var.real) << " did not produce any usable result.\n";
+      std::cerr << "Warning: case split on " << dump_real(var.real)
+                << " did not produce any interesting new result.\n";
     return false;
   }
   for(graph_vect::const_iterator i = h->graphs.begin(), i_end = h->graphs.end(); i != i_end; ++i)
