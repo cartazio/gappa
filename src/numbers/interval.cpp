@@ -260,7 +260,7 @@ interval add_relative(interval const &x, interval const &y, interval const &u, i
   assert(x.base && y.base && u.base && v.base);
   number const &xl = plip(x).lower(), &xu = plip(x).upper(),
                &yl = plip(y).lower(), &yu = plip(y).upper();
-  if (!((xl > 0 || xu < 0) && (yl > 0 || yu < 0) && !in_zero(plip(x) + plip(y)))) return interval();
+  if (in_zero(plip(x) + plip(y))) return interval();
   #define add(a,b) boost::numeric::interval_lib::add< _interval_base >(a,b)
   _interval_base i(
               (plup * xl + plvp * yl) / add(xl, yl));
