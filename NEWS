@@ -1,6 +1,8 @@
 Version 0.8.0:
  * HOL Light back-end:
    - added new back-end
+ * proof graph
+   - selected best paths on length
  * fact database
    - added predicate REL: y = x * (1 + e)
    - replaced rewriting rules on relative error by computations on REL
