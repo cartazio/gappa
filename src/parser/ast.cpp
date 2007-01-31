@@ -110,6 +110,9 @@ std::string dump_real(ast_real const *r, unsigned prio) {
     s << m << (n.base == 2 ? 'b' : 'e') << n.exponent;
     return s.str();
   }
+  if (placeholder const *i = boost::get< placeholder const >(r)) {
+    return std::string(1, '?') + (char)(*i + '1');
+  }
   if (real_op const *o = boost::get< real_op const >(r)) {
     if (o->type == ROP_FUN) {
       std::string s = '[' + o->fun->name() + "](" + dump_real(o->ops[0], 0);
