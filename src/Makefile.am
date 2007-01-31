@@ -5,7 +5,7 @@ AM_YFLAGS = -d
 bin_PROGRAMS = gappa
 
 # Dependencies:
-# proofs/field.cpp initialization requires parser/ast.cpp initialization
+# proofs/rewriting.cpp initialization requires parser/ast.cpp initialization
 # backends/*.cpp initialization requires backends/backends.cpp initialization
 
 gappa_SOURCES = \
@@ -35,14 +35,14 @@ gappa_SOURCES = \
 	parser/pattern.hpp \
 	parser/ring.cpp \
 	proofs/basic_proof.cpp \
-	proofs/basic_proof.hpp \
 	proofs/dichotomy.cpp \
 	proofs/dichotomy.hpp \
-	proofs/field.cpp \
 	proofs/proof_graph.cpp \
 	proofs/proof_graph.hpp \
 	proofs/property.cpp \
 	proofs/property.hpp \
+	proofs/rewriting.cpp \
+	proofs/rewriting.hpp \
 	proofs/schemes.cpp \
 	proofs/schemes.hpp \
 	proofs/updater.cpp \

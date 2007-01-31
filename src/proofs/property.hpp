@@ -27,6 +27,8 @@ class predicated_real {
   bool null() const { return d1 == 0; }
 };
 
+typedef std::vector< predicated_real > preal_vect;
+
 class property {
   union {
     char store_bnd[sizeof(interval)];

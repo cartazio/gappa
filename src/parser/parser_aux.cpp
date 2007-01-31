@@ -5,6 +5,7 @@
 #include "parser/pattern.hpp"
 #include "proofs/proof_graph.hpp"
 #include "proofs/property.hpp"
+#include "proofs/rewriting.hpp"
 
 typedef std::set< ast_real const * > real_set;
 real_set free_variables, input_reals, output_reals;
@@ -234,9 +235,9 @@ int test_rewriting(ast_real const *src, ast_real const *dst, std::string &res) {
   std::ostringstream info;
   for(rewriting_vect::const_iterator i = rewriting_rules.begin(),
       i_end = rewriting_rules.end(); i != i_end; ++i) {
-    rewriting_rule const &rw = **i;
+    rewriting_factory const &rw = **i;
     ast_real_vect holders;
-    if (!match(src, rw.src, holders)) continue;
+    if (!match(src, rw.target.real(), holders)) continue;
     bool b = holders.size() >= 2 && (!holders[0] || !holders[1]);
     if (!match(dst, rw.dst, holders)) continue;
     for(pattern_excl_vect::const_iterator j = rw.excl.begin(),

@@ -1,16 +1,12 @@
-#include "backends/backend.hpp"
 #include "numbers/interval_arith.hpp"
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
 #include "numbers/round.hpp"
 #include "parser/ast.hpp"
 #include "parser/pattern.hpp"
-#include "proofs/basic_proof.hpp"
 #include "proofs/proof_graph.hpp"
+#include "proofs/schemes.hpp"
 #include "proofs/updater.hpp"
-
-extern backend *proof_generator;
-extern bool parameter_constrained;
 
 static preal_vect one_needed(ast_real const *r) {
   return preal_vect(1, predicated_real(r, PRED_BND));
@@ -694,61 +690,6 @@ preal_vect number_scheme::needed_reals() const {
 proof_scheme *number_scheme::factory(ast_real const *real) {
   if (!boost::get< ast_number const *const >(real)) return NULL;
   return new number_scheme(real);
-}
-
-// REWRITE
-preal_vect rewrite_scheme::needed_reals() const {
-  preal_vect res = one_needed(rewritten);
-  for(pattern_cond_vect::const_iterator i = conditions.begin(), end = conditions.end();
-      i != end; ++i)
-    res.push_back(predicated_real(i->real, i->type == COND_NZ ? PRED_ABS : PRED_BND));
-  return res;
-}
-
-node *rewrite_scheme::generate_proof() const {
-  node *n = find_proof(rewritten);
-  if (!n) return NULL;
-  std::vector< property > hyps;
-  for(pattern_cond_vect::const_iterator i = conditions.begin(), end = conditions.end();
-      i != end; ++i) {
-    node *m = find_proof(predicated_real(i->real, i->type == COND_NZ ? PRED_ABS : PRED_BND));
-    if (!m) return NULL;
-    property const &res = m->get_result();
-    interval const &b = res.bnd();
-    number n(i->value);
-    bool good;
-    switch (i->type) {
-    case COND_LE: good = n >= upper(b); break;
-    case COND_GE: good = n <= lower(b); break;
-    case COND_LT: good = n > upper(b); break;
-    case COND_NZ:
-    case COND_GT: good = n < lower(b); break;
-    case COND_NE: good = n > upper(b) || n < lower(b); break;
-    default: assert(false);
-    }
-    if (parameter_constrained && !good) return NULL;
-    hyps.push_back(res);
-  }
-  property const &res = n->get_result();
-  hyps.push_back(res);
-  return create_theorem(hyps.size(), &*hyps.begin(), property(real, res.bnd()), name, identity_updater);
-}
-
-struct rewrite_factory: scheme_factory {
-  ast_real const *src, *dst;
-  std::string name;
-  rewrite_factory(ast_real const *q1, ast_real const *q2)
-    : src(q1), dst(q2), name(proof_generator ? proof_generator->rewrite(src, dst) : "none") {}
-  virtual proof_scheme *operator()(predicated_real const &) const;
-};
-
-proof_scheme *rewrite_factory::operator()(predicated_real const &r) const {
-  if (r.pred() != PRED_BND || r.real() != src) return NULL;
-  return new rewrite_scheme(src, dst, name);
-}
-
-void register_user_rewrite(ast_real const *r1, ast_real const *r2) {
-  scheme_register dummy(new rewrite_factory(r1, r2));
 }
 
 // ADD_SUB_FIX

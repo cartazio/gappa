@@ -17,16 +17,19 @@ struct proof_scheme {
 };
 
 struct scheme_factory {
-  virtual proof_scheme *operator()(predicated_real const &) const = 0;
+  predicated_real target;
+  scheme_factory(predicated_real const &r);
+  virtual proof_scheme *operator()(predicated_real const &, ast_real_vect const &) const = 0;
   virtual ~scheme_factory() {}
 };
 
-struct scheme_register {
-  typedef proof_scheme *(*scheme_factory_fun)(ast_real const *);
-  typedef proof_scheme *(*scheme_factorz_fun)(predicated_real const &);
-  scheme_register(scheme_factory_fun f);
-  scheme_register(scheme_factorz_fun f);
-  scheme_register(scheme_factory const *);
+struct factory_creator {
+  typedef proof_scheme *(*factorx_fun)(predicated_real const &, ast_real_vect const &);
+  typedef proof_scheme *(*factory_fun)(ast_real const *);
+  typedef proof_scheme *(*factorz_fun)(predicated_real const &);
+  factory_creator(factorx_fun f);
+  factory_creator(factory_fun f);
+  factory_creator(factorz_fun f);
 };
 
 #define REGISTER_SCHEME_BEGIN(name) \
@@ -37,7 +40,7 @@ struct scheme_register {
 
 #define REGISTER_SCHEME_END(name) \
   }; \
-  static scheme_register name##_scheme_register(&name##_scheme::factory)
+  static factory_creator name##_scheme_register(&name##_scheme::factory)
 
 #define REGISTER_SCHEMEX_BEGIN(name) \
   struct name##_scheme: proof_scheme { \
@@ -47,7 +50,17 @@ struct scheme_register {
 
 #define REGISTER_SCHEMEX_END(name) \
   }; \
-  static scheme_register name##_scheme_register(&name##_scheme::factory)
+  static factory_creator name##_scheme_register(&name##_scheme::factory)
+
+#define REGISTER_SCHEMEY_BEGIN(name) \
+  struct name##_scheme: proof_scheme { \
+    virtual node *generate_proof() const; \
+    virtual preal_vect needed_reals() const; \
+    static proof_scheme *factory(predicated_real const &, ast_real_vect const &)
+
+#define REGISTER_SCHEMEY_END(name) \
+  }; \
+  static factory_creator name##_scheme_register(&name##_scheme::factory)
 
 inline node *find_proof(predicated_real const &real) { return top_graph->find_already_known(real); }
 node *find_proof(property const &);

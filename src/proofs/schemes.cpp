@@ -5,7 +5,6 @@
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
 #include "parser/pattern.hpp"
-#include "proofs/basic_proof.hpp"
 #include "proofs/schemes.hpp"
 
 typedef std::set< ast_real const * > ast_real_set;
@@ -16,32 +15,33 @@ struct scheme_factories: std::vector< scheme_factory const * > {
 };
 static scheme_factories factories;
 
-struct scheme_factory_wrapper: scheme_factory {
-  typedef scheme_register::scheme_factory_fun scheme_factory_fun;
-  scheme_factory_fun fun;
-  scheme_factory_wrapper(scheme_factory_fun f): fun(f) {}
-  virtual proof_scheme *operator()(predicated_real const &r) const
+scheme_factory::scheme_factory(predicated_real const &r): target(r) {
+  factories.push_back(this);
+}
+
+struct factory_wrapper: scheme_factory {
+  typedef factory_creator::factory_fun factory_fun;
+  factory_fun fun;
+  factory_wrapper(factory_fun f)
+  : scheme_factory(predicated_real()), fun(f) {}
+  virtual proof_scheme *operator()(predicated_real const &r, ast_real_vect const &) const
   { return r.pred() == PRED_BND ? (*fun)(r.real()) : NULL; }
 };
 
-struct scheme_factorz_wrapper: scheme_factory {
-  typedef scheme_register::scheme_factorz_fun scheme_factory_fun;
-  scheme_factory_fun fun;
-  scheme_factorz_wrapper(scheme_factory_fun f): fun(f) {}
-  virtual proof_scheme *operator()(predicated_real const &r) const { return (*fun)(r); }
+struct factorz_wrapper: scheme_factory {
+  typedef factory_creator::factorz_fun factory_fun;
+  factory_fun fun;
+  factorz_wrapper(factory_fun f)
+  : scheme_factory(predicated_real()), fun(f) {}
+  virtual proof_scheme *operator()(predicated_real const &r, ast_real_vect const &) const
+  { return (*fun)(r); }
 };
 
-scheme_register::scheme_register(scheme_factory_fun f) {
-  factories.push_back(new scheme_factory_wrapper(f));
-}
+factory_creator::factory_creator(factory_fun f)
+{ new factory_wrapper(f); }
 
-scheme_register::scheme_register(scheme_factorz_fun f) {
-  factories.push_back(new scheme_factorz_wrapper(f));
-}
-
-scheme_register::scheme_register(scheme_factory const *f) {
-  factories.push_back(f);
-}
+factory_creator::factory_creator(factorz_fun f)
+{ new factorz_wrapper(f); }
 
 typedef std::set< predicated_real > real_set;
 static real_set missing_reals;
@@ -117,18 +117,6 @@ static void delete_scheme(proof_scheme const *s, predicated_real const *restrict
   delete s;
 }
 
-static void add_rewrite_scheme(rewriting_rule const &rw, ast_real const *src,
-                               ast_real_vect const &holders, scheme_set &l) {
-  ast_real const *dst = rewrite(rw.dst, holders);
-  for(pattern_excl_vect::const_iterator i = rw.excl.begin(),
-      end = rw.excl.end(); i != end; ++i)
-    if (rewrite(i->first, holders) == rewrite(i->second, holders)) return;
-  pattern_cond_vect c(rw.cond);
-  for(pattern_cond_vect::iterator i = c.begin(), end = c.end(); i != end; ++i)
-    i->real = rewrite(i->real, holders);
-  l.insert(new rewrite_scheme(src, dst, rw.name, c));
-}
-
 int stat_tested_real = 0, stat_discarded_real = 0;
 
 static real_dependency &initialize_dependencies(predicated_real const &real) {
@@ -140,41 +128,34 @@ static real_dependency &initialize_dependencies(predicated_real const &real) {
   real_dependency &dep = it->second;
   dep.found = false;
   scheme_set &l = dep.schemes;
-  for(scheme_factories::iterator i = factories.begin(), i_end = factories.end(); i != i_end; ++i) {
-    proof_scheme *s = (**i)(real);
-    if (!s) continue;
-    l.insert(s);
-  }
-  // add rewriting schemes
-  if (real.pred() == PRED_BND)
-    for(rewriting_vect::const_iterator i = rewriting_rules.begin(),
-        i_end = rewriting_rules.end(); i != i_end; ++i) {
-      rewriting_rule const &rw = **i;
-      ast_real const *src = real.real();
-      ast_real_vect holders;
-      if (!match(src, rw.src, holders)) continue;
+  for (scheme_factories::iterator i = factories.begin(),
+       i_end = factories.end(); i != i_end; ++i) {
+    scheme_factory const &f = **i;
+    ast_real_vect holders;
+    if (!f.target.null()) {
+      if (f.target.pred() != real.pred()) continue;
+      ast_real const *r1 = f.target.real(), *r2 = f.target.real2();
+      if (!match(real.real(), r1, holders) ||
+          (r2 && !match(real.real2(), r2, holders)))
+        continue;
       if (holders.size() >= 2 && (!holders[0] || !holders[1])) {
         assert(holders[0] || holders[1]);
-        link_map const *lm;
-        int p;
-        if (holders[0]) {
-          lm = &approximates;
-          p = 1;
-        } else {
-          lm = &accurates;
-          p = 0;
-        }
+        int p = !holders[1];
+        link_map const *lm = p ? &approximates : &accurates;
         link_map::const_iterator k = lm->find(holders[1 - p]);
         if (k == lm->end()) continue;
         ast_real_set const &s = k->second;
-        for(ast_real_set::const_iterator j = s.begin(), j_end = s.end(); j != j_end; ++j) {
+        for (ast_real_set::const_iterator j = s.begin(), j_end = s.end(); j != j_end; ++j) {
           holders[p] = *j;
-          add_rewrite_scheme(rw, src, holders, l);
+          if (proof_scheme *s = f(real, holders)) l.insert(s);
         }
-      } else add_rewrite_scheme(rw, src, holders, l);
+        continue;
+      }
     }
+    if (proof_scheme *s = f(real, holders)) l.insert(s);
+  }
   // create the dependencies
-  for(scheme_set::const_iterator i = l.begin(), i_end = l.end(); i != i_end; ++i) {
+  for (scheme_set::const_iterator i = l.begin(), i_end = l.end(); i != i_end; ++i) {
     proof_scheme const *s = *i;
     preal_vect v = s->needed_reals();
     for(preal_vect::const_iterator j = v.begin(), j_end = v.end(); j != j_end; ++j)

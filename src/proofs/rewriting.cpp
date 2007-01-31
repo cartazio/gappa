@@ -1,8 +1,103 @@
 #include <boost/preprocessor/cat.hpp>
-#include "parser/pattern.hpp"
+#include "backends/backend.hpp"
+#include "numbers/real.hpp"
+#include "numbers/interval.hpp"
+#include "numbers/interval_utility.hpp"
+#include "proofs/rewriting.hpp"
+#include "proofs/updater.hpp"
 
+extern backend *proof_generator;
+extern bool parameter_constrained;
+
+// REWRITING_SCHEME
+struct rewriting_scheme: proof_scheme {
+  ast_real const *rewritten;
+  std::string name;
+  pattern_cond_vect conditions;
+  rewriting_scheme(ast_real const *src, ast_real const *dst, std::string const &n)
+  : proof_scheme(src), rewritten(dst), name(n) {}
+  rewriting_scheme(ast_real const *src, ast_real const *dst,
+                   std::string const &n, pattern_cond_vect const &c)
+  : proof_scheme(src), rewritten(dst), name(n), conditions(c) {}
+  virtual node *generate_proof() const;
+  virtual preal_vect needed_reals() const;
+};
+
+preal_vect rewriting_scheme::needed_reals() const {
+  preal_vect res(1, predicated_real(rewritten, PRED_BND));
+  for (pattern_cond_vect::const_iterator i = conditions.begin(),
+       end = conditions.end(); i != end; ++i)
+    res.push_back(predicated_real(i->real, i->type == COND_NZ ? PRED_ABS : PRED_BND));
+  return res;
+}
+
+node *rewriting_scheme::generate_proof() const {
+  node *n = find_proof(rewritten);
+  if (!n) return NULL;
+  std::vector< property > hyps;
+  for (pattern_cond_vect::const_iterator i = conditions.begin(),
+       end = conditions.end(); i != end; ++i) {
+    node *m = find_proof(predicated_real(i->real, i->type == COND_NZ ? PRED_ABS : PRED_BND));
+    if (!m) return NULL;
+    property const &res = m->get_result();
+    interval const &b = res.bnd();
+    number n(i->value);
+    bool good;
+    switch (i->type) {
+    case COND_LE: good = n >= upper(b); break;
+    case COND_GE: good = n <= lower(b); break;
+    case COND_LT: good = n > upper(b); break;
+    case COND_NZ:
+    case COND_GT: good = n < lower(b); break;
+    case COND_NE: good = n > upper(b) || n < lower(b); break;
+    default: assert(false);
+    }
+    if (parameter_constrained && !good) return NULL;
+    hyps.push_back(res);
+  }
+  property const &res = n->get_result();
+  hyps.push_back(res);
+  return create_theorem(hyps.size(), &*hyps.begin(), property(real, res.bnd()),
+                        name, identity_updater);
+}
+
+// REWRITING_FACTORY
 rewriting_vect rewriting_rules;
 
+rewriting_factory::rewriting_factory
+  (ast_real const *p1, ast_real const *p2, std::string const &n,
+   pattern_cond_vect const &c, pattern_excl_vect const &e)
+: scheme_factory(predicated_real(p1, PRED_BND)), dst(p2),
+  name(n), cond(c), excl(e)
+{
+  rewriting_rules.push_back(this);
+}
+
+proof_scheme *rewriting_factory::operator()(predicated_real const &src,
+                                            ast_real_vect const &holders) const {
+  ast_real const *dst = rewrite(this->dst, holders);
+  for (pattern_excl_vect::const_iterator i = excl.begin(),
+       end = excl.end(); i != end; ++i)
+    if (rewrite(i->first, holders) == rewrite(i->second, holders)) return NULL;
+  pattern_cond_vect c(cond);
+  for (pattern_cond_vect::iterator i = c.begin(), end = c.end(); i != end; ++i)
+    i->real = rewrite(i->real, holders);
+  return new rewriting_scheme(src.real(), dst, name, c);
+}
+
+void register_user_rewrite(ast_real const *r1, ast_real const *r2) {
+  new rewriting_factory(r1, r2, proof_generator ? proof_generator->rewrite(r1, r2) : "none",
+                        pattern_cond_vect(), pattern_excl_vect());
+}
+
+struct rewriting_rule {
+  rewriting_rule(pattern const &p1, pattern const &p2, std::string const &n,
+                 pattern_cond_vect const &c, pattern_excl_vect const &e) {
+    new rewriting_factory(p1, p2, n, c, e);
+  }
+};
+
+// PATTERN OPERATIONS
 pattern_cond_vect operator&&(pattern_cond_vect const &v, pattern_cond const &c) {
   pattern_cond_vect res(v);
   res.push_back(c);
