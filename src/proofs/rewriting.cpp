@@ -296,17 +296,13 @@ REWRITe(sub_xals, //actually err_xers
 	(c - b) + (b - a),
 	a ^ c && b ^ c);
 
-REWRIT9(err_xalq,
-	(b - c) / c,
-	(b - a) / a + (a - c) / c + ((b - a) / a) * ((a - c) / c),
-	~c && ~a,
-	a ^ c && b ^ c);
-
+/*
 REWRIT9(err_xalq, //actually err_xerq
 	(c - a) / a,
 	(c - b) / b + (b - a) / a + ((c - b) / b) * ((b - a) / a),
 	~a && ~b,
 	a ^ c && b ^ c);
+*/
 
 REWRIT9(err_xibq,
 	a - b,

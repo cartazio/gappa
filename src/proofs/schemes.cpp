@@ -19,6 +19,15 @@ scheme_factory::scheme_factory(predicated_real const &r): target(r) {
   factories.push_back(this);
 }
 
+struct factorx_wrapper: scheme_factory {
+  typedef factory_creator::factorx_fun factory_fun;
+  factory_fun fun;
+  factorx_wrapper(factory_fun f, predicated_real const &r)
+  : scheme_factory(r), fun(f) {}
+  virtual proof_scheme *operator()(predicated_real const &r, ast_real_vect const &h) const
+  { return (*fun)(r, h); }
+};
+
 struct factory_wrapper: scheme_factory {
   typedef factory_creator::factory_fun factory_fun;
   factory_fun fun;
@@ -36,6 +45,9 @@ struct factorz_wrapper: scheme_factory {
   virtual proof_scheme *operator()(predicated_real const &r, ast_real_vect const &) const
   { return (*fun)(r); }
 };
+
+factory_creator::factory_creator(factorx_fun f, predicated_real const &r)
+{ new factorx_wrapper(f, r); }
 
 factory_creator::factory_creator(factory_fun f)
 { new factory_wrapper(f); }
