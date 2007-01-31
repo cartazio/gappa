@@ -4,7 +4,6 @@
 #include "parser/ast.hpp"
 #include "proofs/dichotomy.hpp"
 #include "parser/parser.h"
-#include "proofs/basic_proof.hpp"
 
 #define yyerror(msg) my_yyerror(yylloc, msg)
 
@@ -25,6 +24,7 @@ int my_yyerror(YYLTYPE &yylloc, char const *errstr) {
   YYERROR; \
 } while (0)
 
+extern void register_user_rewrite(ast_real const *, ast_real const *);
 extern void generate_graph(ast_prop const *p);
 extern void test_ringularity(ast_real const *, ast_real const *);
 extern int test_rewriting(ast_real const *, ast_real const *, std::string &);
