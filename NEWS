@@ -1,6 +1,11 @@
 Version 0.8.0:
  * HOL Light back-end:
    - added new back-end
+ * fact database
+   - added predicate REL: y = x * (1 + e)
+   - replaced rewriting rules on relative error by computations on REL
+   - enhanced path finder to fill holes in theorems
+   - put back rewriting rules to theorem level
 
 Version 0.7.3:
  * fact database
