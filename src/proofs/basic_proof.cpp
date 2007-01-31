@@ -1014,9 +1014,11 @@ node *computation_rel_add_scheme::generate_proof() const {
   if (!fill_hypotheses(hyps, needed)) return NULL;
   real_op const *r = boost::get< real_op const >(real.real());
   assert(r && (r->type == BOP_ADD || r->type == BOP_SUB));
-  property res(real, add_relative(hyps[2].bnd(), hyps[3].bnd(), hyps[0].bnd(), hyps[1].bnd()));
+  bool sub = r->type == BOP_SUB;
+  property res(real, add_relative(hyps[2].bnd(), sub ? -hyps[3].bnd() : hyps[3].bnd(),
+                                  hyps[0].bnd(), hyps[1].bnd()));
   if (!is_defined(res.bnd())) return NULL;
-  return create_theorem(4, hyps, res, r->type == BOP_ADD ? "add_rrbb" : "sub_rrbb");
+  return create_theorem(4, hyps, res, sub ? "sub_rrbb" : "add_rrbb");
 }
 
 preal_vect computation_rel_add_scheme::needed_reals() const {
