@@ -339,7 +339,7 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
     delete h;
     if (warning_dichotomy_failure)
       std::cerr << "Warning: case split on " << dump_real(var.real)
-                << " did not produce any interesting new result.\n";
+                << " has not produced any interesting new result.\n";
     return false;
   }
   for(graph_vect::const_iterator i = h->graphs.begin(), i_end = h->graphs.end(); i != i_end; ++i)
