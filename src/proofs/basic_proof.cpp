@@ -969,6 +969,7 @@ preal_vect computation_rel_mul_scheme::needed_reals() const {
 
 proof_scheme *computation_rel_mul_scheme::factory(predicated_real const &real,
                                                   ast_real_vect const &holders) {
+  if (holders[0] == holders[2] || holders[1] == holders[3]) return NULL;
   preal_vect hyps;
   hyps.push_back(predicated_real(holders[0], holders[2], PRED_REL));
   hyps.push_back(predicated_real(holders[1], holders[3], PRED_REL));
@@ -1000,3 +1001,31 @@ proof_scheme *compose_rel_scheme::factory(predicated_real const &real, ast_real_
   hyps.push_back(predicated_real(holders[0], holders[2], PRED_REL));
   return new compose_rel_scheme(real, hyps);
 }
+
+// ERROR_OF_REL
+REGISTER_SCHEMEY_BEGIN(error_of_rel);
+  preal_vect needed;
+  error_of_rel_scheme(predicated_real const &r, preal_vect const &v)
+    : proof_scheme(r), needed(v) {}
+REGISTER_SCHEMEY_END(error_of_rel, predicated_real(pattern(1) - pattern(0), PRED_BND));
+
+node *error_of_rel_scheme::generate_proof() const {
+  property hyps[2];
+  if (!fill_hypotheses(hyps, needed)) return NULL;
+  property res(real, hyps[0].bnd() * hyps[1].bnd());
+  return create_theorem(2, hyps, res, "error_of_rel", &compose_updater);
+}
+
+preal_vect error_of_rel_scheme::needed_reals() const {
+  return needed;
+}
+
+proof_scheme *error_of_rel_scheme::factory(predicated_real const &real,
+                                           ast_real_vect const &holders) {
+  if (holders[0] == holders[1]) return NULL;
+  preal_vect hyps;
+  hyps.push_back(predicated_real(holders[1], holders[0], PRED_REL));
+  hyps.push_back(predicated_real(holders[0], PRED_BND));
+  return new error_of_rel_scheme(real, hyps);
+}
+

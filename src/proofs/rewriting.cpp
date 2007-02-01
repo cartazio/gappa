@@ -302,12 +302,6 @@ REWRIT9(err_xalq, //actually err_xerq
 	a ^ c && b ^ c);
 */
 
-REWRIT9(err_xibq,
-	a - b,
-	((a - b) / b) * b,
-	~b,
-	a ^ b);
-
 /* bad bad Zoot
 REWRIT9(err_xabq,
 	a / b,
