@@ -844,10 +844,11 @@ proof_scheme *flt_of_singleton_bnd_scheme::factory(predicated_real const &real) 
 }
 
 // BND_OF_ABS_REL
-REGISTER_SCHEME_BEGIN(bnd_of_abs_rel);
+REGISTER_SCHEMEY_BEGIN(bnd_of_abs_rel);
   preal_vect needed;
-  bnd_of_abs_rel_scheme(ast_real const *r, preal_vect const &v): proof_scheme(r), needed(v) {}
-REGISTER_SCHEME_END(bnd_of_abs_rel);
+  bnd_of_abs_rel_scheme(predicated_real const &r, preal_vect const &v): proof_scheme(r), needed(v) {}
+REGISTER_SCHEMEY_END(bnd_of_abs_rel,
+  predicated_real((pattern(1) - pattern(0)) / pattern(0), PRED_BND));
 
 node *bnd_of_abs_rel_scheme::generate_proof() const {
   property hyps[2];
@@ -860,11 +861,8 @@ preal_vect bnd_of_abs_rel_scheme::needed_reals() const {
   return needed;
 }
 
-extern pattern relative_helper;
-
-proof_scheme *bnd_of_abs_rel_scheme::factory(ast_real const *real) {
-  ast_real_vect holders;
-  if (!match(real, relative_helper, holders)) return NULL;
+proof_scheme *bnd_of_abs_rel_scheme::factory(predicated_real const &real,
+                                             ast_real_vect const &holders) {
   preal_vect hyps;
   hyps.push_back(predicated_real(holders[0], PRED_ABS));
   hyps.push_back(predicated_real(holders[1], holders[0], PRED_REL));
