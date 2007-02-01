@@ -22,6 +22,7 @@ bool match_visitor::operator()(real_op const &r1, real_op const &r2) const {
 
 bool match_visitor::visit(ast_real const *src, ast_real const *dst) const {
   if (src == dst) return true;
+  if (boost::get< undefined_real const >(dst)) return src == dst;
   placeholder const *p = boost::get< placeholder const >(dst);
   if (!p) return boost::apply_visitor(*this, *src, *dst);
   unsigned i = *p;
