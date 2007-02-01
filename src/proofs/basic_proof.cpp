@@ -946,11 +946,12 @@ proof_scheme *computation_rel_add_scheme::factory(predicated_real const &real) {
 BINARY_INTERVAL(compose_updater) { r = compose_relative(h[0], h[1]); }
 
 // COMPUTATION_REL_MUL
-REGISTER_SCHEMEX_BEGIN(computation_rel_mul);
+REGISTER_SCHEMEY_BEGIN(computation_rel_mul);
   preal_vect needed;
   computation_rel_mul_scheme(predicated_real const &r, preal_vect const &v)
     : proof_scheme(r), needed(v) {}
-REGISTER_SCHEMEX_END(computation_rel_mul);
+REGISTER_SCHEMEY_END(computation_rel_mul,
+  predicated_real(pattern(0) * pattern(1), pattern(2) * pattern(3), PRED_REL));
 
 node *computation_rel_mul_scheme::generate_proof() const {
   property hyps[2];
@@ -966,15 +967,11 @@ preal_vect computation_rel_mul_scheme::needed_reals() const {
   return needed;
 }
 
-proof_scheme *computation_rel_mul_scheme::factory(predicated_real const &real) {
-  if (real.pred() != PRED_REL) return NULL;
-  real_op const *p = boost::get< real_op const >(real.real());
-  if (!p || p->type != BOP_MUL) return NULL;
-  real_op const *p2 = boost::get< real_op const >(real.real2());
-  if (!p2 || p2->type != BOP_MUL) return NULL;
+proof_scheme *computation_rel_mul_scheme::factory(predicated_real const &real,
+                                                  ast_real_vect const &holders) {
   preal_vect hyps;
-  hyps.push_back(predicated_real(p->ops[0], p2->ops[0], PRED_REL));
-  hyps.push_back(predicated_real(p->ops[1], p2->ops[1], PRED_REL));
+  hyps.push_back(predicated_real(holders[0], holders[2], PRED_REL));
+  hyps.push_back(predicated_real(holders[1], holders[3], PRED_REL));
   return new computation_rel_mul_scheme(real, hyps);
 }
 
