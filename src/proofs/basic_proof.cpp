@@ -1013,7 +1013,7 @@ node *error_of_rel_scheme::generate_proof() const {
   property hyps[2];
   if (!fill_hypotheses(hyps, needed)) return NULL;
   property res(real, hyps[0].bnd() * hyps[1].bnd());
-  return create_theorem(2, hyps, res, "error_of_rel", &compose_updater);
+  return create_theorem(2, hyps, res, "error_of_rel", &mul_updater);
 }
 
 preal_vect error_of_rel_scheme::needed_reals() const {
