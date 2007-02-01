@@ -4,6 +4,8 @@
 #include "proofs/proof_graph.hpp"
 #include "proofs/schemes.hpp"
 
+extern bool parameter_expensive;
+
 graph_t *top_graph = NULL;
 
 unsigned visit_counter = 0;
@@ -50,13 +52,13 @@ bool node::can_visit() const {
 
 typedef std::list< node * > node_list;
 
-void node::compute_weight() {
-  if (weight > 0) return;
+unsigned node::get_weight() {
+  if (weight > 0) return weight;
   node_vect const &v = get_subproofs();
   weight = local_weight;
   switch (v.size()) {
   case 0: break;
-  case 1: weight += v[0]->weight; break;
+  case 1: weight += v[0]->get_weight(); break;
   default:
     ++visit_counter;
     node_list pending;
@@ -71,6 +73,7 @@ void node::compute_weight() {
         if ((*i)->can_visit()) pending.push_back(*i);
     }
   }
+  return weight;
 }
 
 node_vect const &node::get_subproofs() const {
@@ -78,7 +81,9 @@ node_vect const &node::get_subproofs() const {
   return dummy;
 }
 
-node::node(node_id t, graph_t *g): type(t), graph(g), nb_good(0), visited(0), local_weight(1), weight(0) {
+node::node(node_id t, graph_t *g)
+: type(t), graph(g), nb_good(0), visited(0), local_weight(1),
+  weight(parameter_expensive ? 0 : local_weight) {
   if (g)
     g->insert(this);
 }
@@ -318,9 +323,8 @@ bool graph_t::try_real(node *n) {
       delete n;
       return false;
     }
-    n->compute_weight();
     if (res1.implies(res2)) {
-      if (n->weight >= old->weight) {
+      if (n->get_weight() >= old->get_weight()) {
         ++stat_discarded_pred;
         delete n;
         return false;
@@ -329,12 +333,10 @@ bool graph_t::try_real(node *n) {
       ++stat_intersected_pred;
       n = new intersection_node(old, n);
       if (n == contradiction) return true;
-      n->compute_weight();
     }
     dst = n;
     old->remove_known();
   } else {
-    n->compute_weight();
     node_map::iterator i = partial_reals.find(res2.real);
     if (i != partial_reals.end()) { // there is a known inequality
       node *m = i->second;
@@ -345,7 +347,6 @@ bool graph_t::try_real(node *n) {
         ++n->nb_good; // n has just become a known real, this data is needed in case a contradiction is found
         n = new intersection_node(n, m);
         if (n == contradiction) return true;
-        n->compute_weight();
         dst = n;
         --old->nb_good;
       } else delete m;

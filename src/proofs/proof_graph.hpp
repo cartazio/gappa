@@ -41,7 +41,7 @@ struct node {
   mutable unsigned visited;
   unsigned local_weight, weight;
   bool can_visit() const; // update visited
-  void compute_weight();
+  unsigned get_weight();
   node(node_id, graph_t *);
   virtual property const &get_result() const = 0;
   property_vect get_hypotheses() const;

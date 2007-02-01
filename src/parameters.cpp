@@ -7,6 +7,7 @@ int parameter_internal_precision = 60;
 int parameter_dichotomy_depth = 100;
 bool parameter_rfma = false;
 bool parameter_constrained = true;
+bool parameter_expensive = false;
 bool parameter_statistics = false;
 bool warning_dichotomy_failure = true;
 bool warning_hint_difference = true;
@@ -29,6 +30,7 @@ static void help() {
     "\n"
     "Engine modes:\n"
     "  -Munconstrained                 do not check for theorem constraints\n"
+    "  -Mexpensive                     work harder to get shorter proofs, maybe\n"
     "  -Mstatistics                    display statistics at the end\n"
     "\n"
     "Warnings: (default: all)\n"
@@ -67,6 +69,7 @@ bool parse_option(std::string const &s, bool internal) {
     if (internal) return false;
     std::string o = s.substr(2);
     if (o == "unconstrained") parameter_constrained = false; else
+    if (o == "expensive")     parameter_expensive = true; else
     if (o == "statistics")    parameter_statistics  = true;
     else return false;
     break;
