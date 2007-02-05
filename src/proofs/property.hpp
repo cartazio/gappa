@@ -6,7 +6,7 @@
 #include "numbers/interval.hpp"
 #include "parser/ast_real.hpp"
 
-enum predicate_type { PRED_BND = 0, PRED_ABS, PRED_REL, PRED_FIX = 4, PRED_FLT };
+enum predicate_type { PRED_BND = 0, PRED_ABS, PRED_REL, PRED_FIX = 4, PRED_FLT, PRED_NZR = 8 };
 
 class predicated_real {
   long d1, d2;
@@ -17,8 +17,8 @@ class predicated_real {
   predicated_real(ast_real const *r1, ast_real const *r2, predicate_type p)
     : d1(reinterpret_cast< long >(r1) | (p & 3)), d2(reinterpret_cast< long >(r2) | (p >> 2)) {}
   predicate_type pred() const { return (predicate_type)((d1 & 3) | ((d2 & 3) << 2)); }
-  bool pred_bnd() const { return (d2 & 1) == 0; }
-  bool pred_cst() const { return (d2 & 1) != 0; }
+  bool pred_bnd() const { return (d2 & 3) == 0; }
+  bool pred_cst() const { return (d2 & 3) == 1; }
   ast_real const *real()  const { return reinterpret_cast< ast_real const * >(d1 & ~3); }
   ast_real const *real2() const { return reinterpret_cast< ast_real const * >(d2 & ~3); }
   bool operator==(predicated_real const &r) const { return d1 == r.d1 && d2 == r.d2; }
