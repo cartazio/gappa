@@ -346,3 +346,27 @@ REWRIT3(square_sqrt,
 	sqrt(a) * sqrt(a),
 	a,
 	a >= 0);
+
+REWRIT9(addf_1,
+	a / (a + b),
+	one / (one + b / a),
+	~a && ~(a + b),
+	a ^ one);
+
+REWRIT9(addf_2,
+	a / (a + b),
+	one - one / (one + a / b),
+	~b && ~(a + b),
+	a ^ one);
+
+REWRIT9(addf_3,
+	a / (a - b),
+	one / (one - b / a),
+	~a && ~(a - b),
+	a ^ one);
+
+REWRIT9(addf_4,
+	a / (a - b),
+	one + one / (a / b - one),
+	~b && ~(a - b),
+	a ^ one);
