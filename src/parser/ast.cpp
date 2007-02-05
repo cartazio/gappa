@@ -154,6 +154,8 @@ std::string dump_real(predicated_real const &r) {
   case PRED_REL: s << "REL(" << v << ", " << dump_real(r.real2()) << ')'; break;
   case PRED_FIX: s << "FIX(" << v << ')'; break;
   case PRED_FLT: s << "FLT(" << v << ')'; break;
+  case PRED_NZR: s << "NZR(" << v << ')'; break;
+  default: assert(false);
   }
   return s.str();
 }
@@ -167,6 +169,8 @@ std::string dump_property(property const &p) {
   case PRED_REL: s << "REL(" << r << ", " << dump_real(p.real.real2()) << ", " << p.bnd() << ')'; break;
   case PRED_FIX: s << "FIX(" << r << ", " << p.cst() << ')'; break;
   case PRED_FLT: s << "FLT(" << r << ", " << p.cst() << ')'; break;
+  case PRED_NZR: s << "NZR(" << r << ')'; break;
+  default: assert(false);
   }
   return s.str();
 }

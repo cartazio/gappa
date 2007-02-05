@@ -360,12 +360,11 @@ node *computation_scheme::generate_proof() const {
       if (r->type == BOP_SUB)
         return create_theorem(0, NULL, property(real, zero()), "sub_refl", trivial_updater);
       if (r->type == BOP_DIV) {
-        node *n = find_proof(predicated_real(r->ops[0], PRED_ABS));
+        node *n = find_proof(predicated_real(r->ops[0], PRED_NZR));
         if (!n) return NULL;
         property const &res = n->get_result();
-        if (contains_zero(res.bnd())) return NULL;
         number one(1);
-        return create_theorem(1, &res, property(real, interval(one, one)), "div_refl", trivial_updater);
+        return create_theorem(1, &res, property(real, interval(one, one)), "div_refl");
       }
     }
     std::string s;
@@ -421,7 +420,7 @@ preal_vect computation_scheme::needed_reals() const {
   ast_real_vect const &ops = r->ops;
   if (ops.size() == 2 && ops[0] == ops[1]) {
     if (r->type == BOP_SUB) return preal_vect();
-    if (r->type == BOP_DIV) return preal_vect(1, predicated_real(ops[0], PRED_ABS));
+    if (r->type == BOP_DIV) return preal_vect(1, predicated_real(ops[0], PRED_NZR));
     return preal_vect(1, predicated_real(ops[0], PRED_BND));
   }
   preal_vect res;
@@ -705,7 +704,7 @@ preal_vect mul_fix_flt_scheme::needed_reals() const {
 
 proof_scheme *mul_fix_flt_scheme::factory(predicated_real const &real) {
   predicate_type t = real.pred();
-  if (real.pred_bnd()) return NULL;
+  if (t != PRED_FIX && t != PRED_FLT) return NULL;
   real_op const *p = boost::get< real_op const >(real.real());
   if (!p || p->type != BOP_MUL) return NULL;
   preal_vect hyps;
@@ -843,30 +842,29 @@ proof_scheme *flt_of_singleton_bnd_scheme::factory(predicated_real const &real) 
   return new flt_of_singleton_bnd_scheme(real, predicated_real(real.real(), PRED_BND));
 }
 
-// BND_OF_ABS_REL
-REGISTER_SCHEMEY_BEGIN(bnd_of_abs_rel);
+// BND_OF_NZR_REL
+REGISTER_SCHEMEY_BEGIN(bnd_of_nzr_rel);
   preal_vect needed;
-  bnd_of_abs_rel_scheme(predicated_real const &r, preal_vect const &v): proof_scheme(r), needed(v) {}
-REGISTER_SCHEMEY_END(bnd_of_abs_rel,
+  bnd_of_nzr_rel_scheme(predicated_real const &r, preal_vect const &v): proof_scheme(r), needed(v) {}
+REGISTER_SCHEMEY_END(bnd_of_nzr_rel,
   predicated_real((pattern(1) - pattern(0)) / pattern(0), PRED_BND));
 
-node *bnd_of_abs_rel_scheme::generate_proof() const {
+node *bnd_of_nzr_rel_scheme::generate_proof() const {
   property hyps[2];
   if (!fill_hypotheses(hyps, needed)) return NULL;
-  if (contains_zero(hyps[0].bnd())) return NULL;
-  return create_theorem(2, hyps, property(real, hyps[1].bnd()), "bnd_of_abs_rel", identity_updater);
+  return create_theorem(2, hyps, property(real, hyps[1].bnd()), "bnd_of_nzr_rel", identity_updater);
 }
 
-preal_vect bnd_of_abs_rel_scheme::needed_reals() const {
+preal_vect bnd_of_nzr_rel_scheme::needed_reals() const {
   return needed;
 }
 
-proof_scheme *bnd_of_abs_rel_scheme::factory(predicated_real const &real,
+proof_scheme *bnd_of_nzr_rel_scheme::factory(predicated_real const &real,
                                              ast_real_vect const &holders) {
   preal_vect hyps;
-  hyps.push_back(predicated_real(holders[0], PRED_ABS));
+  hyps.push_back(predicated_real(holders[0], PRED_NZR));
   hyps.push_back(predicated_real(holders[1], holders[0], PRED_REL));
-  return new bnd_of_abs_rel_scheme(real, hyps);
+  return new bnd_of_nzr_rel_scheme(real, hyps);
 }
 
 // COMPUTATION_REL_UOP
@@ -1029,3 +1027,26 @@ proof_scheme *error_of_rel_scheme::factory(predicated_real const &real,
   return new error_of_rel_scheme(real, hyps);
 }
 
+// NZR_OF_ABS
+REGISTER_SCHEMEX_BEGIN(nzr_of_abs);
+  predicated_real needed;
+  nzr_of_abs_scheme(predicated_real const &r, predicated_real const &n)
+    : proof_scheme(r), needed(n) {}
+REGISTER_SCHEMEX_END(nzr_of_abs);
+
+node *nzr_of_abs_scheme::generate_proof() const {
+  node *n = find_proof(needed);
+  if (!n) return NULL;
+  property const &hyp = n->get_result();
+  if (contains_zero(hyp.bnd())) return NULL;
+  return create_theorem(1, &hyp, property(real), "nzr_of_abs", trivial_updater);
+}
+
+preal_vect nzr_of_abs_scheme::needed_reals() const {
+  return preal_vect(1, needed);
+}
+
+proof_scheme *nzr_of_abs_scheme::factory(predicated_real const &real) {
+  if (real.pred() != PRED_NZR) return NULL;
+  return new nzr_of_abs_scheme(real, predicated_real(real.real(), PRED_ABS));
+}
