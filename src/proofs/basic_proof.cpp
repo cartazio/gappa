@@ -1049,3 +1049,28 @@ proof_scheme *nzr_of_abs_scheme::factory(predicated_real const &real) {
   if (real.pred() != PRED_NZR) return NULL;
   return new nzr_of_abs_scheme(real, predicated_real(real.real(), PRED_ABS));
 }
+
+// NZR_OF_BND
+REGISTER_SCHEMEX_BEGIN(nzr_of_bnd);
+  ast_real const *needed;
+  nzr_of_bnd_scheme(predicated_real const &r, ast_real const *n)
+    : proof_scheme(r), needed(n) {}
+REGISTER_SCHEMEX_END(nzr_of_bnd);
+
+node *nzr_of_bnd_scheme::generate_proof() const {
+  node *n = find_proof(needed);
+  if (!n) return NULL;
+  property const &hyp = n->get_result();
+  int s = sign(hyp.bnd());
+  if (s == 0) return NULL;
+  return create_theorem(1, &hyp, property(real), s < 0 ? "nzr_of_bnd_n" : "nzr_of_bnd_p", trivial_updater);
+}
+
+preal_vect nzr_of_bnd_scheme::needed_reals() const {
+  return preal_vect(1, predicated_real(needed, PRED_BND));
+}
+
+proof_scheme *nzr_of_bnd_scheme::factory(predicated_real const &real) {
+  if (real.pred() != PRED_NZR) return NULL;
+  return new nzr_of_bnd_scheme(real, real.real());
+}
