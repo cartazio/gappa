@@ -916,11 +916,9 @@ node *computation_rel_add_scheme::generate_proof() const {
   if (!fill_hypotheses(hyps, needed)) return NULL;
   real_op const *r = boost::get< real_op const >(real.real());
   assert(r && (r->type == BOP_ADD || r->type == BOP_SUB));
-  bool sub = r->type == BOP_SUB;
-  property res(real, add_relative(hyps[2].bnd(), sub ? -hyps[3].bnd() : hyps[3].bnd(),
-                                  hyps[0].bnd(), hyps[1].bnd()));
+  property res(real, add_relative(hyps[0].bnd(), hyps[1].bnd(), hyps[2].bnd()));
   if (!is_defined(res.bnd())) return NULL;
-  return create_theorem(4, hyps, res, sub ? "sub_rrbb" : "add_rrbb");
+  return create_theorem(4, hyps, res, r->type == BOP_SUB ? "sub_rr" : "add_rr");
 }
 
 preal_vect computation_rel_add_scheme::needed_reals() const {
@@ -931,13 +929,14 @@ proof_scheme *computation_rel_add_scheme::factory(predicated_real const &real) {
   if (real.pred() != PRED_REL) return NULL;
   real_op const *p = boost::get< real_op const >(real.real());
   if (!p || (p->type != BOP_ADD && p->type != BOP_SUB)) return NULL;
-  real_op const *p2 = boost::get< real_op const >(real.real2());
+  ast_real const *r2 = real.real2();
+  real_op const *p2 = boost::get< real_op const >(r2);
   if (!p2 || p->type != p2->type) return NULL;
   preal_vect hyps;
   hyps.push_back(predicated_real(p->ops[0], p2->ops[0], PRED_REL));
   hyps.push_back(predicated_real(p->ops[1], p2->ops[1], PRED_REL));
-  hyps.push_back(predicated_real(p2->ops[0], PRED_BND));
-  hyps.push_back(predicated_real(p2->ops[1], PRED_BND));
+  hyps.push_back(predicated_real(normalize(real_op(p2->ops[0], BOP_DIV, r2)), PRED_BND));
+  hyps.push_back(predicated_real(r2, PRED_NZR));
   return new computation_rel_add_scheme(real, hyps);
 }
 

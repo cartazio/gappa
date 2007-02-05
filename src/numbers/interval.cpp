@@ -255,18 +255,11 @@ interval compose_relative(interval const &u, interval const &v) {
                   rnd::add_up  (rnd::add_up  (uu, vu), rnd::mul_up  (uu, vu)));
 }
 
-// compute (u * x + v * y) / (x + y)
-interval add_relative(interval const &x, interval const &y, interval const &u, interval const &v) {
-  assert(x.base && y.base && u.base && v.base);
-  number const &xl = plip(x).lower(), &xu = plip(x).upper(),
-               &yl = plip(y).lower(), &yu = plip(y).upper();
-  if (in_zero(plip(x) + plip(y))) return interval();
-  #define add(a,b) boost::numeric::interval_lib::add< _interval_base >(a,b)
-  _interval_base i(
-              (plup * xl + plvp * yl) / add(xl, yl));
-  i = hull(i, (plup * xl + plvp * yu) / add(xl, yu));
-  i = hull(i, (plup * xu + plvp * yl) / add(xu, yl));
-  i = hull(i, (plup * xu + plvp * yu) / add(xu, yu));
-  #undef add
-  return plop(i);
+// compute u * w + v * (1 - w)
+interval add_relative(interval const &u, interval const &v, interval const &w) {
+  assert(u.base && v.base && w.base);
+  number const &wl = plip(w).lower(), &wu = plip(w).upper();
+  #define one_minus(x) boost::numeric::interval_lib::sub< _interval_base >(number(1), x)
+  return plop(hull(wl * plup + one_minus(wl) * plvp, wu * plup + one_minus(wu) * plvp));
+  #undef one_minus
 }
