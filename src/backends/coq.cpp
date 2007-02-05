@@ -144,6 +144,7 @@ static std::string display(property const &p) {
     switch (t) {
     case PRED_FIX: s << "FIX " << display(real) << " (" << p.cst() << ')'; break;
     case PRED_FLT: s << "FLT " << display(real) << " (" << p.cst() << ')'; break;
+    case PRED_NZR: s << "NZR " << display(real); break;
     default: assert(false);
     }
   }
@@ -195,13 +196,16 @@ static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_m
         plouf << " exact h" << h << '.';
       else
         plouf << " apply " << (t == PRED_ABS ? "abs_" : "") << "subset with (1 := h" << h << "). finalize.";
-    } else {
+    } else if (j->real.pred_cst()) {
       long c = pki->second.second->cst(), cc = j->cst();
       assert(t == PRED_FIX && c >= cc || t == PRED_FLT && c <= cc);
       if (c == c)
         plouf << " exact h" << h << '.';
       else
         plouf << " apply " << (t == PRED_FIX ? "fix" : "flt") << "_subset with (1 := h" << h << "). finalize.";
+    } else {
+      assert(t == PRED_NZR);
+      plouf << " exact h" << h << '.';
     }
   }
   plouf << '\n';
