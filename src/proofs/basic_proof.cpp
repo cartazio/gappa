@@ -867,6 +867,33 @@ proof_scheme *bnd_of_nzr_rel_scheme::factory(predicated_real const &real,
   return new bnd_of_nzr_rel_scheme(real, hyps);
 }
 
+// REL_OF_NZR_BND
+REGISTER_SCHEMEX_BEGIN(rel_of_nzr_bnd);
+  preal_vect needed;
+  rel_of_nzr_bnd_scheme(predicated_real const &r, preal_vect const &v)
+    : proof_scheme(r), needed(v) {}
+REGISTER_SCHEMEX_END(rel_of_nzr_bnd);
+
+node *rel_of_nzr_bnd_scheme::generate_proof() const {
+  property hyps[2];
+  if (!fill_hypotheses(hyps, needed)) return NULL;
+  return create_theorem(2, hyps, property(real, hyps[1].bnd()), "rel_of_nzr_bnd", identity_updater);
+}
+
+preal_vect rel_of_nzr_bnd_scheme::needed_reals() const {
+  return needed;
+}
+
+proof_scheme *rel_of_nzr_bnd_scheme::factory(predicated_real const &real) {
+  if (real.pred() != PRED_REL) return NULL;
+  ast_real const *r1 = real.real(), *r2 = real.real2();
+  preal_vect hyps;
+  hyps.push_back(predicated_real(r2, PRED_NZR));
+  hyps.push_back(predicated_real(normalize(real_op(
+    normalize(real_op(r1, BOP_SUB, r2)), BOP_DIV, r2)), PRED_BND));
+  return new rel_of_nzr_bnd_scheme(real, hyps);
+}
+
 // COMPUTATION_REL_UOP
 REGISTER_SCHEMEX_BEGIN(computation_rel_uop);
   predicated_real needed;
