@@ -312,3 +312,31 @@ proof_scheme *rel_of_fix_float_scheme::factory(predicated_real const &real) {
   return new rel_of_fix_float_scheme(real, property(predicated_real(real.real2(), PRED_FIX), f->format.min_exp),
                                      f->format.prec, f->type);
 }
+
+// FIX_FLOAT_OF_FIX
+
+REGISTER_SCHEMEX_BEGIN(fix_float_of_fix);
+  predicated_real needed;
+  fix_float_of_fix_scheme(predicated_real const &r, predicated_real const &n)
+    : proof_scheme(r), needed(n) {}
+REGISTER_SCHEMEX_END(fix_float_of_fix);
+
+node *fix_float_of_fix_scheme::generate_proof() const {
+  node *n = find_proof(needed);
+  if (!n) return NULL;
+  property const &res = n->get_result();
+  return create_theorem(1, &res, property(real, res.cst()), "fix_float_of_fix");
+}
+
+preal_vect fix_float_of_fix_scheme::needed_reals() const {
+  return preal_vect(1, needed);
+}
+
+proof_scheme *fix_float_of_fix_scheme::factory(predicated_real const &real) {
+  if (real.pred() != PRED_FIX) return NULL;
+  real_op const *r = boost::get< real_op const >(real.real());
+  if (!r) return NULL;
+  float_rounding_class const *f = dynamic_cast< float_rounding_class const * >(r->fun);
+  if (!f) return NULL;
+  return new fix_float_of_fix_scheme(real, predicated_real(r->ops[0], PRED_FIX));
+}
