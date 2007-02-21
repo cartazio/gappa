@@ -1036,8 +1036,12 @@ REGISTER_SCHEMEY_END(error_of_rel, predicated_real(pattern(1) - pattern(0), PRED
 node *error_of_rel_scheme::generate_proof() const {
   property hyps[2];
   if (!fill_hypotheses(hyps, needed)) return NULL;
-  property res(real, hyps[0].bnd() * hyps[1].bnd());
-  return create_theorem(2, hyps, res, "error_of_rel", &mul_updater);
+  interval const &i1 = hyps[0].bnd(), &i2 = hyps[1].bnd();
+  property res(real, i1 * i2);
+  std::string s = "error_of_rel_";
+  s += 'o' + sign(i1);
+  s += 'o' + sign(i2);
+  return create_theorem(2, hyps, res, s, &mul_updater);
 }
 
 preal_vect error_of_rel_scheme::needed_reals() const {
