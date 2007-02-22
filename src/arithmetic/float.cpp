@@ -204,11 +204,11 @@ interval float_rounding_class::relative_error_from_approx_abs(interval const &i,
 
 // FIX_OF_FLOAT
 
-REGISTER_SCHEMEX_BEGIN(fix_of_float);
+REGISTER_SCHEME_BEGIN(fix_of_float);
   long min_exp;
   fix_of_float_scheme(predicated_real const &r, long e)
     : proof_scheme(r), min_exp(e) {}
-REGISTER_SCHEMEX_END(fix_of_float);
+REGISTER_SCHEME_END_PREDICATE(fix_of_float);
 
 node *fix_of_float_scheme::generate_proof() const {
   return create_theorem(0, NULL, property(real, min_exp), "fix_of_float");
@@ -229,11 +229,11 @@ proof_scheme *fix_of_float_scheme::factory(predicated_real const &real) {
 
 // FLT_OF_FLOAT
 
-REGISTER_SCHEMEX_BEGIN(flt_of_float);
+REGISTER_SCHEME_BEGIN(flt_of_float);
   long prec;
   flt_of_float_scheme(predicated_real const &r, long p)
     : proof_scheme(r), prec(p) {}
-REGISTER_SCHEMEX_END(flt_of_float);
+REGISTER_SCHEME_END_PREDICATE(flt_of_float);
 
 node *flt_of_float_scheme::generate_proof() const {
   return create_theorem(0, NULL, property(real, prec), "flt_of_float");
@@ -284,13 +284,13 @@ proof_scheme *float_of_fix_flt_scheme::factory(ast_real const *real) {
 
 // REL_OF_FIX_FLOAT
 
-REGISTER_SCHEMEX_BEGIN(rel_of_fix_float);
+REGISTER_SCHEME_BEGIN(rel_of_fix_float);
   property cond;
   long prec;
   direction_type type;
   rel_of_fix_float_scheme(predicated_real const &r, property const &c, long p, direction_type t)
     : proof_scheme(r), cond(c), prec(p), type(t) {}
-REGISTER_SCHEMEX_END(rel_of_fix_float);
+REGISTER_SCHEME_END_PREDICATE(rel_of_fix_float);
 
 node *rel_of_fix_float_scheme::generate_proof() const {
   node *n = find_proof(cond);
@@ -315,11 +315,11 @@ proof_scheme *rel_of_fix_float_scheme::factory(predicated_real const &real) {
 
 // FIX_FLOAT_OF_FIX
 
-REGISTER_SCHEMEX_BEGIN(fix_float_of_fix);
+REGISTER_SCHEME_BEGIN(fix_float_of_fix);
   predicated_real needed;
   fix_float_of_fix_scheme(predicated_real const &r, predicated_real const &n)
     : proof_scheme(r), needed(n) {}
-REGISTER_SCHEMEX_END(fix_float_of_fix);
+REGISTER_SCHEME_END_PREDICATE(fix_float_of_fix);
 
 node *fix_float_of_fix_scheme::generate_proof() const {
   node *n = find_proof(needed);

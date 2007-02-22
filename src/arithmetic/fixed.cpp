@@ -94,11 +94,11 @@ function_class const *int_rounding_generator::operator()(function_params const &
 static int_rounding_generator dummy2;
 
 // FIX_OF_FIXED
-REGISTER_SCHEMEX_BEGIN(fix_of_fixed);
+REGISTER_SCHEME_BEGIN(fix_of_fixed);
   fixed_rounding_class const *rnd;
   fix_of_fixed_scheme(predicated_real const &r, fixed_rounding_class const *f)
     : proof_scheme(r), rnd(f) {}
-REGISTER_SCHEMEX_END(fix_of_fixed);
+REGISTER_SCHEME_END_PREDICATE(fix_of_fixed);
 
 node *fix_of_fixed_scheme::generate_proof() const {
   return create_theorem(0, NULL, property(real, rnd->format.min_exp), "fix_of_fixed");

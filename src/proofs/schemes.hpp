@@ -33,32 +33,25 @@ struct factory_creator {
 };
 
 #define REGISTER_SCHEME_BEGIN(name) \
-  struct name##_scheme: proof_scheme { \
+  class name##_scheme: proof_scheme { \
     virtual node *generate_proof() const; \
-    virtual preal_vect needed_reals() const; \
-    static proof_scheme *factory(ast_real const *)
+    virtual preal_vect needed_reals() const
 
 #define REGISTER_SCHEME_END(name) \
+   public: \
+    static proof_scheme *factory(ast_real const *); \
   }; \
   static factory_creator name##_scheme_register(&name##_scheme::factory)
 
-#define REGISTER_SCHEMEX_BEGIN(name) \
-  struct name##_scheme: proof_scheme { \
-    virtual node *generate_proof() const; \
-    virtual preal_vect needed_reals() const; \
-    static proof_scheme *factory(predicated_real const &)
-
-#define REGISTER_SCHEMEX_END(name) \
+#define REGISTER_SCHEME_END_PREDICATE(name) \
+   public: \
+    static proof_scheme *factory(predicated_real const &); \
   }; \
   static factory_creator name##_scheme_register(&name##_scheme::factory)
 
-#define REGISTER_SCHEMEY_BEGIN(name) \
-  struct name##_scheme: proof_scheme { \
-    virtual node *generate_proof() const; \
-    virtual preal_vect needed_reals() const; \
-    static proof_scheme *factory(predicated_real const &, ast_real_vect const &)
-
-#define REGISTER_SCHEMEY_END(name, pattern) \
+#define REGISTER_SCHEME_END_PATTERN(name, pattern) \
+   public: \
+    static proof_scheme *factory(predicated_real const &, ast_real_vect const &); \
   }; \
   static factory_creator name##_scheme_register(&name##_scheme::factory, pattern)
 

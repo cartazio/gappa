@@ -154,11 +154,11 @@ proof_scheme *absolute_error_from_approx_abs_scheme::factory(ast_real const *rea
 }
 
 // RELATIVE_ERROR_FROM_EXACT_BND
-REGISTER_SCHEMEX_BEGIN(relative_error_from_exact_bnd);
+REGISTER_SCHEME_BEGIN(relative_error_from_exact_bnd);
   function_class const *function;
   relative_error_from_exact_bnd_scheme(predicated_real const &r, function_class const *f)
     : proof_scheme(r), function(f) {}
-REGISTER_SCHEMEX_END(relative_error_from_exact_bnd);
+REGISTER_SCHEME_END_PREDICATE(relative_error_from_exact_bnd);
 
 node *relative_error_from_exact_bnd_scheme::generate_proof() const {
   node *n = find_proof(real.real2());
@@ -181,12 +181,12 @@ proof_scheme *relative_error_from_exact_bnd_scheme::factory(predicated_real cons
 }
 
 // RELATIVE_ERROR_FROM_EXACT_ABS
-REGISTER_SCHEMEX_BEGIN(relative_error_from_exact_abs);
+REGISTER_SCHEME_BEGIN(relative_error_from_exact_abs);
   predicated_real exact;
   function_class const *function;
   relative_error_from_exact_abs_scheme(predicated_real const &r, predicated_real const &e, function_class const *f)
     : proof_scheme(r), exact(e), function(f) {}
-REGISTER_SCHEMEX_END(relative_error_from_exact_abs);
+REGISTER_SCHEME_END_PREDICATE(relative_error_from_exact_abs);
 
 node *relative_error_from_exact_abs_scheme::generate_proof() const {
   node *n = find_proof(exact);
@@ -209,11 +209,11 @@ proof_scheme *relative_error_from_exact_abs_scheme::factory(predicated_real cons
 }
 
 // RELATIVE_ERROR_FROM_APPROX_BND
-REGISTER_SCHEMEX_BEGIN(relative_error_from_approx_bnd);
+REGISTER_SCHEME_BEGIN(relative_error_from_approx_bnd);
   function_class const *function;
   relative_error_from_approx_bnd_scheme(predicated_real const &r, function_class const *f)
     : proof_scheme(r), function(f) {}
-REGISTER_SCHEMEX_END(relative_error_from_approx_bnd);
+REGISTER_SCHEME_END_PREDICATE(relative_error_from_approx_bnd);
 
 node *relative_error_from_approx_bnd_scheme::generate_proof() const {
   node *n = find_proof(real.real());
@@ -236,12 +236,12 @@ proof_scheme *relative_error_from_approx_bnd_scheme::factory(predicated_real con
 }
 
 // RELATIVE_ERROR_FROM_APPROX_ABS
-REGISTER_SCHEMEX_BEGIN(relative_error_from_approx_abs);
+REGISTER_SCHEME_BEGIN(relative_error_from_approx_abs);
   predicated_real approx;
   function_class const *function;
   relative_error_from_approx_abs_scheme(predicated_real const &r, predicated_real const &a, function_class const *f)
     : proof_scheme(r), approx(a), function(f) {}
-REGISTER_SCHEMEX_END(relative_error_from_approx_abs);
+REGISTER_SCHEME_END_PREDICATE(relative_error_from_approx_abs);
 
 node *relative_error_from_approx_abs_scheme::generate_proof() const {
   node *n = find_proof(approx);
@@ -437,9 +437,9 @@ proof_scheme *computation_scheme::factory(ast_real const *real) {
 }
 
 // COMPUTATION_ABS
-REGISTER_SCHEMEX_BEGIN(computation_abs);
+REGISTER_SCHEME_BEGIN(computation_abs);
   computation_abs_scheme(predicated_real const &r): proof_scheme(r) {}
-REGISTER_SCHEMEX_END(computation_abs);
+REGISTER_SCHEME_END_PREDICATE(computation_abs);
 
 node *computation_abs_scheme::generate_proof() const {
   real_op const *r = boost::get< real_op const >(real.real());
@@ -605,10 +605,10 @@ proof_scheme *uabs_of_abs_scheme::factory(ast_real const *real) {
 }
 
 // ABS_OF_BND
-REGISTER_SCHEMEX_BEGIN(abs_of_bnd);
+REGISTER_SCHEME_BEGIN(abs_of_bnd);
   predicated_real needed;
   abs_of_bnd_scheme(predicated_real const &r, predicated_real const &v): proof_scheme(r), needed(v) {}
-REGISTER_SCHEMEX_END(abs_of_bnd);
+REGISTER_SCHEME_END_PREDICATE(abs_of_bnd);
 
 node *abs_of_bnd_scheme::generate_proof() const {
   node *n = find_proof(needed);
@@ -657,12 +657,12 @@ proof_scheme *number_scheme::factory(ast_real const *real) {
 }
 
 // ADD_SUB_FIX
-REGISTER_SCHEMEX_BEGIN(add_sub_fix);
+REGISTER_SCHEME_BEGIN(add_sub_fix);
   preal_vect needed;
   char const *name;
   add_sub_fix_scheme(predicated_real const &r, preal_vect const &v, char const *n)
     : proof_scheme(r), needed(v), name(n) {}
-REGISTER_SCHEMEX_END(add_sub_fix);
+REGISTER_SCHEME_END_PREDICATE(add_sub_fix);
 
 node *add_sub_fix_scheme::generate_proof() const {
   property hyps[2];
@@ -685,12 +685,12 @@ proof_scheme *add_sub_fix_scheme::factory(predicated_real const &real) {
 }
 
 // MUL_FIX_FLT
-REGISTER_SCHEMEX_BEGIN(mul_fix_flt);
+REGISTER_SCHEME_BEGIN(mul_fix_flt);
   preal_vect needed;
   char const *name;
   mul_fix_flt_scheme(predicated_real const &r, preal_vect const &v, char const *n)
     : proof_scheme(r), needed(v), name(n) {}
-REGISTER_SCHEMEX_END(mul_fix_flt);
+REGISTER_SCHEME_END_PREDICATE(mul_fix_flt);
 
 node *mul_fix_flt_scheme::generate_proof() const {
   property hyps[2];
@@ -714,11 +714,11 @@ proof_scheme *mul_fix_flt_scheme::factory(predicated_real const &real) {
 }
 
 // FIX_OF_FLT_BND
-REGISTER_SCHEMEX_BEGIN(fix_of_flt_bnd);
+REGISTER_SCHEME_BEGIN(fix_of_flt_bnd);
   preal_vect needed;
   fix_of_flt_bnd_scheme(predicated_real const &r, preal_vect const &v)
     : proof_scheme(r), needed(v) {}
-REGISTER_SCHEMEX_END(fix_of_flt_bnd);
+REGISTER_SCHEME_END_PREDICATE(fix_of_flt_bnd);
 
 node *fix_of_flt_bnd_scheme::generate_proof() const {
   property hyps[2];
@@ -746,11 +746,11 @@ proof_scheme *fix_of_flt_bnd_scheme::factory(predicated_real const &real) {
 }
 
 // FLT_OF_FIX_BND
-REGISTER_SCHEMEX_BEGIN(flt_of_fix_bnd);
+REGISTER_SCHEME_BEGIN(flt_of_fix_bnd);
   preal_vect needed;
   flt_of_fix_bnd_scheme(predicated_real const &r, preal_vect const &v)
     : proof_scheme(r), needed(v) {}
-REGISTER_SCHEMEX_END(flt_of_fix_bnd);
+REGISTER_SCHEME_END_PREDICATE(flt_of_fix_bnd);
 
 node *flt_of_fix_bnd_scheme::generate_proof() const {
   property hyps[2];
@@ -778,11 +778,11 @@ proof_scheme *flt_of_fix_bnd_scheme::factory(predicated_real const &real) {
 }
 
 // FIX_OF_SINGLETON_BND
-REGISTER_SCHEMEX_BEGIN(fix_of_singleton_bnd);
+REGISTER_SCHEME_BEGIN(fix_of_singleton_bnd);
   predicated_real needed;
   fix_of_singleton_bnd_scheme(predicated_real const &r, predicated_real const &v)
     : proof_scheme(r), needed(v) {}
-REGISTER_SCHEMEX_END(fix_of_singleton_bnd);
+REGISTER_SCHEME_END_PREDICATE(fix_of_singleton_bnd);
 
 node *fix_of_singleton_bnd_scheme::generate_proof() const {
   node *n = find_proof(needed);
@@ -810,11 +810,11 @@ proof_scheme *fix_of_singleton_bnd_scheme::factory(predicated_real const &real) 
 }
 
 // FLT_OF_SINGLETON_BND
-REGISTER_SCHEMEX_BEGIN(flt_of_singleton_bnd);
+REGISTER_SCHEME_BEGIN(flt_of_singleton_bnd);
   predicated_real needed;
   flt_of_singleton_bnd_scheme(predicated_real const &r, predicated_real const &v)
     : proof_scheme(r), needed(v) {}
-REGISTER_SCHEMEX_END(flt_of_singleton_bnd);
+REGISTER_SCHEME_END_PREDICATE(flt_of_singleton_bnd);
 
 node *flt_of_singleton_bnd_scheme::generate_proof() const {
   node *n = find_proof(needed);
@@ -843,10 +843,10 @@ proof_scheme *flt_of_singleton_bnd_scheme::factory(predicated_real const &real) 
 }
 
 // BND_OF_NZR_REL
-REGISTER_SCHEMEY_BEGIN(bnd_of_nzr_rel);
+REGISTER_SCHEME_BEGIN(bnd_of_nzr_rel);
   preal_vect needed;
   bnd_of_nzr_rel_scheme(predicated_real const &r, preal_vect const &v): proof_scheme(r), needed(v) {}
-REGISTER_SCHEMEY_END(bnd_of_nzr_rel,
+REGISTER_SCHEME_END_PATTERN(bnd_of_nzr_rel,
   predicated_real((pattern(1) - pattern(0)) / pattern(0), PRED_BND));
 
 node *bnd_of_nzr_rel_scheme::generate_proof() const {
@@ -868,11 +868,11 @@ proof_scheme *bnd_of_nzr_rel_scheme::factory(predicated_real const &real,
 }
 
 // REL_OF_NZR_BND
-REGISTER_SCHEMEX_BEGIN(rel_of_nzr_bnd);
+REGISTER_SCHEME_BEGIN(rel_of_nzr_bnd);
   preal_vect needed;
   rel_of_nzr_bnd_scheme(predicated_real const &r, preal_vect const &v)
     : proof_scheme(r), needed(v) {}
-REGISTER_SCHEMEX_END(rel_of_nzr_bnd);
+REGISTER_SCHEME_END_PREDICATE(rel_of_nzr_bnd);
 
 node *rel_of_nzr_bnd_scheme::generate_proof() const {
   property hyps[2];
@@ -895,11 +895,11 @@ proof_scheme *rel_of_nzr_bnd_scheme::factory(predicated_real const &real) {
 }
 
 // COMPUTATION_REL_UOP
-REGISTER_SCHEMEX_BEGIN(computation_rel_uop);
+REGISTER_SCHEME_BEGIN(computation_rel_uop);
   predicated_real needed;
   computation_rel_uop_scheme(predicated_real const &r, predicated_real const &n)
     : proof_scheme(r), needed(n) {}
-REGISTER_SCHEMEX_END(computation_rel_uop);
+REGISTER_SCHEME_END_PREDICATE(computation_rel_uop);
 
 node *computation_rel_uop_scheme::generate_proof() const {
   node *n = find_proof(needed);
@@ -932,11 +932,11 @@ proof_scheme *computation_rel_uop_scheme::factory(predicated_real const &real) {
 }
 
 // COMPUTATION_REL_ADD
-REGISTER_SCHEMEX_BEGIN(computation_rel_add);
+REGISTER_SCHEME_BEGIN(computation_rel_add);
   preal_vect needed;
   computation_rel_add_scheme(predicated_real const &r, preal_vect const &v)
     : proof_scheme(r), needed(v) {}
-REGISTER_SCHEMEX_END(computation_rel_add);
+REGISTER_SCHEME_END_PREDICATE(computation_rel_add);
 
 node *computation_rel_add_scheme::generate_proof() const {
   property hyps[4];
@@ -970,11 +970,11 @@ proof_scheme *computation_rel_add_scheme::factory(predicated_real const &real) {
 BINARY_INTERVAL(compose_updater) { r = compose_relative(h[0], h[1]); }
 
 // COMPUTATION_REL_MUL
-REGISTER_SCHEMEY_BEGIN(computation_rel_mul);
+REGISTER_SCHEME_BEGIN(computation_rel_mul);
   preal_vect needed;
   computation_rel_mul_scheme(predicated_real const &r, preal_vect const &v)
     : proof_scheme(r), needed(v) {}
-REGISTER_SCHEMEY_END(computation_rel_mul,
+REGISTER_SCHEME_END_PATTERN(computation_rel_mul,
   predicated_real(pattern(0) * pattern(1), pattern(2) * pattern(3), PRED_REL));
 
 node *computation_rel_mul_scheme::generate_proof() const {
@@ -1001,11 +1001,11 @@ proof_scheme *computation_rel_mul_scheme::factory(predicated_real const &real,
 }
 
 // COMPOSE_REL
-REGISTER_SCHEMEY_BEGIN(compose_rel);
+REGISTER_SCHEME_BEGIN(compose_rel);
   preal_vect needed;
   compose_rel_scheme(predicated_real const &r, preal_vect const &v)
     : proof_scheme(r), needed(v) {}
-REGISTER_SCHEMEY_END(compose_rel, predicated_real(pattern(1), pattern(2), PRED_REL));
+REGISTER_SCHEME_END_PATTERN(compose_rel, predicated_real(pattern(1), pattern(2), PRED_REL));
 
 node *compose_rel_scheme::generate_proof() const {
   property hyps[2];
@@ -1027,11 +1027,11 @@ proof_scheme *compose_rel_scheme::factory(predicated_real const &real, ast_real_
 }
 
 // ERROR_OF_REL
-REGISTER_SCHEMEY_BEGIN(error_of_rel);
+REGISTER_SCHEME_BEGIN(error_of_rel);
   preal_vect needed;
   error_of_rel_scheme(predicated_real const &r, preal_vect const &v)
     : proof_scheme(r), needed(v) {}
-REGISTER_SCHEMEY_END(error_of_rel, predicated_real(pattern(1) - pattern(0), PRED_BND));
+REGISTER_SCHEME_END_PATTERN(error_of_rel, predicated_real(pattern(1) - pattern(0), PRED_BND));
 
 node *error_of_rel_scheme::generate_proof() const {
   property hyps[2];
@@ -1058,11 +1058,11 @@ proof_scheme *error_of_rel_scheme::factory(predicated_real const &real,
 }
 
 // NZR_OF_ABS
-REGISTER_SCHEMEX_BEGIN(nzr_of_abs);
+REGISTER_SCHEME_BEGIN(nzr_of_abs);
   predicated_real needed;
   nzr_of_abs_scheme(predicated_real const &r, predicated_real const &n)
     : proof_scheme(r), needed(n) {}
-REGISTER_SCHEMEX_END(nzr_of_abs);
+REGISTER_SCHEME_END_PREDICATE(nzr_of_abs);
 
 node *nzr_of_abs_scheme::generate_proof() const {
   node *n = find_proof(needed);
@@ -1082,11 +1082,11 @@ proof_scheme *nzr_of_abs_scheme::factory(predicated_real const &real) {
 }
 
 // NZR_OF_BND
-REGISTER_SCHEMEX_BEGIN(nzr_of_bnd);
+REGISTER_SCHEME_BEGIN(nzr_of_bnd);
   ast_real const *needed;
   nzr_of_bnd_scheme(predicated_real const &r, ast_real const *n)
     : proof_scheme(r), needed(n) {}
-REGISTER_SCHEMEX_END(nzr_of_bnd);
+REGISTER_SCHEME_END_PREDICATE(nzr_of_bnd);
 
 node *nzr_of_bnd_scheme::generate_proof() const {
   node *n = find_proof(needed);
