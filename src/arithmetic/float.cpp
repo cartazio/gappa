@@ -340,3 +340,31 @@ proof_scheme *fix_float_of_fix_scheme::factory(predicated_real const &real) {
   if (!f) return NULL;
   return new fix_float_of_fix_scheme(real, predicated_real(r->ops[0], PRED_FIX));
 }
+
+// FLT_FLOAT_OF_FLT
+
+REGISTER_SCHEME_BEGIN(flt_float_of_flt);
+  predicated_real needed;
+  flt_float_of_flt_scheme(predicated_real const &r, predicated_real const &n)
+    : proof_scheme(r), needed(n) {}
+REGISTER_SCHEME_END_PREDICATE(flt_float_of_flt);
+
+node *flt_float_of_flt_scheme::generate_proof() const {
+  node *n = find_proof(needed);
+  if (!n) return NULL;
+  property const &res = n->get_result();
+  return create_theorem(1, &res, property(real, res.cst()), "flt_float_of_flt");
+}
+
+preal_vect flt_float_of_flt_scheme::needed_reals() const {
+  return preal_vect(1, needed);
+}
+
+proof_scheme *flt_float_of_flt_scheme::factory(predicated_real const &real) {
+  if (real.pred() != PRED_FLT) return NULL;
+  real_op const *r = boost::get< real_op const >(real.real());
+  if (!r) return NULL;
+  float_rounding_class const *f = dynamic_cast< float_rounding_class const * >(r->fun);
+  if (!f) return NULL;
+  return new flt_float_of_flt_scheme(real, predicated_real(r->ops[0], PRED_FLT));
+}

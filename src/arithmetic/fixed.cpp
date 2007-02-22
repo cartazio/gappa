@@ -172,3 +172,59 @@ proof_scheme *bnd_of_bnd_fix_scheme::factory(ast_real const *real) {
   hyps.push_back(predicated_real(real, PRED_FIX));
   return new bnd_of_bnd_fix_scheme(hyps);
 }
+
+// FIX_FIXED_OF_FIX
+
+REGISTER_SCHEME_BEGIN(fix_fixed_of_fix);
+  predicated_real needed;
+  fix_fixed_of_fix_scheme(predicated_real const &r, predicated_real const &n)
+    : proof_scheme(r), needed(n) {}
+REGISTER_SCHEME_END_PREDICATE(fix_fixed_of_fix);
+
+node *fix_fixed_of_fix_scheme::generate_proof() const {
+  node *n = find_proof(needed);
+  if (!n) return NULL;
+  property const &res = n->get_result();
+  return create_theorem(1, &res, property(real, res.cst()), "fix_fixed_of_fix");
+}
+
+preal_vect fix_fixed_of_fix_scheme::needed_reals() const {
+  return preal_vect(1, needed);
+}
+
+proof_scheme *fix_fixed_of_fix_scheme::factory(predicated_real const &real) {
+  if (real.pred() != PRED_FIX) return NULL;
+  real_op const *r = boost::get< real_op const >(real.real());
+  if (!r) return NULL;
+  fixed_rounding_class const *f = dynamic_cast< fixed_rounding_class const * >(r->fun);
+  if (!f) return NULL;
+  return new fix_fixed_of_fix_scheme(real, predicated_real(r->ops[0], PRED_FIX));
+}
+
+// FLT_FIXED_OF_FLT
+
+REGISTER_SCHEME_BEGIN(flt_fixed_of_flt);
+  predicated_real needed;
+  flt_fixed_of_flt_scheme(predicated_real const &r, predicated_real const &n)
+    : proof_scheme(r), needed(n) {}
+REGISTER_SCHEME_END_PREDICATE(flt_fixed_of_flt);
+
+node *flt_fixed_of_flt_scheme::generate_proof() const {
+  node *n = find_proof(needed);
+  if (!n) return NULL;
+  property const &res = n->get_result();
+  return create_theorem(1, &res, property(real, res.cst()), "flt_fixed_of_flt");
+}
+
+preal_vect flt_fixed_of_flt_scheme::needed_reals() const {
+  return preal_vect(1, needed);
+}
+
+proof_scheme *flt_fixed_of_flt_scheme::factory(predicated_real const &real) {
+  if (real.pred() != PRED_FLT) return NULL;
+  real_op const *r = boost::get< real_op const >(real.real());
+  if (!r) return NULL;
+  fixed_rounding_class const *f = dynamic_cast< fixed_rounding_class const * >(r->fun);
+  if (!f) return NULL;
+  return new flt_fixed_of_flt_scheme(real, predicated_real(r->ops[0], PRED_FLT));
+}
