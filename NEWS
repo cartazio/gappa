@@ -2,12 +2,15 @@ Version 0.8.0:
  * HOL Light back-end:
    - added new back-end
  * proof graph
-   - selected best paths on length
+   - added option -Mexpensive to select best paths on length
  * fact database
-   - added predicate REL: y = x * (1 + e)
+   - added predicate REL: x = y * (1 + e)
    - replaced rewriting rules on relative error by computations on REL
    - enhanced path finder to fill holes in theorems
    - put back rewriting rules to theorem level
+   - fixed incorrect equality of variables
+   - added predicate NZR: x <> 0
+   - added propagation of FIX and FLT through rounding operators
 
 Version 0.7.3:
  * fact database
