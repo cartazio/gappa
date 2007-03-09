@@ -7,6 +7,7 @@
   <!ENTITY gappa-grammar     SYSTEM "manual/grammar.xml">
   <!ENTITY gappa-hints       SYSTEM "manual/hints.xml">
   <!ENTITY gappa-invoking    SYSTEM "manual/invoking.xml">
+  <!ENTITY gappa-logic       SYSTEM "manual/logic.xml">
   <!ENTITY gappa-roundings   SYSTEM "manual/roundings.xml">
   <!ENTITY gappa-warnings    SYSTEM "manual/warnings.xml">
   <!ENTITY gappa-x1mx        SYSTEM "examples/x1mx.xml">
@@ -84,6 +85,7 @@ errors due to floating-point arithmetic.</para>
 <appendix>
 <title>Gappa language</title>
 &gappa-grammar;
+&gappa-logic;
 </appendix>
 
 <appendix>

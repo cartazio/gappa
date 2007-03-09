@@ -100,9 +100,9 @@ between these two expressions is their difference: <code>approx - exact</code>.
 The relative error is the quotient between the absolute error and the exact
 value: <code>(approx - exact) / exact</code>.</para>
 
-<para>Writing the errors differently will prevent Gappa from applying theorems
-on rounding errors: <code>-(x - o(x))</code> may lead to a worse enclosure than
-<code>o(x) - x</code>.</para>
+<para>Writing the errors differently will prevent Gappa from applying
+theorems on rounding errors: <code>-(x - rnd(x))</code> may lead to a
+worse enclosure than <code>rnd(x) - x</code>.</para>
 </section>
 
 <section>
@@ -117,13 +117,27 @@ of <code>a</code> and <code>b</code> respectively.</para>
 
 <para>Indeed the rewriting rule for the absolute error of the addition is:
 <code>(a + b) - (c + d) -&gt; (a - c) + (b - d)</code>. Similarly, the
-rewriting rules for the multiplication keep the same ordering of the sub-terms.
+rewriting rules for the multiplication keep the same ordering of sub-terms.
 For example, one of the rules is:
 <code>a * b - c * d -&gt; (a - c) * b + c * (b - d)</code>.</para>
 
 <para>If the two sides of an error expression do not have a similar structure,
 a user rewriting rule will have to be added in order to put them in a suitable
 state.</para>
+</section>
+
+<section>
+<title>Subsets of real numbers</title>
+
+<para>Checking in the logical formula that an expression is in a
+specific subset can be achieved by verifying that a rounding operator
+toward this subset is the identity for this expression. For example, to
+check that <code>e</code> is an integer multiple of <texinline>2^{-17}
+</texinline>, this property can be used: <code>fixed&lt;-17, dn&gt;(e) -
+e in [0,0]</code>. Similarly, to test that only 17 bits are needed to
+represent this expression (assuming it is either zero or no closer to
+zero than <texinline>2^{-2001}</texinline>): <code>float&lt;17, -2001,
+ne&gt;(e) - e in [0,0]</code>.</para>
 </section>
 
 </section>
