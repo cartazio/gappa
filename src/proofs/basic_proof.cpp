@@ -941,10 +941,9 @@ REGISTER_SCHEME_END_PREDICATE(computation_rel_add);
 node *computation_rel_add_scheme::generate_proof() const {
   property hyps[4];
   if (!fill_hypotheses(hyps, needed)) return NULL;
-  real_op const *r = boost::get< real_op const >(real.real());
-  assert(r && (r->type == BOP_ADD || r->type == BOP_SUB));
   property res(real, add_relative(hyps[0].bnd(), hyps[1].bnd(), hyps[2].bnd()));
   if (!is_defined(res.bnd())) return NULL;
+  real_op const *r = boost::get< real_op const >(real.real());
   return create_theorem(4, hyps, res, r->type == BOP_SUB ? "sub_rr" : "add_rr");
 }
 
@@ -980,8 +979,6 @@ REGISTER_SCHEME_END_PATTERN(computation_rel_mul,
 node *computation_rel_mul_scheme::generate_proof() const {
   property hyps[2];
   if (!fill_hypotheses(hyps, needed)) return NULL;
-  real_op const *r = boost::get< real_op const >(real.real());
-  assert(r && r->type == BOP_MUL);
   property res(real, compose_relative(hyps[0].bnd(), hyps[1].bnd()));
   if (!is_defined(res.bnd())) return NULL;
   return create_theorem(2, hyps, res, "mul_rr", &compose_updater);
@@ -998,6 +995,36 @@ proof_scheme *computation_rel_mul_scheme::factory(predicated_real const &real,
   hyps.push_back(predicated_real(holders[0], holders[2], PRED_REL));
   hyps.push_back(predicated_real(holders[1], holders[3], PRED_REL));
   return new computation_rel_mul_scheme(real, hyps);
+}
+
+// COMPUTATION_REL_DIV
+REGISTER_SCHEME_BEGIN(computation_rel_div);
+  preal_vect needed;
+  computation_rel_div_scheme(predicated_real const &r, preal_vect const &v)
+    : proof_scheme(r), needed(v) {}
+REGISTER_SCHEME_END_PATTERN(computation_rel_div,
+  predicated_real(pattern(0) / pattern(1), pattern(2) / pattern(3), PRED_REL));
+
+node *computation_rel_div_scheme::generate_proof() const {
+  property hyps[3];
+  if (!fill_hypotheses(hyps, needed)) return NULL;
+  property res(real, compose_relative_inv(hyps[0].bnd(), hyps[1].bnd()));
+  if (!is_defined(res.bnd())) return NULL;
+  return create_theorem(3, hyps, res, "div_rr", &compose_updater);
+}
+
+preal_vect computation_rel_div_scheme::needed_reals() const {
+  return needed;
+}
+
+proof_scheme *computation_rel_div_scheme::factory(predicated_real const &real,
+                                                  ast_real_vect const &holders) {
+  if (holders[0] == holders[2] || holders[1] == holders[3]) return NULL;
+  preal_vect hyps;
+  hyps.push_back(predicated_real(holders[0], holders[2], PRED_REL));
+  hyps.push_back(predicated_real(holders[1], holders[3], PRED_REL));
+  hyps.push_back(predicated_real(holders[3], PRED_NZR));
+  return new computation_rel_div_scheme(real, hyps);
 }
 
 // COMPOSE_REL

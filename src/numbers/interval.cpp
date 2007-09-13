@@ -255,6 +255,17 @@ interval compose_relative(interval const &u, interval const &v) {
                   rnd::add_up  (rnd::add_up  (uu, vu), rnd::mul_up  (uu, vu)));
 }
 
+// compute (u - v) / (1 + v)
+interval compose_relative_inv(interval const &u, interval const &v) {
+  assert(u.base && v.base);
+  typedef real_policies::rounding rnd;
+  number const &ul = plup.lower(), &uu = plup.upper(),
+               &vl = plvp.lower(), &vu = plvp.upper();
+  if (ul < -1 || vl <= -1) return interval();
+  return interval(rnd::div_down(rnd::sub_down(ul, vu), rnd::add_up  (number(1), vu)),
+                  rnd::div_up  (rnd::sub_up  (uu, vl), rnd::add_down(number(1), vl)));
+}
+
 // compute u * w + v * (1 - w)
 interval add_relative(interval const &u, interval const &v, interval const &w) {
   assert(u.base && v.base && w.base);

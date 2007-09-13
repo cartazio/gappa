@@ -302,12 +302,6 @@ REWRIT9(mul_firq,
 
 // DIV
 
-REWRIT9(div_mibq,
-	(a / b - c / d) / (c / d),
-	((a - c) / c - (b - d) / d) / (one + (b - d) / d),
-	~b && ~c && ~d,
-	b ^ d);
-
 REWRIT9(div_firq,
 	(a / b - c / b) / (c / b),
 	(a - c) / c,
@@ -334,14 +328,6 @@ REWRITe(sub_xals, //actually err_xers
 	c - a,
 	(c - b) + (b - a),
 	a ^ c && b ^ c);
-
-/*
-REWRIT9(err_xalq, //actually err_xerq
-	(c - a) / a,
-	(c - b) / b + (b - a) / a + ((c - b) / b) * ((b - a) / a),
-	~a && ~b,
-	a ^ c && b ^ c);
-*/
 
 /* bad bad Zoot
 REWRIT9(err_xabq,
