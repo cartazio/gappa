@@ -25,6 +25,17 @@ struct ast_prop {
 
 typedef std::vector< ast_prop const * > ast_prop_vect;
 
+struct hint_cond
+{
+  condition_type type;
+  ast_real const *real;
+  ast_number const *value;
+  hint_cond(condition_type t, ast_real const *r, ast_number const *v)
+    : type(t), real(r), value(v) {}
+};
+
+typedef std::vector< hint_cond const * > hint_cond_vect;
+
 typedef std::vector< unsigned long > function_params;
 
 struct function_generator {

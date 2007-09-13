@@ -22,6 +22,8 @@ ast_number *normalize(ast_number const &);
 
 extern ast_number const *token_zero, *token_one;
 
+enum condition_type { COND_LT, COND_LE, COND_GT, COND_GE, COND_NE, COND_NZ };
+
 enum real_op_type { UOP_ID, UOP_NEG, UOP_SQRT, UOP_ABS, BOP_ADD, BOP_SUB, BOP_MUL, BOP_DIV, COP_FMA, ROP_FUN, ROP_UNK };
 
 struct interval;

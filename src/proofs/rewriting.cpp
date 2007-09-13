@@ -3,6 +3,7 @@
 #include "numbers/real.hpp"
 #include "numbers/interval.hpp"
 #include "numbers/interval_utility.hpp"
+#include "parser/ast.hpp"
 #include "proofs/rewriting.hpp"
 #include "proofs/updater.hpp"
 
@@ -109,9 +110,25 @@ proof_scheme *rewriting_factory::operator()(predicated_real const &src,
   return new rewriting_scheme(src.real(), dst, name, c);
 }
 
-void register_user_rewrite(ast_real const *r1, ast_real const *r2) {
-  new rewriting_factory(r1, r2, proof_generator ? proof_generator->rewrite(r1, r2) : "none",
-                        pattern_cond_vect(), pattern_excl_vect());
+void register_user_rewrite(ast_real const *r1, ast_real const *r2, hint_cond_vect *hc)
+{
+  pattern_cond_vect pc;
+  if (hc)
+  {
+    for (hint_cond_vect::const_iterator i = hc->begin(),
+         i_end = hc->end(); i != i_end; ++i)
+    {
+      hint_cond const *c = *i;
+      pattern_cond cond;
+      cond.real = c->real;
+      cond.value = atoi(c->value->mantissa.c_str());
+      cond.type = c->type == COND_NE && cond.value == 0 ? COND_NZ : c->type;
+      pc.push_back(cond);
+      delete c;
+    }
+  }
+  std::string name = proof_generator ? proof_generator->rewrite(r1, r2) : "$AXIOM";
+  new rewriting_factory(r1, r2, name, pc, pattern_excl_vect());
 }
 
 struct rewriting_rule {

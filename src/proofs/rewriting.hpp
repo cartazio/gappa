@@ -1,6 +1,8 @@
 #ifndef PROOFS_REWRITING_HPP
 #define PROOFS_REWRITING_HPP
 
+#include <string>
+#include <vector>
 #include "parser/pattern.hpp"
 #include "proofs/schemes.hpp"
 

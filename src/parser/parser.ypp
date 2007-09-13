@@ -24,9 +24,9 @@ int my_yyerror(YYLTYPE &yylloc, char const *errstr) {
   YYERROR; \
 } while (0)
 
-extern void register_user_rewrite(ast_real const *, ast_real const *);
+extern void register_user_rewrite(ast_real const *, ast_real const *, hint_cond_vect *);
 extern void generate_graph(ast_prop const *p);
-extern void test_ringularity(ast_real const *, ast_real const *);
+extern void test_ringularity(ast_real const *, ast_real const *, bool);
 extern int test_rewriting(ast_real const *, ast_real const *, std::string &);
 extern std::set< ast_real const * > free_variables;
 extern bool parameter_rfma;
@@ -48,9 +48,10 @@ static ast_real const *rnd_normalize(ast_real const &real) {
   return normalize(ast_real(real_op(rounding_mode, r)));
 }
 
-#define scan_integer(n,res) \
-  if (n->exponent != 0 || n->mantissa.size() >= 7) failure("the number does not look like an integer"); \
-  unsigned long res = (unsigned long)(atoi(n->mantissa.c_str()) * 2) | 1;
+static unsigned long read_integer_param(ast_number const *n)
+{
+  return (unsigned long)(atoi(n->mantissa.c_str()) * 2) | 1;
+}
 
 #define YYINCLUDED_STDLIB_H
 
@@ -60,7 +61,7 @@ static ast_real const *rnd_normalize(ast_real const &real) {
 %pure-parser
 %locations
 
-%token IDENT IN NUMBER SQRT FMA LE GE
+%token IDENT FUNID VARID IN NUMBER SQRT FMA NE LE GE
 
 %union {
   ast_number const	*number;
@@ -73,11 +74,17 @@ static ast_real const *rnd_normalize(ast_real const &real) {
   function_class const	*function;
   function_params	*params;
   unsigned long		param;
+  hint_cond		*precond;
+  hint_cond_vect	*preconds;
 }
 
 %type <number>		NUMBER
 %type <number>		SNUMBER
+%type <number>          INTEGER
+%type <number>          SINTEGER
 %type <ident>		IDENT
+%type <ident>		VARID
+%type <ident>		FUNID
 %type <real>		REAL
 %type <reals>		REALS
 %type <dvar>		DVAR
@@ -88,6 +95,9 @@ static ast_real const *rnd_normalize(ast_real const &real) {
 %type <params>		FUNCTION_PARAMS
 %type <params>		FUNCTION_PARAMS_AUX
 %type <param>		FUNCTION_PARAM
+%type <precond>		PRECOND
+%type <preconds>	PRECONDS
+%type <preconds>	PRECONDS_AUX
 
 %right IMPL
 %left OR
@@ -123,8 +133,22 @@ SNUMBER:
 | '+' NUMBER	{ $$ = $2; }
 | '-' NUMBER	{ $$ = negative_number($2); }
 
+INTEGER:
+  NUMBER
+  {
+    if ($1->exponent != 0 || $1->mantissa.size() >= 7) failure("the number does not look like an integer");
+    $$ = $1;
+  }
+
+SINTEGER:
+  SNUMBER
+  {
+    if ($1->exponent != 0 || $1->mantissa.size() >= 7) failure("the number does not look like an integer");
+    $$ = $1;
+  }
+
 FUNCTION_PARAM:
-  SNUMBER	{ scan_integer($1, v); $$ = v; }
+  SINTEGER	{ $$ = read_integer_param($1); }
 | IDENT		{ $$ = reinterpret_cast< unsigned long >($1); }
 
 FUNCTION_PARAMS_AUX:
@@ -141,10 +165,9 @@ FUNCTION_PARAMS:
 | '<' FUNCTION_PARAMS_AUX '>'	{ $$ = $2; }
 
 FUNCTION:
-  IDENT FUNCTION_PARAMS
+  FUNID FUNCTION_PARAMS
   {
     ast_ident *r = $1;
-    if (r->type != ID_FUN) failure(r->name << " is not a function");
     function_class const *f;
     if (function_params *p = $2) {
       f = (*r->fun)(*p);
@@ -167,7 +190,6 @@ PROG:
 | PROG IDENT EQUAL REAL ';'
   {
     ast_ident *v = $2;
-    if (v->type != ID_NONE) failure("the symbol " << v->name << " is redefined");
     ast_real const *r = $4;
     v->type = ID_VAR;
     v->var = r;
@@ -178,26 +200,25 @@ PROG:
 | PROG '@' IDENT '=' FUNCTION ';'
   {
     ast_ident *v = $3;
-    if (v->type != ID_NONE) failure("the symbol " << v->name << " is redefined");
     v->type = ID_FUN;
     v->fun = new default_function_generator($5);
   }
+| PROG VARID		{ failure("the symbol " << $2->name << " is redefined"); }
+| PROG FUNID		{ failure("the symbol " << $2->name << " is redefined"); }
+| PROG '@' VARID	{ failure("the symbol " << $3->name << " is redefined"); }
+| PROG '@' FUNID	{ failure("the symbol " << $3->name << " is redefined"); }
 
 REAL:
   SNUMBER	{ $$ = normalize(ast_real($1)); }
+| VARID		{ $$ = $1->var; }
 | IDENT
   {
     ast_ident *v = $1;
-    switch (v->type) {
-    case ID_FUN: failure(v->name << " is not a variable");
-    case ID_VAR: break;
-    case ID_NONE:
-      v->type = ID_VAR;
-      ast_real *r = normalize(ast_real(v));
-      free_variables.insert(r);
-      v->var = r;
-    }
-    $$ = v->var;
+    v->type = ID_VAR;
+    ast_real *r = normalize(ast_real(v));
+    free_variables.insert(r);
+    v->var = r;
+    $$ = r;
   }
 | FUNCTION '(' REALS ')'
   {
@@ -241,7 +262,7 @@ DPOINTS:
 
 DVAR:
   REAL				{ dichotomy_var v = { $1, 0 }; $$ = v; }
-| REAL IN NUMBER		{ scan_integer($3, w); dichotomy_var v = { $1, w }; $$ = v; }
+| REAL IN INTEGER		{ dichotomy_var v = { $1, read_integer_param($3) }; $$ = v; }
 | REAL IN '(' DPOINTS ')'	{ dichotomy_var v = { $1, $4 }; $$ = v; }
 
 DVARS:
@@ -252,11 +273,31 @@ DVARS:
     $$ = $1;
   }
 
+PRECOND:
+  REAL NE  SINTEGER	{ $$ = new hint_cond(COND_NE, $1, $3); }
+| REAL LE  SINTEGER	{ $$ = new hint_cond(COND_LE, $1, $3); }
+| REAL GE  SINTEGER	{ $$ = new hint_cond(COND_GE, $1, $3); }
+| REAL '<' SINTEGER	{ $$ = new hint_cond(COND_LT, $1, $3); }
+| REAL '>' SINTEGER	{ $$ = new hint_cond(COND_GT, $1, $3); }
+
+PRECONDS_AUX:
+  PRECOND { $$ = new hint_cond_vect(1, $1); }
+| PRECONDS_AUX ',' PRECOND
+  {
+    $1->push_back($3);
+    $$ = $1;
+  }
+
+PRECONDS:
+                       { $$ = NULL; }
+| '{' PRECONDS_AUX '}' { $$ = $2; }
+
 HINTS:
-| HINTS REAL IMPL REAL ';'
+| HINTS REAL IMPL REAL PRECONDS ';'
   {
     ast_real const *r1 = $2, *r2 = $4;
-    test_ringularity(r1, r2);
+    hint_cond_vect *hc = $5;
+    test_ringularity(r1, r2, !hc);
     std::string info;
     int t = test_rewriting(r1, r2, info);
     if (t == 1) {
@@ -267,7 +308,8 @@ HINTS:
       if (!info.empty())
         std::cerr << "  if all the following properties can be proved\n" << info;
     }
-    register_user_rewrite(r1, r2);
+    register_user_rewrite(r1, r2, hc);
+    delete hc;
   }
 | HINTS REALS '$' DVARS ';'
   {

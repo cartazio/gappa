@@ -131,13 +131,15 @@ static quotient mul(quotient const &q1, quotient const &q2) {
   return res;
 }
 
+static bool check_divisor;
+
 static quotient div(quotient const &q1, quotient const &q2) {
   sum const &d = q2.first;
   if (d.empty()) {
     std::cerr << "Error: a zero appears as a denominator in a rewriting rule.\n";
     exit(EXIT_FAILURE);
   }
-  if (warning_null_denominator && parameter_constrained && (d.size() > 1 || !d.begin()->first.empty()))
+  if (check_divisor && (d.size() > 1 || !d.begin()->first.empty()))
     std::cerr << "Warning: although present in a quotient, the expression "
               << dump_sum(d) << " may have not been tested for non-zeroness.\n";
   quotient res;
@@ -188,11 +190,15 @@ static quotient const &ringalize(ast_real const *r) {
   return i->second;
 }
 
-void test_ringularity(ast_real const *r1, ast_real const *r2) {
-  if (!warning_hint_difference && !warning_null_denominator) return;
+void test_ringularity(ast_real const *r1, ast_real const *r2, bool b)
+{
+  check_divisor = warning_null_denominator && b;
+  if (!warning_hint_difference && !check_divisor) return;
   sum const &diff = sub_num(ringalize(r1), ringalize(r2));
   if (!diff.empty() && warning_hint_difference)
+  {
     std::cerr <<
       "Warning: " << dump_real(r1) << " and " << dump_real(r2) << " are not trivially equal.\n"
       "         Difference: " << dump_sum(diff) << '\n';
+  }
 }
