@@ -1105,3 +1105,25 @@ proof_scheme *nzr_of_bnd_scheme::factory(predicated_real const &real) {
   if (real.pred() != PRED_NZR) return NULL;
   return new nzr_of_bnd_scheme(real, real.real());
 }
+
+// NZR_OF_UNCONSTRAINED
+REGISTER_SCHEME_BEGIN(nzr_of_unconstrained);
+  nzr_of_unconstrained_scheme(predicated_real const &r): proof_scheme(r) {}
+REGISTER_SCHEME_END_PREDICATE(nzr_of_unconstrained);
+
+node *nzr_of_unconstrained_scheme::generate_proof() const
+{
+  return create_theorem(0, NULL, property(real), "$FALSE");
+}
+
+preal_vect nzr_of_unconstrained_scheme::needed_reals() const
+{
+  return preal_vect();
+}
+
+proof_scheme *nzr_of_unconstrained_scheme::factory(predicated_real const &real)
+{
+  extern bool parameter_constrained;
+  if (real.pred() != PRED_NZR || parameter_constrained) return NULL;
+  return new nzr_of_unconstrained_scheme(real);
+}

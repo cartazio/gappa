@@ -37,10 +37,11 @@ struct node {
   node_id type;
   node_set succ;
   graph_t *graph;
-  unsigned nb_good;
-  mutable unsigned visited;
+  unsigned nb_good;         // number of references by various graph_t::known_reals
+  unsigned nb_missing;      // heuristic number of missing facts
+  mutable unsigned visited; // timestamp of last visit
   unsigned local_weight, weight;
-  bool can_visit() const; // update visited
+  bool can_visit() const;
   unsigned get_weight();
   node(node_id, graph_t *);
   virtual property const &get_result() const = 0;
@@ -109,9 +110,10 @@ class graph_t {
   bool populate(property_tree const &, dichotomy_sequence const &);	// fill the proof graph, return true in case of contradiction
   bool dichotomize(property_tree const &, dichotomy_hint const &);	// apply a dichotomy hint, return true if nodes were added
   node *get_contradiction() const { return contradiction; }
-  void set_contradiction(node *);
-  void purge();		// remove any unused nodes and free maps
-  void replace_known(node_vect const &);
+  void purge();		                   // remove any unused nodes and free maps
+  void set_contradiction(node *);          // set contradiction node and purge graph
+  void replace_known(node_vect const &);   // replace known_reals and purge graph
+  void show_dangling() const;
 };
 
 struct graph_loader {

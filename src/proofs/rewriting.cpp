@@ -25,7 +25,6 @@ struct rewriting_scheme: proof_scheme {
 
 preal_vect rewriting_scheme::needed_reals() const {
   preal_vect res(1, predicated_real(rewritten, PRED_BND));
-  if (!parameter_constrained) return res;
   for (pattern_cond_vect::const_iterator i = conditions.begin(),
        end = conditions.end(); i != end; ++i)
     res.push_back(predicated_real(i->real, i->type == COND_NZ ? PRED_NZR : PRED_BND));
@@ -36,28 +35,49 @@ node *rewriting_scheme::generate_proof() const {
   node *n = find_proof(rewritten);
   if (!n) return NULL;
   std::vector< property > hyps;
-  if (parameter_constrained) {
-    for (pattern_cond_vect::const_iterator i = conditions.begin(),
-         end = conditions.end(); i != end; ++i) {
-      node *m = find_proof(predicated_real(i->real, i->type == COND_NZ ? PRED_NZR : PRED_BND));
+  for (pattern_cond_vect::const_iterator i = conditions.begin(),
+       i_end = conditions.end(); i != i_end; ++i)
+  {
+    if (i->type == COND_NZ)
+    {
+      node *m = find_proof(predicated_real(i->real, PRED_NZR));
       if (!m) return NULL;
+      hyps.push_back(m->get_result());
+      continue;
+    }
+    property p(predicated_real(i->real, PRED_BND));
+    number n(i->value);
+    switch (i->type)
+    {
+      case COND_LE:
+      case COND_LT:
+        p.bnd() = interval(number::neg_inf, n); break;
+      case COND_GE:
+      case COND_GT:
+        p.bnd() = interval(n, number::pos_inf); break;
+      case COND_NE: break;
+      default: assert(false);
+    }
+    if (node *m = find_proof(p))
+    {
       property const &res = m->get_result();
-      if (i->type != COND_NZ) {
-        interval const &b = res.bnd();
-        number n(i->value);
-        bool good = false;
-        switch (i->type) {
-        case COND_LE: good = n >= upper(b); break;
-        case COND_GE: good = n <= lower(b); break;
+      interval const &b = res.bnd();
+      bool good = true;
+      switch(i->type)
+      {
         case COND_LT: good = n > upper(b); break;
         case COND_GT: good = n < lower(b); break;
         case COND_NE: good = n > upper(b) || n < lower(b); break;
-        default: assert(false);
-        }
-        if (!good) return NULL;
+        default: ;
       }
-      hyps.push_back(res);
+      if (good)
+      {
+        hyps.push_back(res);
+        continue;
+      }
     }
+    if (parameter_constrained) return NULL;
+    hyps.push_back(p);
   }
   property const &res = n->get_result();
   hyps.push_back(res);

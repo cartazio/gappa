@@ -1,10 +1,13 @@
+#include <iostream>
 #include <list>
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
+#include "parser/ast.hpp"
 #include "proofs/proof_graph.hpp"
 #include "proofs/schemes.hpp"
 
 extern bool parameter_expensive;
+extern bool parameter_constrained;
 
 graph_t *top_graph = NULL;
 
@@ -82,8 +85,9 @@ node_vect const &node::get_subproofs() const {
 }
 
 node::node(node_id t, graph_t *g)
-: type(t), graph(g), nb_good(0), visited(0), local_weight(1),
-  weight(parameter_expensive ? 0 : local_weight) {
+  : type(t), graph(g), nb_good(0), nb_missing(0), visited(0), local_weight(1),
+    weight(parameter_expensive ? 0 : local_weight)
+{
   if (g)
     g->insert(this);
 }
@@ -173,17 +177,38 @@ modus_node::modus_node(theorem_node *n)
     : dependent_node(MODUS) {
   assert(n);
   target = n;
+  if (n->name == "$FALSE")
+  {
+    assert(!parameter_constrained && n->hyp.size() == 0);
+    nb_missing = 1;
+    return;
+  }
+  int missing = 0;
   property_vect const &ghyp = graph->get_hypotheses();
   char *v = new_hyps(hyps, ghyp);
   node_set nodes;
-  for(property_vect::const_iterator i = n->hyp.begin(), i_end = n->hyp.end();
-      i != i_end; ++i) {
+  for (property_vect::const_iterator i = n->hyp.begin(),
+       i_end = n->hyp.end(); i != i_end; ++i)
+  {
     node *m = find_proof(*i);
+    if (!m)
+    {
+      assert(!parameter_constrained);
+      m = create_theorem(0, NULL, *i, "$FALSE");
+    }
     assert(m && dominates(m, this));
     fill_hyps(v, ghyp, m);
     if (m->type != HYPOTHESIS && nodes.insert(m).second)
       insert_pred(m);
+    if (m->nb_missing)
+    {
+      assert(!parameter_constrained);
+      ++missing;
+      if (m->nb_missing > nb_missing)
+        nb_missing = m->nb_missing;
+    }
   }
+  nb_missing += missing;
 }
 
 modus_node::~modus_node() {
@@ -300,7 +325,7 @@ void graph_t::purge() {
 }
 
 void graph_t::set_contradiction(node *n) {
-  assert(n);
+  assert(n && !contradiction);
   contradiction = n;
   ++n->nb_good;
   purge();
@@ -324,7 +349,9 @@ bool graph_t::try_real(node *n) {
       return false;
     }
     if (res1.implies(res2)) {
-      if (n->get_weight() >= old->get_weight()) {
+      if (n->get_weight() >= old->get_weight() ||
+          n->nb_missing >= old->nb_missing)
+      {
         ++stat_discarded_pred;
         delete n;
         return false;
@@ -379,6 +406,27 @@ void graph_t::replace_known(node_vect const &v) {
   }
   for(node_map::const_iterator i = old.begin(), end = old.end(); i != end; ++i)
     i->second->remove_known();
+  for(node_map::const_iterator i = partial_reals.begin(), end = partial_reals.end(); i != end; ++i)
+    delete i->second;
+  partial_reals.clear();
+}
+
+void graph_t::show_dangling() const
+{
+  bool first = true;
+  for (node_set::const_iterator i = nodes.begin(), i_end = nodes.end(); i != i_end; ++i)
+  {
+    node *n = *i;
+    if (n->type == MODUS && static_cast< modus_node * >(n)->target->name == "$FALSE")
+    {
+      if (first)
+      {
+        first = false;
+        std::cerr << "Unproven assumptions:\n";
+      }
+      std::cerr << "  " << dump_property(n->get_result()) << '\n';
+    }
+  }
 }
 
 void enlarger(node_vect const &nodes) {

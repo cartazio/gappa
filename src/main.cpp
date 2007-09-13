@@ -59,6 +59,7 @@ int main(int argc, char **argv) {
         proof_generator->theorem(n);
       }
       proven_contexts.push_back(true);
+      g->show_dangling();
     } else if (current_context.goals.empty()) {
       std::cerr << "Warning: no contradiction was found.\n";
       globally_proven = false;
@@ -86,6 +87,7 @@ int main(int argc, char **argv) {
         globally_proven = false;
       }
       proven_contexts.push_back(proven);
+      g->show_dangling();
     }
     delete g;
   }
