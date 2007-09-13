@@ -127,7 +127,7 @@ void register_user_rewrite(ast_real const *r1, ast_real const *r2, hint_cond_vec
       delete c;
     }
   }
-  std::string name = proof_generator ? proof_generator->rewrite(r1, r2) : "$AXIOM";
+  std::string name = proof_generator ? proof_generator->rewrite(r1, r2, pc) : "$AXIOM";
   new rewriting_factory(r1, r2, name, pc, pattern_excl_vect());
 }
 

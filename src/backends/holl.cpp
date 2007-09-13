@@ -382,11 +382,13 @@ struct holl_backend: backend {
          "Section Generated_by_Gappa.*)\n";
   }
   void finalize() { *out << "(*End Generated_by_Gappa.*)\n"; }
-  virtual std::string rewrite(ast_real const *, ast_real const *);
+  virtual std::string rewrite(ast_real const *, ast_real const *, pattern_cond_vect const &);
   virtual std::string theorem(node *n) { return display(n); }
 };
 
-std::string holl_backend::rewrite(ast_real const *src, ast_real const *dst) {
+std::string holl_backend::rewrite(ast_real const *src, ast_real const *dst,
+                                  pattern_cond_vect const &)
+{
   static int a_id = 0;
   std::ostringstream name;
   name << ++a_id;
