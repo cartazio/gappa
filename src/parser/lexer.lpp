@@ -53,6 +53,7 @@ static int read_ident(YYSTYPE *yylval) {
     case ID_NONE: return IDENT;
     case ID_VAR:  return VARID;
     case ID_FUN:  return FUNID;
+    default: assert(false); return IDENT;
   }
 }
 
