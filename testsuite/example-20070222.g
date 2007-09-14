@@ -14,7 +14,7 @@ err = (q1 - a / b) / (a / b);
   -> err in [0,1] /\ a * err in [0,0.99999]
   /\ rnd(q0) - q0 in [0,0] /\ rnd(e0) - e0 in [0,0] /\ rnd(q1) - q1 in [0,0] }
 
-e0 -> -eps0 + 1b-17;
-err -> -(eps0 * eps0) + (1 + eps0) * 1b-17;
+e0 -> -eps0 + 1b-17                            { b <> 0 };
+err -> -(eps0 * eps0) + (1 + eps0) * 1b-17     { a <> 0, b <> 0 };
 
 rnd(q1) - q1 $ 1 / b;
