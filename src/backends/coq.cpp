@@ -104,9 +104,12 @@ static std::string display(ast_real const *r) {
   } else if (real_op const *o = boost::get< real_op const >(r)) {
     static char const op[] = "X-XX+-*/XX";
     if (o->type == ROP_FUN) {
+      bool convert = o->fun->name().find("rounding") == 0;
+      if (convert) plouf << "float2R (";
       plouf << convert_name(o->fun->name()) << " (" << display(o->ops[0]) << ')';
       for(ast_real_vect::const_iterator i = ++(o->ops.begin()), end = o->ops.end(); i != end; ++i)
         plouf << " (" << display(*i) << ')';
+      if (convert) plouf << ')';
     } else if (o->ops.size() == 1) {
       std::string s(1, op[o->type]);
       if (o->type == UOP_ABS) s = "Rabs";
