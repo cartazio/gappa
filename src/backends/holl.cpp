@@ -297,8 +297,19 @@ static std::string display(node *n) {
     for(int i = 0; i < 2; ++i) {
       node *m = pred[i];
       property const &res = m->get_result();
-      if (!is_bounded(res.bnd())) suffix = (i == 0) ? "_hb" : "_bh";
-      else if (res.real.pred() != PRED_BND) suffix = "_aa";
+      switch (res.real.pred()) {
+        case PRED_BND:
+          if (!is_bounded(res.bnd())) suffix = (i == 0) ? "_hb" : "_bh";
+          break;
+        case PRED_ABS:
+          suffix = "_aa";
+          break;
+        case PRED_REL:
+          suffix = "_rr";
+          break;
+        default:
+          assert(false);
+      }
       if (m->type == HYPOTHESIS) {
         property_map::iterator pki = pmap.find(res.real);
         assert(pki != pmap.end());

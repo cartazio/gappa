@@ -275,6 +275,12 @@ intersection_node::intersection_node(node *n1, node *n2)
   fill_hyps(v, ghyp, n1);
   fill_hyps(v, ghyp, n2);
   if (is_empty(res.bnd())) {
+    if (res1.real.pred() == PRED_REL) {
+      // "always 0" is not a contradiction, so bail out and hope nobody encounters it
+      std::cerr << "Sorry, not implemented: Contradiction on relative errors.\n";
+      exit(1);
+      return;
+    }
     res = property();
     top_graph->set_contradiction(this);
   }
