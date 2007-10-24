@@ -1,4 +1,3 @@
-#include <map>
 #include "backends/backend.hpp"
 
 std::ostream *out;
@@ -14,4 +13,10 @@ backend *backend::find(std::string const &name) {
   backend_map::const_iterator i = backends.find(name);
   if (i == backends.end()) return NULL;
   return i->second;
+}
+
+std::string composite(char prefix, int num) {
+  std::ostringstream s;
+  s << prefix << (num < 0 ? -num : num);
+  return s.str();
 }

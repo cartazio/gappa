@@ -9,21 +9,6 @@
 
 extern std::string get_real_split(number const &f, int &exp, bool &zero);
 
-template< class T >
-int map_finder(std::map< T, int > &m, T const &k) {
-  typename std::map< T, int >::const_iterator it = m.find(k);
-  if (it != m.end()) return -it->second;
-  int id = m.size() + 1;
-  m.insert(std::make_pair(k, id));
-  return id;
-}
-
-static std::string composite(char prefix, int num) {
-  std::ostringstream s;
-  s << prefix << (num < 0 ? -num : num);
-  return s.str();
-}
-
 static std::string convert_name(std::string const &name) {
   if (name == "sqrt") return "sqrtG";
   std::string::size_type p2 = name.find(',');
@@ -60,7 +45,7 @@ static std::string convert_name(std::string const &name) {
   return '(' + res.str() + ')';
 }
 
-static std::map< std::string, int > displayed_floats;
+static id_cache< std::string > displayed_floats;
 
 static std::string display(number const &f) {
   std::ostringstream s;
@@ -76,30 +61,30 @@ static std::string display(number const &f) {
   if (!zero && exp != 0)
     s << (exp < 0 ? " / &2 pow " : " * &2 pow ") << std::abs(exp);
   std::string const &s_ = s.str();
-  int f_id = map_finder(displayed_floats, s_);
+  int f_id = displayed_floats.find(s_);
   std::string name = composite('f', f_id);
   if (f_id >= 0)
     *out << "NOTATION `(" << name << ":real) = " << s_ << "`;;\n";
   return name;
 }
 
-static std::map< std::string, int > displayed_intervals;
+static id_cache< std::string > displayed_intervals;
 
 static std::string display(interval const &i) {
   std::ostringstream s;
   s << display(lower(i)) << ":real),(" << display(upper(i));
   std::string const &s_ = s.str();
-  int i_id = map_finder(displayed_intervals, s_);
+  int i_id = displayed_intervals.find(s_);
   std::string name = composite('i', i_id);
   if (i_id >= 0)
     *out << "NOTATION `(" << name << ":real#real) = ((" << s_ << ":real))`;;\n";
   return name;
 }
 
-static std::map< ast_real const *, int > displayed_reals;
+static id_cache< ast_real const * > displayed_reals;
 
 static std::string display(ast_real const *r) {
-  int r_id = map_finder(displayed_reals, r);
+  int r_id = displayed_reals.find(r);
   std::string name = r->name ? '_' + r->name->name : composite('r', r_id);
   if (r_id < 0)
     return name;
@@ -144,7 +129,7 @@ static std::string display(ast_real const *r) {
   return name;
 }
 
-static std::map< std::string, int > displayed_properties;
+static id_cache< std::string > displayed_properties;
 
 static std::string display(property const &p) {
   std::ostringstream s;
@@ -176,7 +161,7 @@ static std::string display(property const &p) {
     }
   }
   std::string s_ = s.str();
-  int p_id = map_finder(displayed_properties, s_);
+  int p_id = displayed_properties.find(s_);
   std::string name = composite('p', p_id);
   if (p_id >= 0)
     *out << "NOTATION `(" << name << ":bool) = " << s_ << "`;; (* " << dump_property(p) << " *)\n";
@@ -251,11 +236,11 @@ static void invoke_lemma(auto_flush &plouf, node *n, property_map const &pmap) {
   }
 }
 
-static std::map< node *, int > displayed_nodes;
+static id_cache< node * > displayed_nodes;
 
 static std::string display(node *n) {
   assert(n);
-  int n_id = map_finder(displayed_nodes, n);
+  int n_id = displayed_nodes.find(n);
   std::string name = composite('l', n_id);
   if (n_id < 0) return name;
   auto_flush plouf;
@@ -382,6 +367,7 @@ struct holl_backend: backend {
          "Section Generated_by_Gappa.*)\n";
   }
   void finalize() { *out << "(*End Generated_by_Gappa.*)\n"; }
+  void reset() { displayed_nodes.clear(); }
   virtual std::string rewrite(ast_real const *, ast_real const *, pattern_cond_vect const &);
   virtual std::string theorem(node *n) { return display(n); }
 };

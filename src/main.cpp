@@ -47,6 +47,7 @@ int main(int argc, char **argv) {
       }
     }
     std::cerr << ":\n";
+    if (proof_generator) proof_generator->reset();
     graph_t *g = new graph_t(NULL, hyp);
     if (g->populate(current_context.goals, dichotomies)) {
       if (!current_context.goals.empty())
