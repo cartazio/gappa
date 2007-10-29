@@ -11,11 +11,22 @@ extern bool parameter_constrained;
 
 graph_t *top_graph = NULL;
 
-unsigned visit_counter = 0;
+/** Timestamp for the currently running graph algorithm. Increased each time an algorithm starts. */
+static unsigned visit_counter = 0;
 
-static char *new_hyps(long &h, property_vect const &hyp) {
+/**
+ * Creates a bit vector representing the empty subset for the properties of \a hyp.
+ * If the bit vector fits inside a pointer word, it is stored directly. Otherwise a pointer to it is used.
+ * The indirection is seldom used, as propositions usually have less than 32/64 global hypotheses.
+ * @param h   A reference to the data to be stored, either the bit vector or a pointer to it.
+ * @param hyp A vector of properties. The same vector should then be passed to the functions ::get_hyps and ::delete_hyps.
+ * @return A pointer to the bit vector.
+ */
+static char *new_hyps(long &h, property_vect const &hyp)
+{
   unsigned nb = hyp.size();
-  if (nb <= sizeof(long) * 8) {
+  if (nb <= sizeof(long) * 8)
+  {
     h = 0;
     return reinterpret_cast< char * >(&h);
   }
@@ -24,30 +35,50 @@ static char *new_hyps(long &h, property_vect const &hyp) {
   return v;
 }
 
-static void delete_hyps(long h, property_vect const &hyp) {
+/**
+ * Deletes a compressed property_vect.
+ * @see ::new_hyps
+ */
+static void delete_hyps(long h, property_vect const &hyp)
+{
   if (hyp.size() > sizeof(long) * 8)
     delete[] reinterpret_cast< char * >(h);
 }
 
-static char *get_hyps(long &h, property_vect const &hyp) {
+/**
+ * Returns a pointer to the bit vector representing a compressed property_vect.
+ * @see ::new_hyps
+ */
+static char *get_hyps(long &h, property_vect const &hyp)
+{
   if (hyp.size() > sizeof(long) * 8)
     return reinterpret_cast< char * >(h);
   else
     return reinterpret_cast< char * >(&h);
 }
 
-property_vect node::get_hypotheses() const {
+/**
+ * Uncompresses the vector of global hypotheses this node (in)directly depends on.
+ * The carrier vector is the hypotheses of the graph that owns this node.
+ */
+property_vect node::get_hypotheses() const
+{
   property_vect res;
   long h = get_hyps();
   if (h == 0) return res;
   property_vect const &ghyp = graph->get_hypotheses();
   char const *v = ::get_hyps(h, ghyp);
-  for(unsigned i = 0, nb = ghyp.size(); i < nb; ++i)
+  for (unsigned i = 0, nb = ghyp.size(); i < nb; ++i)
     if (v[i / 8] & (1 << (i & 7))) res.push_back(ghyp[i]);
   return res;
 }
 
-bool node::can_visit() const {
+/**
+ * Tells if the node has yet to be visited by the current graph algorithm.
+ * In that case, the function updates the #visited timestamp so that the next call returns false.
+ */
+bool node::can_visit() const
+{
   if (visited == visit_counter) return false;
   visited = visit_counter;
   return true;
@@ -55,35 +86,54 @@ bool node::can_visit() const {
 
 typedef std::list< node * > node_list;
 
-unsigned node::get_weight() {
+/**
+ * Computes the sum of the #local_weight of all the ancestors of this node.
+ * The result is cached in the #weight data member.
+ * @node Outside the expensive mode, the weights of the nodes are their #local_weight.
+ */
+unsigned node::get_weight()
+{
   if (weight > 0) return weight;
   node_vect const &v = get_subproofs();
   weight = local_weight;
-  switch (v.size()) {
-  case 0: break;
-  case 1: weight += v[0]->get_weight(); break;
-  default:
-    ++visit_counter;
-    node_list pending;
-    for (node_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i)
-      if ((*i)->can_visit()) pending.push_back(*i);
-    while (!pending.empty()) {
-      node *n = pending.front();
-      pending.pop_front();
-      weight += n->local_weight;
-      node_vect const &w = n->get_subproofs();
-      for(node_vect::const_iterator i = w.begin(), end = w.end(); i != end; ++i)
+  switch (v.size())
+  {
+    case 0:
+      break;
+    case 1:
+      weight += v[0]->get_weight();
+      break;
+    default:
+      ++visit_counter;
+      node_list pending;
+      for (node_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i)
         if ((*i)->can_visit()) pending.push_back(*i);
-    }
+      while (!pending.empty())
+      {
+        node *n = pending.front();
+        pending.pop_front();
+        weight += n->local_weight;
+        node_vect const &w = n->get_subproofs();
+        for(node_vect::const_iterator i = w.begin(), end = w.end(); i != end; ++i)
+          if ((*i)->can_visit()) pending.push_back(*i);
+      }
   }
   return weight;
 }
 
-node_vect const &node::get_subproofs() const {
+/**
+ * Returns the immediate ancestors of this node.
+ * By default, a node has no ancestors.
+ */
+node_vect const &node::get_subproofs() const
+{
   static node_vect dummy;
   return dummy;
 }
 
+/**
+ * Creates a node of type @a t. Inserts it in the graph @a g, if any.
+ */
 node::node(node_id t, graph_t *g)
   : type(t), graph(g), nb_good(0), nb_missing(0), visited(0), local_weight(1),
     weight(parameter_expensive ? 0 : local_weight)
@@ -92,34 +142,57 @@ node::node(node_id t, graph_t *g)
     g->insert(this);
 }
 
-node::~node() {
+/**
+ * Destroys the node and removes from its graph #graph.
+ * @pre The graph should have no successors nor be referenced by any graph_t::known_reals.
+ */
+node::~node()
+{
   assert(succ.empty() && nb_good == 0);
   if (graph)
     graph->remove(this);
 }
 
-void node::remove_known() {
+/**
+ * Called when this node is removed from a graph_t::known_reals.
+ * Automatically destroys this node if possible.
+ */
+void node::remove_known()
+{
   assert(nb_good > 0);
   if (--nb_good == 0 && succ.empty()) delete this;
 }
 
-void node::remove_succ(node const *n) {
+/**
+ * Removes the node @a n from the successors of this node.
+ * Automatically destroys this node if possible
+ */
+void node::remove_succ(node const *n)
+{
   succ.erase(const_cast< node * >(n));
   if (succ.empty() && nb_good == 0) delete this;
 }
 
-bool graph_t::dominates(graph_t const *g) const {
-  while (g) {
+/**
+ * Tells if the graph @a g is a super-set of this graph.
+ * @note It means that @a g has weaker hypotheses than this graph.
+ */
+bool graph_t::dominates(graph_t const *g) const
+{
+  while (g)
+  {
     if (g == this) return true;
     g = g->father;
   }
   return false;
 }
 
-property node::maximal() const {
+property node::maximal() const
+{
   property res;
   property const &current = get_result();
-  for(node_set::const_iterator i = succ.begin(), end = succ.end(); i != end; ++i) {
+  for(node_set::const_iterator i = succ.begin(), end = succ.end(); i != end; ++i)
+  {
     property p = (*i)->maximal_for(this);
     if (res.null()) res = p;
     else res.intersect(p);
@@ -128,37 +201,63 @@ property node::maximal() const {
   return res.null() ? get_result() : res;
 }
 
-static bool dominates(node const *n1, node const *n2) {
+/**
+ * Tells if the node @a n1 is owned by a graph dominating the graph of the node @a n2.
+ * @note It means that @a n2 can rely on the result proven by @a n1.
+ * @see graph_t::dominates
+ */
+static bool dominates(node const *n1, node const *n2)
+{
   assert(n1 && n1->graph && n2);
   return n1->graph->dominates(n2->graph);
 }
 
 theorem_node::theorem_node(int nb, property const h[], property const &p, std::string const &n, theorem_updater *u)
-    : res(p), name(n), updater(u) {
+  : res(p), name(n), updater(u)
+{
   for(int i = 0; i < nb; ++i) hyp.push_back(h[i]);
 }
 
+/**
+ * Adds the node @a n as an immediate ancestor to this node.
+ * @pre If this node is not an node_id::UNION node, then the node @a n shall dominate it.
+ */
 void dependent_node::insert_pred(node *n) {
   assert(dominates(n, this) || type == UNION);
   n->succ.insert(this);
   pred.push_back(n);
 }
 
-void dependent_node::clean_dependencies() {
+/**
+ * Removes all the dependencies of this node.
+ * @note As the node is no longer a successor of the nodes it immediatly relies on, this may cause these nodes to be collected.
+ */
+void dependent_node::clean_dependencies()
+{
   std::sort(pred.begin(), pred.end()); // do not remove a node more than once
   for(node_vect::const_iterator i = pred.begin(), end = std::unique(pred.begin(), pred.end()); i != end; ++i)
     (*i)->remove_succ(this);
   pred.clear();
 }
 
-static void fill_hyps(char *v, property_vect const &hyp, predicated_real const &r) {
+/**
+ * Marks all the hypotheses about @a r, in the compressed property_vect represented by the bit vector @a v.
+ */
+static void fill_hyps(char *v, property_vect const &hyp, predicated_real const &r)
+{
   for(unsigned i = 0, nb = hyp.size(); i < nb; ++i)
     if (hyp[i].real == r)
       v[i / 8] |= 1 << (i & 7);
 }
 
-static void fill_hyps(char *v, property_vect const &hyp, node *n) {
-  if (n->type == HYPOTHESIS) {
+/**
+ * Marks all the hypotheses used by the node @a n, in the compressed property_vect represented by the bit vector @a v.
+ * @note While a node_id::HYPOTHESIS node does not really rely on any hypothesis, it still adds itself to @a v.
+ */
+static void fill_hyps(char *v, property_vect const &hyp, node *n)
+{
+  if (n->type == HYPOTHESIS)
+  {
     fill_hyps(v, hyp, n->get_result().real);
     return;
   }
@@ -174,7 +273,8 @@ static void fill_hyps(char *v, property_vect const &hyp, node *n) {
 }
 
 modus_node::modus_node(theorem_node *n)
-    : dependent_node(MODUS) {
+  : dependent_node(MODUS)
+{
   assert(n);
   target = n;
   if (n->name == "$FALSE")

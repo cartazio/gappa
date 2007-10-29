@@ -7,20 +7,29 @@
 #include "proofs/dichotomy.hpp"
 #include "proofs/property.hpp"
 
-enum node_id { HYPOTHESIS, MODUS, UNION, INTERSECTION, GOAL };
+/** Category of a node in a proof graph. */
+enum node_id {
+  HYPOTHESIS,   /**< A property found on the left hand side of an implication. */
+  MODUS,        /**< The application of a theorem of the database. */
+  UNION,        /**< The parent node of all the related nodes of a dichotomy. */
+  INTERSECTION, /**< The intersection between two nodes on the same real. */
+  GOAL          /**< A property found on the right hand side of an application. */
+};
 
 struct node;
 struct graph_t;
 
+/** Current graph, to which new nodes are added. */
 extern graph_t *top_graph;
 
 struct theorem_updater;
 
+/** Specific instanciation of a theorem. */
 struct theorem_node {
-  property res;
-  property_vect hyp;
-  std::string name;
-  theorem_updater *updater;
+  property res;             /**< Proven result. */
+  property_vect hyp;        /**< Properties needed as hypotheses for proving the result. */
+  std::string name;         /**< Unmangled name of the theorem. */
+  theorem_updater *updater; /**< Function for simplifying the hypotheses in case the goal can be weakened. */
   theorem_node(int, property const [], property const &, std::string const &, theorem_updater *);
 };
 
@@ -33,14 +42,16 @@ typedef std::vector< node * > node_vect;
 typedef std::set< node * > node_set;
 typedef std::map< predicated_real, node * > node_map;
 
+/** Node of a proof graph. */
 struct node {
-  node_id type;
-  node_set succ;
-  graph_t *graph;
-  unsigned nb_good;         // number of references by various graph_t::known_reals
-  unsigned nb_missing;      // heuristic number of missing facts
-  mutable unsigned visited; // timestamp of last visit
-  unsigned local_weight, weight;
+  node_id type;             /**< Type of this node. */
+  node_set succ;            /**< All the nodes that immediatly depend on this node. */
+  graph_t *graph;           /**< The graph owning this node, if any. */
+  unsigned nb_good;         /**< Number of references by all the graph_t::known_reals. */
+  unsigned nb_missing;      /**< Heuristic number of missing facts in unconstrained mode. */
+  mutable unsigned visited; /**< Timestamp of the last visit by an algorithm. */
+  unsigned local_weight;    /**< Local weight of the node, usually 1. */
+  unsigned weight;          /**< Total weight of all the ancestors, computed on demand. */
   bool can_visit() const;
   unsigned get_weight();
   node(node_id, graph_t *);
