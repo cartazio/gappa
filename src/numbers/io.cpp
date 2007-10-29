@@ -63,7 +63,7 @@ bool detailed_io = false;
 
 std::ostream &operator<<(std::ostream &stream, number const &value) {
   mpfr_t const &f = value.data->val;
-  if (!detailed_io) {
+  if (!detailed_io || mpfr_inf_p(f)) {
     stream << mpfr_get_d(f, GMP_RNDN);
     return stream;
   }
