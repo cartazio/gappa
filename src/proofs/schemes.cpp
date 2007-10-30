@@ -296,6 +296,15 @@ bool fill_hypotheses(property *hyp, preal_vect const &v) {
 
 int stat_tested_th = 0;
 
+/**
+ * Fills this graph by iteratively applying theorems until
+ * \li @a goals is statisfied, or
+ * \li a contradiction is found, or
+ * \li a fixpoint is reached for the results, or
+ * \li an upper bound on the number of iterations is reached.
+ *
+ * @return true if a contradiction is found.
+ */
 bool graph_t::populate(property_tree const &goals, dichotomy_sequence const &dichotomy) {
   if (contradiction)
     return true;

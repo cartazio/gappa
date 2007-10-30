@@ -67,6 +67,7 @@ struct node {
   virtual void enlarge(property const &) = 0;
 };
 
+/** Node of type ::HYPOTHESIS. */
 class hypothesis_node: public node {
   property const &res;
  public:
@@ -77,6 +78,7 @@ class hypothesis_node: public node {
   virtual void enlarge(property const &) { assert(false); }
 };
 
+/** Node refering to other nodes previously proven. */
 class dependent_node: public node {
   node_vect pred;
  protected:
@@ -90,6 +92,7 @@ class dependent_node: public node {
 
 node *create_theorem(int, property const [], property const &, std::string const &, theorem_updater * = NULL);
 
+/** Node of type ::MODUS */
 class modus_node: public dependent_node {
   long hyps;
  public:
@@ -102,13 +105,14 @@ class modus_node: public dependent_node {
   virtual void enlarge(property const &);
 };
 
+/** Graph of nodes. */
 class graph_t {
-  graph_t *father;
-  node_set nodes;		// nodes owned by the graph, each node is implied by hyp
-  node_map known_reals;		// best node implied by hyp for each real
-  node_map partial_reals;	// never used half hypotheses
-  property_vect hyp;		// hypotheses of the graph (they imply the hypotheses from the super-graph)
-  node *contradiction;
+  graph_t *father;        /**< Parent graph. */
+  node_set nodes;         /**< Nodes owned by this graph. Each node can be proved in the context of #hyp. */
+  node_map known_reals;   /**< Best node implied by #hyp for each real. */
+  node_map partial_reals; /**< Partly-bounded hypotheses that have yet to be used by an intersection_node. */
+  property_vect hyp;      /**< Hypotheses of this graph. They imply the hypotheses of the #father graph. */
+  node *contradiction;    /**< Node proving an empty result, thus proving anything. */
  public:
   void insert(node *n) { nodes.insert(n); }
   void remove(node *n) { nodes.erase (n); }
@@ -118,15 +122,16 @@ class graph_t {
   bool try_real(node *);
   property_vect const &get_hypotheses() const { return hyp; }
   bool dominates(graph_t const *) const;
-  bool populate(property_tree const &, dichotomy_sequence const &);	// fill the proof graph, return true in case of contradiction
-  bool dichotomize(property_tree const &, dichotomy_hint const &);	// apply a dichotomy hint, return true if nodes were added
+  bool populate(property_tree const &, dichotomy_sequence const &);
+  bool dichotomize(property_tree const &, dichotomy_hint const &);
   node *get_contradiction() const { return contradiction; }
-  void purge();		                   // remove any unused nodes and free maps
-  void set_contradiction(node *);          // set contradiction node and purge graph
-  void replace_known(node_vect const &);   // replace known_reals and purge graph
+  void purge();
+  void set_contradiction(node *);
+  void replace_known(node_vect const &);
   void show_dangling() const;
 };
 
+/** Helper for keeping ::top_graph up-to-date. */
 struct graph_loader {
   graph_t *old_graph;
   graph_loader(graph_t *g): old_graph(top_graph) { top_graph = g; }

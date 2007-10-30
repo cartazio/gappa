@@ -220,7 +220,7 @@ theorem_node::theorem_node(int nb, property const h[], property const &p, std::s
 
 /**
  * Adds the node @a n as an immediate ancestor to this node.
- * @pre If this node is not an node_id::UNION node, then the node @a n shall dominate it.
+ * @pre If this node is not an ::UNION node, then the node @a n shall dominate it.
  */
 void dependent_node::insert_pred(node *n) {
   assert(dominates(n, this) || type == UNION);
@@ -252,7 +252,7 @@ static void fill_hyps(char *v, property_vect const &hyp, predicated_real const &
 
 /**
  * Marks all the hypotheses used by the node @a n, in the compressed property_vect represented by the bit vector @a v.
- * @note While a node_id::HYPOTHESIS node does not really rely on any hypothesis, it still adds itself to @a v.
+ * @note While a ::HYPOTHESIS node does not really rely on any hypothesis, it still adds itself to @a v.
  */
 static void fill_hyps(char *v, property_vect const &hyp, node *n)
 {
@@ -311,19 +311,22 @@ modus_node::modus_node(theorem_node *n)
   nb_missing += missing;
 }
 
-modus_node::~modus_node() {
+modus_node::~modus_node()
+{
   // axioms are not owned by modus node
   if (!target->name.empty())
     delete target;
   delete_hyps(hyps, graph->get_hypotheses());
 }
 
-property modus_node::maximal_for(node const *n) const {
+property modus_node::maximal_for(node const *n) const
+{
   if (!target->updater) return n->get_result();
   predicated_real r = n->get_result().real;
   property res;
-  for(property_vect::const_iterator i = target->hyp.begin(),
-      end = target->hyp.end(); i != end; ++i) {
+  for (property_vect::const_iterator i = target->hyp.begin(),
+       end = target->hyp.end(); i != end; ++i)
+  {
     if (r != i->real) continue;
     if (res.null()) res = *i;
     else res.intersect(*i);
@@ -332,16 +335,19 @@ property modus_node::maximal_for(node const *n) const {
   return res;
 }
 
-void modus_node::enlarge(property const &p) {
+void modus_node::enlarge(property const &p)
+{
   if (!target->updater) return;
   target->updater->expand(target, p);
 }
 
-node *create_theorem(int nb, property const h[], property const &p, std::string const &n, theorem_updater *u) {
+node *create_theorem(int nb, property const h[], property const &p, std::string const &n, theorem_updater *u)
+{
   return new modus_node(new theorem_node(nb, h, p, n, u));
 }
 
-class intersection_node: public dependent_node {
+class intersection_node: public dependent_node
+{
   property res;
   long hyps;
  public:
@@ -354,8 +360,13 @@ class intersection_node: public dependent_node {
   virtual void enlarge(property const &p) { res = p; }
 };
 
+/**
+ * Creates a node proving a property that is an intersection between the results of two nodes @a n1 and @a n2.
+ * Calls graph_t::set_contradiction if the new node proves an empty result.
+ */
 intersection_node::intersection_node(node *n1, node *n2)
-    : dependent_node(INTERSECTION) {
+  : dependent_node(INTERSECTION)
+{
   assert(dominates(n1, this) && dominates(n2, this));
   property const &res1 = n1->get_result(), &res2 = n2->get_result();
   assert(res1.real == res2.real && res1.real.pred_bnd());
@@ -374,8 +385,10 @@ intersection_node::intersection_node(node *n1, node *n2)
   char *v = new_hyps(hyps, ghyp);
   fill_hyps(v, ghyp, n1);
   fill_hyps(v, ghyp, n2);
-  if (is_empty(res.bnd())) {
-    if (res1.real.pred() == PRED_REL) {
+  if (is_empty(res.bnd()))
+  {
+    if (res1.real.pred() == PRED_REL)
+    {
       // "always 0" is not a contradiction, so bail out and hope nobody encounters it
       std::cerr << "Sorry, not implemented: Contradiction on relative errors.\n";
       exit(1);
@@ -386,14 +399,18 @@ intersection_node::intersection_node(node *n1, node *n2)
   }
 }
 
-property intersection_node::maximal_for(node const *n) const {
+property intersection_node::maximal_for(node const *n) const
+{
   node_vect const &v = get_subproofs();
   number l = number::neg_inf, u = number::pos_inf;
-  if (res.null()) {
+  if (res.null())
+  {
     // TODO: improve bounds
     if (n == v[0]) u = upper(v[0]->get_result().bnd());
     else l = lower(v[1]->get_result().bnd());
-  } else {
+  }
+  else
+  {
     if (n == v[0])
       u = upper(res.bnd());
     else
@@ -402,26 +419,41 @@ property intersection_node::maximal_for(node const *n) const {
   return property(n->get_result().real, interval(l, u));
 }
 
+/**
+ * Creates a new graph with stronger hypotheses @a h than the parent graph @a f.
+ * Marks all the parent nodes in #known_reals as known in this new graph too.
+ * Tries to add ::HYPOTHESIS nodes corresponding to bounded interval hypotheses of @a h.
+ * Adds other hypotheses of @a h in #partial_reals.
+ */
 graph_t::graph_t(graph_t *f, property_vect const &h)
-  : father(f), hyp(h), contradiction(NULL) {
+  : father(f), hyp(h), contradiction(NULL)
+{
   graph_loader loader(this);
-  if (f) {
+  if (f)
+  {
     assert(hyp.implies(f->hyp));
     assert(!f->contradiction);
     known_reals = f->known_reals;
-    for(node_map::iterator i = known_reals.begin(), end = known_reals.end(); i != end; ++i)
+    for (node_map::iterator i = known_reals.begin(), end = known_reals.end(); i != end; ++i)
       ++i->second->nb_good;
   }
-  for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i) {
+  for (property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
+  {
     interval const &bnd = i->bnd();
-    if (!is_bounded(bnd)) {
+    if (!is_bounded(bnd))
+    {
       if (known_reals.count(i->real) == 0)
         partial_reals.insert(std::make_pair(i->real, new hypothesis_node(*i)));
-    } else try_real(new hypothesis_node(*i));
+    }
+    else try_real(new hypothesis_node(*i));
   }
 }
 
-void graph_t::purge() {
+/**
+ * Empties #known_reals and #partial_reals.
+ */
+void graph_t::purge()
+{
   for(node_map::const_iterator i = known_reals.begin(), end = known_reals.end(); i != end; ++i)
     i->second->remove_known();
   for(node_map::const_iterator i = partial_reals.begin(), end = partial_reals.end(); i != end; ++i)
@@ -430,7 +462,11 @@ void graph_t::purge() {
   partial_reals.clear();
 }
 
-void graph_t::set_contradiction(node *n) {
+/**
+ * Sets @a n in #contradiction and increases its node::nb_good reference count. Purges the graph.
+ */
+void graph_t::set_contradiction(node *n)
+{
   assert(n && !contradiction);
   contradiction = n;
   ++n->nb_good;
@@ -439,22 +475,39 @@ void graph_t::set_contradiction(node *n) {
 
 int stat_successful_th = 0, stat_discarded_pred = 0, stat_intersected_pred = 0;
 
-bool graph_t::try_real(node *n) {
+/**
+ * Remembers @a n if it is worth it. Deletes it otherwise.
+ *
+ * A node is worth it, if
+ * \li the real of its result is not yet known, or
+ * \li its result is not a superset of an already known result, or
+ * \li its result is equal to an already known result but it has a smaller weight.
+ *
+ * If the result is new, the function tests the node against #partial_reals and creates an ::intersection_node if any real match.
+ *
+ * If the result is not a strict subset, an ::intersection_node with the alreay known result is created.
+ */
+bool graph_t::try_real(node *n)
+{
   assert(top_graph == this && !contradiction);
   assert(n && n->graph && n->graph->dominates(this));
   property const &res2 = n->get_result();
   ++stat_successful_th;
   std::pair< node_map::iterator, bool > ib = known_reals.insert(std::make_pair(res2.real, n));
   node *&dst = ib.first->second;
-  if (!ib.second) { // there was already a known range
+  if (!ib.second)
+  {
+    // there was already a known range
     node *old = dst;
     property const &res1 = old->get_result();
-    if (res1.strict_implies(res2)) {
+    if (res1.strict_implies(res2))
+    {
       ++stat_discarded_pred;
       delete n;
       return false;
     }
-    if (res1.implies(res2)) {
+    if (res1.implies(res2))
+    {
       if (n->get_weight() >= old->get_weight() ||
           n->nb_missing >= old->nb_missing)
       {
@@ -462,61 +515,91 @@ bool graph_t::try_real(node *n) {
         delete n;
         return false;
       }
-    } else if (!res2.strict_implies(res1)) {
+    }
+    else if (!res2.strict_implies(res1))
+    {
       ++stat_intersected_pred;
       n = new intersection_node(old, n);
       if (n == contradiction) return true;
     }
     dst = n;
     old->remove_known();
-  } else {
+  }
+  else
+  {
     node_map::iterator i = partial_reals.find(res2.real);
-    if (i != partial_reals.end()) { // there is a known inequality
+    if (i != partial_reals.end())
+    {
+      // there is a known inequality
       node *m = i->second;
       partial_reals.erase(i);
       property const &res1 = m->get_result();
-      if (!res2.implies(res1)) {
+      if (!res2.implies(res1))
+      {
         node *old = n;
         ++n->nb_good; // n has just become a known real, this data is needed in case a contradiction is found
         n = new intersection_node(n, m);
         if (n == contradiction) return true;
         dst = n;
         --old->nb_good;
-      } else delete m;
+      }
+      else delete m;
     }
   }
   ++n->nb_good;
   return true;
 }
 
-node *graph_t::find_already_known(predicated_real const &real) const {
+/**
+ * Returns the best node proving a result on real @a real.
+ */
+node *graph_t::find_already_known(predicated_real const &real) const
+{
   node_map::const_iterator i = known_reals.find(real);
-  return (i != known_reals.end()) ? i->second : NULL;
+  return i != known_reals.end() ? i->second : NULL;
 }
 
-graph_t::~graph_t() {
-  if (contradiction) {
+/**
+ * Deletes the #contradiction node if any, otherwise purges the graph.
+ * No nodes should remain in the graph after these deletions.
+ */
+graph_t::~graph_t()
+{
+  if (contradiction)
+  {
     --contradiction->nb_good;
     delete contradiction;
-  } else purge();
+  }
+  else
+    purge();
   assert(nodes.empty());
 }
 
-void graph_t::replace_known(node_vect const &v) {
+/**
+ * Replaces the known reals by the nodes from @a v which are usually weaker and a subset of #known_reals.
+ * Purges #partial_reals too.
+ * @note This function is meant to be called once the graph is complete, in order to retain only the nodes useful to prove the user proposition.
+ */
+void graph_t::replace_known(node_vect const &v)
+{
   node_map old;
   old.swap(known_reals);
-  for(node_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i) {
+  for (node_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i)
+  {
     node *n = *i;
     ++n->nb_good;
     known_reals.insert(std::make_pair(n->get_result().real, n));
   }
-  for(node_map::const_iterator i = old.begin(), end = old.end(); i != end; ++i)
+  for (node_map::const_iterator i = old.begin(), end = old.end(); i != end; ++i)
     i->second->remove_known();
-  for(node_map::const_iterator i = partial_reals.begin(), end = partial_reals.end(); i != end; ++i)
+  for (node_map::const_iterator i = partial_reals.begin(), end = partial_reals.end(); i != end; ++i)
     delete i->second;
   partial_reals.clear();
 }
 
+/**
+ * Displays the nodes with assumed results in unconstrained mode.
+ */
 void graph_t::show_dangling() const
 {
   bool first = true;
@@ -535,17 +618,23 @@ void graph_t::show_dangling() const
   }
 }
 
-void enlarger(node_vect const &nodes) {
+/**
+ * Scans the nodes of the graph from goals to hypotheses and tries to weaken results.
+ */
+void enlarger(node_vect const &nodes)
+{
   ++visit_counter;
   node_list pending;
   for (node_vect::const_iterator i = nodes.begin(), end = nodes.end(); i != end; ++i)
     if ((*i)->can_visit()) pending.push_back(*i);
-  for (node_list::iterator i = pending.begin(); i != pending.end(); ++i) {
+  for (node_list::iterator i = pending.begin(); i != pending.end(); ++i)
+  {
     node_vect const &v = (*i)->get_subproofs();
-    for(node_vect::const_iterator j = v.begin(), end = v.end(); j != end; ++j)
+    for (node_vect::const_iterator j = v.begin(), end = v.end(); j != end; ++j)
       if ((*j)->can_visit()) pending.push_back(*j);
   }
-  while (!pending.empty()) {
+  while (!pending.empty())
+  {
     node *n = pending.front();
     pending.pop_front();
     n->visited = 0;
@@ -556,7 +645,7 @@ void enlarger(node_vect const &nodes) {
     n->enlarge(max_res);
     if (!old_res.strict_implies(n->get_result())) continue;
     node_vect const &v = n->get_subproofs();
-    for(node_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i)
+    for (node_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i)
       if ((*i)->can_visit()) pending.push_back(*i);
   }
 }

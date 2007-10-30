@@ -249,6 +249,11 @@ void dichotomy_helper::dichotomize() {
   }
 }
 
+/**
+ * Applies a ::dichotomy_hint.
+ * @param goals subset of the user goal that drives the bisection.
+ * @return true if a contradiction is found.
+ */
 bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint) {
   assert(top_graph == this);
   dichotomy_sequence hints;
