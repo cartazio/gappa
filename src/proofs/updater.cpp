@@ -3,7 +3,12 @@
 #include "numbers/round.hpp"
 #include "proofs/updater.hpp"
 
-static property boundify(property const &opt, property const &cur) {
+/**
+ * Returns @a opt if it is bounded, a mix with @a cur otherwise.
+ * @pre @a cur is a bounded subset of @a opt.
+ */
+static property boundify(property const &opt, property const &cur)
+{
   property res = opt;
   interval const &bopt = opt.bnd(), &bcur = cur.bnd();
   if (is_bounded(bopt)) return res;
@@ -13,24 +18,30 @@ static property boundify(property const &opt, property const &cur) {
   return res;
 }
 
-struct trivial_updater1: theorem_updater {
+struct trivial_updater1: theorem_updater
+{
   virtual void expand(theorem_node *n, property const &p)
   { n->res = boundify(p, n->res); }
 };
 static trivial_updater1 trivial_updater2;
+/** Updater for setting the result to the passed argument. */
 theorem_updater *trivial_updater = &trivial_updater2; 
 
-struct identity_updater1: theorem_updater {
-  virtual void expand(theorem_node *n, property const &p) {
+struct identity_updater1: theorem_updater
+{
+  virtual void expand(theorem_node *n, property const &p)
+  {
     n->res = boundify(p, n->res);
     unsigned sz = n->hyp.size();
     if (sz > 0) n->hyp[sz - 1].bnd() = n->res.bnd();
   }
 };
 static identity_updater1 identity_updater2;
+/** Updater for setting the result and the last hypothesis to the passed argument. */
 theorem_updater *identity_updater = &identity_updater2;
 
-void unary_interval_updater::expand(theorem_node *n, property const &p) {
+void unary_interval_updater::expand(theorem_node *n, property const &p)
+{
   int b = 3;
   property res = p;
   interval const &bnd = p.bnd();
@@ -62,7 +73,8 @@ void unary_interval_updater::expand(theorem_node *n, property const &p) {
   n->res = boundify(p, res);
 }
 
-void binary_interval_updater::expand(theorem_node *n, property const &p) {
+void binary_interval_updater::expand(theorem_node *n, property const &p)
+{
   int b = 15;
   property res = p;
   interval const &bnd = p.bnd();

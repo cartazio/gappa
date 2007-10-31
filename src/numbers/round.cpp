@@ -194,22 +194,37 @@ bool rnd_symmetric(direction_type type) {
   return false;
 }
 
-static void simplify(mpfr_t &f, int dir) {
+/**
+ * Simplifies the floating-point number @a f
+ * \li toward infinity if @a dir is positive,
+ * \li toward zero otherwise.
+ *
+ * @pre @a f is not zero.
+ * @note @a f stays in the same interval (-inf,-1], [-1,0), (0,1], or [1,+inf)
+ */
+static void simplify(mpfr_t &f, int dir)
+{
   mpz_t m;
   int e, s;
   mpz_init(m);
   split_exact(f, m, e, s);
   assert(s != 0);
-  if (mpz_cmp_ui(m, 1) == 0) {
+  if (mpz_cmp_ui(m, 1) == 0)
+  {
+    // mantissa is 1, so converge toward 1 if allowed
     if (e < 0 && dir > 0) ++e;
     else if (e > 0 && dir < 0) --e;
-  } else {
+  }
+  else
+  {
+    // mantissa is odd and bigger than one, so replace the last digit by 0
     (dir < 0 ? mpz_sub_ui : mpz_add_ui)(m, m, 1);
     int d = mpz_scan1(m, 0);
     assert(d > 0);
     mpz_fdiv_q_2exp(m, m, d);
     e += d;
   }
+  // mpfr needs two bits at least
   mpfr_set_prec(f, std::max<int>(mpz_sizeinbase(m, 2), 2));
   if (s < 0) mpz_neg(m, m);
   int v = mpfr_set_z(f, m, GMP_RNDN);
@@ -218,6 +233,10 @@ static void simplify(mpfr_t &f, int dir) {
   mpz_clear(m);
 }
 
+/**
+ * Simplifies @a f toward the infinity with the same sign than @a dir.
+ * @see ::simplify(mpfr_t &, int)
+ */
 number simplify(number const &f, int dir) {
   number res = f;
   if (f == 0) return res;
