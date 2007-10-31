@@ -187,6 +187,9 @@ bool graph_t::dominates(graph_t const *g) const
   return false;
 }
 
+/**
+ * Returns the widest property this node can prove without invalidating one of the successors.
+ */
 property node::maximal() const
 {
   property res;
@@ -272,6 +275,10 @@ static void fill_hyps(char *v, property_vect const &hyp, node *n)
       if (nv[i / 8] & (1 << (i & 7))) fill_hyps(v, hyp, nhyp[i].real);
 }
 
+/**
+ * Creates a ::MODUS node. Finds predecessors needed by @a n with ::find_proof.
+ * Merges the global hypotheses of predecessors to obtain the global hypotheses of this node.
+ */
 modus_node::modus_node(theorem_node *n)
   : dependent_node(MODUS)
 {
@@ -319,6 +326,11 @@ modus_node::~modus_node()
   delete_hyps(hyps, graph->get_hypotheses());
 }
 
+/**
+ * Returns the intersection of all the hypotheses dealing with the same real than the result proved by @a n.
+ * @note If the #target theorem has no updater, the hypotheses have not changed creation time.
+ *       So the intersection can be skipped since it will not produce a wider result.
+ */
 property modus_node::maximal_for(node const *n) const
 {
   if (!target->updater) return n->get_result();
@@ -341,6 +353,7 @@ void modus_node::enlarge(property const &p)
   target->updater->expand(target, p);
 }
 
+/** Helper function for creating both a ::MODUS node and its associated ::theorem_node. */
 node *create_theorem(int nb, property const h[], property const &p, std::string const &n, theorem_updater *u)
 {
   return new modus_node(new theorem_node(nb, h, p, n, u));
@@ -362,7 +375,10 @@ class intersection_node: public dependent_node
 
 /**
  * Creates a node proving a property that is an intersection between the results of two nodes @a n1 and @a n2.
+ *
  * Calls graph_t::set_contradiction if the new node proves an empty result.
+ *
+ * @note Predecessors are ordered so that the first one is "less than" the second one.
  */
 intersection_node::intersection_node(node *n1, node *n2)
   : dependent_node(INTERSECTION)
@@ -399,6 +415,10 @@ intersection_node::intersection_node(node *n1, node *n2)
   }
 }
 
+/**
+ * Extends the interval of the left predecessor towards minus infinity and the
+ * interval of the right predecessor towards plus infinity.
+ */
 property intersection_node::maximal_for(node const *n) const
 {
   node_vect const &v = get_subproofs();
@@ -421,9 +441,9 @@ property intersection_node::maximal_for(node const *n) const
 
 /**
  * Creates a new graph with stronger hypotheses @a h than the parent graph @a f.
- * Marks all the parent nodes in #known_reals as known in this new graph too.
- * Tries to add ::HYPOTHESIS nodes corresponding to bounded interval hypotheses of @a h.
- * Adds other hypotheses of @a h in #partial_reals.
+ * \li Marks all the parent nodes in #known_reals as known in this new graph too.
+ * \li Tries to add ::HYPOTHESIS nodes corresponding to bounded interval hypotheses of @a h.
+ * \li Adds other hypotheses of @a h in #partial_reals.
  */
 graph_t::graph_t(graph_t *f, property_vect const &h)
   : father(f), hyp(h), contradiction(NULL)
@@ -599,6 +619,7 @@ void graph_t::replace_known(node_vect const &v)
 
 /**
  * Displays the nodes with assumed results in unconstrained mode.
+ * Assumed results are associated to a special theorem with the name "$FALSE".
  */
 void graph_t::show_dangling() const
 {
