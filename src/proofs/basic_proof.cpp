@@ -997,6 +997,8 @@ proof_scheme *computation_rel_mul_scheme::factory(predicated_real const &real,
   return new computation_rel_mul_scheme(real, hyps);
 }
 
+BINARY_INTERVAL(compose_inv_updater) { r = compose_relative_inv(h[0], h[1]); }
+
 // COMPUTATION_REL_DIV
 REGISTER_SCHEME_BEGIN(computation_rel_div);
   preal_vect needed;
@@ -1010,7 +1012,7 @@ node *computation_rel_div_scheme::generate_proof() const {
   if (!fill_hypotheses(hyps, needed)) return NULL;
   property res(real, compose_relative_inv(hyps[0].bnd(), hyps[1].bnd()));
   if (!is_defined(res.bnd())) return NULL;
-  return create_theorem(3, hyps, res, "div_rr", &compose_updater);
+  return create_theorem(3, hyps, res, "div_rr", &compose_inv_updater);
 }
 
 preal_vect computation_rel_div_scheme::needed_reals() const {
