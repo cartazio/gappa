@@ -18,10 +18,27 @@ static property boundify(property const &opt, property const &cur)
   return res;
 }
 
+/**
+ * Returns a fully simplified mix of @a opt with @a cur.
+ * Ensures the bounds do not cross the points -1, 0, and -1.
+ * @pre @a cur is a bounded subset of @a opt.
+ * @see ::simplify_full
+ */
+static property boundify_full(property const &opt, property const &cur)
+{
+  property res = opt;
+  interval const &bopt = opt.bnd(), &bcur = cur.bnd();
+  if (is_bounded(bopt)) return res;
+  res.bnd() = (lower(bopt) == number::neg_inf) ?
+    interval(simplify_full(lower(bcur), -1), upper(bopt)) :
+    interval(lower(bopt), simplify_full(upper(bcur), 1));
+  return res;
+}
+
 struct trivial_updater1: theorem_updater
 {
   virtual void expand(theorem_node *n, property const &p)
-  { n->res = boundify(p, n->res); }
+  { n->res = boundify_full(p, n->res); }
 };
 static trivial_updater1 trivial_updater2;
 /** Updater for setting the result to the passed argument. */
@@ -31,7 +48,7 @@ struct identity_updater1: theorem_updater
 {
   virtual void expand(theorem_node *n, property const &p)
   {
-    n->res = boundify(p, n->res);
+    n->res = boundify_full(p, n->res);
     unsigned sz = n->hyp.size();
     if (sz > 0) n->hyp[sz - 1].bnd() = n->res.bnd();
   }

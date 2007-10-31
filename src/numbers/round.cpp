@@ -234,13 +234,47 @@ static void simplify(mpfr_t &f, int dir)
 }
 
 /**
+ * Simplifies @a f until its mantissa has only one digit.
+ * @see ::simplify(mpfr_t &, int)
+ */
+static void simplify_full(mpfr_t &f, int dir)
+{
+  mpz_t m;
+  int e, s;
+  mpz_init(m);
+  split_exact(f, m, e, s);
+  assert(s != 0);
+  int d = mpz_sizeinbase(m, 2);
+  if (dir < 0) --d;
+  e += d;
+  mpfr_set_prec(f, 2);
+  mpfr_set_si(f, s < 0 ? -1 : 1, GMP_RNDN);
+  mpfr_mul_2si(f, f, e, GMP_RNDN);
+  mpz_clear(m);
+}
+
+/**
  * Simplifies @a f toward the infinity with the same sign than @a dir.
  * @see ::simplify(mpfr_t &, int)
  */
-number simplify(number const &f, int dir) {
+number simplify(number const &f, int dir)
+{
   number res = f;
   if (f == 0) return res;
   number_base *d = res.unique();
   simplify(d->val, f < 0 ? -dir : dir);
+  return res;
+}
+
+/**
+ * Simplifies @a f toward the infinity with the same sign than @a dir until its mantissa has only one digit.
+ * @see ::simplify_full(mpfr_t &, int)
+ */
+number simplify_full(number const &f, int dir)
+{
+  number res = f;
+  if (f == 0) return res;
+  number_base *d = res.unique();
+  simplify_full(d->val, f < 0 ? -dir : dir);
   return res;
 }
