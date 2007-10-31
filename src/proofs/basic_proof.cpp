@@ -1121,9 +1121,9 @@ node *nzr_of_bnd_scheme::generate_proof() const {
   node *n = find_proof(needed);
   if (!n) return NULL;
   property const &hyp = n->get_result();
-  int s = sign(hyp.bnd());
-  if (s == 0) return NULL;
-  return create_theorem(1, &hyp, property(real), s < 0 ? "nzr_of_bnd_n" : "nzr_of_bnd_p", trivial_updater);
+  if (contains_zero(hyp.bnd())) return NULL;
+  char const *s = sign(hyp.bnd()) < 0 ? "nzr_of_bnd_n" : "nzr_of_bnd_p";
+  return create_theorem(1, &hyp, property(real), s, trivial_updater);
 }
 
 preal_vect nzr_of_bnd_scheme::needed_reals() const {
