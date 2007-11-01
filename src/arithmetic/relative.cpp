@@ -1,3 +1,4 @@
+#include <climits>
 #include <map>
 #include <sstream>
 #include "parser/ast.hpp"

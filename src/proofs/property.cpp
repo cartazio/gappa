@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <climits>
 #include <new>
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"

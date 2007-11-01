@@ -212,7 +212,7 @@ static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_m
         plouf << " APPLY " << (t == PRED_ABS ? "abs_" : "") << "subset [\"h" << h << "\"] THEN FINALIZE ();;";
     } else if (j->real.pred_cst()) {
       long c = pki->second.second->cst(), cc = j->cst();
-      assert(t == PRED_FIX && c >= cc || t == PRED_FLT && c <= cc);
+      assert((t == PRED_FIX && c >= cc) || (t == PRED_FLT && c <= cc));
       if (c == c)
         plouf << " EXACT \"h" << h << "\";;";
       else
