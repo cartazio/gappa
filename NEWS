@@ -1,5 +1,19 @@
+Version 0.9.0:
+ * syntax
+   - added constraints on user rewriting, e.g. "x -> 1/(1/x) { x <> 0 }"
+ * whole engine
+   - added detection of assumed facts in -Munconstrained mode
+ * fact database
+   - added relative error propagation through division
+ * back-ends
+   - fixed cache collisions between theorems
+ * proof graph
+   - fixed intersection of relative errors
+   - enabled bound simplification through rewriting rules
+   - fixed handling of half-bounded goals
+
 Version 0.8.0:
- * HOL Light back-end:
+ * HOL Light back-end
    - added new back-end
  * proof graph
    - added option -Mexpensive to select best paths on length

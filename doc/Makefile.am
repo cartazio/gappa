@@ -1,5 +1,6 @@
 EXTRA_DIST = gappa.xml gappa-preprocess.xsl gappa.xsl gappa.css gappa.dsl unescape_math.pl \
-             $(wildcard manual/*.xml) $(wildcard examples/*.xml) $(wildcard images/*.png)
+             $(wildcard manual/*.xml) $(wildcard examples/*.xml) $(wildcard images/*.png) \
+             doxygen/Doxyfile
 
 html-doc:
 	rm -rf tmp/ html/
