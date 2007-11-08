@@ -80,8 +80,8 @@ static unsigned long read_integer_param(ast_number const *n)
 
 %type <number>		NUMBER
 %type <number>		SNUMBER
-%type <number>          INTEGER
-%type <number>          SINTEGER
+%type <number>		INTEGER
+%type <number>		SINTEGER
 %type <ident>		IDENT
 %type <ident>		VARID
 %type <ident>		FUNID
@@ -119,7 +119,7 @@ PROP:
     $$ = new ast_prop(new ast_atom_bound($1, (!p || p->type != UOP_ABS) ? NULL : token_zero, $3));
   }
 | REAL IN '[' SNUMBER ',' SNUMBER ']'
-  			{ $$ = new ast_prop(new ast_atom_bound($1, $4, $6)); }
+			{ $$ = new ast_prop(new ast_atom_bound($1, $4, $6)); }
 | REAL IN '?'		{ $$ = new ast_prop(new ast_atom_bound($1, NULL, NULL)); }
 | REAL GE SNUMBER	{ $$ = new ast_prop(new ast_atom_bound($1, $3, NULL)); }
 | PROP AND PROP		{ $$ = new ast_prop($1, PROP_AND,  $3); }
@@ -161,7 +161,7 @@ FUNCTION_PARAMS_AUX:
   }
 
 FUNCTION_PARAMS:
-  { $$ = NULL; }
+				{ $$ = NULL; }
 | '<' FUNCTION_PARAMS_AUX '>'	{ $$ = $2; }
 
 FUNCTION:
@@ -289,8 +289,8 @@ PRECONDS_AUX:
   }
 
 PRECONDS:
-                       { $$ = NULL; }
-| '{' PRECONDS_AUX '}' { $$ = $2; }
+			{ $$ = NULL; }
+| '{' PRECONDS_AUX '}'	{ $$ = $2; }
 
 HINTS:
 | HINTS REAL IMPL REAL PRECONDS ';'

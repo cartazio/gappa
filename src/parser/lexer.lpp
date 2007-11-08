@@ -106,7 +106,7 @@ zero		((((0+(\.0*)?)|(\.0+))([eE][-+]?{integer})?)|0x(((0+(\.0*)?)|(\.0+))([pP][
 "->"		return IMPL;
 "not"		return NOT;
 "in"		return IN;
-"<>"            return NE;
+"<>"		return NE;
 "<="		return LE;
 <prop_context>">="	return GE;
 "sqrt"		return SQRT;
