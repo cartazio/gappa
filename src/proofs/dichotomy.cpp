@@ -7,6 +7,7 @@
 #include "proofs/dichotomy.hpp"
 #include "proofs/proof_graph.hpp"
 #include "proofs/schemes.hpp"
+#include "proofs/updater.hpp"
 
 extern int parameter_dichotomy_depth;
 extern bool warning_dichotomy_failure;
@@ -126,7 +127,7 @@ class dichotomy_node: public dependent_node {
   virtual property const &get_result() const { return res; }
   using dependent_node::insert_pred;
   virtual long get_hyps() const;
-  virtual void enlarge(property const &p) { res = p; }
+  virtual void enlarge(property const &p) { res = boundify(p, res); }
   virtual property maximal_for(node const *) const;
 };
 

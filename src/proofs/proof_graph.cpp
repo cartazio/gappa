@@ -5,6 +5,7 @@
 #include "parser/ast.hpp"
 #include "proofs/proof_graph.hpp"
 #include "proofs/schemes.hpp"
+#include "proofs/updater.hpp"
 
 extern bool parameter_expensive;
 extern bool parameter_constrained;
@@ -370,7 +371,7 @@ class intersection_node: public dependent_node
   virtual long get_hyps() const { return hyps; }
   virtual property maximal() const { return res.null() ? res : node::maximal(); }
   virtual property maximal_for(node const *) const;
-  virtual void enlarge(property const &p) { res = p; }
+  virtual void enlarge(property const &p) { res = boundify(p, res); }
 };
 
 /**

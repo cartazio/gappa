@@ -5,6 +5,8 @@
 
 extern theorem_updater *trivial_updater, *identity_updater;
 
+property boundify(property const &opt, property const &cur);
+
 struct unary_interval_updater: theorem_updater {
   typedef void (*fn)(interval const &, interval &);
   fn compute;

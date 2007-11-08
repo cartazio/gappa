@@ -7,7 +7,7 @@
  * Returns @a opt if it is bounded, a mix with @a cur otherwise.
  * @pre @a cur is a bounded subset of @a opt.
  */
-static property boundify(property const &opt, property const &cur)
+property boundify(property const &opt, property const &cur)
 {
   property res = opt;
   interval const &bopt = opt.bnd(), &bcur = cur.bnd();
