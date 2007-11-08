@@ -266,7 +266,7 @@ static std::string display(node *n) {
     break; }
   case INTERSECTION: {
     int num[2];
-    std::string suffix;
+    char const *suffix = "";
     for(int i = 0; i < 2; ++i) {
       node *m = pred[i];
       property const &res = m->get_result();
@@ -333,7 +333,12 @@ static std::string display(node *n) {
     node *m = pred[0];
     interval const &mb = m->get_result().bnd(), &nb = n_res.bnd();
     if (!(nb <= mb))
-      plouf << " apply subset with " << display(mb) << ". 2: finalize.\n";
+    {
+      char const *suffix = "";
+      if (lower(nb) == number::neg_inf) suffix = "_r";
+      else if (upper(nb) == number::pos_inf) suffix = "_l";
+      plouf << " apply subset" << suffix << " with " << display(mb) << ". 2: finalize.\n";
+    }
     invoke_lemma(plouf, m, pmap);
     plouf << "Qed.\n";
     break; }
