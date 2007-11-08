@@ -4,8 +4,10 @@
 <section>
 <title>Error: $bison at line $17 column $42.</title>
 <para>The Bison front-end has detected a syntax error at the given location.
-The error message is usually unusable, so let us hope the location will be
-enough for you to find what the problem is.</para>
+The error message is usually unusable, so let us hope the location is enough
+for you to find what the problem is.</para>
+<programlisting>f(x) = x + 1;</programlisting>
+<screen>Error: syntax error, unexpected '(', expecting FUNID or '=' at line 1 column 2</screen>
 </section>
 
 <section>
@@ -18,38 +20,36 @@ displayed for options embedded in the script.</para>
 <section>
 <title>Error: the symbol $toto is redefined...</title>
 <para>A symbol cannot be defined more than once, even if the right hand sides
-of every definitions are equivalent. Neither can it be defined after having
-been used as an unbound variable. E.g. <code>b = a * 2; a = 1;</code></para>
+of every definitions are equivalent.</para>
+<programlisting>a = 1;
+a = 1;</programlisting>
+<para>Nor can it be defined after being used as an unbound variable.</para>
+<programlisting>b = a * 2;
+a = 1;</programlisting>
 </section>
 
 <section>
 <title>Error: $toto is not a rounding operator...</title>
 <para>Only rounding operators (unary function close to the identity function)
 can be prepended to the equal sign in a definition.</para>
-</section>
-
-<section>
-<title>Error: $toto is not a function...</title>
-<para>Only functions can be followed by bracketed parameters or parenthesized
-arguments.</para>
-</section>
-
-<section>
-<title>Error: $toto is not a variable...</title>
-<para>A function cannot be used without parenthesized arguments.</para>
+<programlisting><![CDATA[x add_rel<25,-100>= 1;]]></programlisting>
+<screen>Error: relative,add,25,-100 is not a rounding operator at line 1 column 20</screen>
 </section>
 
 <section>
 <title>Error: invalid parameters for $toto...</title>
 <para>A function template has been instantiated with an incorrect number of
-parameters or with parameters of the wrong type. E.g.
-<code>float&lt;ieee_32, 0&gt;</code>.</para>
+parameters or with parameters of the wrong type.</para>
+<programlisting><![CDATA[x = float<ieee_32,0>(y);]]></programlisting>
+<screen>Error: invalid parameters for float at line 1 column 20</screen>
 </section>
 
 <section>
 <title>Error: incorrect number of arguments when calling $toto...</title>
-<para>There is either less or more expressions between parentheses than
-expected by the function. E.g. <code>int&lt;zr&gt;(x, y)</code>.</para>
+<para>There are either less or more expressions between parentheses than
+expected by the function.</para>
+<programlisting><![CDATA[x = int<zr>(y, z);]]></programlisting>
+<screen>Error: incorrect number of arguments when calling rounding_fixed,zr,0 at line 1 column 17</screen>
 </section>
 
 </section>
@@ -58,25 +58,36 @@ expected by the function. E.g. <code>int&lt;zr&gt;(x, y)</code>.</para>
 <title>Error messages</title>
 
 <section>
-<title>Error: undefined intervals are reserved for conclusions.</title>
+<title>Error: undefined intervals are restricted to conclusions.</title>
 <para>You are not allowed to use an interrogation mark for an interval that
 appears as an hypothesis in the logical formula.</para>
+<programlisting><![CDATA[{ x in ? -> x + 1 in [0,1] }]]></programlisting>
+<para>Notice that this condition is checked after the proposition has been
+reduced to several elementary propositions. As a consequence, an interrogation
+mark on the right hand side of an implication can still cause Gappa to fail.</para>
+<programlisting><![CDATA[{ x + 1 in [0,1] \/ not (x in ?) }]]></programlisting>
 </section>
 
 <section>
 <title>Error: the range of $toto is an empty interval.</title>
-<para>An interval was either written with reversed bounds or it was so tight
-that Gappa needed to replace it with an empty interval. For example, Gappa will
-complain about <code>{ 1.3 in [1.3,1.3] }</code> since 1.3 is not representable
-and the empty set is the biggest representable interval that is a subset of
-the singleton {1.3}.</para>
+<para>An interval has been interpreted as having reverted bounds.</para>
+<programlisting><![CDATA[{ x in [2,1] }]]></programlisting>
+<screen><![CDATA[Error: the range of x is an empty interval.]]></screen>
+<para>Interval bounds are replaced by binary floating-point numbers. As a
+consequence, Gappa can encounteer an empty interval when it tightens a range
+appearing in a goal. For example, the empty set is the biggest representable
+interval that is a subset of the singleton {1.3}. So Gappa fails to prove the
+following property.</para>
+<programlisting><![CDATA[{ 1.3 in [1.3,1.3] }]]></programlisting>
+<screen><![CDATA[Error: the range of 13e-1 is an empty interval.]]></screen>
 </section>
 
 <section>
 <title>Error: a zero appears as a denominator in a rewriting rule.</title>
 <para>Gappa has a detected that a divisor is trivially equal to zero in an
-expression that appears in a rewriting rule. This is most certainly an error.
-For example <code>y -&gt; y * (x - x) / (x - x)</code>.</para>
+expression that appears in a rewriting rule. This is most certainly an error.</para>
+<programlisting><![CDATA[{ 1 in ? }
+y -> y * (x - x) / (x - x);]]></programlisting>
 </section>
 
 </section>
@@ -85,54 +96,75 @@ For example <code>y -&gt; y * (x - x) / (x - x)</code>.</para>
 <title>Warning messages</title>
 
 <section>
-<title>Warning: the hypotheses on $toto are trivially contradictory.</title>
-<para>If an expression is enclosed by more than one hypothesis and the
-intersection of these ranges is empty, then the proposition is trivially true.
-As a consequence, Gappa will skip the proposition and not prove it. The script
-<code>{ x &lt;= 2 /\ x &gt;= 3 -&gt; y in ? }</code> is an example of such a
-trivial proposition.</para>
-</section>
-
-<section>
-<title>Warning: proof of triviality will not be generated.</title>
-<para>One of the goals Gappa has to prove is a trivial consequence of an
-hypothesis. No proof will be generated for this goal. For example, the script
-<code>{ x in [0,1] -&gt; x in ? }</code> will lead to an empty proof.</para>
+<title>Warning: the hypotheses on $toto are trivially contradictory, skipping.</title>
+<para>If an expression is enclosed in several hypotheses, and if the
+intersection of their ranges is empty, then the proposition is trivially true.
+As a consequence, Gappa skips the proposition instead of proving it.</para>
+<programlisting><![CDATA[{ x <= 2 /\ x >= 3 -> x in ? }]]></programlisting>
+<screen>Warning: the hypotheses on x are trivially contradictory, skipping.</screen>
 </section>
 
 <section>
 <title>Warning: $toto is being renamed to $titi.</title>
 <para>When a definition <code>toto = expr</code> is given to Gappa, the name
 <code>toto</code> is associated to the expression <code>expr</code>. This name
-will then be used whenever Gappa would have needed to output <code>expr</code>.
-If another definition <code>titi = expr</code> is later written, the new name
-will supersede the name previously defined.</para>
+is then used whenever Gappa needs to output <code>expr</code>. If another
+definition <code>titi = expr</code> is later provided, the new name supersedes
+the name given previously.</para>
+<programlisting>a = 42;
+b = 42;
+{ a - b in ? }</programlisting>
+<screen>Warning: a is being renamed to b at line 2 column 7
+
+Results:
+b - b in [0, 0]</screen>
 </section>
 
 <section>
 <title>Warning: although present in a quotient, the expression $toto may not
 have been tested for non-zeroness.</title>
 <para>When Gappa verifies that both sides of a user rewriting rule are
-equivalent, it does not generate additional constraints to verify that the
-denominator is not zero. E.g. the rule <code>1 / (1 / x) -&gt; x</code> only
-applies when <code>x</code> is not zero, but Gappa will not test for it.</para>
+equivalent, it does not generate additional constraints to verify that
+denominators appearing in the expressions are not zero. For example, the rule
+<code>1 / (1 / x) -&gt; x</code> only applies when <code>x</code> is not zero;
+yet Gappa does not test for it.</para>
+<para>No warning messages are displayed when constraints are added to the
+rewriting rule (whether these constraints are sufficient or not).
+E.g. <code>1 / (1/ x) -&gt; x { x &lt;&gt; 0 }</code>.</para>
 <para>Option switch: <code>-W[no-]null-denominator</code>.</para>
 </section>
 
 <section>
 <title>Warning: $toto and $titi are not trivially equal.</title>
-<para>When Gappa verifies the rule <code>toto -&gt; titi</code>, it will
-normalize the difference of both sides. If this difference does not normalize
-to zero, Gappa will warn of it and display the difference. It may happen when
-numerical computations are required; e.g. <code>1b-2 -&gt; 0.2 + 0.05</code>.</para>
+<para>When Gappa verifies the rule <code>toto -&gt; titi</code>, it first
+performs the subtraction of both sides. Then it normalizes this expression in
+the field of polynomial fractions with integer coefficients. If this result is
+not zero, Gappa warns about it.</para>
+<para>As the normalization only deals with polynomials and integers, false
+positive may appear when the expressions involve numerical values or square
+roots or absolute values.</para>
+<programlisting><![CDATA[{ 1 in ? }
+x * (y - 2) -> x * y - x;  # not equal
+1b-2 -> 0.2 + 0.05;        # equal, but needs numerical computations
+sqrt(x * x) -> |x|;        # equal, but involves square root and absolute value]]>
+</programlisting>
+<screen>Warning: x * (y - 2) and x * y - x are not trivially equal.
+         Difference: -(x)
+Warning: 1b-2 and 2e-1 + 5e-2 are not trivially equal.
+         Difference: -(2e-1) - (5e-2) + (1b-2)
+Warning: sqrt(x * x) and |x| are not trivially equal.
+         Difference: (sqrt(x * x)) - (|x|)</screen>
 <para>Option switch: <code>-W[no-]hint-difference</code>.</para>
 </section>
 
 <section>
 <title>Warning: $titi is a variable without definition, yet it is unbound.</title>
-<para>No expression is associated to the identifier <code>titi</code> and it is
-not a sub-term of any of the bounded expressions of the logical property. This
-may mean an identifier was in fact mistyped.</para>
+<para>Neither an expression is associated to the identifier <code>titi</code>
+nor it is a sub-term of any of the bounded expressions of the logical property.
+This may mean an identifier was in fact mistyped.</para>
+<programlisting>{ x - x in ? }</programlisting>
+<screen>Warning: x is a variable without definition, yet it is unbound.</screen>
+<para>Option switch: <code>-W[no-]unbound-variable</code>.</para>
 </section>
 
 </section>
@@ -147,6 +179,7 @@ does not have any theorem that could be used to compute this expression or one
 of its sub-terms.</para>
 </section>
 
+<!--
 <section>
 <title>Warning: generated hypotheses were not proved, skipping.</title>
 <para>Gappa has created additional hypotheses in order to prove a property.
@@ -157,25 +190,24 @@ contains more hypotheses than required. For example, in order to prove
 unable to prove the first property, there is no point in trying to prove the
 second one, since it contains an additional hypothesis.</para>
 </section>
+-->
 
 <section>
 <title>Warning: hypotheses are in contradiction, any result is true.</title>
 <para>Gappa has found a contradiction among the hypotheses. So, instead of
 proving the goals, it will just prove <code>False</code>, since it implies any
 possible goal.</para>
-<screen>$ echo "{ x in [1,2] /\ x - 1 in [3,4] -&gt; x in [5,6] }" | src/gappa
-
-Results for x in [1, 1b1 {2, 2^(1)}] and x - 1 in [3, 1b2 {4, 2^(2)}]:
+<programlisting><![CDATA[{ x in [1,2] /\ x - 1 in [3,4] -> x in [5,6] }]]></programlisting>
+<screen>Results for x in [1, 2] and x - 1 in [3, 4]:
 Warning: hypotheses are in contradiction, any result is true.</screen>
 </section>
 
 <section>
 <title>Warning: no contradiction was found.</title>
 <para>Gappa had no specific goal to prove, and as such was expecting to find a
-contradiction and prove it. Unfortunately none was found.</para>
-<screen>$ echo "{ x in [1,2] -&gt; not x+1 in [2,3] }" | src/gappa
-
-Results for x in [1, 2] and x + 1 in [2, 3]:
+contradiction and prove it. Yet none were found.</para>
+<programlisting><![CDATA[{ x in [1,2] -> not x + 1 in [2,3] }]]></programlisting>
+<screen>Results for x in [1, 2] and x + 1 in [2, 3]:
 Warning: no contradiction was found.</screen>
 </section>
 
@@ -183,40 +215,70 @@ Warning: no contradiction was found.</screen>
 <title>Warning: some enclosures were not satisfied.</title>
 <para>Only part of a conjunction of goals was proved to be true. Gappa was
 unable to prove some other expressions.</para>
-<screen>$ echo "{ x in [1,2] -&gt; x + 1 in ? /\ x + 2 in [2,3] }" | src/gappa
-
-Results for x in [1, 1b1 {2, 2^(1)}]:
+<programlisting><![CDATA[{ x in [1,2] -> x + 1 in ? /\ x + 2 in [2,3] }]]></programlisting>
+<screen>Results for x in [1, 2]:
 x + 1 in [1b1 {2, 2^(1)}, 3]
 Warning: some enclosures were not satisfied.</screen>
 </section>
 
 <section>
 <title>Warning: when $toto is in $i1, $titi is in $i2 potentially outside of $i3.</title>
-<para>When Gappa applies a case splitting <code>titi $ toto</code>, it will split
+<para>When Gappa applies a case splitting <code>titi $ toto</code>, it splits
 the interval of <code>toto</code> until the goal containing <code>titi</code>
-holds true for any sub-interval. If the maximal dichotomy depth has been
-reached and the property still does not hold true, this warning will display
-the first failing sub-interval and the relevant ranges.</para>
-<screen>$ echo "{ x in [1,2] -&gt; x + 1 in [2,2.75] } x + 1 $ x;" | src/gappa
-
-Results for x in [1, 2]:
-Warning: when x is in [1.75, 1008806316530991105b-59 {1.75}], x + 1 is in [2.75, 792633534417207297b-58 {2.75)}] potentially outside of [2, 2.75]
+holds for any sub-interval. If the maximal dichotomy depth has been reached yet
+the property still does not hold, the warning message displays the failing
+sub-interval (the leftmost one) and the computed ranges.</para>
+<programlisting><![CDATA[#@-Edichotomy=3
+{ x in [1,2] -> x + 1 in [2,2.75] }
+x + 1 $ x;]]></programlisting>
+<screen>Results for x in [1, 2]:
+Warning: when x is in [1.75, 1.78125], x + 1 is in [2.75, 2.78125] potentially outside of [2, 2.75].
 Warning: some enclosures were not satisfied.</screen>
 <para>Variant: when $toto is in $i1, $titi is not computable. This warning is
-displayed if no bound of <code>titi</code> cannot even be computed.</para>
+displayed if no bounds on <code>titi</code> can even be computed.</para>
+<programlisting><![CDATA[{ x in [-2,1] -> x / x in [1,1]  }
+x / x $ x;]]></programlisting>
+<screen>Results for x in [-2, 1]:
+Warning: when x is in [-1.2446e-60, 6.22302e-61], x / x is not computable.
+Warning: some enclosures were not satisfied.</screen>
 <para>Option switch: <code>-W[no-]dichotomy-failure</code>.</para>
 </section>
 
 <section>
-<title>Warning: case splitting on $toto did not produce any usable result.</title>
-<para>Gappa displays this warning when it was successful in finding a case
-splitting that satisfies the goals. Yet the obtained results were not
-interesting: they had already been found through simple analysis.</para>
-<screen>$ echo "{ x in [1,2] -&gt; x + 1 in ? } x + 1 $ x;" | src/gappa
+<title>Warning: case split on $toto has not produced any interesting new result.</title>
+<para>This warning is displayed when Gappa is successful in finding a case
+split that satisfies the goals, yet the results obtained on the sub-intervals
+are not interesting: they have already been proved through a simpler analysis.</para>
+<programlisting><![CDATA[{ x in [1,2] -> x + 1 in ? }
+$ x;]]></programlisting>
+<screen>Results for x in [1, 2]:
+Warning: case split on x has not produced any interesting new result.
+x + 1 in [1b1 {2, 2^(1)}, 3]</screen>
+<para>Option switch: <code>-W[no-]dichotomy-failure</code>.</para>
+</section>
 
-Results for x in [1, 2]:
-Warning: case splitting on x did not produce any usable result.
-x + 1 in [2, 3]</screen>
+<section>
+<title>Warning: case split on $toto has no range to split.</title>
+<para>This warning is displayed when Gappa is unable to find the initial range
+on which to split cases.</para>
+<programlisting><![CDATA[{ x in [-1,1] -> 1 in ? }
+$ 1 / x;]]></programlisting>
+<screen>Results for x in [-1, 1]:
+Warning: case split on 1 / x has no range to split.
+1 in [1, 1]</screen>
+<para>Option switch: <code>-W[no-]dichotomy-failure</code>.</para>
+</section>
+
+<section>
+<title>Warning: case split on $toto is not goal-driven anymore.</title>
+<para>This warning is displayed when Gappa is supposed to find the best case
+split for proving a property, yet it does not know the range for this property
+or it has already proved it.</para>
+<programlisting><![CDATA[{ x in [-1,1] -> x + 1 in ? }
+x + 1 $ x;]]></programlisting>
+<screen>Results for x in [-1, 1]:
+Warning: case split on x is not goal-driven anymore.
+x + 1 in [0, 1b1 {2, 2^(1)}]</screen>
 <para>Option switch: <code>-W[no-]dichotomy-failure</code>.</para>
 </section>
 
