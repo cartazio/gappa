@@ -77,6 +77,7 @@ best_splitter::best_splitter(interval const &i) {
 bool best_splitter::split(interval &i) {
   if (stack.size() >= (unsigned)parameter_dichotomy_depth) return false;
   std::pair< interval, interval > ii = ::split(i);
+  if (!(ii.first < i && ii.second < i)) return false;
   i = ii.first;
   stack.push(ii.second);
   return true;
