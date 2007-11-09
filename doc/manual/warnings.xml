@@ -232,14 +232,14 @@ sub-interval (the leftmost one) and the computed ranges.</para>
 { x in [1,2] -> x + 1 in [2,2.75] }
 x + 1 $ x;]]></programlisting>
 <screen>Results for x in [1, 2]:
-Warning: when x is in [1.75, 1.78125], x + 1 is in [2.75, 2.78125] potentially outside of [2, 2.75].
+Warning: when x is in [1.75, 1.875], x + 1 is in [2.75, 2.875] potentially outside of [2, 2.75].
 Warning: some enclosures were not satisfied.</screen>
 <para>Variant: when $toto is in $i1, $titi is not computable. This warning is
 displayed if no bounds on <code>titi</code> can even be computed.</para>
 <programlisting><![CDATA[{ x in [-2,1] -> x / x in [1,1]  }
 x / x $ x;]]></programlisting>
 <screen>Results for x in [-2, 1]:
-Warning: when x is in [-1.2446e-60, 6.22302e-61], x / x is not computable.
+Warning: when x is in [-1.57772e-30, 7.88861e-31], x / x is not computable.
 Warning: some enclosures were not satisfied.</screen>
 <para>Option switch: <code>-W[no-]dichotomy-failure</code>.</para>
 </section>
