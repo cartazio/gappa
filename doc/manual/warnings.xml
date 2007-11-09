@@ -92,7 +92,7 @@ y -> y * (x - x) / (x - x);]]></programlisting>
 
 </section>
 
-<section>
+<section id="warning-messages1">
 <title>Warning messages</title>
 
 <section>
@@ -169,7 +169,7 @@ This may mean an identifier was in fact mistyped.</para>
 
 </section>
 
-<section>
+<section id="warning-messages2">
 <title>Warning messages during proof computation</title>
 
 <section>

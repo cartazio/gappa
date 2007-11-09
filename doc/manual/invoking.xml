@@ -3,8 +3,23 @@
 <para>Gappa reads a script on its standard input. Such a script is made of
 three parts: the definitions, the logical formula, and the hints. Warning
 messages, error messages, and results are displayed on the standard error
-output. Gappa send to the standard output a formal proof of the logical
+output. Gappa sends to the standard output a formal proof of the logical
 formula; its format depends on the selected back-end.</para>
+<para>For example, the command-line below feeds Gappa with the
+<filename>test.g</filename> file and stores the generated Coq proof script
+in a <filename>test.v</filename> file. The proof can then be automatically
+checked by the Coq proof assistant. Since nothing is displayed, it means no
+errors were detected.</para>
+<screen><![CDATA[$ echo "{ x in [-2,2] -> x * x in ? }" > test.g
+
+$ gappa -Bcoq < test.g > test.v
+
+Results for x in [-2, 2]:
+x * x in [0, 1b2 {4, 2^(2)}]
+
+$ coqc -I path/to/gappalib-coq test.v
+
+$]]></screen>
 </section>
 
 <!-- ###### -->
@@ -18,13 +33,30 @@ formula; its format depends on the selected back-end.</para>
 <para>These options are mutually exclusive and cannot be embedded into the
 scripts.</para>
 
-<para>Option: <code>-Bnull</code>. Do not enable any back-end. This is the
-default. This is also the only back-end compatible with the
+<section>
+<title>Null back-end.</title>
+<para>Option: <code>-Bnull</code></para>
+<para>Do not enable any back-end. This is the default.</para>
+<para>This is also the only back-end compatible with the
 <code>-Munconstrained</code> option.</para>
+</section>
 
-<para>Option: <code>-Bcoq</code>. When this back-end is selected, Gappa will
-generate a proof script of its results and this script can be automatically
-machine-checked by the Coq proof-checker.</para>
+<section>
+<title>Coq back-end</title>
+<para>Option: <code>-Bcoq</code></para>
+<para>When this back-end is selected, Gappa generates a script that proves the
+results it displays. This script can be automatically verified by the Coq
+proof-checker. It can also be reused in bigger formal developments made with
+Coq.</para>
+</section>
+
+<section>
+<title>HOL Light back-end</title>
+<para>Option: <code>-Bholl</code></para>
+<para>Similar to the previous option, but for the HOL Light proof-checker this
+time.</para>
+</section>
+
 </section>
 
 <section>
@@ -33,17 +65,26 @@ machine-checked by the Coq proof-checker.</para>
 <section>
 <title>Internal precision</title>
 <para>Option: <code>-Eprecision=</code><emphasis>integer</emphasis></para>
-<para>This option sets the internal MPFR precision used by the bounds of the
-intervals. The default value is 60. This is already a high value, any use of
-a higher setting would probably be dubious.</para>
+<para>This option sets the internal MPFR precision that Gappa uses when
+computing bounds of intervals. The default value is 60 and should be sufficient
+for most uses.</para>
 </section>
 
 <section>
 <title>Dichotomy depth</title>
 <para>Option: <code>-Edichotomy=</code><emphasis>integer</emphasis></para>
 <para>This option limits the depth of a dichotomy split. The default value is
-100. It means that an interval of width 1 will potentially be split in
-2^100 intervals of width 2^-100.</para>
+100. It means that an interval of width 1 is potentially split into 2^100
+intervals of width 2^-100.</para>
+</section>
+
+<section>
+<title>Fused multiply-add format</title>
+<para>Option: <code>-E[no-]reverted-fma</code></para>
+<para>By default (<code>-Eno-reverted-fma</code>), the expression
+<code>fma(a,b,c)</code> is interpreted as <code>a * b + c</code>. As this may
+not be the preferred order for the operands, the option makes Gappa use
+<code>c + a * b</code> instead.</para>
 </section>
 
 </section>
@@ -56,8 +97,9 @@ a higher setting would probably be dubious.</para>
 
 <section>
 <title>Enabling and disabling warning messages</title>
-<para>By default, all the warning messages are enabled. See annex for the
-detail of the warning types.</para>
+<para>By default, all the warning messages are enabled. See annex for details
+on warning messages during <link linkend="warning-messages1">parsing</link>
+and during <link linkend="warning-messages2">computations</link>.</para>
 </section>
 
 </section>
