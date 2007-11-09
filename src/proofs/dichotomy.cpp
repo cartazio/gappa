@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <stack>
 #include "numbers/interval_utility.hpp"
@@ -12,24 +13,56 @@
 extern int parameter_dichotomy_depth;
 extern bool warning_dichotomy_failure;
 
-struct splitter {
-  virtual bool split(interval &) = 0;
-  virtual bool next(interval &) = 0;
+/**
+ * Abstract generator of sub-intervals when performing a dichotomy.
+ */
+struct splitter
+{
+  /**
+   * Splits the current interval and returns it in @a bnd.
+   * @param bnd output interval.
+   * @return false if the interval cannot be split anymore.
+   */
+  virtual bool split(interval &bnd)
+  { (void)&bnd; return false; }
+  /**
+   * Returns the next interval in @a bnd.
+   * @param bnd output interval.
+   * @return false if all the intervals have been handled.
+   */
+  virtual bool next(interval &bnd) = 0;
   virtual ~splitter() {}
-  bool merge;
+  /**
+   * Indicates whether intervals should be merged afterwards.
+   * @return false by default.
+   */
+  virtual bool merge()
+  { return false; }
 };
 
-struct fixed_splitter: splitter {
-  interval bnd, left;
-  unsigned pos, nb;
-  fixed_splitter(interval const &i, unsigned n): bnd(i), left(i), pos(0), nb(n) { merge = false; }
-  virtual bool split(interval &) { return false; }
+/**
+ * Generator of equally-wide sub-intervals.
+ */
+struct fixed_splitter: splitter
+{
+  interval bnd;  /**< Whole interval. */
+  interval left; /**< Already handled part of the whole interval. */
+  unsigned pos;  /**< Number of sub-intervals already handled. */
+  unsigned nb;   /**< Total number of sub-intervals. */
+  fixed_splitter(interval const &i, unsigned n)
+    : bnd(i), left(i), pos(0), nb(n) {}
   virtual bool next(interval &);
 };
 
-bool fixed_splitter::next(interval &i) {
+/**
+ * Splits the whole interval into two parts at ratio #pos / #nb.
+ * Returns the sub-interval that has yet to be handled in the #left part.
+ */
+bool fixed_splitter::next(interval &i)
+{
   if (pos++ == nb) return false;
-  if (pos == nb) {
+  if (pos == nb)
+  {
     i = left;
     return true;
   }
@@ -41,17 +74,27 @@ bool fixed_splitter::next(interval &i) {
 
 typedef std::vector< number > number_vect;
 
-struct point_splitter: splitter {
-  interval bnd;
-  number_vect const &bnds;
-  int pos;
-  point_splitter(interval const &i, number_vect const *b): bnd(i), bnds(*b), pos(-1) { merge = false; }
-  virtual bool split(interval &) { return false; }
+/**
+ * Generator of user-specified sub-intervals.
+ */
+struct point_splitter: splitter
+{
+  interval bnd; /**< Whole interval. */
+  number_vect const &bnds; /**< Sets of user-specified points. */
+  int pos; /**< Number of user points already handled. */
+  point_splitter(interval const &i, number_vect const *b)
+    : bnd(i), bnds(*b), pos(-1) {}
   virtual bool next(interval &);
 };
 
-bool point_splitter::next(interval &i) {
-  for(int sz = bnds.size(); pos++ < sz;) {
+/**
+ * Iteratively increments #pos until an intersection between #bnd and the user-specified intervals is found.
+ * Returns this intersection.
+ */
+bool point_splitter::next(interval &i)
+{
+  for(int sz = bnds.size(); pos++ < sz;)
+  {
     i = intersect(bnd, interval(pos == 0  ? number::neg_inf : bnds[pos - 1],
                                 pos == sz ? number::pos_inf : bnds[pos]));
     if (is_empty(i)) continue;
@@ -60,33 +103,59 @@ bool point_splitter::next(interval &i) {
   return false;
 }
 
-struct best_splitter: splitter {
-  std::stack< interval > stack;
+/**
+ * Generator of sub-intervals based on dichotomy. A merge of the sub-intervals is performed at the end.
+ */
+struct best_splitter: splitter
+{
+  /**
+   * Stack of sub-intervals not handled yet and their depth in the dichotomy tree.
+   * Top of the stack is the currently handled interval.
+   */
+  std::stack< std::pair< interval, int > > stack;
   best_splitter(interval const &i);
   virtual bool split(interval &);
   virtual bool next(interval &);
+  virtual bool merge() { return true; }
 };
 
-best_splitter::best_splitter(interval const &i) {
+/**
+ * Stores the whole interval @a i at the top of the stack (it will be skipped by the first call to #next)
+ * and its two sub-intervals.
+ */
+best_splitter::best_splitter(interval const &i)
+{
   std::pair< interval, interval > ii = ::split(i);
-  stack.push(ii.second);
-  stack.push(ii.first);
-  merge = true;
+  stack.push(std::make_pair(ii.second, 1));
+  stack.push(std::make_pair(ii.first, 1));
+  stack.push(std::make_pair(i, 0));
 }
 
-bool best_splitter::split(interval &i) {
-  if (stack.size() >= (unsigned)parameter_dichotomy_depth) return false;
-  std::pair< interval, interval > ii = ::split(i);
-  if (!(ii.first < i && ii.second < i)) return false;
+/**
+ * Splits the interval at the top of the stack. Replaces it by the right part.
+ * Pushes the left part and returns it. Sets an increased depth to both parts.
+ */
+bool best_splitter::split(interval &i)
+{
+  std::pair< interval, int > &p = stack.top();
+  if (p.second >= parameter_dichotomy_depth) return false;
+  std::pair< interval, interval > ii = ::split(p.first);
+  if (!(ii.first < p.first && ii.second < p.first)) return false;
+  p.first = ii.second;
+  ++p.second;
   i = ii.first;
-  stack.push(ii.second);
+  stack.push(std::make_pair(i, p.second));
   return true;
 }
 
-bool best_splitter::next(interval &i) {
-  if (stack.empty()) return false;
-  i = stack.top();
+/**
+ * Pops the interval at the top of the stack and returns the next one.
+ */
+bool best_splitter::next(interval &i)
+{
   stack.pop();
+  if (stack.empty()) return false;
+  i = stack.top().first;
   return true;
 }
 
@@ -184,7 +253,7 @@ void dichotomy_helper::try_graph(graph_t *g2) {
     last_graph = g2;
     return;
   }
-  if (gen->merge) {
+  if (gen->merge()) {
     property p(g1->get_hypotheses()[0]);
     p.bnd() = interval(lower(p.bnd()), upper(g2->get_hypotheses()[0].bnd()));
     tmp_hyp[0] = p;
