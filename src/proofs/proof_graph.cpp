@@ -90,7 +90,7 @@ typedef std::list< node * > node_list;
 /**
  * Computes the sum of the #local_weight of all the ancestors of this node.
  * The result is cached in the #weight data member.
- * @node Outside the expensive mode, the weights of the nodes are their #local_weight.
+ * @note Outside the expensive mode, the weights of the nodes are their #local_weight.
  */
 unsigned node::get_weight()
 {
