@@ -95,7 +95,7 @@ not be the preferred order for the operands, the option makes Gappa use
 <para>These options cannot be embedded into scripts.</para>
 
 <section>
-<title>Assumed hypotheses</title>
+<title>Assuming vague hypotheses</title>
 <para>Option: <code>-Munconstrained</code></para>
 <para>By default, Gappa checks that all its hypotheses hold before using a
 theorem. This mode weakens the engine by making it skip hypotheses that are not
@@ -121,6 +121,38 @@ the unproven properties actually relies on the proof of another one. Both will
 be displayed as unproven, although only the second one needs to be
 proved.</para>
 <para>This mode cannot be used when a proof back-end is selected.</para>
+</section>
+
+<section>
+<title>Improving generated proofs</title>
+<para>Option: <code>-Mexpensive</code></para>
+<para>In this mode, Gappa tries to find shorter proofs. While this mode may
+considerably slow down the computations, its effectiveness is far from being
+guaranteed.</para>
+</section>
+
+<section>
+<title>Gathering statistics</title>
+<para>Option: <code>-Mstatistics</code></para>
+<para>At the end of its computations, Gappa displays some statistics. For
+example, the second script of this <link linkend="example-fixed">example</link>
+gives:</para>
+<screen>Statistics:
+  4949 expressions were considered,
+    but then 0 of these got discarded.
+  14747 theorems were tried. Among these,
+    5963 were successfully instantiated,
+    yet 3247 of these were not good enough
+    and 2 were only partially better.</screen>
+<para>The first two lines show the amounts of intermediate expressions Gappa
+prepared. The first number is the amount of expressions that were considered,
+and the second number is the amount of expressions for which Gappa had not found
+any usable theorem. Once this set of expressions is ready, Gappa tries to find
+properties by applying theorems. The next statistics count these theorems.
+First, the amount of theorem Gappa tried to apply. Then, among the theorems for
+which Gappa could satisfy hypotheses, some gave a usable result, and some others
+did not (because a better property was already proved at the time the theorem
+was considered).</para>
 </section>
 
 </section>
