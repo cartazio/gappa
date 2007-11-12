@@ -507,6 +507,8 @@ int stat_successful_th = 0, stat_discarded_pred = 0, stat_intersected_pred = 0;
  * If the result is new, the function tests the node against #partial_reals and creates an ::intersection_node if any real match.
  *
  * If the result is not a strict subset, an ::intersection_node with the alreay known result is created.
+ *
+ * @return true is the node is worth it.
  */
 bool graph_t::try_real(node *n)
 {
@@ -529,7 +531,7 @@ bool graph_t::try_real(node *n)
     }
     if (res1.implies(res2))
     {
-      if (n->get_weight() >= old->get_weight() ||
+      if (n->get_weight() >= old->get_weight() &&
           n->nb_missing >= old->nb_missing)
       {
         ++stat_discarded_pred;
