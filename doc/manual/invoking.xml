@@ -28,9 +28,9 @@ $]]></screen>
 <title>Command-line options</title>
 
 <section>
-<title>Selecting a back-end</title>
+<title>Selecting a proof back-end</title>
 
-<para>These options are mutually exclusive and cannot be embedded into the
+<para>These options are mutually exclusive and cannot be embedded into
 scripts.</para>
 
 <section>
@@ -92,7 +92,37 @@ not be the preferred order for the operands, the option makes Gappa use
 <section>
 <title>Setting modes</title>
 
-<para>To be written.</para>
+<para>These options cannot be embedded into scripts.</para>
+
+<section>
+<title>Assumed hypotheses</title>
+<para>Option: <code>-Munconstrained</code></para>
+<para>By default, Gappa checks that all its hypotheses hold before using a
+theorem. This mode weakens the engine by making it skip hypotheses that are not
+needed for computing intermediate results. For example, Gappa will no longer
+check that <code>x</code> is not zero before applying the lemma proving
+<code>x / x in [1,1]</code>.</para>
+<para>This mode is especially useful when starting a proof on relative errors,
+as it makes it possible to get some early results about them without having to
+prove that they are well-defined.</para>
+<para>At the end of its run, Gappa displays all the facts that are left
+unproven. In the example below, the property <code>NZR</code> means that a value
+is not zero.</para>
+<programlisting><![CDATA[{ x in [1,2] ->
+  (x + 1) / (x + 1) in ? /\ (x - 1) / (x - 1) in ? }]]></programlisting>
+<screen>Results for x in [1, 2]:
+(x + 1) / (x + 1) in [1, 1]
+(x - 1) / (x - 1) in [1, 1]
+Unproven assumptions:
+  NZR(x - 1)</screen>
+<para>While Gappa only displays the properties that are left unproven at the end
+of its run, it may contain false positive. This is especially true when one of
+the unproven properties actually relies on the proof of another one. Both will
+be displayed as unproven, although only the second one needs to be
+proved.</para>
+<para>This mode cannot be used when a proof back-end is selected.</para>
+</section>
+
 </section>
 
 <section>
