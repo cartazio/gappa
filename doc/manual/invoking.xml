@@ -149,7 +149,7 @@ prepared. The first number is the amount of expressions that were considered,
 and the second number is the amount of expressions for which Gappa had not found
 any usable theorem. Once this set of expressions is ready, Gappa tries to find
 properties by applying theorems. The next statistics count these theorems.
-First, the amount of theorem Gappa tried to apply. Then, among the theorems for
+First, the amount of theorems Gappa tried to apply. Then, among the theorems for
 which Gappa could satisfy hypotheses, some gave a usable result, and some others
 did not (because a better property was already proved at the time the theorem
 was considered).</para>
