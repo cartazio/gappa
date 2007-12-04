@@ -12,6 +12,7 @@
 
 extern int parameter_dichotomy_depth;
 extern bool warning_dichotomy_failure;
+extern bool detailed_io;
 
 /**
  * Abstract generator of sub-intervals when performing a dichotomy.
@@ -372,6 +373,7 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
   } catch (dichotomy_failure const &e) {
     if (warning_dichotomy_failure) {
       property const &h = e.hyp;
+      detailed_io = true;
       std::cerr << "Warning: when " << dump_real(h.real.real()) << " is in "
                 << h.bnd() << ", ";
       ast_real const *dst = e.expected.real.real();
@@ -382,6 +384,7 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
                   << " potentially outside of " << e.expected.bnd() << ".\n";
       else
         std::cerr << dump_real(dst) << " is not computable.\n";
+      detailed_io = false;
     }
     delete h;
     return false;
