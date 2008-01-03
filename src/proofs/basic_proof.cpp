@@ -1156,3 +1156,86 @@ proof_scheme *nzr_of_unconstrained_scheme::factory(predicated_real const &real)
   if (real.pred() != PRED_NZR || parameter_constrained) return NULL;
   return new nzr_of_unconstrained_scheme(real);
 }
+
+// NZR_OF_NZR_REL
+REGISTER_SCHEME_BEGIN(nzr_of_nzr_rel);
+  preal_vect needed;
+  nzr_of_nzr_rel_scheme(predicated_real const &r, preal_vect const &v)
+    : proof_scheme(r), needed(v) {}
+REGISTER_SCHEME_END_PATTERN(nzr_of_nzr_rel, predicated_real(pattern(1), PRED_NZR));
+
+node *nzr_of_nzr_rel_scheme::generate_proof() const
+{
+  property hyps[2];
+  if (!fill_hypotheses(hyps, needed)) return NULL;
+  return create_theorem(2, hyps, real, "nzr_of_nzr_rel");
+}
+
+preal_vect nzr_of_nzr_rel_scheme::needed_reals() const
+{
+  return needed;
+}
+
+proof_scheme *nzr_of_nzr_rel_scheme::factory(predicated_real const &real, ast_real_vect const &holders)
+{
+  preal_vect hyps;
+  hyps.push_back(predicated_real(holders[0], PRED_NZR));
+  hyps.push_back(predicated_real(holders[1], holders[0], PRED_REL));
+  return new nzr_of_nzr_rel_scheme(real, hyps);
+}
+
+// NZR_OF_NZR_REL_REV
+REGISTER_SCHEME_BEGIN(nzr_of_nzr_rel_rev);
+  preal_vect needed;
+  nzr_of_nzr_rel_rev_scheme(predicated_real const &r, preal_vect const &v)
+    : proof_scheme(r), needed(v) {}
+REGISTER_SCHEME_END_PATTERN(nzr_of_nzr_rel_rev, predicated_real(pattern(-1), PRED_NZR));
+
+node *nzr_of_nzr_rel_rev_scheme::generate_proof() const
+{
+  property hyps[2];
+  if (!fill_hypotheses(hyps, needed)) return NULL;
+  return create_theorem(2, hyps, real, "nzr_of_nzr_rel_rev");
+}
+
+preal_vect nzr_of_nzr_rel_rev_scheme::needed_reals() const
+{
+  return needed;
+}
+
+proof_scheme *nzr_of_nzr_rel_rev_scheme::factory(predicated_real const &real, ast_real_vect const &holders)
+{
+  preal_vect hyps;
+  hyps.push_back(predicated_real(holders[1], PRED_NZR));
+  hyps.push_back(predicated_real(holders[1], holders[0], PRED_REL));
+  return new nzr_of_nzr_rel_rev_scheme(real, hyps);
+}
+
+// BND_DIV_OF_REL_BND_DIV
+REGISTER_SCHEME_BEGIN(bnd_div_of_rel_bnd_div);
+  preal_vect needed;
+  bnd_div_of_rel_bnd_div_scheme(predicated_real const &r, preal_vect const &v)
+    : proof_scheme(r), needed(v) {}
+REGISTER_SCHEME_END_PATTERN(bnd_div_of_rel_bnd_div, predicated_real((pattern(1) - pattern(0)) / pattern(2), PRED_BND));
+
+node *bnd_div_of_rel_bnd_div_scheme::generate_proof() const
+{
+  property hyps[2];
+  if (!fill_hypotheses(hyps, needed)) return NULL;
+  property res(real, hyps[0].bnd() * hyps[1].bnd());
+  return create_theorem(2, hyps, res, "bnd_div_of_rel_bnd_div", &mul_updater);
+}
+
+preal_vect bnd_div_of_rel_bnd_div_scheme::needed_reals() const
+{
+  return needed;
+}
+
+proof_scheme *bnd_div_of_rel_bnd_div_scheme::factory(predicated_real const &real, ast_real_vect const &holders)
+{
+  preal_vect hyps;
+  if (holders[0] == holders[2]) return NULL;
+  hyps.push_back(predicated_real(holders[1], holders[0], PRED_REL));
+  hyps.push_back(predicated_real(normalize(real_op(holders[0], BOP_DIV, holders[2])), PRED_BND));
+  return new bnd_div_of_rel_bnd_div_scheme(real, hyps);
+}

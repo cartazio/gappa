@@ -308,6 +308,22 @@ REWRIT9(div_firq,
 	~b && ~c,
 	a ^ c);
 
+REWRIT9(div_xals,
+	b / c,
+	(b - a) / c + a / c,
+	~c,
+	a ^ c && b ^ c);
+
+REWRIT3(div_fir,
+	(a * b) / b,
+	a,
+	~b);
+
+REWRIT3(div_fil,
+	(a * b) / a,
+	b,
+	~a);
+
 // SQRT
 
 REWRIT9(sqrt_mibs,
