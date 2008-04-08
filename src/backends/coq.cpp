@@ -184,14 +184,33 @@ static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_m
       if (ii <= i)
         plouf << " exact h" << h << '.';
       else
-        plouf << " apply " << (t == PRED_ABS ? "abs_" : "") << "subset with (1 := h" << h << "). finalize.";
+      {
+        char const *prefix = "";
+        switch (t)
+        {
+          case PRED_ABS: prefix = "abs_"; break;
+          case PRED_REL: prefix = "rel_"; break;
+          case PRED_BND: break;
+          default: assert(false);
+        }
+        plouf << " apply " << prefix << "subset with (1 := h" << h << "). finalize.";
+      }
     } else if (j->real.pred_cst()) {
       long c = pki->second.second->cst(), cc = j->cst();
       assert((t == PRED_FIX && c >= cc) || (t == PRED_FLT && c <= cc));
       if (c == c)
         plouf << " exact h" << h << '.';
       else
-        plouf << " apply " << (t == PRED_FIX ? "fix" : "flt") << "_subset with (1 := h" << h << "). finalize.";
+      {
+        char const *prefix = "";
+        switch (t)
+        {
+          case PRED_FIX: prefix = "fix_"; break;
+          case PRED_FLT: prefix = "flt_"; break;
+          default: assert(false);
+        }
+        plouf << " apply " << prefix << "subset with (1 := h" << h << "). finalize.";
+      }
     } else {
       assert(t == PRED_NZR);
       plouf << " exact h" << h << '.';

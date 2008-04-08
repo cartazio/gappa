@@ -1,6 +1,8 @@
 Version 0.9.1:
  * proof graph
    - avoided infinite dichotomy on some unprovable propositions
+ * back-ends
+   - fixed generation of subset facts
 
 Version 0.9.0:
  * syntax
