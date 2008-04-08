@@ -179,7 +179,7 @@ interval float_rounding_class::absolute_error_from_approx_bnd(interval const &i,
 
 interval float_rounding_class::absolute_error_from_approx_abs(interval const &i, std::string &name) const {
   int e_err = exponent(upper(i), format);
-  name = "float_absolute_inv" + ident;
+  name = "float_absolute_inv2" + ident;
   if (rnd_to_nearest(type)) return from_exponent(e_err - 1, 0);
   return from_exponent(e_err, 0);
 }
