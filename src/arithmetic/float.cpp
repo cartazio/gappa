@@ -134,7 +134,9 @@ static bool influenced(number const &n, int e, int e_infl, int infl) {
   return (infl != 1) ? cmp <= 0 : cmp < 0;
 }
 
-interval float_rounding_class::absolute_error_from_exact_bnd(interval const &i, std::string &name) const {
+interval float_rounding_class::absolute_error_from_exact_bnd(interval const &i, std::string &name) const
+{
+  // directed rounding only
   rounding_fun f = direction_functions[type];
   number const &v1 = lower(i), &v2 = upper(i);
   int e1 = exponent(round_number(v1, &format, f), format),
@@ -153,7 +155,9 @@ interval float_rounding_class::absolute_error_from_exact_bnd(interval const &i, 
   return from_exponent(e_err, rnd_global_direction_abs(type, i));
 }
 
-interval float_rounding_class::absolute_error_from_exact_abs(interval const &i, std::string &name) const {
+interval float_rounding_class::absolute_error_from_exact_abs(interval const &i, std::string &name) const
+{
+  // symmetric rounding only
   rounding_fun f = direction_functions[type];
   number const &v = upper(i);
   int e0 = exponent(round_number(v, &format, f), format);
@@ -169,7 +173,9 @@ interval float_rounding_class::absolute_error_from_exact_abs(interval const &i, 
   return from_exponent(e_err, rnd_global_direction_abs(type, i));
 }
 
-interval float_rounding_class::absolute_error_from_approx_bnd(interval const &i, std::string &name) const {
+interval float_rounding_class::absolute_error_from_approx_bnd(interval const &i, std::string &name) const
+{
+  // directed rounding only
   int e1 = exponent(lower(i), format), e2 = exponent(upper(i), format);
   int e_err = std::max(e1, e2);
   name = "float_absolute_inv" + ident;
@@ -177,9 +183,11 @@ interval float_rounding_class::absolute_error_from_approx_bnd(interval const &i,
   return from_exponent(e_err, rnd_global_direction_abs(type, i));
 }
 
-interval float_rounding_class::absolute_error_from_approx_abs(interval const &i, std::string &name) const {
+interval float_rounding_class::absolute_error_from_approx_abs(interval const &i, std::string &name) const
+{
+  // symmetric rounding only
   int e_err = exponent(upper(i), format);
-  name = "float_absolute_inv2" + ident;
+  name = "float_absolute_inv" + ident;
   if (rnd_to_nearest(type)) return from_exponent(e_err - 1, 0);
   return from_exponent(e_err, 0);
 }
