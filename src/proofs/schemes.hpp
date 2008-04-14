@@ -10,10 +10,11 @@ struct proof_scheme {
   virtual node *generate_proof() const = 0;
   virtual preal_vect needed_reals() const = 0;
   virtual ~proof_scheme() {}
-  proof_scheme(ast_real const *r): real(r, PRED_BND) {}
+  proof_scheme(ast_real const *r): real(r, PRED_BND), visited(0) {}
   proof_scheme(predicated_real const &r): real(r) {}
   predicated_real real;
-  mutable bool scanned;
+  mutable unsigned visited;
+  bool can_visit() const;
 };
 
 struct scheme_factory {

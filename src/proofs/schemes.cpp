@@ -1,11 +1,16 @@
+#include <fstream>
 #include <list>
 #include <map>
 #include <set>
+#include <string>
 #include <vector>
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
+#include "parser/ast.hpp"
 #include "parser/pattern.hpp"
 #include "proofs/schemes.hpp"
+
+extern std::string parameter_schemes;
 
 typedef std::set< ast_real const * > ast_real_set;
 extern ast_real_set input_reals, output_reals;
@@ -61,37 +66,73 @@ static real_set missing_reals;
 typedef std::vector< proof_scheme const * > scheme_vect;
 static scheme_vect source_schemes;
 
+/** Timestamp for the currently running graph algorithm. Increased each time an algorithm starts. */
+static unsigned visit_counter = 0;
+
 typedef std::set< proof_scheme const * > scheme_set;
-struct real_dependency {
+struct real_dependency
+{
   scheme_set dependent;
   scheme_set schemes;
   bool found;
+  mutable unsigned visited;
+  real_dependency(): found(false), visited(0) {}
+  bool can_visit() const;
 };
 typedef std::map< predicated_real, real_dependency > real_dependencies;
 static real_dependencies reals;
 
 typedef std::list< proof_scheme const * > scheme_list;
 
-static void initialize_scheme_list(scheme_list &v) {
-  for(real_dependencies::iterator i = reals.begin(), i_end = reals.end(); i != i_end; ++i) {
-    scheme_set &s = i->second.schemes;
-    for(scheme_set::iterator j = s.begin(), j_end = s.end(); j != j_end; ++j)
-      if (*j) (*j)->scanned = false;
-  }
-  for(scheme_vect::const_iterator i = source_schemes.begin(),
-      i_end = source_schemes.end(); i != i_end; ++i) {
+/**
+ * Tells if the scheme has yet to be visited by the current graph algorithm.
+ * In that case, the function updates the #visited timestamp so that the next call returns false.
+ */
+bool proof_scheme::can_visit() const
+{
+  if (visited == visit_counter) return false;
+  visited = visit_counter;
+  return true;
+}
+
+/**
+ * Tells if the real has yet to be visited by the current graph algorithm.
+ * In that case, the function updates the #visited timestamp so that the next call returns false.
+ */
+bool real_dependency::can_visit() const
+{
+  if (visited == visit_counter) return false;
+  visited = visit_counter;
+  return true;
+}
+
+/**
+ * Marks the source schemes as visited and puts them into @a v.
+ */
+static void initialize_scheme_list(scheme_list &v)
+{
+  ++visit_counter;
+  v.clear();
+  for (scheme_vect::const_iterator i = source_schemes.begin(),
+       i_end = source_schemes.end(); i != i_end; ++i)
+  {
     proof_scheme const *s = *i;
-    s->scanned = true;
+    s->visited = visit_counter;
     v.push_back(s);
   }
 }
 
-static void insert_dependent(scheme_list &v, predicated_real const &real) {
+/**
+ * Marks as visited and inserts into @a v all the schemes that depend on @a real.
+ */
+static void insert_dependent(scheme_list &v, predicated_real const &real)
+{
   scheme_set const &dep = reals[real].dependent;
-  for(scheme_set::const_iterator i = dep.begin(), end = dep.end(); i != end; ++i) {
+  for (scheme_set::const_iterator i = dep.begin(),
+       i_end = dep.end(); i != i_end; ++i)
+  {
     proof_scheme const *s = *i;
-    if (s->scanned) continue;
-    s->scanned = true;
+    if (!s->can_visit()) continue;
     v.push_back(s);
   }
 }
@@ -100,15 +141,16 @@ static void insert_dependent_init(scheme_list &v, predicated_real const &real) {
   scheme_set const &dep = reals[real].dependent;
   for(scheme_set::const_iterator i = dep.begin(), i_end = dep.end(); i != i_end; ++i) {
     proof_scheme const *s = *i;
-    if (!s || s->scanned) continue;
+    if (!s || s->visited == visit_counter) continue;
     preal_vect w = s->needed_reals();
     bool good = true;
     for(preal_vect::const_iterator j = w.begin(), j_end = w.end(); j != j_end; ++j)
       if (!reals[*j].found) { good = false; break; }
     if (!good) continue;
     bool &found = reals[s->real].found;
+    // FIXME: ???
     if (w.size() > 0 && w[0] == s->real && !found) continue;
-    s->scanned = true;
+    s->visited = visit_counter;
     v.push_back(s);
     found = true;
   }
@@ -138,7 +180,6 @@ static real_dependency &initialize_dependencies(predicated_real const &real) {
   ++stat_tested_real;
   it = reals.insert(std::make_pair(real, real_dependency())).first;
   real_dependency &dep = it->second;
-  dep.found = false;
   scheme_set &l = dep.schemes;
   for (scheme_factories::iterator i = factories.begin(),
        i_end = factories.end(); i != i_end; ++i) {
@@ -175,6 +216,41 @@ static real_dependency &initialize_dependencies(predicated_real const &real) {
     missing_reals.insert(s->real);
   }
   return it->second;
+}
+
+/**
+ * Tells if the scheme @a s depends indirectly on @a real only.
+ *
+ * @note Scans only 10 reals below @a real before it assumes there are
+ *       other dependencies.
+ */
+bool depends_only_on(proof_scheme const *s, predicated_real const &real)
+{
+  preal_vect v = s->needed_reals();
+  if (v.empty()) return false;
+  ++visit_counter;
+  reals[real].visited = visit_counter;
+  std::list<predicated_real> pending_reals;
+  for (preal_vect::const_iterator i = v.begin(), i_end = v.end(); i != i_end; ++i)
+    if (reals[*i].can_visit()) pending_reals.push_back(*i);
+  int iter = 0;
+  while (!pending_reals.empty())
+  {
+    if (iter++ == 10) return false;
+    predicated_real r = pending_reals.front();
+    pending_reals.pop_front();
+    scheme_set const &v = reals[r].schemes;
+    for (scheme_set::const_iterator i = v.begin(), i_end = v.end(); i != i_end; ++i)
+    {
+      proof_scheme const *t = *i;
+      if (!t) return false;
+      preal_vect w = t->needed_reals();
+      if (w.empty()) return false;
+      for (preal_vect::const_iterator j = w.begin(), j_end = w.end(); j != j_end; ++j)
+        if (reals[*j].can_visit()) pending_reals.push_back(*j);
+    }
+  }
+  return true;
 }
 
 ast_real_vect generate_proof_paths() {
@@ -216,7 +292,21 @@ ast_real_vect generate_proof_paths() {
     v.swap(r.schemes);
     for(scheme_set::iterator j = v.begin(), j_end = v.end(); j != j_end; ++j) {
       proof_scheme const *s = *j;
-      if (!s || s->scanned) r.schemes.insert(s);
+      if (!s || s->visited == visit_counter) r.schemes.insert(s);
+      else delete_scheme(s, NULL);
+    }
+  }
+  // remove useless schemes
+  for (real_dependencies::iterator i = reals.begin(), i_end = reals.end(); i != i_end; ++i)
+  {
+    predicated_real const &real = i->first;
+    real_dependency &r = i->second;
+    scheme_set v;
+    v.swap(r.schemes);
+    for (scheme_set::iterator j = v.begin(), j_end = v.end(); j != j_end; ++j)
+    {
+      proof_scheme const *s = *j;
+      if (!s || !depends_only_on(s, real)) r.schemes.insert(s);
       else delete_scheme(s, NULL);
     }
   }
@@ -253,6 +343,28 @@ ast_real_vect generate_proof_paths() {
         source_schemes.push_back(s);
     }
     r.dependent.erase(NULL);
+  }
+  // generate the scheme graph
+  if (!parameter_schemes.empty())
+  {
+    std::ofstream out(parameter_schemes.c_str());
+    int num_th = 0;
+    out << "digraph {\n";
+    for (real_dependencies::iterator i = reals.begin(), i_end = reals.end(); i != i_end; ++i)
+    {
+      real_dependency &r = i->second;
+      for (scheme_set::iterator j = r.schemes.begin(), j_end = r.schemes.end(); j != j_end; ++j)
+      {
+        ++num_th;
+        out << "  \"" << dump_real(i->first) << "\" -> \"T" << num_th << "\";\n"
+             << "  \"T" << num_th << "\" [shape=box];\n";
+        preal_vect v = (*j)->needed_reals();
+        for (preal_vect::const_iterator k = v.begin(), k_end = v.end(); k != k_end; ++k)
+          out << "  \"T" << num_th << "\" -> \"" << dump_real(*k) << "\";\n";
+      }
+    }
+    out << "}\n";
+    out.close();
   }
   // find unreachable outputs
   ast_real_vect missing_targets;
@@ -317,11 +429,11 @@ bool graph_t::populate(property_tree const &goals, dichotomy_sequence const &dic
     for(node_map::const_iterator i = known_reals.begin(), i_end = known_reals.end(); i != i_end; ++i)
       insert_dependent(missing_schemes, i->first);
     unsigned iter = 0;
-    while (iter != 1000000 && !missing_schemes.empty()) {
+    while (iter != 10000000 && !missing_schemes.empty()) {
       ++iter;
       proof_scheme const *s = missing_schemes.front();
       missing_schemes.pop_front();
-      s->scanned = false;
+      s->visited = 0; // allows the scheme to be reused later, if needed
       ++stat_tested_th;
       node *n = s->generate_proof();
       if (!n || !try_real(n)) continue;		// the scheme did not find anything useful
