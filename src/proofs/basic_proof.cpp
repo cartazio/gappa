@@ -12,6 +12,22 @@ static preal_vect one_needed(ast_real const *r) {
   return preal_vect(1, predicated_real(r, PRED_BND));
 }
 
+static bool is_changing_sign(ast_real const *r)
+{
+  real_op const *p = boost::get< real_op const >(r);
+  return p && (p->type == UOP_ABS || p->type == UOP_NEG);
+}
+
+bool is_constant(ast_real const *r)
+{
+  if (boost::get< ast_number const *const >(r)) return true;
+  real_op const *p = boost::get< real_op const >(r);
+  if (!p) return false;
+  for (ast_real_vect::const_iterator i = p->ops.begin(), end = p->ops.end(); i != end; ++i)
+    if (!is_constant(*i)) return false;
+  return true;
+}
+
 // ABSOLUTE_ERROR
 REGISTER_SCHEME_BEGIN(absolute_error);
   function_class const *function;
@@ -348,8 +364,10 @@ node *computation_scheme::generate_proof() const {
     case UOP_SQRT:
       if (lower(i) < 0) return NULL;
       return create_theorem(1, &res, property(real, sqrt(i)), "sqrt", &sqrt_updater);
+#if 0
     case UOP_ABS:
       return create_theorem(1, &res, property(real, abs(i)), std::string("abs_") += ('o' + sign(i)), &abs_updater);
+#endif
     default:
       assert(false);
     }
@@ -432,7 +450,7 @@ preal_vect computation_scheme::needed_reals() const {
 
 proof_scheme *computation_scheme::factory(ast_real const *real) {
   real_op const *p = boost::get< real_op const >(real);
-  if (!p || p->fun) return NULL;
+  if (!p || p->fun || p->type == UOP_ABS) return NULL;
   return new computation_scheme(real);
 }
 
@@ -448,12 +466,15 @@ node *computation_abs_scheme::generate_proof() const {
   case 1: {
     node *n1 = find_proof(predicated_real(r->ops[0], PRED_ABS));
     if (!n1) return NULL;
-    property const &res = n1->get_result();
+    property const &res1 = n1->get_result();
+    property res(real, res1.bnd());
     switch (r->type) {
+#if 0
     case UOP_NEG:
-      return create_theorem(1, &res, res, "neg_a", identity_updater);
+      return create_theorem(1, &res1, res, "neg_a", identity_updater);
+#endif
     case UOP_ABS:
-      return create_theorem(1, &res, res, "abs_a", identity_updater);
+      return create_theorem(1, &res1, res, "abs_a", identity_updater);
     default:
       assert(false);
     }
@@ -479,6 +500,7 @@ node *computation_abs_scheme::generate_proof() const {
       if (lower(i) > 0) s += (lower(i1) > upper(i2)) ? "_p" : "_n";
       else s += "_o";
       break;
+#if 0
     case BOP_MUL:
       i = i1 * i2;
       s = "mul_aa";
@@ -490,6 +512,7 @@ node *computation_abs_scheme::generate_proof() const {
       s = "div_aa";
       u = &div_updater;
       break;
+#endif
     default:
       assert(false);
       return NULL;
@@ -516,7 +539,11 @@ preal_vect computation_abs_scheme::needed_reals() const {
 proof_scheme *computation_abs_scheme::factory(predicated_real const &real) {
   if (real.pred() != PRED_ABS) return NULL;
   real_op const *p = boost::get< real_op const >(real.real());
+#if 0
   if (!p || p->fun || p->type == UOP_SQRT) return NULL;
+#else
+  if (!p || (p->type != BOP_ADD && p->type != BOP_SUB && p->type != UOP_ABS)) return NULL;
+#endif
   return new computation_abs_scheme(real);
 }
 
@@ -540,8 +567,39 @@ preal_vect bnd_of_abs_scheme::needed_reals() const {
   return preal_vect(1, predicated_real(real.real(), PRED_ABS));
 }
 
-proof_scheme *bnd_of_abs_scheme::factory(ast_real const *real) {
+proof_scheme *bnd_of_abs_scheme::factory(ast_real const *real)
+{
+  real_op const *p = boost::get< real_op const >(real);
+  if (p && p->type == UOP_ABS) return NULL;
   return new bnd_of_abs_scheme(real);
+}
+
+// ABS_OF_BND
+REGISTER_SCHEME_BEGIN(abs_of_bnd);
+  abs_of_bnd_scheme(predicated_real const &r): proof_scheme(r) {}
+REGISTER_SCHEME_END_PREDICATE(abs_of_bnd);
+
+node *abs_of_bnd_scheme::generate_proof() const
+{
+  node *n = find_proof(real.real());
+  if (!n) return NULL;
+  property const &res = n->get_result();
+  interval const &i = res.bnd();
+  return create_theorem(1, &res, property(real, abs(i)),
+                        std::string("abs_of_bnd_") += ('o' + sign(i)), &abs_updater);
+}
+
+preal_vect abs_of_bnd_scheme::needed_reals() const
+{
+  return one_needed(real.real());
+}
+
+proof_scheme *abs_of_bnd_scheme::factory(predicated_real const &real)
+{
+  if (real.pred() != PRED_ABS) return NULL;
+  real_op const *p = boost::get< real_op const >(real.real());
+  if (p && p->type == UOP_ABS) return NULL;
+  return new abs_of_bnd_scheme(real);
 }
 
 // BND_OF_BND_ABS
@@ -574,7 +632,11 @@ preal_vect bnd_of_bnd_abs_scheme::needed_reals() const {
   return needed;
 }
 
-proof_scheme *bnd_of_bnd_abs_scheme::factory(ast_real const *real) {
+proof_scheme *bnd_of_bnd_abs_scheme::factory(ast_real const *real)
+{
+  if (is_constant(real)) return NULL;
+  real_op const *p = boost::get< real_op const >(real);
+  if (p && p->type == UOP_ABS) return NULL;
   preal_vect hyps;
   hyps.push_back(predicated_real(real, PRED_BND));
   hyps.push_back(predicated_real(real, PRED_ABS));
@@ -590,8 +652,9 @@ REGISTER_SCHEME_END(uabs_of_abs);
 node *uabs_of_abs_scheme::generate_proof() const {
   node *n = find_proof(needed);
   if (!n) return NULL;
-  property const &res = n->get_result();
-  return create_theorem(1, &res, res, "uabs_of_abs", identity_updater);
+  property const &res1 = n->get_result();
+  property res(real, res1.bnd());
+  return create_theorem(1, &res1, res, "uabs_of_abs", identity_updater);
 }
 
 preal_vect uabs_of_abs_scheme::needed_reals() const {
@@ -604,30 +667,33 @@ proof_scheme *uabs_of_abs_scheme::factory(ast_real const *real) {
   return new uabs_of_abs_scheme(real, predicated_real(p->ops[0], PRED_ABS));
 }
 
-// ABS_OF_BND
-REGISTER_SCHEME_BEGIN(abs_of_bnd);
+// ABS_OF_UABS
+REGISTER_SCHEME_BEGIN(abs_of_uabs);
   predicated_real needed;
-  abs_of_bnd_scheme(predicated_real const &r, predicated_real const &v): proof_scheme(r), needed(v) {}
-REGISTER_SCHEME_END_PREDICATE(abs_of_bnd);
+  abs_of_uabs_scheme(predicated_real const &r, predicated_real const &v): proof_scheme(r), needed(v) {}
+REGISTER_SCHEME_END_PREDICATE(abs_of_uabs);
 
-node *abs_of_bnd_scheme::generate_proof() const {
+node *abs_of_uabs_scheme::generate_proof() const
+{
   node *n = find_proof(needed);
   if (!n) return NULL;
   property const &res1 = n->get_result();
   property res(real, res1.bnd());
-  return create_theorem(1, &res1, res, "abs_of_bnd", identity_updater);
+  return create_theorem(1, &res1, res, "abs_of_uabs", identity_updater);
 }
 
-preal_vect abs_of_bnd_scheme::needed_reals() const {
+preal_vect abs_of_uabs_scheme::needed_reals() const
+{
   return preal_vect(1, needed);
 }
 
-proof_scheme *abs_of_bnd_scheme::factory(predicated_real const &real) {
+proof_scheme *abs_of_uabs_scheme::factory(predicated_real const &real)
+{
   if (real.pred() != PRED_ABS) return NULL;
   real_op const *p = boost::get< real_op const >(real.real());
   if (p && p->type == UOP_ABS) return NULL;
   ast_real const *r = normalize(ast_real(real_op(UOP_ABS, real.real())));
-  return new abs_of_bnd_scheme(real, predicated_real(r, PRED_BND));
+  return new abs_of_uabs_scheme(real, predicated_real(r, PRED_BND));
 }
 
 // NUMBER
@@ -656,6 +722,37 @@ proof_scheme *number_scheme::factory(ast_real const *real) {
   return new number_scheme(real);
 }
 
+// NEG_ABS_FIX_FLT
+REGISTER_SCHEME_BEGIN(neg_abs_fix_flt);
+  predicated_real needed;
+  std::string name;
+  neg_abs_fix_flt_scheme(predicated_real const &r, predicated_real const &v, std::string const &n)
+    : proof_scheme(r), needed(v), name(n) {}
+REGISTER_SCHEME_END_PREDICATE(neg_abs_fix_flt);
+
+node *neg_abs_fix_flt_scheme::generate_proof() const
+{
+  node *n = find_proof(needed);
+  if (!n) return NULL;
+  property const &hyp = n->get_result();
+  return create_theorem(1, &hyp, property(real, hyp.cst()), name);
+}
+
+preal_vect neg_abs_fix_flt_scheme::needed_reals() const
+{
+  return preal_vect(1, needed);
+}
+
+proof_scheme *neg_abs_fix_flt_scheme::factory(predicated_real const &real)
+{
+  predicate_type t = real.pred();
+  if (t != PRED_FIX && t != PRED_FLT) return NULL;
+  real_op const *p = boost::get< real_op const >(real.real());
+  if (!p || (p->type != UOP_ABS && p->type != UOP_NEG)) return NULL;
+  std::string name = p->type == UOP_ABS ? "abs_" : "neg_";
+  return new neg_abs_fix_flt_scheme(real, predicated_real(p->ops[0], t), name + (t == PRED_FIX ? "fix" : "flt"));
+}
+
 // ADD_SUB_FIX
 REGISTER_SCHEME_BEGIN(add_sub_fix);
   preal_vect needed;
@@ -676,6 +773,7 @@ preal_vect add_sub_fix_scheme::needed_reals() const {
 
 proof_scheme *add_sub_fix_scheme::factory(predicated_real const &real) {
   if (real.pred() != PRED_FIX) return NULL;
+  if (is_constant(real.real())) return NULL;
   real_op const *p = boost::get< real_op const >(real.real());
   if (!p || (p->type != BOP_ADD && p->type != BOP_SUB)) return NULL;
   preal_vect hyps;
@@ -705,6 +803,7 @@ preal_vect mul_fix_flt_scheme::needed_reals() const {
 proof_scheme *mul_fix_flt_scheme::factory(predicated_real const &real) {
   predicate_type t = real.pred();
   if (t != PRED_FIX && t != PRED_FLT) return NULL;
+  if (is_constant(real.real())) return NULL;
   real_op const *p = boost::get< real_op const >(real.real());
   if (!p || p->type != BOP_MUL) return NULL;
   preal_vect hyps;
@@ -737,11 +836,14 @@ preal_vect fix_of_flt_bnd_scheme::needed_reals() const {
   return needed;
 }
 
-proof_scheme *fix_of_flt_bnd_scheme::factory(predicated_real const &real) {
+proof_scheme *fix_of_flt_bnd_scheme::factory(predicated_real const &real)
+{
   if (real.pred() != PRED_FIX) return NULL;
+  ast_real const *r = real.real();
+  if (is_constant(r) || is_changing_sign(r)) return NULL;
   preal_vect hyps;
-  hyps.push_back(predicated_real(real.real(), PRED_FLT));
-  hyps.push_back(predicated_real(real.real(), PRED_ABS));
+  hyps.push_back(predicated_real(r, PRED_FLT));
+  hyps.push_back(predicated_real(r, PRED_ABS));
   return new fix_of_flt_bnd_scheme(real, hyps);
 }
 
@@ -769,11 +871,14 @@ preal_vect flt_of_fix_bnd_scheme::needed_reals() const {
   return needed;
 }
 
-proof_scheme *flt_of_fix_bnd_scheme::factory(predicated_real const &real) {
+proof_scheme *flt_of_fix_bnd_scheme::factory(predicated_real const &real)
+{
   if (real.pred() != PRED_FLT) return NULL;
+  ast_real const *r = real.real();
+  if (is_constant(r) || is_changing_sign(r)) return NULL;
   preal_vect hyps;
-  hyps.push_back(predicated_real(real.real(), PRED_FIX));
-  hyps.push_back(predicated_real(real.real(), PRED_ABS));
+  hyps.push_back(predicated_real(r, PRED_FIX));
+  hyps.push_back(predicated_real(r, PRED_ABS));
   return new flt_of_fix_bnd_scheme(real, hyps);
 }
 
@@ -806,7 +911,7 @@ preal_vect fix_of_singleton_bnd_scheme::needed_reals() const {
 
 proof_scheme *fix_of_singleton_bnd_scheme::factory(predicated_real const &real) {
   if (real.pred() != PRED_FIX) return NULL;
-  return new fix_of_singleton_bnd_scheme(real, predicated_real(real.real(), PRED_BND));
+  return new fix_of_singleton_bnd_scheme(real, predicated_real(real.real(), PRED_ABS));
 }
 
 // FLT_OF_SINGLETON_BND
@@ -839,7 +944,7 @@ preal_vect flt_of_singleton_bnd_scheme::needed_reals() const {
 
 proof_scheme *flt_of_singleton_bnd_scheme::factory(predicated_real const &real) {
   if (real.pred() != PRED_FLT) return NULL;
-  return new flt_of_singleton_bnd_scheme(real, predicated_real(real.real(), PRED_BND));
+  return new flt_of_singleton_bnd_scheme(real, predicated_real(real.real(), PRED_ABS));
 }
 
 // BND_OF_NZR_REL
