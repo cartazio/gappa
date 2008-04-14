@@ -10,6 +10,7 @@ bool parameter_rfma = false;
 bool parameter_constrained = true;
 bool parameter_expensive = false;
 bool parameter_statistics = false;
+std::string parameter_schemes;
 bool warning_dichotomy_failure = true;
 bool warning_hint_difference = true;
 bool warning_null_denominator = true;
@@ -32,7 +33,8 @@ static void help() {
     "Engine modes:\n"
     "  -Munconstrained                 do not check for theorem constraints\n"
     "  -Mexpensive                     work harder to get shorter proofs, maybe\n"
-    "  -Mstatistics                    display statistics at the end\n"
+    "  -Mstatistics                    display statistics\n"
+    "  -Mschemes[=filename]            produce a dot graph (default: schemes.dot)\n"
     "\n"
     "Warnings: (default: all)\n"
     "  -W[no-]dichotomy-failure\n"
@@ -71,7 +73,16 @@ bool parse_option(std::string const &s, bool internal) {
     std::string o = s.substr(2);
     if (o == "unconstrained") parameter_constrained = false; else
     if (o == "expensive")     parameter_expensive = true; else
-    if (o == "statistics")    parameter_statistics  = true;
+    if (o == "statistics")    parameter_statistics = true; else
+    if (o.compare(0, 7, "schemes") == 0)
+    {
+      if (o.size() == 7) parameter_schemes = "schemes.dot";
+      else
+      {
+        if (o[7] != '=') return false;
+        parameter_schemes = o.substr(8);
+      }
+    }
     else return false;
     break;
   }
