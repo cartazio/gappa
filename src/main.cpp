@@ -49,7 +49,8 @@ int main(int argc, char **argv) {
     std::cerr << ":\n";
     if (proof_generator) proof_generator->reset();
     graph_t *g = new graph_t(NULL, hyp);
-    if (g->populate(current_context.goals, dichotomies)) {
+    if (g->populate(current_context.goals, dichotomies, 100*1000*1000))
+    {
       if (!current_context.goals.empty())
         std::cerr << "Warning: hypotheses are in contradiction, any result is true.\n";
       else

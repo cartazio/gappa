@@ -1,3 +1,4 @@
+#include <iostream>
 #include <fstream>
 #include <list>
 #include <map>
@@ -417,20 +418,24 @@ int stat_tested_th = 0;
  *
  * @return true if a contradiction is found.
  */
-bool graph_t::populate(property_tree const &goals, dichotomy_sequence const &dichotomy) {
+bool graph_t::populate(property_tree const &goals, dichotomy_sequence const &dichotomy, int iter_max)
+{
   if (contradiction)
     return true;
+  iter_max = iter_max / (2 * dichotomy.size() + 1);
   property_tree current_goals = goals;
   graph_loader loader(this);
-  for(dichotomy_sequence::const_iterator dichotomy_it = dichotomy.begin(),
-      dichotomy_end = dichotomy.end(); /*nothing*/; ++dichotomy_it) {
+  for (dichotomy_sequence::const_iterator dichotomy_it = dichotomy.begin(),
+       dichotomy_end = dichotomy.end(); /*nothing*/; ++dichotomy_it)
+  {
     scheme_list missing_schemes;
     initialize_scheme_list(missing_schemes);
-    for(node_map::const_iterator i = known_reals.begin(), i_end = known_reals.end(); i != i_end; ++i)
+    for (node_map::const_iterator i = known_reals.begin(),
+         i_end = known_reals.end(); i != i_end; ++i)
       insert_dependent(missing_schemes, i->first);
-    unsigned iter = 0;
-    while (iter != 10000000 && !missing_schemes.empty()) {
-      ++iter;
+    int iter = -(int)missing_schemes.size();
+    while (iter++ != iter_max && !missing_schemes.empty())
+    {
       proof_scheme const *s = missing_schemes.front();
       missing_schemes.pop_front();
       s->visited = 0; // allows the scheme to be reused later, if needed
@@ -444,8 +449,10 @@ bool graph_t::populate(property_tree const &goals, dichotomy_sequence const &dic
       current_goals.remove(n->get_result());
       if (current_goals.empty()) return false;	// now empty, there is nothing left to prove
     }
+    if (iter > iter_max)
+      std::cerr << "Warning: maximum number of iterations reached.\n";
     if (dichotomy_it == dichotomy_end) return false;
-    if (dichotomize(current_goals, *dichotomy_it) && contradiction)
+    if (dichotomize(current_goals, *dichotomy_it, iter_max) && contradiction)
       return true;
   }
 }
