@@ -219,6 +219,8 @@ static real_dependency &initialize_dependencies(predicated_real const &real) {
   return it->second;
 }
 
+typedef std::list< predicated_real > real_list;
+
 /**
  * Tells if the scheme @a s depends indirectly on @a real only.
  *
@@ -231,7 +233,7 @@ bool depends_only_on(proof_scheme const *s, predicated_real const &real)
   if (v.empty()) return false;
   ++visit_counter;
   reals[real].visited = visit_counter;
-  std::list<predicated_real> pending_reals;
+  real_list pending_reals;
   for (preal_vect::const_iterator i = v.begin(), i_end = v.end(); i != i_end; ++i)
     if (reals[*i].can_visit()) pending_reals.push_back(*i);
   int iter = 0;
@@ -310,6 +312,44 @@ ast_real_vect generate_proof_paths() {
       if (!s || !depends_only_on(s, real)) r.schemes.insert(s);
       else delete_scheme(s, NULL);
     }
+  }
+  // find reals reaching to outputs
+  real_list pending_reals;
+  ++visit_counter;
+  for (ast_real_set::const_iterator i = output_reals.begin(),
+       i_end = output_reals.end(); i != i_end; ++i)
+  {
+    predicated_real r(*i, PRED_BND);
+    if (reals[r].can_visit()) pending_reals.push_back(r);
+  }
+  for (ast_real_set::const_iterator i = input_reals.begin(),
+       i_end = input_reals.end(); i != i_end; ++i)
+  {
+    predicated_real r(*i, PRED_BND);
+    if (reals[r].can_visit()) pending_reals.push_back(r);
+  }
+  while (!pending_reals.empty())
+  {
+    predicated_real r = pending_reals.front();
+    pending_reals.pop_front();
+    scheme_set const &v = reals[r].schemes;
+    for (scheme_set::const_iterator j = v.begin(), j_end = v.end(); j != j_end; ++j)
+    {
+      proof_scheme const *s = *j;
+      if (!s) continue;
+      preal_vect w = s->needed_reals();
+      for (preal_vect::const_iterator k = w.begin(), k_end = w.end(); k != k_end; ++k)
+        if (reals[*k].can_visit()) pending_reals.push_back(*k);
+    }
+  }
+  // remove schemes from unreachable reals
+  for(real_dependencies::iterator i = reals.begin(), i_end = reals.end(); i != i_end; ++i)
+  {
+    real_dependency &r = i->second;
+    if (r.visited == visit_counter) continue;
+    for(scheme_set::iterator j = r.schemes.begin(), j_end = r.schemes.end(); j != j_end; ++j)
+      if (*j) delete_scheme(*j, NULL);
+    r.schemes.clear();
   }
   // remove useless reals
   while (!missing_reals.empty()) {
