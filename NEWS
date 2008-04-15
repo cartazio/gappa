@@ -3,6 +3,11 @@ Version 0.9.1:
    - avoided infinite dichotomy on some unprovable propositions
  * back-ends
    - fixed generation of subset facts
+ * fact database
+   - reduced cycles in theorems
+ * main interface
+   - added -Mschemes option for generating .dot scheme graphs
+   - allowed input filename on command line
 
 Version 0.9.0:
  * syntax

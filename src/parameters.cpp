@@ -19,7 +19,7 @@ backend *proof_generator = NULL;
 
 static void help() {
   std::cerr <<
-    "Usage: gappa [OPTIONS]\n"
+    "Usage: gappa [OPTIONS] [FILE]\n"
     "Read a statement on standard input and display its proof on standard output.\n"
     "\n"
     "  -h, --help                      display this help and exit\n"
@@ -34,7 +34,7 @@ static void help() {
     "  -Munconstrained                 do not check for theorem constraints\n"
     "  -Mexpensive                     work harder to get shorter proofs, maybe\n"
     "  -Mstatistics                    display statistics\n"
-    "  -Mschemes[=filename]            produce a dot graph (default: schemes.dot)\n"
+    "  -Mschemes[=FILE]                produce a dot graph (default: schemes.dot)\n"
     "\n"
     "Warnings: (default: all)\n"
     "  -W[no-]dichotomy-failure\n"
@@ -48,9 +48,30 @@ static void help() {
     "  -Bholl                          produce a script for the HOL Light checker\n";
 }
 
-// return false for an unrecognized option
-bool parse_option(std::string const &s, bool internal) {
-  if (s.size() < 2 || s[0] != '-') return false;
+extern void change_input(std::string const &n);
+
+/**
+ * Parses an option found on the command-line or in the input script.
+ *
+ * @param embedded true if the option comes from the input script
+ * @return false when the option @a s is not recognized.
+ */
+bool parse_option(std::string const &s, bool embedded)
+{
+  static bool no_more_options = false;
+  if (s.size() < 2 || s[0] != '-' || (!embedded && no_more_options))
+  {
+    static bool already_done = false;
+    if (embedded || already_done) return false;
+    change_input(s);
+    already_done = true;
+    return true;
+  }
+  if (!embedded && s == "--")
+  {
+    no_more_options = true;
+    return true;
+  }
   switch (s[1]) {
   case 'E': {
     std::string::size_type p = s.find('=');
@@ -69,7 +90,7 @@ bool parse_option(std::string const &s, bool internal) {
     }
     break; }
   case 'M': {
-    if (internal) return false;
+    if (embedded) return false;
     std::string o = s.substr(2);
     if (o == "unconstrained") parameter_constrained = false; else
     if (o == "expensive")     parameter_expensive = true; else
@@ -96,7 +117,7 @@ bool parse_option(std::string const &s, bool internal) {
     else return false;
     break; }
   case 'B': {
-    if (internal) return false;
+    if (embedded) return false;
     std::string o = s.substr(2);
     if (o == "null") proof_generator = NULL;
     else {

@@ -117,3 +117,16 @@ zero		((((0+(\.0*)?)|(\.0+))([eE][-+]?{integer})?)|0x(((0+(\.0*)?)|(\.0+))([pP][
 "{"		{ BEGIN(prop_context); return '{'; }
 "}"		{ BEGIN(hint_context); return '}'; }
 .		return yytext[0];
+
+%%
+
+void change_input(std::string const &n)
+{
+  FILE *f = fopen(n.c_str(), "r");
+  if (!f)
+  {
+    perror("Error while opening input file");
+    exit(EXIT_FAILURE);
+  }
+  yyin = f;
+}
