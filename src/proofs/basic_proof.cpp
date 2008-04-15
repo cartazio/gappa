@@ -23,6 +23,7 @@ bool is_constant(ast_real const *r)
   if (boost::get< ast_number const *const >(r)) return true;
   real_op const *p = boost::get< real_op const >(r);
   if (!p) return false;
+  if ((p->type == BOP_SUB || p->type == BOP_DIV) && p->ops[0] == p->ops[1]) return true;
   for (ast_real_vect::const_iterator i = p->ops.begin(), end = p->ops.end(); i != end; ++i)
     if (!is_constant(*i)) return false;
   return true;
@@ -539,11 +540,13 @@ preal_vect computation_abs_scheme::needed_reals() const {
 proof_scheme *computation_abs_scheme::factory(predicated_real const &real) {
   if (real.pred() != PRED_ABS) return NULL;
   real_op const *p = boost::get< real_op const >(real.real());
+  if (!p) return NULL;
 #if 0
-  if (!p || p->fun || p->type == UOP_SQRT) return NULL;
+  if (p->fun || p->type == UOP_SQRT) return NULL;
 #else
-  if (!p || (p->type != BOP_ADD && p->type != BOP_SUB && p->type != UOP_ABS)) return NULL;
+  if (p->type != BOP_ADD && p->type != BOP_SUB && p->type != UOP_ABS) return NULL;
 #endif
+  if (p && p->type == BOP_SUB && p->ops[0] == p->ops[1]) return NULL;
   return new computation_abs_scheme(real);
 }
 
@@ -1213,31 +1216,6 @@ preal_vect nzr_of_abs_scheme::needed_reals() const {
 proof_scheme *nzr_of_abs_scheme::factory(predicated_real const &real) {
   if (real.pred() != PRED_NZR) return NULL;
   return new nzr_of_abs_scheme(real, predicated_real(real.real(), PRED_ABS));
-}
-
-// NZR_OF_BND
-REGISTER_SCHEME_BEGIN(nzr_of_bnd);
-  ast_real const *needed;
-  nzr_of_bnd_scheme(predicated_real const &r, ast_real const *n)
-    : proof_scheme(r), needed(n) {}
-REGISTER_SCHEME_END_PREDICATE(nzr_of_bnd);
-
-node *nzr_of_bnd_scheme::generate_proof() const {
-  node *n = find_proof(needed);
-  if (!n) return NULL;
-  property const &hyp = n->get_result();
-  if (contains_zero(hyp.bnd())) return NULL;
-  char const *s = sign(hyp.bnd()) < 0 ? "nzr_of_bnd_n" : "nzr_of_bnd_p";
-  return create_theorem(1, &hyp, property(real), s, trivial_updater);
-}
-
-preal_vect nzr_of_bnd_scheme::needed_reals() const {
-  return preal_vect(1, predicated_real(needed, PRED_BND));
-}
-
-proof_scheme *nzr_of_bnd_scheme::factory(predicated_real const &real) {
-  if (real.pred() != PRED_NZR) return NULL;
-  return new nzr_of_bnd_scheme(real, real.real());
 }
 
 // NZR_OF_UNCONSTRAINED
