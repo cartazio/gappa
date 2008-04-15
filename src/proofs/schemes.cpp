@@ -278,6 +278,28 @@ void mark_useful_reals(predicated_real const &real)
 }
 
 /**
+ * Detects some schemes known to be useless.
+ */
+bool is_useless_scheme(proof_scheme const *s)
+{
+  predicated_real rfix = s->real;
+  if (rfix.pred() != PRED_FIX) return false;
+  preal_vect v = s->needed_reals();
+  if (v.size() != 2) return false;
+  predicated_real rflt = v[0], rabs = v[1];
+  if (rflt != predicated_real(rfix.real(), PRED_FLT)) return false;
+  if (rabs != predicated_real(rfix.real(), PRED_ABS)) return false;
+  real_dependency const &r = reals[rflt];
+  if (r.schemes.size() != 2) return false;
+  v = (*r.schemes.begin())->needed_reals();
+  preal_vect v2 = (*++r.schemes.begin())->needed_reals();
+  if (v.size() < v2.size()) std::swap(v, v2);
+  if (v.size() != 2 || v2.size() != 1) return false;
+  if (v[0] != rfix || v[1] != rabs || v2[0] != rabs) return false;
+  return true;
+}
+
+/**
  * Generates all the schemes needed for linking inputs and outputs.
  */
 ast_real_vect generate_proof_paths()
@@ -337,7 +359,8 @@ ast_real_vect generate_proof_paths()
     for (scheme_set::iterator j = v.begin(), j_end = v.end(); j != j_end; ++j)
     {
       proof_scheme const *s = *j;
-      if (!s || !depends_only_on(s, real)) r.schemes.insert(s);
+      if (!s || !(depends_only_on(s, real) || is_useless_scheme(s)))
+        r.schemes.insert(s);
       else delete_scheme(s, NULL);
     }
   }
