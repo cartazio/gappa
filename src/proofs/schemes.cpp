@@ -398,15 +398,15 @@ ast_real_vect generate_proof_paths()
     predicated_real real = pending_reals.back();
     pending_reals.pop_back();
     real_dependency &r = reals[real];
-    r.visited = 0;
     for (scheme_set::const_iterator i = r.dependent.begin(),
          i_end = r.dependent.end(); i != i_end; ++i)
     {
       proof_scheme const *s = *i;
       if (!s) continue;
-      real_dependency const &t = reals[s->real];
-      if (t.schemes.empty() && t.can_visit()) pending_reals.push_back(s->real);
+      predicated_real u = s->real;
+      real_dependency const &t = reals[u];
       delete_scheme(s, &real);
+      if (t.schemes.empty() && t.can_visit()) pending_reals.push_back(u);
     }
     reals.erase(real);
     ++stat_discarded_real;
