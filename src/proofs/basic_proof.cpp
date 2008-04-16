@@ -470,10 +470,8 @@ node *computation_abs_scheme::generate_proof() const {
     property const &res1 = n1->get_result();
     property res(real, res1.bnd());
     switch (r->type) {
-#if 0
     case UOP_NEG:
       return create_theorem(1, &res1, res, "neg_a", identity_updater);
-#endif
     case UOP_ABS:
       return create_theorem(1, &res1, res, "abs_a", identity_updater);
     default:
@@ -501,7 +499,6 @@ node *computation_abs_scheme::generate_proof() const {
       if (lower(i) > 0) s += (lower(i1) > upper(i2)) ? "_p" : "_n";
       else s += "_o";
       break;
-#if 0
     case BOP_MUL:
       i = i1 * i2;
       s = "mul_aa";
@@ -513,7 +510,6 @@ node *computation_abs_scheme::generate_proof() const {
       s = "div_aa";
       u = &div_updater;
       break;
-#endif
     default:
       assert(false);
       return NULL;
@@ -540,13 +536,8 @@ preal_vect computation_abs_scheme::needed_reals() const {
 proof_scheme *computation_abs_scheme::factory(predicated_real const &real) {
   if (real.pred() != PRED_ABS) return NULL;
   real_op const *p = boost::get< real_op const >(real.real());
-  if (!p) return NULL;
-#if 0
-  if (p->fun || p->type == UOP_SQRT) return NULL;
-#else
-  if (p->type != BOP_ADD && p->type != BOP_SUB && p->type != UOP_ABS) return NULL;
-#endif
-  if (p && p->type == BOP_SUB && p->ops[0] == p->ops[1]) return NULL;
+  if (!p || p->fun || p->type == UOP_SQRT) return NULL;
+  if (is_constant(real.real())) return NULL;
   return new computation_abs_scheme(real);
 }
 
