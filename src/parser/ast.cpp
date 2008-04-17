@@ -98,7 +98,10 @@ RUN_ONCE(load_numbers) {
   token_one = normalize(num);
 }
 
-std::string dump_real(ast_real const *r, unsigned prio) {
+std::string dump_real(ast_real const *r, unsigned prio)
+{
+  if (hidden_real const *h = boost::get< hidden_real const >(r))
+    r = h->real;
   if (r->name)
     return r->name->name;
   if (ast_number const *const *nn = boost::get< ast_number const *const >(r)) {

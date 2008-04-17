@@ -69,7 +69,10 @@ static std::string display(interval const &i) {
 
 static id_cache< ast_real const * > displayed_reals;
 
-static std::string display(ast_real const *r) {
+static std::string display(ast_real const *r)
+{
+  if (hidden_real const *h = boost::get< hidden_real const >(r))
+    r = h->real;
   int r_id = displayed_reals.find(r);
   std::string name = r->name ? '_' + r->name->name : composite('r', r_id);
   if (r_id < 0)
