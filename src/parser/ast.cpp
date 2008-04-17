@@ -111,7 +111,7 @@ std::string dump_real(ast_real const *r, unsigned prio) {
     return s.str();
   }
   if (placeholder const *i = boost::get< placeholder const >(r)) {
-    return std::string(1, '?') + (char)(*i + '1');
+    return std::string(1, '?') + (char)(i->num + '1');
   }
   if (real_op const *o = boost::get< real_op const >(r)) {
     if (o->type == ROP_FUN) {

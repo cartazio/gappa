@@ -25,7 +25,7 @@ bool match_visitor::visit(ast_real const *src, ast_real const *dst) const {
   if (boost::get< undefined_real const >(dst)) return src == dst;
   placeholder const *p = boost::get< placeholder const >(dst);
   if (!p) return boost::apply_visitor(*this, *src, *dst);
-  unsigned i = *p;
+  unsigned i = p->num;
   if (*p == -1) {
     // -1 is used to force two holders when only pattern(0) is present
     i= 0;
@@ -46,14 +46,16 @@ struct rewrite_visitor: boost::static_visitor< ast_real const * > {
   template< typename T > ast_real const *operator()(T const &r) const { return normalize(ast_real(r)); }
   ast_real const *operator()(undefined_real const &) const { assert(false); }
   ast_real const *operator()(real_op const &r) const;
-  ast_real const *operator()(placeholder i) const;
+  ast_real const *operator()(placeholder const &i) const;
   ast_real_vect const &holders;
   rewrite_visitor(ast_real_vect const &h): holders(h) {}
 };
 
-ast_real const *rewrite_visitor::operator()(placeholder i) const {
-  assert(unsigned(i) < holders.size() && holders[i]);
-  return holders[i];
+ast_real const *rewrite_visitor::operator()(placeholder const &i) const {
+  assert((unsigned)i.num < holders.size());
+  ast_real const *r = holders[i.num];
+  assert(r);
+  return r;
 }
 
 ast_real const *rewrite_visitor::operator()(real_op const &r) const {
@@ -123,6 +125,7 @@ PATTERN_COND(!=, NE)
 pattern pattern::operator-() const	{ return pattern(real_op(UOP_NEG, real)); }
 pattern pattern::abs(pattern const &p)	{ return pattern(real_op(UOP_ABS, p.real)); }
 pattern pattern::sqrt(pattern const &p)	{ return pattern(real_op(UOP_SQRT, p.real)); }
+pattern pattern::hide(pattern const &p)	{ hidden_real h = { p.real }; return pattern(h); }
 
 pattern_cond pattern::operator~() const {
   pattern_cond res;

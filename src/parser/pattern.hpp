@@ -20,6 +20,7 @@ class pattern {
   ast_real const *real;
  public:
   operator ast_real const *() const { return real; }
+  pattern(int n): real(normalize(placeholder(n))) {}
   pattern(ast_real const &r): real(normalize(r)) {}
   pattern operator-() const;
   pattern operator+(pattern const &) const;
@@ -34,6 +35,7 @@ class pattern {
   pattern_cond operator~() const;
   static pattern abs(pattern const &);
   static pattern sqrt(pattern const &);
+  static pattern hide(pattern const &);
 };
 
 #endif // PARSER_PATTERN_HPP

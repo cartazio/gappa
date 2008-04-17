@@ -73,13 +73,28 @@ struct real_op {
 
 struct ast_ident;
 
-typedef int placeholder;
+struct placeholder
+{
+  int num;
+  placeholder(int n): num(n) {}
+  bool operator==(placeholder const &v) const { return num == v.num; }
+  bool operator< (placeholder const &v) const { return num <  v.num; }
+};
+
+struct hidden_real
+{
+  ast_real const *real;
+  hidden_real(ast_real const *r): real(r) {}
+  bool operator==(hidden_real const &v) const { return real == v.real; }
+  bool operator< (hidden_real const &v) const { return real <  v.real; }
+};
 
 typedef boost::blank undefined_real;
 
 typedef boost::variant
   < undefined_real
   , ast_number const *
+  , hidden_real
   , real_op
   , placeholder
   > ast_real_aux;
@@ -88,8 +103,9 @@ struct ast_real: ast_real_aux {
   mutable ast_ident const *name;
   ast_real(ast_ident const *v): ast_real_aux(undefined_real()), name(v) {}
   ast_real(ast_number const *v): ast_real_aux(v), name(NULL) {}
+  ast_real(hidden_real const &v): ast_real_aux(v), name(NULL) {}
   ast_real(real_op const &v): ast_real_aux(v), name(NULL) {};
-  ast_real(placeholder v): ast_real_aux(v), name(NULL) {}
+  ast_real(placeholder const &v): ast_real_aux(v), name(NULL) {}
   bool operator==(ast_real const &v) const;
   bool operator<(ast_real const &v) const;
 };
