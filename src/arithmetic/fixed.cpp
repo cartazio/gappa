@@ -167,10 +167,11 @@ preal_vect bnd_of_bnd_fix_scheme::needed_reals() const {
 }
 
 extern bool is_constant(ast_real const *);
+extern bool is_hidden(ast_real const *);
 
 proof_scheme *bnd_of_bnd_fix_scheme::factory(ast_real const *real)
 {
-  if (is_constant(real)) return NULL;
+  if (is_hidden(real) || is_constant(real)) return NULL;
   real_op const *p = boost::get< real_op const >(real);
   if (p && p->type == UOP_ABS) return NULL;
   preal_vect hyps;
