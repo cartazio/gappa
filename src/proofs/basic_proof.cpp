@@ -337,7 +337,9 @@ proof_scheme *enforce_bound_scheme::factory(ast_real const *real) {
 
 // COMPUTATION
 REGISTER_SCHEME_BEGIN(computation);
-  computation_scheme(ast_real const *r): proof_scheme(r) {}
+  real_op const *naked_real;
+  computation_scheme(ast_real const *r1, real_op const *r2)
+    : proof_scheme(r1), naked_real(r2) {}
 REGISTER_SCHEME_END(computation);
 
 UNARY_INTERVAL(abs_updater)    { r = abs(h);    }
@@ -350,9 +352,9 @@ BINARY_INTERVAL(sub_updater) { r = h[0] - h[1]; }
 BINARY_INTERVAL(mul_updater) { r = h[0] * h[1]; }
 BINARY_INTERVAL(div_updater) { r = h[0] / h[1]; }
 
-node *computation_scheme::generate_proof() const {
-  real_op const *r = boost::get< real_op const >(real.real());
-  assert(r);
+node *computation_scheme::generate_proof() const
+{
+  real_op const *r = naked_real;
   switch (r->ops.size()) {
   case 1: {
     node *n1 = find_proof(r->ops[0]);
@@ -433,9 +435,9 @@ node *computation_scheme::generate_proof() const {
   return NULL;
 }
 
-preal_vect computation_scheme::needed_reals() const {
-  real_op const *r = boost::get< real_op const >(real.real());
-  assert(r);
+preal_vect computation_scheme::needed_reals() const
+{
+  real_op const *r = naked_real;
   ast_real_vect const &ops = r->ops;
   if (ops.size() == 2 && ops[0] == ops[1]) {
     if (r->type == BOP_SUB) return preal_vect();
@@ -449,10 +451,14 @@ preal_vect computation_scheme::needed_reals() const {
   return res;
 }
 
-proof_scheme *computation_scheme::factory(ast_real const *real) {
-  real_op const *p = boost::get< real_op const >(real);
+proof_scheme *computation_scheme::factory(ast_real const *real)
+{
+  ast_real const *r = real;
+  if (hidden_real const *h = boost::get< hidden_real const >(real))
+    r = h->real;
+  real_op const *p = boost::get< real_op const >(r);
   if (!p || p->fun || p->type == UOP_ABS) return NULL;
-  return new computation_scheme(real);
+  return new computation_scheme(real, p);
 }
 
 // COMPUTATION_ABS
