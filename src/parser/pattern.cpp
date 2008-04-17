@@ -47,6 +47,7 @@ struct rewrite_visitor: boost::static_visitor< ast_real const * > {
   ast_real const *operator()(undefined_real const &) const { assert(false); }
   ast_real const *operator()(real_op const &r) const;
   ast_real const *operator()(placeholder const &i) const;
+  ast_real const *operator()(hidden_real const &h) const;
   ast_real_vect const &holders;
   rewrite_visitor(ast_real_vect const &h): holders(h) {}
 };
@@ -56,6 +57,11 @@ ast_real const *rewrite_visitor::operator()(placeholder const &i) const {
   ast_real const *r = holders[i.num];
   assert(r);
   return r;
+}
+
+ast_real const *rewrite_visitor::operator()(hidden_real const &h) const
+{
+  return normalize(hidden_real(visit(h.real)));
 }
 
 ast_real const *rewrite_visitor::operator()(real_op const &r) const {
