@@ -159,6 +159,7 @@ static pattern a(0), b(1), c(2), d(3), a_b(-1), one(token_one);
 
 #define abs pattern::abs
 #define sqrt pattern::sqrt
+#define hide pattern::hide
 
 #define REWRITING_NAME BOOST_PP_CAT(rewriting_rule_,__LINE__)
 
@@ -200,15 +201,15 @@ REWRIT9(opp_mibs,
 
 REWRITE(add_xals,
 	b + c,
-	(b - a) + (a + c));
+	hide((b - a) + (a + c)));
 
 REWRITE(add_xars,
 	c + b,
-	(c + a) + (b - a));
+	hide((c + a) + (b - a)));
 
 REWRITe(add_mibs,
 	(a + b) - (c + d),
-	(a - c) + (b - d),
+	hide((a - c) + (b - d)),
 	a ^ c && b ^ d);
 
 REWRITe(add_fils,
@@ -225,22 +226,22 @@ REWRITe(add_firs,
 
 REWRITe(sub_xals,
 	b - c,
-	(b - a) + (a - c),
+	hide((b - a) + (a - c)),
 	a ^ c && b ^ c);
 
 REWRITe(sub_xars,
 	c - b,
-	(c - a) + -(b - a),
+	hide((c - a) - (b - a)),
 	b ^ c); // no a^c so that the rule can be used to revert a-b
 
 REWRITe(sub_mibs,
 	(a - b) - (c - d),
-	(a - c) + -(b - d),
+	hide((a - c) - (b - d)),
 	a ^ c && b ^ d);
 
 REWRITe(sub_fils,
 	(a - b) - (a - c),
-	-(b - c),
+	hide(-(b - c)),
 	b ^ c);
 
 REWRITe(sub_firs,
@@ -252,40 +253,40 @@ REWRITe(sub_firs,
 
 REWRITE(mul_xals,
 	b * c,
-	(b - a) * c + a * c);
+	hide(hide((b - a) * c) + a * c));
 
 REWRITE(mul_xars,
 	c * b,
-	c * (b - a) + c * a);
+	hide(hide(c * (b - a)) + c * a));
 
 REWRITe(mul_fils,
 	a * b - a * c,
-	a * (b - c),
+	hide(a * (b - c)),
 	b ^ c);
 
 REWRITe(mul_firs,
 	a * c - b * c,
-	(a - b) * c,
+	hide((a - b) * c),
 	a ^ b);
 
 REWRITe(mul_mars,
 	a * b - c * d,
-	a * (b - d) + (a - c) * d,
+	hide(hide(a * (b - d)) + hide((a - c) * d)),
 	a ^ c && b ^ d);
 
 REWRITe(mul_mals,
 	a * b - c * d,
-	(a - c) * b + c * (b - d),
+	hide(hide((a - c) * b) + hide(c * (b - d))),
 	a ^ c && b ^ d);
 
 REWRITe(mul_mabs,
 	a * b - c * d,
-	a * (b - d) + (a - c) * b + -((a - c) * (b - d)),
+	hide(hide(hide(a * (b - d)) + hide((a - c) * b)) - hide((a - c) * (b - d))),
 	a ^ c && b ^ d);
 
 REWRITe(mul_mibs,
 	a * b - c * d,
-	c * (b - d) + (a - c) * d + (a - c) * (b - d),
+	hide(hide(hide(c * (b - d)) + hide((a - c) * d)) + hide((a - c) * (b - d))),
 	a ^ c && b ^ d);
 
 REWRIT9(mul_filq,
@@ -310,7 +311,7 @@ REWRIT9(div_firq,
 
 REWRIT9(div_xals,
 	b / c,
-	(b - a) / c + a / c,
+	hide((b - a) / c + a / c),
 	~c,
 	a ^ c && b ^ c);
 
@@ -328,13 +329,13 @@ REWRIT3(div_fil,
 
 REWRIT9(sqrt_mibs,
 	sqrt(a) - sqrt(b),
-	(a - b) / (sqrt(a) + sqrt(b)),
+	hide((a - b) / hide(sqrt(a) + sqrt(b))),
 	a >= 0 && b >= 0,
 	a ^ b);
 
 REWRIT9(sqrt_mibq,
 	(sqrt(a) - sqrt(b)) / sqrt(b),
-	sqrt(one + (a - b) / b) - one,
+	hide(sqrt(hide(one + (a - b) / b)) - one),
 	a >= 0 && b > 0,
 	a ^ b);
 
@@ -342,7 +343,7 @@ REWRIT9(sqrt_mibq,
 
 REWRITe(sub_xals, //actually err_xers
 	c - a,
-	(c - b) + (b - a),
+	hide((c - b) + (b - a)),
 	a ^ c && b ^ c);
 
 /* bad bad Zoot
@@ -354,7 +355,7 @@ REWRIT9(err_xabq,
 */
 
 REWRIT9(err_fabq,
-	one + (a - b) / b,
+	hide(one + (a - b) / b),
 	a / b,
 	~b,
 	a ^ b);
@@ -363,20 +364,20 @@ REWRIT9(err_fabq,
 
 REWRITE(val_xabs,
 	b,
-	a + (b - a));
+	hide(a + (b - a)));
 
 REWRITE(val_xebs,
-        a_b,
-        b + -(b - a));
+	a_b,
+	hide(b - (b - a)));
 
 REWRIT3(val_xabq,
 	b,
-	a * (one + (b - a) / a),
+	hide(a * hide(one + (b - a) / a)),
 	~a);
 
 REWRIT3(val_xebq,
 	a_b,
-	b / (one + (b - a) / a),
+	hide(b / hide(one + (b - a) / a)),
 	~a && ~b);
 
 // BLI
@@ -388,24 +389,24 @@ REWRIT3(square_sqrt,
 
 REWRIT9(addf_1,
 	a / (a + b),
-	one / (one + b / a),
+	hide(one / hide(one + b / a)),
 	~a && ~(a + b),
 	a ^ one);
 
 REWRIT9(addf_2,
 	a / (a + b),
-	one - one / (one + a / b),
+	hide(one - hide(one / hide(one + a / b))),
 	~b && ~(a + b),
 	a ^ one);
 
 REWRIT9(addf_3,
 	a / (a - b),
-	one / (one - b / a),
+	hide(one / hide(one - b / a)),
 	~a && ~(a - b),
 	a ^ one);
 
 REWRIT9(addf_4,
 	a / (a - b),
-	one + one / (a / b - one),
+	hide(one + hide(one / hide(a / b - one))),
 	~b && ~(a - b),
 	a ^ one);
