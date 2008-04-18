@@ -1163,7 +1163,9 @@ preal_vect compose_rel_scheme::needed_reals() const {
   return needed;
 }
 
-proof_scheme *compose_rel_scheme::factory(predicated_real const &real, ast_real_vect const &holders) {
+proof_scheme *compose_rel_scheme::factory(predicated_real const &real, ast_real_vect const &holders)
+{
+  if (holders[0] == holders[2]) return NULL;
   preal_vect hyps;
   hyps.push_back(predicated_real(holders[1], holders[0], PRED_REL));
   hyps.push_back(predicated_real(holders[0], holders[2], PRED_REL));
