@@ -240,7 +240,7 @@ int test_rewriting(ast_real const *src, ast_real const *dst, std::string &res) {
     ast_real_vect holders;
     if (!match(src, rw.target.real(), holders)) continue;
     bool b = holders.size() >= 2 && (!holders[0] || !holders[1]);
-    if (!match(dst, rw.dst, holders)) continue;
+    if (!match(dst, rw.dst, holders, true)) continue;
     for(pattern_excl_vect::const_iterator j = rw.excl.begin(),
         j_end = rw.excl.end(); j != j_end; ++j)
       if (rewrite(j->first, holders) == rewrite(j->second, holders)) goto next_rule;

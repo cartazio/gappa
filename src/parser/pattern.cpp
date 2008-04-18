@@ -1,14 +1,20 @@
 #include <set>
+#include <boost/utility/enable_if.hpp>
+#include <boost/type_traits/is_same.hpp>
 #include <boost/variant.hpp>
 #include "parser/pattern.hpp"
 
-struct match_visitor: boost::static_visitor< bool > {
+struct match_visitor: boost::static_visitor< bool >
+{
   bool visit(ast_real const *src, ast_real const *dst) const;
   template< typename T, typename U > bool operator()(T const &, U const &) const { return false; }
   template< typename T > bool operator()(T const &r1, T const &r2) const { return r1 == r2; }
+  bool operator()(real_op const &r1, hidden_real const &r2) const
+  { return transparent ? visit(normalize(ast_real(r1)), r2.real) : false; }
   bool operator()(real_op const &r1, real_op const &r2) const;
   ast_real_vect &holders;
-  match_visitor(ast_real_vect &h): holders(h) {}
+  bool transparent;
+  match_visitor(ast_real_vect &h, bool b): holders(h), transparent(b) {}
 };
 
 bool match_visitor::operator()(real_op const &r1, real_op const &r2) const {
@@ -28,7 +34,7 @@ bool match_visitor::visit(ast_real const *src, ast_real const *dst) const {
   unsigned i = p->num;
   if (*p == -1) {
     // -1 is used to force two holders when only pattern(0) is present
-    i= 0;
+    i = 0;
     if (holders.size() < 2) holders.resize(2, NULL);
   } else if (i >= holders.size()) holders.resize(i + 1, NULL);
   ast_real const *&r1 = holders[i];
@@ -37,8 +43,9 @@ bool match_visitor::visit(ast_real const *src, ast_real const *dst) const {
   return true;
 }
 
-bool match(ast_real const *src, ast_real const *dst, ast_real_vect &holders) {
-  return match_visitor(holders).visit(src, dst);
+bool match(ast_real const *src, ast_real const *dst, ast_real_vect &holders, bool transparent)
+{
+  return match_visitor(holders, transparent).visit(src, dst);
 }
 
 struct rewrite_visitor: boost::static_visitor< ast_real const * > {

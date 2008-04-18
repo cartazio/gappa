@@ -4,7 +4,7 @@
 #include "parser/ast_real.hpp"
 #include "proofs/property.hpp"
 
-bool match(ast_real const *src, ast_real const *dst, ast_real_vect &);
+bool match(ast_real const *src, ast_real const *dst, ast_real_vect &, bool = false);
 ast_real const *rewrite(ast_real const *, ast_real_vect const &);
 
 function_class const *absolute_rounding_error(ast_real const *, ast_real const *[2]);
