@@ -112,8 +112,6 @@ struct ast_real: ast_real_aux {
 
 ast_real *normalize(ast_real const &);
 ast_real const *unround(real_op_type, ast_real_vect const &);
-bool match(ast_real const *, ast_real const *, ast_real_vect &);
-ast_real const *rewrite(ast_real const *, ast_real_vect const &);
 
 typedef std::map< ast_real const *, ast_real_set > link_map;
 extern link_map accurates, approximates;
