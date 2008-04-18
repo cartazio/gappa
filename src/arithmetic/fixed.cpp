@@ -173,7 +173,7 @@ proof_scheme *bnd_of_bnd_fix_scheme::factory(ast_real const *real)
 {
   if (is_hidden(real) || is_constant(real)) return NULL;
   real_op const *p = boost::get< real_op const >(real);
-  if (p && p->type == UOP_ABS) return NULL;
+  if (p && (p->type == UOP_ABS || p->type == UOP_SQRT || p->type == BOP_DIV)) return NULL;
   preal_vect hyps;
   hyps.push_back(predicated_real(real, PRED_BND));
   hyps.push_back(predicated_real(real, PRED_FIX));
