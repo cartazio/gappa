@@ -685,6 +685,7 @@ node *abs_of_uabs_scheme::generate_proof() const
   node *n = find_proof(needed);
   if (!n) return NULL;
   property const &res1 = n->get_result();
+  if (lower(res1.bnd()) < 0) return NULL;
   property res(real, res1.bnd());
   return create_theorem(1, &res1, res, "abs_of_uabs", identity_updater);
 }
@@ -992,6 +993,7 @@ REGISTER_SCHEME_END_PREDICATE(rel_of_nzr_bnd);
 node *rel_of_nzr_bnd_scheme::generate_proof() const {
   property hyps[2];
   if (!fill_hypotheses(hyps, needed)) return NULL;
+  if (lower(hyps[1].bnd()) <= -1) return NULL;
   return create_theorem(2, hyps, property(real, hyps[1].bnd()), "rel_of_nzr_bnd", identity_updater);
 }
 
