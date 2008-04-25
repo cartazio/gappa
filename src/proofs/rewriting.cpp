@@ -222,6 +222,18 @@ REWRITe(add_firs,
 	a - c,
 	a ^ c);
 
+REWRIT9(add_filq,
+	((a + b) - (a + c)) / (a + c),
+	(b - c) / (a + c),
+	~(a + c),
+	b ^ c);
+
+REWRIT9(add_firq,
+	((a + b) - (c + b)) / (c + b),
+	(a - c) / (c + b),
+	~(c + b),
+	a ^ c);
+
 // SUB
 
 REWRITe(sub_xals,
@@ -247,6 +259,18 @@ REWRITe(sub_fils,
 REWRITe(sub_firs,
 	(a - b) - (c - b),
 	a - c,
+	a ^ c);
+
+REWRIT9(sub_filq,
+	((a - b) - (a - c)) / (a - c),
+	hide(-((b - c) / (a - c))),
+	~(a - c),
+	b ^ c);
+
+REWRIT9(sub_firq,
+	((a - b) - (c - b)) / (c - b),
+	(a - c) / (c - b),
+	~(c - b),
 	a ^ c);
 
 // MUL
@@ -387,26 +411,49 @@ REWRIT3(square_sqrt,
 	a,
 	a >= 0);
 
-REWRIT9(addf_1,
+REWRIT3(addf_1,
 	a / (a + b),
 	hide(one / hide(one + b / a)),
-	~a && ~(a + b),
-	a ^ one);
+	~a && ~(a + b));
 
 REWRIT9(addf_2,
 	a / (a + b),
-	hide(one - hide(one / hide(one + a / b))),
-	~b && ~(a + b),
-	a ^ one);
+	hide(one - b / (a + b)),
+	~(a + b),
+	a ^ b);
 
 REWRIT9(addf_3,
 	a / (a - b),
 	hide(one / hide(one - b / a)),
 	~a && ~(a - b),
-	a ^ one);
+	a ^ b);
 
 REWRIT9(addf_4,
 	a / (a - b),
-	hide(one + hide(one / hide(a / b - one))),
+	hide(one + b / (a - b)),
+	~a && ~(a - b),
+	a ^ b);
+
+REWRIT9(addf_5,
+	b / (a + b),
+	hide(one / hide(a / b + one)),
+	~b && ~(a + b),
+	a ^ b);
+
+REWRIT9(addf_6,
+	b / (a + b),
+	hide(one - a / (a + b)),
+	~(a + b),
+	a ^ b);
+
+REWRIT9(addf_7,
+	b / (a - b),
+	hide(one / hide(a / b - one)),
 	~b && ~(a - b),
-	a ^ one);
+	a ^ b);
+
+REWRIT9(addf_8,
+	b / (a - b),
+	hide(a / (a - b) - one),
+	~a && ~(a - b),
+	a ^ b);
