@@ -1151,6 +1151,8 @@ REGISTER_SCHEME_BEGIN(compose_rel);
   preal_vect needed;
   compose_rel_scheme(predicated_real const &r, preal_vect const &v)
     : proof_scheme(r), needed(v) {}
+ public:
+  static proof_scheme *factory2(predicated_real const &, ast_real_vect const &);
 REGISTER_SCHEME_END_PATTERN(compose_rel, predicated_real(pattern(1), pattern(2), PRED_REL));
 
 node *compose_rel_scheme::generate_proof() const {
@@ -1173,6 +1175,18 @@ proof_scheme *compose_rel_scheme::factory(predicated_real const &real, ast_real_
   hyps.push_back(predicated_real(holders[0], holders[2], PRED_REL));
   return new compose_rel_scheme(real, hyps);
 }
+
+proof_scheme *compose_rel_scheme::factory2(predicated_real const &real, ast_real_vect const &holders)
+{
+  if (holders[1] == holders[2]) return NULL;
+  preal_vect hyps;
+  hyps.push_back(predicated_real(holders[2], holders[1], PRED_REL));
+  hyps.push_back(predicated_real(holders[1], holders[0], PRED_REL));
+  return new compose_rel_scheme(real, hyps);
+}
+
+static factory_creator compose_rel_scheme_register2(&compose_rel_scheme::factory2,
+  predicated_real(pattern(2), pattern(0), PRED_REL));
 
 // ERROR_OF_REL
 REGISTER_SCHEME_BEGIN(error_of_rel);
