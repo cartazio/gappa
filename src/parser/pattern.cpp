@@ -148,6 +148,17 @@ pattern_cond pattern::operator~() const {
   return res;
 }
 
+bool relative_error(ast_real const *src, ast_real const *dst[2])
+{
+  real_op const *p = boost::get< real_op const >(src);
+  if (!p || p->type != BOP_DIV) return false;
+  real_op const *o = boost::get< real_op const >(p->ops[0]);
+  if (!o || o->type != BOP_SUB || o->ops[1] != p->ops[1]) return false;
+  dst[0] = p->ops[1];
+  dst[1] = o->ops[0];
+  return true;
+}
+
 function_class const *absolute_rounding_error(ast_real const *src, ast_real const *dst[2]) {
   real_op const *p = boost::get< real_op const >(src);
   if (!p || p->type != BOP_SUB) return NULL;
