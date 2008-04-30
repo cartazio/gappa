@@ -349,24 +349,21 @@ REWRITe(mul_mibs,
 	hide(hide(hide(c * (b - d)) + hide((a - c) * d)) + hide((a - c) * (b - d))),
 	a ^ c && b ^ d);
 
-REWRIT9(mul_filq,
+REWRITe(mul_filq,
 	(a * b - a * c) / (a * c),
 	(b - c) / c,
-	~a && ~c,
 	b ^ c);
 
-REWRIT9(mul_firq,
+REWRITe(mul_firq,
 	(a * b - c * b) / (c * b),
 	(a - c) / c,
-	~b && ~c,
 	a ^ c);
 
 // DIV
 
-REWRIT9(div_firq,
+REWRITe(div_firq,
 	(a / b - c / b) / (c / b),
 	(a - c) / c,
-	~b && ~c,
 	a ^ c);
 
 REWRIT9(div_xals,
@@ -414,11 +411,13 @@ REWRIT9(err_xabq,
 	a ^ b);
 */
 
+/* ???
 REWRIT9(err_fabq,
-	hide(one + (a - b) / b),
+	one + (a - b) / b,
 	a / b,
 	~b,
 	a ^ b);
+*/
 
 // VAL
 
