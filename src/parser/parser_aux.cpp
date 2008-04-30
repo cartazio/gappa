@@ -236,9 +236,9 @@ int test_rewriting(ast_real const *src, ast_real const *dst, std::string &res) {
   std::ostringstream info;
   for(rewriting_vect::const_iterator i = rewriting_rules.begin(),
       i_end = rewriting_rules.end(); i != i_end; ++i) {
-    rewriting_factory const &rw = **i;
+    rewriting_rule const &rw = **i;
     ast_real_vect holders;
-    if (!match(src, rw.target.real(), holders)) continue;
+    if (!match(src, rw.src, holders)) continue;
     bool b = holders.size() >= 2 && (!holders[0] || !holders[1]);
     if (!match(dst, rw.dst, holders, true)) continue;
     for(pattern_excl_vect::const_iterator j = rw.excl.begin(),
