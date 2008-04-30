@@ -1004,6 +1004,7 @@ preal_vect rel_of_nzr_bnd_scheme::needed_reals() const {
 proof_scheme *rel_of_nzr_bnd_scheme::factory(predicated_real const &real) {
   if (real.pred() != PRED_REL) return NULL;
   ast_real const *r1 = real.real(), *r2 = real.real2();
+  if (r1 == r2) return NULL;
   preal_vect hyps;
   hyps.push_back(predicated_real(r2, PRED_NZR));
   hyps.push_back(predicated_real(normalize(real_op(
