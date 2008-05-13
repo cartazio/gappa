@@ -976,7 +976,9 @@ preal_vect bnd_of_nzr_rel_scheme::needed_reals() const {
 }
 
 proof_scheme *bnd_of_nzr_rel_scheme::factory(predicated_real const &real,
-                                             ast_real_vect const &holders) {
+                                             ast_real_vect const &holders)
+{
+  if (holders[0] == holders[1]) return NULL;
   preal_vect hyps;
   hyps.push_back(predicated_real(holders[0], PRED_NZR));
   hyps.push_back(predicated_real(holders[1], holders[0], PRED_REL));
@@ -1218,6 +1220,34 @@ proof_scheme *error_of_rel_scheme::factory(predicated_real const &real,
   hyps.push_back(predicated_real(holders[1], holders[0], PRED_REL));
   hyps.push_back(predicated_real(holders[0], PRED_BND));
   return new error_of_rel_scheme(real, hyps);
+}
+
+// REL_OF_EQUAL
+REGISTER_SCHEME_BEGIN(rel_of_equal);
+  ast_real const *needed;
+  rel_of_equal_scheme(predicated_real const &r, ast_real const *n)
+    : proof_scheme(r), needed(n) {}
+REGISTER_SCHEME_END_PREDICATE(rel_of_equal);
+
+node *rel_of_equal_scheme::generate_proof() const
+{
+  node *n = find_proof(needed);
+  if (!n) return NULL;
+  property const &hyp = n->get_result();
+  if (!is_zero(hyp.bnd())) return NULL;
+  return create_theorem(1, &hyp, property(real, hyp.bnd()), "rel_of_equal", trivial_updater);
+}
+
+preal_vect rel_of_equal_scheme::needed_reals() const
+{
+  return one_needed(needed);
+}
+
+proof_scheme *rel_of_equal_scheme::factory(predicated_real const &real)
+{
+  if (real.pred() != PRED_REL) return NULL;
+  ast_real const *r = normalize(real_op(real.real(), BOP_SUB, real.real2()));
+  return new rel_of_equal_scheme(real, r);
 }
 
 // NZR_OF_ABS
