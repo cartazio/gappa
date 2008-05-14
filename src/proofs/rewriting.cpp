@@ -227,12 +227,6 @@ REWRITe(opp_mibs,
 	-(a - b),
 	a ^ b);
 
-REWRIT9(opp_mibs,
-	(-a - -b) / -b,
-	(a - b) / b,
-	~b,
-	a ^ b);
-
 // ADD
 
 REWRITE(add_xals,
