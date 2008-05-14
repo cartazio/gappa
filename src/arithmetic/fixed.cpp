@@ -166,7 +166,6 @@ preal_vect bnd_of_bnd_fix_scheme::needed_reals() const {
   return needed;
 }
 
-extern bool is_constant(ast_real const *);
 extern bool is_hidden(ast_real const *);
 
 proof_scheme *bnd_of_bnd_fix_scheme::factory(ast_real const *real)

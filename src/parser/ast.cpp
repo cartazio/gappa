@@ -56,6 +56,27 @@ bool ast_real::operator<(ast_real const &v) const {
   return ast_real_aux::operator<(static_cast< ast_real_aux const & >(v));
 }
 
+static bool set_flags_constant(real_op const *p)
+{
+  if ((p->type == BOP_SUB || p->type == BOP_DIV) && p->ops[0] == p->ops[1]) return true;
+  for (ast_real_vect::const_iterator i = p->ops.begin(), end = p->ops.end(); i != end; ++i)
+    if (!(*i)->is_constant) return false;
+  return true;
+}
+
+static bool set_flags_placeholder(real_op const *p)
+{
+  for (ast_real_vect::const_iterator i = p->ops.begin(), end = p->ops.end(); i != end; ++i)
+    if ((*i)->has_placeholder) return true;
+  return false;
+}
+
+void set_flags(ast_real *r, real_op const *p)
+{
+  r->is_constant = set_flags_constant(p);
+  r->has_placeholder = set_flags_placeholder(p);
+}
+
 ast_real const *unround(real_op_type type, ast_real_vect const &v) {
   switch (type) {
   case UOP_ID: return v[0];

@@ -9,8 +9,6 @@ struct match_visitor: boost::static_visitor< bool >
   bool visit(ast_real const *src, ast_real const *dst) const;
   template< typename T, typename U > bool operator()(T const &, U const &) const { return false; }
   template< typename T > bool operator()(T const &r1, T const &r2) const { return r1 == r2; }
-  bool operator()(real_op const &r1, hidden_real const &r2) const
-  { return transparent ? visit(normalize(ast_real(r1)), r2.real) : false; }
   bool operator()(real_op const &r1, real_op const &r2) const;
   ast_real_vect &holders;
   bool transparent;
@@ -26,9 +24,12 @@ bool match_visitor::operator()(real_op const &r1, real_op const &r2) const {
   return true;
 }
 
-bool match_visitor::visit(ast_real const *src, ast_real const *dst) const {
+bool match_visitor::visit(ast_real const *src, ast_real const *dst) const
+{
   if (src == dst) return true;
-  if (boost::get< undefined_real const >(dst)) return src == dst;
+  if (hidden_real const *h = boost::get< hidden_real const >(dst))
+    return transparent ? visit(src, h->real) : false;
+  if (!dst->has_placeholder) return false;
   placeholder const *p = boost::get< placeholder const >(dst);
   if (!p) return boost::apply_visitor(*this, *src, *dst);
   unsigned i = p->num;
@@ -80,8 +81,9 @@ ast_real const *rewrite_visitor::operator()(real_op const &r) const {
   return normalize(ast_real(real_op(r.type, r.fun, ops)));
 }
 
-ast_real const *rewrite_visitor::visit(ast_real const *dst) const {
-  if (boost::get< undefined_real const >(dst)) return dst;
+ast_real const *rewrite_visitor::visit(ast_real const *dst) const
+{
+  if (!dst->has_placeholder) return dst;
   return boost::apply_visitor(*this, *dst);
 }
 

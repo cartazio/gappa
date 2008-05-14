@@ -18,17 +18,6 @@ static bool is_changing_sign(ast_real const *r)
   return p && (p->type == UOP_ABS || p->type == UOP_NEG);
 }
 
-bool is_constant(ast_real const *r)
-{
-  if (boost::get< ast_number const *const >(r)) return true;
-  real_op const *p = boost::get< real_op const >(r);
-  if (!p) return false;
-  if ((p->type == BOP_SUB || p->type == BOP_DIV) && p->ops[0] == p->ops[1]) return true;
-  for (ast_real_vect::const_iterator i = p->ops.begin(), end = p->ops.end(); i != end; ++i)
-    if (!is_constant(*i)) return false;
-  return true;
-}
-
 bool is_hidden(ast_real const *r)
 {
   return boost::get< hidden_real const >(r);

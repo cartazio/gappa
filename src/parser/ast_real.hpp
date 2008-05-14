@@ -99,17 +99,27 @@ typedef boost::variant
   , placeholder
   > ast_real_aux;
 
-struct ast_real: ast_real_aux {
+extern void set_flags(ast_real *r, real_op const *p);
+
+struct ast_real: ast_real_aux
+{
   mutable ast_ident const *name;
-  ast_real(ast_ident const *v): ast_real_aux(undefined_real()), name(v) {}
-  ast_real(ast_number const *v): ast_real_aux(v), name(NULL) {}
-  ast_real(hidden_real const &v): ast_real_aux(v), name(NULL) {}
-  ast_real(real_op const &v): ast_real_aux(v), name(NULL) {};
-  ast_real(placeholder const &v): ast_real_aux(v), name(NULL) {}
+  bool is_constant, has_placeholder;
+  ast_real(ast_ident const *v)
+    : ast_real_aux(undefined_real()), name(v), is_constant(false), has_placeholder(false) {}
+  ast_real(ast_number const *v)
+    : ast_real_aux(v), name(NULL), is_constant(true), has_placeholder(false) {}
+  ast_real(hidden_real const &v)
+    : ast_real_aux(v), name(NULL), is_constant(false), has_placeholder(v.real->has_placeholder) {}
+  ast_real(real_op const &v)
+    : ast_real_aux(v), name(NULL) { set_flags(this, &v); }
+  ast_real(placeholder const &v)
+    : ast_real_aux(v), name(NULL), is_constant(false), has_placeholder(true) {}
   bool operator==(ast_real const &v) const;
   bool operator<(ast_real const &v) const;
 };
 
+inline bool is_constant(ast_real const *r) { return r->is_constant; }
 ast_real *normalize(ast_real const &);
 ast_real const *unround(real_op_type, ast_real_vect const &);
 
