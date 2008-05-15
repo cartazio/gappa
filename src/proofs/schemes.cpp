@@ -120,16 +120,16 @@ static void initialize_scheme_list(scheme_list &v)
 }
 
 /**
- * Marks as visited and inserts into @a v all the schemes that depend on @a real.
+ * Marks as visited and inserts into @a v all the schemes (except @a ss) that depend on @a real.
  */
-static void insert_dependent(scheme_list &v, predicated_real const &real)
+static void insert_dependent(scheme_list &v, predicated_real const &real, proof_scheme const *ss = NULL)
 {
   scheme_set const &dep = reals[real].dependent;
   for (scheme_set::const_iterator i = dep.begin(),
        i_end = dep.end(); i != i_end; ++i)
   {
     proof_scheme const *s = *i;
-    if (!s->can_visit()) continue;
+    if (s == ss || !s->can_visit()) continue;
     v.push_back(s);
   }
 }
@@ -202,7 +202,7 @@ typedef std::list< predicated_real > preal_list;
  * @note Scans only 10 reals below @a real before it assumes there are
  *       other dependencies.
  */
-bool depends_only_on(proof_scheme const *s, predicated_real const &real)
+static bool depends_only_on(proof_scheme const *s, predicated_real const &real)
 {
   preal_vect v = s->needed_reals();
   if (v.empty()) return false;
@@ -234,7 +234,7 @@ bool depends_only_on(proof_scheme const *s, predicated_real const &real)
 /**
  * Marks all the schemes and reals reachable from @a real.
  */
-void mark_dependent_schemes(predicated_real const &real)
+static void mark_dependent_schemes(predicated_real const &real)
 {
   preal_list pending_reals;
   if (!reals[real].can_visit()) return;
@@ -256,7 +256,7 @@ void mark_dependent_schemes(predicated_real const &real)
 /**
  * Marks all the reals potentially useful for reaching @a real.
  */
-void mark_useful_reals(predicated_real const &real)
+static void mark_useful_reals(predicated_real const &real)
 {
   preal_list pending_reals;
   if (!reals[real].can_visit()) return;
@@ -280,7 +280,7 @@ void mark_useful_reals(predicated_real const &real)
 /**
  * Detects some schemes known to be useless.
  */
-bool is_useless_scheme(proof_scheme const *s)
+static bool is_useless_scheme(proof_scheme const *s)
 {
   predicated_real rfix = s->real;
   if (rfix.pred() != PRED_FIX) return false;
@@ -524,7 +524,7 @@ bool graph_t::populate(property_tree const &goals, dichotomy_sequence const &dic
       node *n = s->generate_proof();
       if (!n || !try_real(n)) continue;		// the scheme did not find anything useful
       if (contradiction) return true;		// we have got a contradiction, everything is true
-      insert_dependent(missing_schemes, s->real);
+      insert_dependent(missing_schemes, s->real, s);
       if (current_goals.empty()) continue;	// originally empty, we are striving for a contradiction
       if (s->real.pred() != PRED_BND) continue;
       current_goals.remove(n->get_result());
