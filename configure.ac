@@ -30,8 +30,14 @@ AC_TRY_COMPILE([#include <boost/version.hpp>], [
 #if BOOST_VERSION >= 103200
 #else
 #  error Boost version is too old
-#endif], [AC_MSG_RESULT(yes)], [AC_MSG_RESULT([no])
+#endif], [AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no])
 AC_MSG_ERROR([ *** Unable to find Boost library (http://www.boost.org/)])])
+
+AC_MSG_CHECKING([for tr1/unordered_map])
+AC_TRY_COMPILE([#include <tr1/unordered_map>], [
+std::tr1::unordered_map<int, double> toto],
+[AC_MSG_RESULT([yes])
+AC_DEFINE([HAVE_UMAP], [1], [Define to 1 if your Standard Library supports tr1/unordered_map.])], [AC_MSG_RESULT([no])])
 
 AC_CONFIG_HEADER(config.h)
 AC_CONFIG_FILES([Makefile doc/Makefile src/Makefile testsuite/Makefile])

@@ -3,7 +3,13 @@
 #include <iostream>
 #include <map>
 #include <sstream>
+
+#include <../config.h>
+#ifdef HAVE_UMAP
+#include <tr1/unordered_map>
+#else
 #include <ext/hash_map>
+#endif
 
 #include "parser/ast.hpp"
 
@@ -21,7 +27,12 @@ struct product_hash {
   }
 };
 
+#ifdef HAVE_UMAP
+typedef std::tr1::unordered_map< product, int, product_hash > sum;
+#else
 typedef __gnu_cxx::hash_map< product, int, product_hash > sum;
+#endif
+
 typedef std::pair< sum, sum > quotient;
 
 static std::string dump_sum(sum const &s) {
