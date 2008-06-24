@@ -1,4 +1,4 @@
-Version 0.9.1:
+Version 0.10.0:
  * proof graph
    - avoided infinite dichotomy on some unprovable propositions
  * back-ends
