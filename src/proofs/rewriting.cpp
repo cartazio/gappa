@@ -224,7 +224,7 @@ Naming convention: operator name followed by
 
 REWRITe(opp_mibs,
 	-a - -b,
-	-(a - b),
+	hide(-(a - b)),
 	a ^ b);
 
 // ADD
