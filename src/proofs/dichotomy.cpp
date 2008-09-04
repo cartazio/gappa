@@ -269,6 +269,7 @@ dicho_graph dichotomy_helper::try_hypothesis(dichotomy_failure *exn) const
     graph_loader loader(g);
     if (node *n = find_proof(exn->expected.real))
       exn->found = n->get_result().bnd();
+    exn->hyp = find_proof(tmp_hyp[0].real)->get_result();
   }
   delete g;
   return dicho_graph(NULL, 0);
@@ -343,6 +344,7 @@ void dichotomy_helper::dichotomize() {
   for (;;)
   {
     h = bnd;
+    exn.hyp = tmp_hyp[0];
     dicho_graph g = try_hypothesis(&exn);
     if (g.first)
     {
@@ -354,9 +356,8 @@ void dichotomy_helper::dichotomize() {
         return;
       }
     }
-    else if (!gen->split(bnd, iter_max))
+    else if (is_singleton(exn.hyp.bnd()) || !gen->split(bnd, iter_max))
     {
-      exn.hyp = tmp_hyp[0];
       throw exn;
     }
   }
