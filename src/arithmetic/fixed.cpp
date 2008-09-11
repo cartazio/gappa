@@ -120,16 +120,26 @@ proof_scheme *fix_of_fixed_scheme::factory(predicated_real const &real) {
 // FIXED_OF_FIX
 REGISTER_SCHEME_BEGIN(fixed_of_fix);
   predicated_real fixval;
-  long min_exp;
-  fixed_of_fix_scheme(ast_real const *r, predicated_real const &v, long e)
-    : proof_scheme(r), fixval(v), min_exp(e) {}
+  fixed_rounding_class const *rnd;
+  fixed_of_fix_scheme(ast_real const *r, predicated_real const &v, fixed_rounding_class const *f)
+    : proof_scheme(r), fixval(v), rnd(f) {}
 REGISTER_SCHEME_END(fixed_of_fix);
 
 node *fixed_of_fix_scheme::generate_proof() const {
   node *n = find_proof(fixval);
   if (!n) return NULL;
   property const &hyp = n->get_result();
-  if (hyp.cst() < min_exp) return NULL;
+  long weight = hyp.cst();
+  if (weight < rnd->format.min_exp)
+  {
+    int dir = rnd_global_direction_abs(rnd->type);
+    interval error = from_exponent(rnd->format.min_exp - (dir == 0 ? 1 : 0), dir);
+    number adj = upper(from_exponent(weight, 1));
+    interval adjust(adj, adj);
+    if (dir <= 0) error = intersect(error, error + adjust);
+    if (dir >= 0) error = intersect(error, error - adjust);
+    return create_theorem(1, &hyp, property(real, error), "fixed_of_fix_reduced");
+  }
   return create_theorem(1, &hyp, property(real, zero()), "fixed_of_fix");
 }
 
@@ -141,7 +151,7 @@ proof_scheme *fixed_of_fix_scheme::factory(ast_real const *real) {
   ast_real const *holders[2];
   fixed_rounding_class const *f = dynamic_cast< fixed_rounding_class const * >(absolute_rounding_error(real, holders));
   if (!f) return NULL;
-  return new fixed_of_fix_scheme(real, predicated_real(holders[0], PRED_FIX), f->format.min_exp);
+  return new fixed_of_fix_scheme(real, predicated_real(holders[0], PRED_FIX), f);
 }
 
 // BND_OF_BND_FIX

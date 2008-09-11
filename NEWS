@@ -1,6 +1,8 @@
 Version 0.10.1:
  * proof graph
    - avoided splitting provably-singleton intervals
+ * arithmetic
+   - tightened rounding error when applied to short values
 
 Version 0.10.0:
  * proof graph
