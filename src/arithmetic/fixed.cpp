@@ -132,8 +132,9 @@ node *fixed_of_fix_scheme::generate_proof() const {
   long weight = hyp.cst();
   if (weight < rnd->format.min_exp)
   {
+    if (rnd_to_nearest(rnd->type)) return NULL;
     int dir = rnd_global_direction_abs(rnd->type);
-    interval error = from_exponent(rnd->format.min_exp - (dir == 0 ? 1 : 0), dir);
+    interval error = from_exponent(rnd->format.min_exp, dir);
     number adj = upper(from_exponent(weight, 1));
     interval adjust(adj, adj);
     if (dir <= 0) error = intersect(error, error + adjust);
