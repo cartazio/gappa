@@ -103,26 +103,83 @@ bool real_dependency::can_visit() const
   return true;
 }
 
+/** Priority queue for storing schemes. */
+struct scheme_queue
+{
+  static int const
+    nb_queues = 10,		/**< Number of queues. */
+    score_per_queue = 3,	/**< Granularity of the score. */
+    pop_per_queue = 3,		/**< Period for removing from a lower queue. */
+    success_score = 6;		/**< Score increase for successful schemes. */
+  scheme_queue();
+  /** Decreases the score of @a s and stores it in the corresponding queue. */
+  void push(proof_scheme const *a);
+  /**
+   * Removes a scheme from a queue and returns it.
+   * Queues with the highest scores are emptied more often.
+   */
+  proof_scheme const *pop();
+  scheme_list queues[nb_queues];
+  int counters[nb_queues];
+};
+
+scheme_queue::scheme_queue()
+{
+  for (int i = 0; i < nb_queues; ++i) counters[i] = 0;
+}
+
+void scheme_queue::push(proof_scheme const *s)
+{
+  int zero_queue = nb_queues / 2,
+      min_score = - zero_queue * score_per_queue,
+      max_score = (nb_queues - zero_queue - 1) * score_per_queue;
+  --s->score;
+  if (s->score <= min_score) s->score = min_score; else
+  if (s->score >= max_score) s->score = max_score;
+  int num = (s->score - min_score) / score_per_queue;
+  queues[num].push_back(s);
+}
+
+proof_scheme const *scheme_queue::pop()
+{
+  for (int j = 0; j < 2; ++j)
+  {
+    // Two runs, to ensure we return a scheme if there is one.
+    for (int i = nb_queues - 1; i >= 0; --i)
+    {
+      if (queues[i].empty()) continue;
+      if (++counters[i] == pop_per_queue)
+      {
+        counters[i] = 0;
+        continue;
+      }
+      proof_scheme const *s = queues[i].front();
+      queues[i].pop_front();
+      return s;
+    }
+  }
+  return NULL;
+}
+
 /**
  * Marks the source schemes as visited and puts them into @a v.
  */
-static void initialize_scheme_list(scheme_list &v)
+static void initialize_scheme_list(scheme_queue &v)
 {
   ++visit_counter;
-  v.clear();
   for (scheme_vect::const_iterator i = source_schemes.begin(),
        i_end = source_schemes.end(); i != i_end; ++i)
   {
     proof_scheme const *s = *i;
     s->visited = visit_counter;
-    v.push_back(s);
+    v.push(s);
   }
 }
 
 /**
  * Marks as visited and inserts into @a v all the schemes (except @a ss) that depend on @a real.
  */
-static void insert_dependent(scheme_list &v, predicated_real const &real, proof_scheme const *ss = NULL)
+static void insert_dependent(scheme_queue &v, predicated_real const &real, proof_scheme const *ss = NULL)
 {
   scheme_set const &dep = reals[real].dependent;
   for (scheme_set::const_iterator i = dep.begin(),
@@ -130,7 +187,7 @@ static void insert_dependent(scheme_list &v, predicated_real const &real, proof_
   {
     proof_scheme const *s = *i;
     if (s == ss || !s->can_visit()) continue;
-    v.push_back(s);
+    v.push(s);
   }
 }
 
@@ -509,20 +566,23 @@ bool graph_t::populate(property_tree const &goals, dichotomy_sequence const &dic
   for (dichotomy_sequence::const_iterator dichotomy_it = dichotomy.begin(),
        dichotomy_end = dichotomy.end(); /*nothing*/; ++dichotomy_it)
   {
-    scheme_list missing_schemes;
+    scheme_queue missing_schemes;
     initialize_scheme_list(missing_schemes);
+    int iter = 0;
     for (node_map::const_iterator i = known_reals.begin(),
          i_end = known_reals.end(); i != i_end; ++i)
-      insert_dependent(missing_schemes, i->first);
-    int iter = -(int)missing_schemes.size();
-    while (iter++ != iter_max && !missing_schemes.empty())
     {
-      proof_scheme const *s = missing_schemes.front();
-      missing_schemes.pop_front();
+      insert_dependent(missing_schemes, i->first);
+      --iter;
+    }
+    proof_scheme const *s;
+    while (iter++ != iter_max && ((s = missing_schemes.pop())))
+    {
       s->visited = 0; // allows the scheme to be reused later, if needed
       ++stat_tested_th;
       node *n = s->generate_proof();
       if (!n || !try_real(n)) continue;		// the scheme did not find anything useful
+      s->score += scheme_queue::success_score;
       if (contradiction) return true;		// we have got a contradiction, everything is true
       insert_dependent(missing_schemes, s->real, s);
       if (current_goals.empty()) continue;	// originally empty, we are striving for a contradiction

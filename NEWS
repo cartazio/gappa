@@ -1,6 +1,7 @@
 Version 0.10.1:
  * proof graph
    - avoided splitting provably-singleton intervals
+   - added score system for favoring successful schemes
  * arithmetic
    - tightened rounding error when applied to short values
 
