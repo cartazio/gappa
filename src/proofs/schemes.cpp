@@ -13,8 +13,8 @@
 
 extern std::string parameter_schemes;
 
-typedef std::set< ast_real const * > ast_real_set;
-extern ast_real_set input_reals, output_reals;
+typedef std::set< predicated_real > preal_set;
+extern preal_set input_reals, output_reals;
 
 struct scheme_factories: std::vector< scheme_factory const * > {
   ~scheme_factories() { for(iterator i = begin(), i_end = end(); i != i_end; ++i) delete *i; }
@@ -359,20 +359,20 @@ static bool is_useless_scheme(proof_scheme const *s)
 /**
  * Generates all the schemes needed for linking inputs and outputs.
  */
-ast_real_vect generate_proof_paths()
+preal_vect generate_proof_paths()
 {
   // recursively search schemes needed for output reals
-  for (ast_real_set::const_iterator i = output_reals.begin(),
+  for (preal_set::const_iterator i = output_reals.begin(),
        i_end = output_reals.end(); i != i_end; ++i)
   {
-    real_dependency &r = initialize_dependencies(predicated_real(*i, PRED_BND));
+    real_dependency &r = initialize_dependencies(*i);
     r.dependent.insert(NULL);
   }
   // initialize hypothesis reals to handle contradictions
-  for (ast_real_set::const_iterator i = input_reals.begin(),
+  for (preal_set::const_iterator i = input_reals.begin(),
        i_end = input_reals.end(); i != i_end; ++i)
   {
-    real_dependency &r = initialize_dependencies(predicated_real(*i, PRED_BND));
+    real_dependency &r = initialize_dependencies(*i);
     r.schemes.insert(NULL);
     r.dependent.insert(NULL);
   }
@@ -389,10 +389,10 @@ ast_real_vect generate_proof_paths()
       mark_dependent_schemes(s->real);
     }
   }
-  for (ast_real_set::const_iterator i = input_reals.begin(),
+  for (preal_set::const_iterator i = input_reals.begin(),
        i_end = input_reals.end(); i != i_end; ++i)
   {
-    mark_dependent_schemes(predicated_real(*i, PRED_BND));
+    mark_dependent_schemes(*i);
   }
   for (real_dependencies::iterator i = reals.begin(), i_end = reals.end(); i != i_end; ++i)
   {
@@ -423,15 +423,15 @@ ast_real_vect generate_proof_paths()
   }
   // find reals reaching to outputs, then remove unneeded reals
   ++visit_counter;
-  for (ast_real_set::const_iterator i = output_reals.begin(),
+  for (preal_set::const_iterator i = output_reals.begin(),
        i_end = output_reals.end(); i != i_end; ++i)
   {
-    mark_useful_reals(predicated_real(*i, PRED_BND));
+    mark_useful_reals(*i);
   }
-  for (ast_real_set::const_iterator i = input_reals.begin(),
+  for (preal_set::const_iterator i = input_reals.begin(),
        i_end = input_reals.end(); i != i_end; ++i)
   {
-    mark_useful_reals(predicated_real(*i, PRED_BND));
+    mark_useful_reals(*i);
   }
   for (real_dependencies::iterator i = reals.begin(), i_end = reals.end(); i != i_end; ++i)
   {
@@ -505,10 +505,11 @@ ast_real_vect generate_proof_paths()
     out.close();
   }
   // find unreachable outputs
-  ast_real_vect missing_targets;
-  for (ast_real_set::iterator i = output_reals.begin(), i_end = output_reals.end(); i != i_end; ++i)
+  preal_vect missing_targets;
+  for (preal_set::iterator i = output_reals.begin(),
+       i_end = output_reals.end(); i != i_end; ++i)
   {
-    real_dependencies::iterator j = reals.find(predicated_real(*i, PRED_BND));
+    real_dependencies::iterator j = reals.find(*i);
     if (j == reals.end())
       missing_targets.push_back(*i);
   }

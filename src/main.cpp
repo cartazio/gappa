@@ -30,9 +30,12 @@ int main(int argc, char **argv) {
     proof_generator->initialize(std::cout);
   }
   if (yyparse()) return EXIT_FAILURE;
-  ast_real_vect missing_paths = generate_proof_paths();
-  for(ast_real_vect::const_iterator i = missing_paths.begin(), i_end = missing_paths.end(); i != i_end; ++i)
-    std::cerr << "Warning: no path was found for " << dump_real(*i) << ".\n";
+  preal_vect missing_paths = generate_proof_paths();
+  for (preal_vect::const_iterator i = missing_paths.begin(),
+       i_end = missing_paths.end(); i != i_end; ++i)
+  {
+    std::cerr << "Warning: no path was found for " << dump_real_short(*i) << ".\n";
+  }
   std::vector< bool > proven_contexts;
   bool globally_proven = true;
   for(context_vect::const_iterator i = contexts.begin(), i_end = contexts.end(); i != i_end; ++i) {
@@ -43,7 +46,7 @@ int main(int argc, char **argv) {
       std::cerr << " for ";
       for(unsigned i = 0; i < nb_hyp; ++i) {
         if (i != 0) std::cerr << " and ";
-        std::cerr << dump_real(hyp[i].real.real()) << " in " << hyp[i].bnd();
+        std::cerr << dump_real_short(hyp[i].real) << " in " << hyp[i].bnd();
       }
     }
     std::cerr << ":\n";
@@ -75,7 +78,7 @@ int main(int argc, char **argv) {
       for(node_vect::const_iterator j = nodes.begin(), j_end = nodes.end(); j != j_end; ++j) {
         node *n = *j;
         assert(n->type == GOAL);
-        results[dump_real(n->get_result().real.real())] = n;
+        results[dump_real_short(n->get_result().real)] = n;
       }
       for(named_nodes::const_iterator j = results.begin(), j_end = results.end(); j != j_end; ++j) {
         node *n = j->second;

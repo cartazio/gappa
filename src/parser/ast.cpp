@@ -184,6 +184,25 @@ std::string dump_real(predicated_real const &r) {
   return s.str();
 }
 
+std::string dump_real_short(predicated_real const &r)
+{
+  std::string v = dump_real(r.real());
+  switch (r.pred())
+  {
+  case PRED_BND:
+    return v;
+  case PRED_REL:
+  {
+    std::stringstream s;
+    s << v << " -/ " << dump_real(r.real2());
+    return s.str();
+  }
+  default:
+    assert(false);
+    return "...";
+  }
+}
+
 std::string dump_property(property const &p) {
   std::stringstream s;
   std::string r = dump_real(p.real.real());

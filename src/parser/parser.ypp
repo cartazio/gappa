@@ -62,7 +62,7 @@ static unsigned long read_integer_param(ast_number const *n)
 %pure-parser
 %locations
 
-%token IDENT FUNID VARID IN NUMBER SQRT FMA NE LE GE
+%token IDENT FUNID VARID IN NUMBER SQRT FMA NE LE GE RDIV
 
 %union {
   ast_number const	*number;
@@ -123,6 +123,11 @@ PROP:
 			{ $$ = new ast_prop(new ast_atom_bound($1, $4, $6)); }
 | REAL IN '?'		{ $$ = new ast_prop(new ast_atom_bound($1, NULL, NULL)); }
 | REAL GE SNUMBER	{ $$ = new ast_prop(new ast_atom_bound($1, $3, NULL)); }
+| REAL RDIV REAL IN '[' SNUMBER ',' SNUMBER ']'
+			{ $$ = new ast_prop(new ast_atom_bound($1, $3, $6, $8)); }
+| '|' REAL RDIV REAL '|' LE NUMBER
+			{ $$ = new ast_prop(new ast_atom_bound($2, $4, negative_number($7), $7)); }
+| REAL RDIV REAL IN '?'	{ $$ = new ast_prop(new ast_atom_bound($1, $3, NULL, NULL)); }
 | PROP AND PROP		{ $$ = new ast_prop($1, PROP_AND,  $3); }
 | PROP OR PROP		{ $$ = new ast_prop($1, PROP_OR,   $3); }
 | PROP IMPL PROP	{ $$ = new ast_prop($1, PROP_IMPL, $3); }

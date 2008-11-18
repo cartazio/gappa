@@ -6,10 +6,12 @@
 #include "parser/ast_real.hpp"
 
 struct ast_atom_bound {
-  ast_real const *real;
+  ast_real const *real, *real2;
   ast_number const *lower, *upper;
   ast_atom_bound(ast_real const *r, ast_number const *l, ast_number const *u)
-    : real(r), lower(l), upper(u) {}
+    : real(r), real2(NULL), lower(l), upper(u) {}
+  ast_atom_bound(ast_real const *r1, ast_real const *r2, ast_number const *l, ast_number const *u)
+    : real(r1), real2(r2), lower(l), upper(u) {}
 };
 
 enum ast_prop_type { PROP_ATOM, PROP_NOT, PROP_AND, PROP_OR, PROP_IMPL };
@@ -70,6 +72,7 @@ struct ast_ident {
 std::string dump_real(ast_real const *, unsigned = 0);
 struct predicated_real;
 std::string dump_real(predicated_real const &);
+std::string dump_real_short(predicated_real const &);
 struct property;
 std::string dump_property(property const &);
 

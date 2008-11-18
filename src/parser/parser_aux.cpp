@@ -2,6 +2,8 @@
 #include <cassert>
 #include <iostream>
 #include <sstream>
+#include "numbers/interval_utility.hpp"
+#include "numbers/real.hpp"
 #include "parser/ast.hpp"
 #include "parser/pattern.hpp"
 #include "proofs/proof_graph.hpp"
@@ -9,23 +11,46 @@
 #include "proofs/rewriting.hpp"
 
 typedef std::set< ast_real const * > real_set;
-real_set free_variables, input_reals, output_reals;
+real_set free_variables;
+typedef std::set< predicated_real > preal_set;
+preal_set input_reals, output_reals;
 
 interval create_interval(ast_number const *, ast_number const *, bool);
 void find_unknown_reals(real_set &, ast_real const *);
 
 extern bool warning_unbound_variable;
 
-static property generate_property(ast_atom_bound const &p, bool goal) {
-  property r(p.real);
-  output_reals.insert(p.real);
-  if (p.lower || p.upper) {
+static property generate_property(ast_atom_bound const &p, bool goal)
+{
+  predicated_real pr;
+  if (p.real2)
+    pr = predicated_real(p.real, p.real2, PRED_REL);
+  else
+    pr = predicated_real(p.real, PRED_BND);
+  output_reals.insert(pr);
+  property r(pr);
+  if (p.lower || p.upper)
+  {
     interval &bnd = r.bnd();
     bnd = create_interval(p.lower, p.upper, !goal);
     if (is_empty(bnd))
-      { std::cerr << "Error: the range of " << dump_real(p.real) << " is an empty interval.\n"; exit(1); }
-  } else if (!goal)
-    { std::cerr << "Error: undefined intervals are restricted to conclusions.\n"; exit(1); }
+    {
+      std::cerr << "Error: the range of " << dump_real_short(pr)
+                << " is an empty interval.\n";
+      exit(1);
+    }
+    if (pr.real2() && lower(bnd) <= number(-1))
+    {
+      std::cerr << "Error: the range of " << dump_real_short(pr)
+                << " contains values smaller or equal to -1.\n";
+      exit(1);
+    }
+  }
+  else if (!goal)
+  {
+    std::cerr << "Error: undefined intervals are restricted to conclusions.\n";
+    exit(1);
+  }
   return r;
 }
 
@@ -160,35 +185,52 @@ static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
       }
     }
   }
+
+  // for any hypothesis x>=b or x<=b, add the converse inequality as a goal
   for(ast_prop_vect::const_iterator i = s.rhs.begin(), end = s.rhs.end(); i != end; ++i) {
     ast_prop const *p = *i;
     ast_atom_bound const &atom = *p->atom;
     if (p->type != PROP_ATOM || !atom.lower == !atom.upper) continue;
     s.lhs.push_back(new ast_prop(new ast_atom_bound(atom.real, atom.upper, atom.lower)));
   }
-  typedef std::map< ast_real const *, property > input_set;
+
+  // register approximates, and intersects properties with common reals
+  typedef std::map< predicated_real, property > input_set;
   input_set inputs;
-  for(ast_prop_vect::const_iterator i = s.lhs.begin(), end = s.lhs.end(); i != end; ++i) {
+  for (ast_prop_vect::const_iterator i = s.lhs.begin(),
+       i_end = s.lhs.end(); i != i_end; ++i)
+  {
     ast_prop const *p = *i;
     assert(p && p->type == PROP_ATOM);
     ast_atom_bound const &atom = *p->atom;
-    check_approx(atom.real);
+    if (atom.real2)
+      register_approx(atom.real, atom.real2);
+    else
+      check_approx(atom.real);
     property q = generate_property(atom, false);
-    std::pair< input_set::iterator, bool > ib = inputs.insert(std::make_pair(atom.real, q));
+    std::pair< input_set::iterator, bool > ib = inputs.insert(std::make_pair(q.real, q));
     if (!ib.second) // there was already a known range
       ib.first->second.intersect(q);
   }
+
   context ctxt;
-  for(input_set::const_iterator i = inputs.begin(), end = inputs.end(); i != end; ++i) {
+  for (input_set::const_iterator i = inputs.begin(),
+       i_end = inputs.end(); i != i_end; ++i)
+  {
     interval const &bnd = i->second.bnd();
-    if (is_empty(bnd)) {
-      std::cerr << "Warning: the hypotheses on " << dump_real(i->first) << " are trivially contradictory, skipping.\n";
+    // bail out early if there is an empty set on an input
+    if (is_empty(bnd))
+    {
+      std::cerr << "Warning: the hypotheses on " << dump_real_short(i->first)
+                << " are trivially contradictory, skipping.\n";
       return;
     }
+    // locate variables appearing in bounded expressions
     if (is_bounded(bnd))
       input_reals.insert(i->first);
     ctxt.hyp.push_back(i->second);
   }
+
   if (s.rhs.size() == 1)
     generate_goal(ctxt.goals, s.rhs[0]);
   else if (!s.rhs.empty()) {
@@ -216,10 +258,16 @@ static void delete_prop(ast_prop const *p) {
   delete p;
 }
 
-static void check_unbound() {
+static void check_unbound()
+{
   real_set bound_variables;
-  for(real_set::const_iterator i = input_reals.begin(), end = input_reals.end(); i != end; ++i)
-    find_unknown_reals(bound_variables, *i);
+  for (preal_set::const_iterator i = input_reals.begin(),
+       i_end = input_reals.end(); i != i_end; ++i)
+  {
+    predicated_real const &r = *i;
+    find_unknown_reals(bound_variables, r.real());
+    if (r.real2()) find_unknown_reals(bound_variables, r.real2());
+  }
   real_set s;
   std::set_difference(free_variables.begin(), free_variables.end(),
                       bound_variables.begin(), bound_variables.end(),

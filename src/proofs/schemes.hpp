@@ -61,6 +61,6 @@ inline node *find_proof(predicated_real const &real) { return top_graph->find_al
 node *find_proof(property const &);
 bool fill_hypotheses(property *, preal_vect const &);
 
-ast_real_vect generate_proof_paths();
+preal_vect generate_proof_paths();
 
 #endif // PROOFS_SCHEMES_HPP

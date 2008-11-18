@@ -111,6 +111,7 @@ zero		((((0+(\.0*)?)|(\.0+))([eE][-+]?{integer})?)|0x(((0+(\.0*)?)|(\.0+))([pP][
 <prop_context>">="	return GE;
 "sqrt"		return SQRT;
 "fma"		return FMA;
+"-/"		return RDIV;
 {zero}		{ yylval->number = token_zero; return NUMBER; }
 {number}	{ read_number(yylval); return NUMBER; }
 {ident}		{ return read_ident(yylval); }
