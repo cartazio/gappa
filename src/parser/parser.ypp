@@ -28,6 +28,7 @@ extern void register_user_rewrite(ast_real const *, ast_real const *, hint_cond_
 extern void generate_graph(ast_prop const *p);
 extern void test_ringularity(ast_real const *, ast_real const *, bool);
 extern int test_rewriting(ast_real const *, ast_real const *, std::string &);
+extern void check_approx(ast_real const *);
 extern std::set< ast_real const * > free_variables;
 extern bool parameter_rfma;
 
@@ -308,6 +309,7 @@ HINTS:
       if (!info.empty())
         std::cerr << "  if all the following properties can be proved\n" << info;
     }
+    check_approx(r1);
     register_user_rewrite(r1, r2, hc);
     delete hc;
   }

@@ -4,6 +4,8 @@ Version 0.10.1:
    - added score system for favoring successful schemes
  * arithmetic
    - tightened rounding error when applied to short values
+ * syntax
+   - recognized lhs of user rewriting as potential user approximate
 
 Version 0.10.0:
  * proof graph

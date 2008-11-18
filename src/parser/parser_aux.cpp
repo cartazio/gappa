@@ -65,6 +65,29 @@ static void generate_goal(property_tree &tree, ast_prop const *p) {
   }
 }
 
+static void register_approx(ast_real const *r1, ast_real const *r2)
+{
+  accurates[r1].insert(r2);
+  approximates[r2].insert(r1);
+}
+
+void check_approx(ast_real const *real)
+{
+  real_op const *o = boost::get< real_op const >(real);
+  if (!o) return;
+  // look for an approx/accurate pair
+  if (o->type == UOP_ABS)
+    o = boost::get< real_op const >(o->ops[0]);
+  ast_real const *r = NULL;
+  if (o && o->type == BOP_DIV)
+  {
+    r = o->ops[1];
+    o = boost::get< real_op const >(o->ops[0]);
+  }
+  if (o && o->type == BOP_SUB && (!r || r == o->ops[1]))
+    register_approx(o->ops[0], o->ops[1]);
+}
+
 struct sequent {
   ast_prop_vect lhs, rhs;
 };
@@ -149,19 +172,7 @@ static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
     ast_prop const *p = *i;
     assert(p && p->type == PROP_ATOM);
     ast_atom_bound const &atom = *p->atom;
-    if (real_op const *o = boost::get< real_op const >(atom.real)) {
-      // look for an approx/accurate pair
-      if (o->type == UOP_ABS) o = boost::get< real_op const >(o->ops[0]);
-      ast_real const *r = NULL;
-      if (o && o->type == BOP_DIV) {
-        r = o->ops[1];
-        o = boost::get< real_op const >(o->ops[0]);
-      }
-      if (o && o->type == BOP_SUB && (!r || r == o->ops[1])) {
-        accurates[o->ops[0]].insert(o->ops[1]);
-        approximates[o->ops[1]].insert(o->ops[0]);
-      }
-    }
+    check_approx(atom.real);
     property q = generate_property(atom, false);
     std::pair< input_set::iterator, bool > ib = inputs.insert(std::make_pair(atom.real, q));
     if (!ib.second) // there was already a known range
