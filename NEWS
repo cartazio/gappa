@@ -1,4 +1,4 @@
-Version 0.10.1:
+Version 0.11.0:
  * proof graph
    - avoided splitting provably-singleton intervals
    - added score system for favoring successful schemes
@@ -6,6 +6,7 @@ Version 0.10.1:
    - tightened rounding error when applied to short values
  * syntax
    - recognized lhs of user rewriting as potential user approximate
+   - added "x -/ y in ..." and "|x -/ y| <= ..." for REL properties
 
 Version 0.10.0:
  * proof graph
