@@ -187,7 +187,8 @@ static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
   }
 
   // for any goal x>=b or x<=b, add the converse inequality as a hypothesis
-  for(ast_prop_vect::const_iterator i = s.rhs.begin(), i_end = s.rhs.end(); i != i_end; ++i)
+  for (ast_prop_vect::const_iterator i = s.rhs.begin(),
+       i_end = s.rhs.end(); i != i_end; ++i)
   {
     ast_prop const *p = *i;
     ast_atom_bound const &atom = *p->atom;
