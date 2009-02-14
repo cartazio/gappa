@@ -21,7 +21,7 @@ extern int
   stat_intersected_pred, stat_discarded_pred;
 
 int main(int argc, char **argv) {
-  if (!parse_args(argc, argv)) return 0;
+  if (!parse_args(argc, argv)) return EXIT_FAILURE;
   if (proof_generator) {
     if (!parameter_constrained) {
       std::cerr << "Error: unconstrained mode is not compatible with script generation, since proofs are left incomplete.\n";
