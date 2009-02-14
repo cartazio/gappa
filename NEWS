@@ -7,6 +7,8 @@ Version 0.11.0:
  * syntax
    - recognized lhs of user rewriting as potential user approximate
    - added "x -/ y in ..." and "|x -/ y| <= ..." for REL properties
+ * build system
+   - fixed compilation on Cygwin
 
 Version 0.10.0:
  * proof graph
