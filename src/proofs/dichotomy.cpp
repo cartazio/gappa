@@ -417,16 +417,16 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
     if (warning_dichotomy_failure) {
       property const &h = e.hyp;
       detailed_io = true;
-      std::cerr << "Warning: when " << dump_real(h.real.real()) << " is in "
+      std::cerr << "Warning: when " << dump_real_short(h.real) << " is in "
                 << h.bnd() << ", ";
-      ast_real const *dst = e.expected.real.real();
-      if (!dst)
+      predicated_real const &dst = e.expected.real;
+      if (dst.null())
         std::cerr << "nothing is satisfied.\n";
       else if (is_defined(e.found))
-        std::cerr << dump_real(dst) << " is in " << e.found
+        std::cerr << dump_real_short(dst) << " is in " << e.found
                   << " potentially outside of " << e.expected.bnd() << ".\n";
       else
-        std::cerr << dump_real(dst) << " is not computable.\n";
+        std::cerr << dump_real_short(dst) << " is not computable.\n";
       detailed_io = false;
     }
     delete h;
