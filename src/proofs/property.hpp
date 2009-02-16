@@ -72,7 +72,7 @@ struct graph_t;
 
 struct property_tree {
   struct data {
-    std::vector< property > leafs;
+    std::vector< property > leaves;
     std::vector< property_tree > subtrees;
     unsigned ref;
     bool conjonction;
@@ -98,8 +98,19 @@ struct property_tree {
   data const *operator->() const { return ptr; }
   data *operator->() { unique(); return ptr; }
   bool empty() const { return !ptr; }
-  bool remove(property const &);		// false if the tree is not yet fully satisfied
-  bool verify(graph_t *, property *) const;	// false if some branches are not satisfied
+
+  /**
+   * Removes from the tree the leaves and subtrees satisfied by property @a p.
+   * @return false if the tree is not yet fully satisfied.
+   */
+  bool remove(property const &p);
+
+  /**
+   * Checks if the tree is satisfied by graph @a g.
+   * @arg p Pointer to an optional storage for an unsatisfied property.
+   * @return false if some properties are not satisfied.
+   */
+  bool verify(graph_t *g, property *p) const;
   bool get_nodes(graph_t *, std::vector< node * > &) const;
 };
 

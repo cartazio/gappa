@@ -72,7 +72,7 @@ static void generate_goal(property_tree &tree, ast_prop const *p) {
     tree.unique();
   switch (p->type) {
   case PROP_ATOM:
-    tree->leafs.push_back(generate_property(*p->atom, true));
+    tree->leaves.push_back(generate_property(*p->atom, true));
     break;
   case PROP_AND:
   case PROP_OR: {

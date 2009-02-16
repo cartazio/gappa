@@ -142,6 +142,10 @@ void property_tree::unique() {
   }
 }
 
+/**
+ * Helper class for filtering out leaves that are satisfied by a given
+ * property.
+ */
 struct remove_pred1 {
   property const &prop;
   bool unrelated;
@@ -156,6 +160,10 @@ struct remove_pred1 {
   }
 };
 
+/**
+ * Helper class for filtering out (and recursively pruning) subtrees that
+ * are satisfied by a given property.
+ */
 struct remove_pred2 {
   property const &prop;
   bool unrelated;
@@ -171,10 +179,10 @@ struct remove_pred2 {
 void property_tree::flatten() {
   if (ptr->subtrees.size() != 1) return;
   property_tree &t = ptr->subtrees[0];
-  if (!ptr->leafs.empty() && t.ptr->conjonction != ptr->conjonction) return;
+  if (!ptr->leaves.empty() && t.ptr->conjonction != ptr->conjonction) return;
   t.unique();
   data *p = t.ptr;
-  p->leafs.insert(p->leafs.end(), ptr->leafs.begin(), ptr->leafs.end());
+  p->leaves.insert(p->leaves.end(), ptr->leaves.begin(), ptr->leaves.end());
   ++p->ref; // have to "incr" before decr; decr may erase t otherwise
   decr();
   ptr = p;
@@ -183,41 +191,53 @@ void property_tree::flatten() {
 bool property_tree::remove(property const &p) {
   if (!ptr) return true;
   unique();
-  assert(p.real.pred() == PRED_BND);
+  assert(p.real.pred() == PRED_BND || p.real.pred() == PRED_REL);
+  {
+  // Filter out satisfied leaves.
   remove_pred1 pred1(p);
+  std::vector< property >::iterator end1 = ptr->leaves.end(),
+    i1 = std::remove_if(ptr->leaves.begin(), end1, pred1);
+  if (i1 != end1 && !ptr->conjonction) goto kill_tree;
+  // Filter out satisfied subtrees.
   remove_pred2 pred2(p);
-  std::vector< property >::iterator end1 = ptr->leafs.end(),
-    i1 = std::remove_if(ptr->leafs.begin(), end1, pred1);
   std::vector< property_tree >::iterator end2 = ptr->subtrees.end(),
     i2 = std::remove_if(ptr->subtrees.begin(), end2, pred2);
-  if (i1 != end1 && !ptr->conjonction) goto kill_tree;
   if (i2 != end2 && !ptr->conjonction) goto kill_tree;
-  ptr->leafs.erase(i1, end1);
+  ptr->leaves.erase(i1, end1);
   ptr->subtrees.erase(i2, end2);
-  if (ptr->leafs.empty() && ptr->subtrees.empty()) goto kill_tree;
+  if (ptr->leaves.empty() && ptr->subtrees.empty()) goto kill_tree;
   flatten();
   return !pred1.unrelated && !pred2.unrelated;
+  }
  kill_tree:
   decr();
   ptr = NULL;
   return true;
 }
 
-bool property_tree::verify(graph_t *g, property *p) const {
+bool property_tree::verify(graph_t *g, property *p) const
+{
   if (!ptr) return false;
   graph_loader loader(g);
   bool b = ptr->conjonction;
-  for(std::vector< property >::const_iterator i = ptr->leafs.begin(),
-      end = ptr->leafs.end(); i != end; ++i) {
-    if (b == !find_proof(*i)) {
-      if (b && p) *p = *i;
-      return !b;
-    }
+  for (std::vector< property >::const_iterator i = ptr->leaves.begin(),
+       end = ptr->leaves.end(); i != end; ++i)
+  {
+    if (b == !!find_proof(*i)) continue;
+    // Either this tree node is a conjunction and property *i is not satisfied,
+    // or it is a disjunction and property *i is satisfied.
+    if (b && p) *p = *i;
+    return !b;
   }
-  for(std::vector< property_tree >::const_iterator i = ptr->subtrees.begin(),
-      end = ptr->subtrees.end(); i != end; ++i)
-    if (b == !i->verify(g, b ? p : NULL))
-      return !b;
+  for (std::vector< property_tree >::const_iterator i = ptr->subtrees.begin(),
+       end = ptr->subtrees.end(); i != end; ++i)
+  {
+    if (b == i->verify(g, b ? p : NULL)) continue;
+    // Same here, but for the *i subtree.
+    return !b;
+  }
+  // Either the tree node is a conjunction and all its properties are satisfied,
+  // or it is a disjunction and none are satisfied.
   return b;
 }
 
@@ -242,14 +262,18 @@ node_vect const &goal_node::get_subproofs() const {
 }
 
 typedef std::vector< std::pair< node *, interval > > goal_vect;
-bool property_tree::get_nodes_aux(goal_vect &goals) const {
+
+bool property_tree::get_nodes_aux(goal_vect &goals) const
+{
   bool all = true;
-  for(std::vector< property >::const_iterator i = ptr->leafs.begin(),
-      end = ptr->leafs.end(); i != end; ++i)
+  for (std::vector< property >::const_iterator i = ptr->leaves.begin(),
+       end = ptr->leaves.end(); i != end; ++i)
+  {
     if (node *n = find_proof(*i)) {
       goals.push_back(std::make_pair(n, i->bnd()));
       if (!ptr->conjonction) return true;
     } else all = false;
+  }
   if (ptr->conjonction) {
     for(std::vector< property_tree >::const_iterator i = ptr->subtrees.begin(),
         end = ptr->subtrees.end(); i != end; ++i)
@@ -316,13 +340,13 @@ void property_tree::restrict(ast_real_vect const &dst) {
   unique();
   remove_pred3 pred1(dst);
   remove_pred4 pred2(dst);
-  std::vector< property >::iterator end1 = ptr->leafs.end(),
-    i1 = std::remove_if(ptr->leafs.begin(), end1, pred1);
+  std::vector< property >::iterator end1 = ptr->leaves.end(),
+    i1 = std::remove_if(ptr->leaves.begin(), end1, pred1);
   std::vector< property_tree >::iterator end2 = ptr->subtrees.end(),
     i2 = std::remove_if(ptr->subtrees.begin(), end2, pred2);
-  ptr->leafs.erase(i1, end1);
+  ptr->leaves.erase(i1, end1);
   ptr->subtrees.erase(i2, end2);
-  if (ptr->leafs.empty() && ptr->subtrees.empty()) {
+  if (ptr->leaves.empty() && ptr->subtrees.empty()) {
     delete ptr;
     ptr = NULL;
   } else flatten();
