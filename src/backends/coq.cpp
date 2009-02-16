@@ -323,6 +323,7 @@ static std::string display(node *n) {
     assert(pred.size() >= 2);
     node *mcase = pred[0];
     property const &pcase = mcase->get_result();
+    assert(pcase.real.pred() == PRED_BND);
     property_map::mapped_type &hcase = pmap[pcase.real];
     if (mcase->type != HYPOTHESIS) {
       plouf << " assert (h" << num_hyp << " : " << display(pcase) << ").";
