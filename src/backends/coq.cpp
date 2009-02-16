@@ -346,7 +346,7 @@ static std::string display(node *n) {
       }
       invoke_lemma(plouf, m, pmap);
       if (i + 1 != i_end)
-        plouf << " next_interval (" << prefix << "union) u.\n";
+        plouf << " next_interval (union) u.\n";
       else
         plouf << " exact u.\n";
     }
