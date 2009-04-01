@@ -50,4 +50,5 @@ gappa_SOURCES = \
 	parser/ast.cpp \
 	main.cpp \
 	parameters.cpp \
+	parameters.hpp \
 	utils.hpp

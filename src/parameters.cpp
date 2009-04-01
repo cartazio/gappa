@@ -1,7 +1,9 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+
 #include "../config.h"
+#include "parameters.hpp"
 #include "backends/backend.hpp"
 
 int parameter_internal_precision = 60;
@@ -50,12 +52,6 @@ static void help() {
 
 extern void change_input(std::string const &n);
 
-/**
- * Parses an option found on the command-line or in the input script.
- *
- * @param embedded true if the option comes from the input script
- * @return false when the option @a s is not recognized.
- */
 bool parse_option(std::string const &s, bool embedded)
 {
   static bool no_more_options = false;
@@ -131,19 +127,23 @@ bool parse_option(std::string const &s, bool embedded)
   return true;
 }
 
-// return true if the program can go on
-bool parse_args(int argc, char **argv) {
-  for(int i = 1; i < argc; ++i) {
+parse_args_status parse_args(int argc, char **argv)
+{
+  for (int i = 1; i < argc; ++i)
+  {
     std::string s = argv[i];
     if (parse_option(s, false)) continue;
-    if (s == "-v" || s == "--version")
+    if (s == "-v" || s == "--version") {
       std::cout << PACKAGE_STRING << '\n';
-    else {
-      if (s != "-h" && s != "--help")
-        std::cerr << "Error: unrecognized option '" << s << "'.\n\n";
-      help();
+      return PARGS_EXIT;
     }
-    return false;
+    if (s == "-h" || s == "--help") {
+      help();
+      return PARGS_EXIT;
+    }
+    std::cerr << "Error: unrecognized option '" << s << "'.\n\n";
+    help();
+    return PARGS_FAILURE;
   }
-  return true;
+  return PARGS_CONTINUE;
 }

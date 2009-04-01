@@ -1,3 +1,7 @@
+Version 0.11.1:
+ * main interface
+   - removed error code on options --help and --version
+
 Version 0.11.0:
  * proof graph
    - avoided splitting provably-singleton intervals

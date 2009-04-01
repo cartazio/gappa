@@ -1,4 +1,6 @@
 #include <iostream>
+
+#include "parameters.hpp"
 #include "backends/backend.hpp"
 #include "numbers/interval_utility.hpp"
 #include "parser/ast.hpp"
@@ -8,7 +10,6 @@
 extern bool parameter_constrained, parameter_statistics;
 extern int yyparse(void);
 extern std::vector< graph_t * > graphs;
-extern bool parse_args(int argc, char **argv);
 extern bool detailed_io;
 extern backend *proof_generator;
 dichotomy_sequence dichotomies;
@@ -20,8 +21,11 @@ extern int
   stat_tested_real, stat_discarded_real,
   stat_intersected_pred, stat_discarded_pred;
 
-int main(int argc, char **argv) {
-  if (!parse_args(argc, argv)) return EXIT_FAILURE;
+int main(int argc, char **argv)
+{
+  parse_args_status pargs_status = parse_args(argc, argv);
+  if (pargs_status != PARGS_CONTINUE)
+    return pargs_status == PARGS_FAILURE ? EXIT_FAILURE : EXIT_SUCCESS;
   if (proof_generator) {
     if (!parameter_constrained) {
       std::cerr << "Error: unconstrained mode is not compatible with script generation, since proofs are left incomplete.\n";
