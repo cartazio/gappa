@@ -4,8 +4,11 @@
 #include <map>
 #include <string>
 #include <gmp.h>
+
 #include "parser/ast.hpp"
 #include "proofs/dichotomy.hpp"
+#include "parameters.hpp"
+
 #include "parser/parser.h"
 
 static void read_number(YYSTYPE *yylval) {
@@ -56,8 +59,6 @@ static int read_ident(YYSTYPE *yylval) {
     default: assert(false); return IDENT;
   }
 }
-
-extern bool parse_option(std::string const &, bool);
 
 static void read_options(YYLTYPE &yylloc) {
   std::string s = yytext;
