@@ -99,9 +99,9 @@ zero		((((0+(\.0*)?)|(\.0+))([eE][-+]?{integer})?)|0x(((0+(\.0*)?)|(\.0+))([pP][
 %%
 
 [ \t]
-\n		{ ++yylloc->first_line; yylloc->first_column = 0; }
-#@[^\n]*	read_options(*yylloc);
-#[^\n]*
+[\r]?\n		{ ++yylloc->first_line; yylloc->first_column = 0; }
+#@[^\r\n]*	read_options(*yylloc);
+#[^\r\n]*
 "/\\"		return AND;
 "\\/"		return OR;
 "->"		return IMPL;
