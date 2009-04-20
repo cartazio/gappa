@@ -198,6 +198,7 @@ PROG:
   {
     ast_ident *v = $2;
     ast_real const *r = $4;
+    if (v->type != ID_NONE) failure("the symbol " << $2->name << " is redefined");
     v->type = ID_VAR;
     v->var = r;
     if (r->name) warning(r->name->name << " is being renamed to " << v->name);
