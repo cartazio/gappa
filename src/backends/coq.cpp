@@ -175,30 +175,41 @@ static std::string display(theorem_node *t) {
 
 typedef std::map< predicated_real, std::pair< int, property const * > > property_map;
 
-static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_map const &pmap) {
-  for(property_vect::const_iterator j = hyp.begin(), j_end = hyp.end(); j != j_end; ++j) {
+static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_map const &pmap)
+{
+  for(property_vect::const_iterator j = hyp.begin(), j_end = hyp.end(); j != j_end; ++j)
+  {
     property_map::const_iterator pki = pmap.find(j->real);
     assert(pki != pmap.end());
     int h = pki->second.first;
     predicate_type t = j->real.pred();
-    if (j->real.pred_bnd()) {
+    if (j->real.pred_bnd())
+    {
       interval const &i = pki->second.second->bnd(), &ii = j->bnd();
       assert(i <= ii);
       if (ii <= i)
         plouf << " exact h" << h << '.';
       else
       {
-        char const *prefix = "";
+        char const *prefix = "", *suffix = "";
         switch (t)
         {
           case PRED_ABS: prefix = "abs_"; break;
           case PRED_REL: prefix = "rel_"; break;
-          case PRED_BND: break;
+          case PRED_BND:
+            if (lower(ii) == number::neg_inf)
+              suffix = "_r";
+            else if (upper(ii) == number::pos_inf)
+              suffix = "_l";
+            break;
           default: assert(false);
         }
-        plouf << " apply " << prefix << "subset with (1 := h" << h << "). finalize.";
+        plouf << " apply " << prefix << "subset" << suffix
+              << " with (1 := h" << h << "). finalize.";
       }
-    } else if (j->real.pred_cst()) {
+    }
+    else if (j->real.pred_cst())
+    {
       long c = pki->second.second->cst(), cc = j->cst();
       assert((t == PRED_FIX && c >= cc) || (t == PRED_FLT && c <= cc));
       if (c == c)
@@ -214,7 +225,9 @@ static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_m
         }
         plouf << " apply " << prefix << "subset with (1 := h" << h << "). finalize.";
       }
-    } else {
+    }
+    else
+    {
       assert(t == PRED_NZR);
       plouf << " exact h" << h << '.';
     }

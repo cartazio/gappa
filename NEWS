@@ -1,3 +1,7 @@
+Version 0.11.3:
+ * Coq back-end
+   - applied correct theorems for intervals with infinite bounds
+
 Version 0.11.2:
  * parser
    - fixed handling of CRLF end of line
