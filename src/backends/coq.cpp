@@ -170,7 +170,7 @@ static std::string display(theorem_node *t) {
     for(int i = 0; i < nb_hyps; ++i) plouf << " (" << i + 1 << " := h" << i << ')';
   }
   plouf << " ; finalize.\nQed.\n";
-  return name;  
+  return name;
 }
 
 typedef std::map< predicated_real, std::pair< int, property const * > > property_map;
@@ -212,7 +212,7 @@ static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_m
     {
       long c = pki->second.second->cst(), cc = j->cst();
       assert((t == PRED_FIX && c >= cc) || (t == PRED_FLT && c <= cc));
-      if (c == c)
+      if (c == cc)
         plouf << " exact h" << h << '.';
       else
       {
