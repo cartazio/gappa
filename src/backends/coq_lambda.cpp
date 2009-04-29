@@ -22,7 +22,10 @@ static char const *theorem_defs[][2] = {
   { "absurd_intersect_bh", "$gpred_bnd.$t $1x $1i $2l $" },
 
   { "abs_of_bnd_p", "$gpred_abs.$t $1x $1i $i $" },
-  { "abs_of_uabs", "$gpred_abs.$t $x $i $" },
+  { "abs_of_bnd_o", "$gpred_abs.$t $1x $1i $i $" },
+  { "abs_of_bnd_n", "$gpred_abs.$t $1x $1i $i $" },
+  { "abs_of_uabs", "$gpred_abs.$t $x $1i $" },
+  { "uabs_of_abs", "$gpred_abs.$t $1x $i $1p" },
   { "nzr_of_abs", "$gpred_nzr.$t $1x $1i $" },
 
   { "constant1", "$gpred_bnd.$t _ $i $" },
@@ -32,8 +35,10 @@ static char const *theorem_defs[][2] = {
   { "add_aa_n", "$gpred_abs.$t $1x $2x $1i $2i $i $" },
   { "mul_aa",   "$gpred_abs.$t $1x $2x $1i $2i $i $" },
 
+  { "add", "$gpred_bnd.$t $1x $2x $1i $2i $i $" },
   { "sub", "$gpred_bnd.$t $1x $2x $1i $2i $i $" },
 
+  { "sub_refl", "$gpred_bnd.$t _ $i $" },
   { "div_refl", "$gpred_bnd.$t $1x $i $" },
 
   { "sqrt", "$gpred_bnd.sqrtG $1x $1i $i $" },
@@ -52,6 +57,11 @@ static char const *theorem_defs[][2] = {
   { "bnd_of_bnd_fix", "$gfixed.$t $1x $2c $1i $i $" },
 
   { "rel_of_fix_float_ne", "$gfloat.$t _ _ $1c $1x $i $" },
+
+  { "fixed_error_dn", "$gfixed.$t _ _ $i $" },
+
+  { "sub_xals", "$grewriting.$t _ _ _ $i $1p" },
+  { "sub_xars", "$grewriting.$t _ _ _ $i $1p" },
 
   { NULL, NULL }
 };
