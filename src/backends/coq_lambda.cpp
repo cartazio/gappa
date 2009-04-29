@@ -596,9 +596,9 @@ std::string coq_lambda_backend::theorem(node *n)
   out_vars = out;
   std::ostringstream buf;
   out = &buf;
-  *out_vars << "fun ";
+  *out_vars << "(fun ";
   std::string s = display(n);
-  *out_vars << "=>\n" << buf.str() << s << '\n';
+  *out_vars << "=>\n" << buf.str() << s << ")\n";
   return s;
 }
 
