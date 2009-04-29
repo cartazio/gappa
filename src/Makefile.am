@@ -14,6 +14,7 @@ gappa_SOURCES = \
 	arithmetic/homogen.cpp \
 	arithmetic/relative.cpp \
 	backends/coq.cpp \
+	backends/coq_lambda.cpp \
 	backends/holl.cpp \
 	backends/backend.cpp \
 	backends/backend.hpp \
