@@ -13,19 +13,25 @@
 #define COQRDEF "Reals.Rdefinitions."
 
 static char const *theorem_defs[][2] = {
-  { "subset", "$gpred_bnd.subset $1x $1i $i $1p" },
-  { "subset_l", "$gpred_bnd.subset_l $1x $1i $l $1p" },
-  { "subset_r", "$gpred_bnd.subset_l $1x $1i $u $1p" },
-  { "abs_subset", "$gpred_abs.abs_subset $1x $1i $i $1p" },
-  { "rel_subset", "$gpred_rel.rel_subset $1x $1y $1i $i $1p" },
+  { "subset",     "$gpred_bnd.$t $1x $1i $i $1p $b" },
+  { "subset_l",   "$gpred_bnd.$t $1x $1i $l $1p $b" },
+  { "subset_r",   "$gpred_bnd.$t $1x $1i $u $1p $b" },
+  { "abs_subset", "$gpred_abs.$t $1x $1i $i $1p $b" },
+  { "rel_subset", "$gpred_rel.$t $1x $1y $1i $i $1p $b" },
 
-  { "sqrt", "$gpred_bnd.sqrtG $1x $1i $i $1p" },
+  { "absurd_intersect_bh", "$gpred_bnd.$t $1x $1i $2l $1p $2p $b" },
 
-  { "add_fix", "$gpred_fixflt.add_fix $1x $2x $1c $2c $c $1p $2p" },
+  { "constant1", "$gpred_bnd.$t _ $i $b" },
 
-  { "fix_of_float", "$gfloat.fix_of_float _ _ _ _ $c" },
+  { "div_pp", "$gpred_bnd.$t $1x $2x $1i $2i $i $1p $2p $b" },
 
-  { "rel_of_fix_float_ne", "$gfloat.rel_of_fix_float_ne _ _ $1c $1x $i $1p" },
+  { "sqrt", "$gpred_bnd.sqrtG $1x $1i $i $1p $b" },
+
+  { "add_fix", "$gpred_fixflt.$t $1x $2x $1c $2c $c $1p $2p $b" },
+
+  { "fix_of_float", "$gfloat.$t _ _ _ _ $c $b" },
+
+  { "rel_of_fix_float_ne", "$gfloat.$t _ _ $1c $1x $i $1p $b" },
 
   { NULL, NULL }
 };
@@ -169,7 +175,11 @@ static std::string display(property const &p)
   std::ostringstream s;
   predicate_type t = p.real.pred();
   ast_real const *real = p.real.real();
-  if (p.real.pred_bnd())
+  if (p.null())
+  {
+    return GAPPADEF "contradiction";
+  }
+  else if (p.real.pred_bnd())
   {
     interval const &bnd = p.bnd();
     if (lower(bnd) == number::neg_inf) {
@@ -221,8 +231,11 @@ static std::string display(property const &p)
   return name;
 }
 
+typedef std::map< predicated_real, std::pair< int, property const * > > property_map;
+
 static void apply_theorem(auto_flush &plouf, std::string const &th,
-                          property const &res, property const *hyp)
+                          property const &res, property const *hyp,
+                          property_map const *pmap = NULL, int *num = NULL)
 {
   theorem_map::const_iterator it = theorems.find(th);
   if (it == theorems.end()) {
@@ -230,42 +243,62 @@ static void apply_theorem(auto_flush &plouf, std::string const &th,
               << "' is missing from the coq-lambda back-end. Aborting.\n";
     exit(1);
   }
+  std::ostringstream s;
   char const *p = it->second;
+  bool has_comp = false;
   for (; *p; ++p)
   {
-    if (*p != '$') { plouf << *p; continue; }
+    if (*p != '$') { s << *p; continue; }
     ++p;
     property const *h = &res;
     if (*p >= '1' && *p <= '9') h = &hyp[*(p++) - '1'];
     switch (*p) {
       case 'g':
-        plouf << "Gappa.Gappa_";
+        s << "Gappa.Gappa_";
+        break;
+      case 't':
+        s << th;
         break;
       case 'i':
-        plouf << display(h->bnd());
+        s << display(h->bnd());
         break;
       case 'l':
-        plouf << display(lower(h->bnd()));
+        s << display(lower(h->bnd()));
         break;
       case 'u':
-        plouf << display(upper(h->bnd()));
+        s << display(upper(h->bnd()));
         break;
       case 'c':
-        plouf << '(' << h->cst() << ')';
+        s << '(' << h->cst() << ')';
         break;
       case 'x':
-        plouf << display(h->real.real());
+        s << display(h->real.real());
         break;
       case 'y':
-        plouf << display(h->real.real2());
+        s << display(h->real.real2());
         break;
       case 'p':
-        plouf << 'h' << h - hyp;
+        s << 'h';
+        if (pmap) {
+          property_map::const_iterator pki = pmap->find(h->real);
+          assert(pki != pmap->end());
+          s << pki->second.first;
+        } else if (num)
+          s << num[h - hyp];
+        else
+           s << h - hyp;
+        break;
+      case 'b':
+        has_comp = true;
         break;
       default:
-        plouf << '$';
+        s << '$';
     }
   }
+  if (!has_comp)
+    plouf << s.str();
+  else
+    plouf << "((" << s.str() << ": _ -> " << display(res) << ") (refl_equal true))";
 }
 
 static std::string display(node *n);
@@ -282,13 +315,11 @@ static std::string display(theorem_node *t)
   {
     plouf << " (h" << num_hyp++ << " : " << display(*i) << ')';
   }
-  plouf << " : " <<  display(t->res) << " := (";
+  plouf << " : " <<  display(t->res) << " := ";
   apply_theorem(plouf, convert_name(t->name), t->res, &*t->hyp.begin());
-  plouf << " : _ -> " << display(t->res) << ") (refl_equal true) in\n";
+  plouf << " in\n";
   return name;
 }
-
-typedef std::map< predicated_real, std::pair< int, property const * > > property_map;
 
 static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_map const &pmap)
 {
@@ -320,10 +351,9 @@ static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_m
             break;
           default: assert(false);
         }
-        plouf << " (";
+        plouf << ' ';
         apply_theorem(plouf, std::string(prefix) + "subset" + suffix,
-                      *j, pki->second.second);
-        plouf << ')';
+                      *j, pki->second.second, &pmap);
       }
     }
     else if (j->real.pred_cst())
@@ -341,10 +371,9 @@ static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_m
           case PRED_FLT: prefix = "flt_"; break;
           default: assert(false);
         }
-        plouf << " (";
+        plouf << ' ';
         apply_theorem(plouf, std::string(prefix) + "subset",
-                      *j, pki->second.second);
-        plouf << ')';
+                      *j, pki->second.second, &pmap);
       }
     }
     else
@@ -391,7 +420,7 @@ static std::string display(node *n)
     property const &p = pred[0]->get_result();
     plouf << " (h0 : " << display(p) << ")";
     assert(num_hyp == 0);
-    pmap.insert(std::make_pair(p.real, std::make_pair(num_hyp++, &p)));
+    pmap[p.real] = std::make_pair(num_hyp++, &p);
   }
   property const &n_res = n->get_result();
   std::string p_res, prefix;
@@ -420,13 +449,15 @@ static std::string display(node *n)
     invoke_lemma(plouf, mn->target->hyp, pmap);
     plouf << " in\n";
     break; }
-#if 0
   case INTERSECTION: {
+    property hyps[2];
     int num[2];
     char const *suffix = "";
-    for(int i = 0; i < 2; ++i) {
+    for (int i = 0; i < 2; ++i)
+    {
       node *m = pred[i];
       property const &res = m->get_result();
+      hyps[i] = res;
       switch (res.real.pred()) {
         case PRED_BND:
           if (!is_bounded(res.bnd())) suffix = (i == 0) ? "_hb" : "_bh";
@@ -446,14 +477,17 @@ static std::string display(node *n)
         num[i] = pki->second.first;
         continue;
       }
-      plouf << " assert (h" << num_hyp << " : " << display(res) << ").";
+      plouf << "  let h" << num_hyp << " : " << display(res) << " := ";
       invoke_lemma(plouf, m, pmap);
+      plouf << " in\n";
       num[i] = num_hyp++;
     }
-    plouf << " apply " << prefix << "intersect" << suffix << " with"
-                 " (1 := h" << num[0] << ") (2 := h" << num[1] << ")."
-             " finalize.\nQed.\n";
+    plouf << "  ";
+    apply_theorem(plouf, std::string(prefix) + "intersect" + suffix,
+                  n_res, hyps, NULL, num);
+    plouf << " in\n";
     break; }
+#if 0
   case UNION: {
     assert(pred.size() >= 2);
     node *mcase = pred[0];
@@ -493,11 +527,14 @@ static std::string display(node *n)
     interval const &mb = m->get_result().bnd(), &nb = n_res.bnd();
     if (!(nb <= mb))
     {
+      assert(false);
+#if 0
       char const *suffix = "";
       if (lower(nb) == number::neg_inf) suffix = "_r";
       else if (upper(nb) == number::pos_inf) suffix = "_l";
       apply_theorem(plouf, std::string("subset") + suffix,
                     n_res, &m->get_result());
+#endif
     }
     invoke_lemma(plouf, m, pmap);
     plouf << " in\n";
