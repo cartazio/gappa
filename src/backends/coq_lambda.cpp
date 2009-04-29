@@ -21,9 +21,18 @@ static char const *theorem_defs[][2] = {
 
   { "absurd_intersect_bh", "$gpred_bnd.$t $1x $1i $2l $1p $2p $b" },
 
+  { "abs_of_bnd_p", "$gpred_abs.$t $1x $1i $i $1p $b" },
+  { "abs_of_uabs", "$gpred_abs.$t $x $i $1p $b" },
+  { "nzr_of_abs", "$gpred_nzr.$t $1x $1i $1p $b" },
+
   { "constant1", "$gpred_bnd.$t _ $i $b" },
 
   { "div_pp", "$gpred_bnd.$t $1x $2x $1i $2i $i $1p $2p $b" },
+
+  { "add_aa_n", "$gpred_abs.$t $1x $2x $1i $2i $i $1p $2p $b" },
+  { "mul_aa",   "$gpred_abs.$t $1x $2x $1i $2i $i $1p $2p $b" },
+
+  { "div_refl", "$gpred_bnd.$t $1x $i $1p $b" },
 
   { "sqrt", "$gpred_bnd.sqrtG $1x $1i $i $1p $b" },
 
@@ -36,7 +45,7 @@ static char const *theorem_defs[][2] = {
   { NULL, NULL }
 };
 
-struct theorem_map : std::map<std::string, char const * >
+struct theorem_map : std::map<std::string, char const *>
 {
   theorem_map()
   {
