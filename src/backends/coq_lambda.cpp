@@ -13,34 +13,45 @@
 #define COQRDEF "Reals.Rdefinitions."
 
 static char const *theorem_defs[][2] = {
-  { "subset",     "$gpred_bnd.$t $1x $1i $i $1p $b" },
-  { "subset_l",   "$gpred_bnd.$t $1x $1i $l $1p $b" },
-  { "subset_r",   "$gpred_bnd.$t $1x $1i $u $1p $b" },
-  { "abs_subset", "$gpred_abs.$t $1x $1i $i $1p $b" },
-  { "rel_subset", "$gpred_rel.$t $1x $1y $1i $i $1p $b" },
+  { "subset",     "$gpred_bnd.$t $1x $1i $i $" },
+  { "subset_l",   "$gpred_bnd.$t $1x $1i $l $" },
+  { "subset_r",   "$gpred_bnd.$t $1x $1i $u $" },
+  { "abs_subset", "$gpred_abs.$t $1x $1i $i $" },
+  { "rel_subset", "$gpred_rel.$t $1x $1y $1i $i $" },
 
-  { "absurd_intersect_bh", "$gpred_bnd.$t $1x $1i $2l $1p $2p $b" },
+  { "absurd_intersect_bh", "$gpred_bnd.$t $1x $1i $2l $" },
 
-  { "abs_of_bnd_p", "$gpred_abs.$t $1x $1i $i $1p $b" },
-  { "abs_of_uabs", "$gpred_abs.$t $x $i $1p $b" },
-  { "nzr_of_abs", "$gpred_nzr.$t $1x $1i $1p $b" },
+  { "abs_of_bnd_p", "$gpred_abs.$t $1x $1i $i $" },
+  { "abs_of_uabs", "$gpred_abs.$t $x $i $" },
+  { "nzr_of_abs", "$gpred_nzr.$t $1x $1i $" },
 
-  { "constant1", "$gpred_bnd.$t _ $i $b" },
+  { "constant1", "$gpred_bnd.$t _ $i $" },
 
-  { "div_pp", "$gpred_bnd.$t $1x $2x $1i $2i $i $1p $2p $b" },
+  { "div_pp", "$gpred_bnd.$t $1x $2x $1i $2i $i $" },
 
-  { "add_aa_n", "$gpred_abs.$t $1x $2x $1i $2i $i $1p $2p $b" },
-  { "mul_aa",   "$gpred_abs.$t $1x $2x $1i $2i $i $1p $2p $b" },
+  { "add_aa_n", "$gpred_abs.$t $1x $2x $1i $2i $i $" },
+  { "mul_aa",   "$gpred_abs.$t $1x $2x $1i $2i $i $" },
 
-  { "div_refl", "$gpred_bnd.$t $1x $i $1p $b" },
+  { "sub", "$gpred_bnd.$t $1x $2x $1i $2i $i $" },
 
-  { "sqrt", "$gpred_bnd.sqrtG $1x $1i $i $1p $b" },
+  { "div_refl", "$gpred_bnd.$t $1x $i $" },
 
-  { "add_fix", "$gpred_fixflt.$t $1x $2x $1c $2c $c $1p $2p $b" },
+  { "sqrt", "$gpred_bnd.sqrtG $1x $1i $i $" },
 
-  { "fix_of_float", "$gfloat.$t _ _ _ _ $c $b" },
+  { "add_fix", "$gpred_fixflt.$t $1x $2x $1c $2c $c $" },
+  { "sub_fix", "$gpred_fixflt.$t $1x $2x $1c $2c $c $" },
 
-  { "rel_of_fix_float_ne", "$gfloat.$t _ _ $1c $1x $i $1p $b" },
+  { "fix_of_float", "$gfloat.$t _ _ _ _ $c $" },
+  { "flt_of_float", "$gfloat.$t _ _ _ $c _ $" },
+
+  { "float_of_fix_flt", "$gfloat.$t _ $1x $i $1c _ $2c _ $" },
+
+  { "fix_of_flt_bnd", "$gpred_fixflt.$t $1x $2i $c $1c $" },
+  { "flt_of_fix_bnd", "$gpred_fixflt.$t $1x $2i $1c $c $" },
+
+  { "bnd_of_bnd_fix", "$gfixed.$t $1x $2c $1i $i $" },
+
+  { "rel_of_fix_float_ne", "$gfloat.$t _ _ $1c $1x $i $" },
 
   { NULL, NULL }
 };
@@ -255,36 +266,34 @@ static void apply_theorem(auto_flush &plouf, std::string const &th,
   std::ostringstream s;
   char const *p = it->second;
   bool has_comp = false;
+  int max = 0;
+  std::string buf;
   for (; *p; ++p)
   {
     if (*p != '$') { s << *p; continue; }
     ++p;
     property const *h = &res;
-    if (*p >= '1' && *p <= '9') h = &hyp[*(p++) - '1'];
+    if (*p >= '1' && *p <= '9')
+    {
+      int n = *(p++) - '1';
+      h = &hyp[n];
+      for (; max <= n; ++max) {
+        char t[] = { ' ', '$', '1' + max, 'p', '\0' };
+        buf += t;
+      }
+    }
     switch (*p) {
-      case 'g':
-        s << "Gappa.Gappa_";
-        break;
-      case 't':
-        s << th;
-        break;
-      case 'i':
-        s << display(h->bnd());
-        break;
-      case 'l':
-        s << display(lower(h->bnd()));
-        break;
-      case 'u':
-        s << display(upper(h->bnd()));
-        break;
-      case 'c':
-        s << '(' << h->cst() << ')';
-        break;
-      case 'x':
-        s << display(h->real.real());
-        break;
-      case 'y':
-        s << display(h->real.real2());
+      case 'g': s << "Gappa.Gappa_"; break;
+      case 't': s << th; break;
+      case 'i': s << display(h->bnd()); break;
+      case 'l': s << display(lower(h->bnd())); break;
+      case 'u': s << display(upper(h->bnd())); break;
+      case 'c': s << '(' << h->cst() << ')'; break;
+      case 'x': s << display(h->real.real()); break;
+      case 'y': s << display(h->real.real2()); break;
+      case '\0':
+        has_comp = true;
+        p = buf.c_str();
         break;
       case 'p':
         s << 'h';
@@ -307,7 +316,7 @@ static void apply_theorem(auto_flush &plouf, std::string const &th,
   if (!has_comp)
     plouf << s.str();
   else
-    plouf << "((" << s.str() << ": _ -> " << display(res) << ") (refl_equal true))";
+    plouf << "((" << s.str() << " : _ -> " << display(res) << ") (refl_equal true))";
 }
 
 static std::string display(node *n);
