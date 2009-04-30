@@ -21,6 +21,7 @@ static char const *theorem_defs[][2] = {
 
   { "absurd_intersect_bh", "$gpred_bnd.$t $1x $1i $2l $" },
 
+  { "bnd_of_abs", "$gpred_abs.$t $1x $1i $i $" },
   { "abs_of_bnd_p", "$gpred_abs.$t $1x $1i $i $" },
   { "abs_of_bnd_o", "$gpred_abs.$t $1x $1i $i $" },
   { "abs_of_bnd_n", "$gpred_abs.$t $1x $1i $i $" },
@@ -37,6 +38,20 @@ static char const *theorem_defs[][2] = {
 
   { "add", "$gpred_bnd.$t $1x $2x $1i $2i $i $" },
   { "sub", "$gpred_bnd.$t $1x $2x $1i $2i $i $" },
+
+  { "mul_pp", "$gpred_bnd.$t $1x $2x $1i $2i $i $" },
+  { "mul_po", "$gpred_bnd.$t $1x $2x $1i $2i $i $" },
+  { "mul_pn", "$gpred_bnd.$t $1x $2x $1i $2i $i $" },
+  { "mul_op", "$gpred_bnd.$t $1x $2x $1i $2i $i $" },
+  { "mul_oo", "$gpred_bnd.$t $1x $2x $1i $2i $i $" },
+  { "mul_on", "$gpred_bnd.$t $1x $2x $1i $2i $i $" },
+  { "mul_np", "$gpred_bnd.$t $1x $2x $1i $2i $i $" },
+  { "mul_no", "$gpred_bnd.$t $1x $2x $1i $2i $i $" },
+  { "mul_nn", "$gpred_bnd.$t $1x $2x $1i $2i $i $" },
+
+  { "square_p", "$gpred_bnd.$t $1x $1i $i $" },
+  { "square_o", "$gpred_bnd.$t $1x $1i $i $" },
+  { "square_n", "$gpred_bnd.$t $1x $1i $i $" },
 
   { "sub_refl", "$gpred_bnd.$t _ $i $" },
   { "div_refl", "$gpred_bnd.$t $1x $i $" },
@@ -57,6 +72,10 @@ static char const *theorem_defs[][2] = {
   { "bnd_of_bnd_fix", "$gfixed.$t $1x $2c $1i $i $" },
 
   { "rel_of_fix_float_ne", "$gfloat.$t _ _ $1c $1x $i $" },
+
+  { "float_round", "$gfloat.$t _ _ _ $1x $1i $i $" },
+
+  { "float_absolute_wide_ne", "$gfloat.$t _ _ $1x $1i $i $" },
 
   { "fixed_error_dn", "$gfixed.$t _ _ $i $" },
 
