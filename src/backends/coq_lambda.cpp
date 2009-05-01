@@ -345,7 +345,7 @@ static void apply_theorem(auto_flush &plouf, std::string const &th,
   if (!has_comp)
     plouf << s.str();
   else
-    plouf << "((" << s.str() << " : _ -> " << display(res) << ") (refl_equal true))";
+    plouf << '(' << s.str() << " _)";
 }
 
 static std::string display(node *n);
@@ -612,12 +612,13 @@ std::string coq_lambda_backend::rewrite
 
 std::string coq_lambda_backend::theorem(node *n)
 {
-  out_vars = out;
+  *out << "(* " << n->get_hypotheses().size() << " *)\n(fun ";
   std::ostringstream buf;
+  out_vars = out;
   out = &buf;
-  *out_vars << "(fun ";
   std::string s = display(n);
-  *out_vars << "=>\n" << buf.str() << s << ")\n";
+  out = out_vars;
+  *out << "=>\n" << buf.str() << s << ")\n";
   return s;
 }
 
