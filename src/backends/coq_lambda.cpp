@@ -431,7 +431,8 @@ static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_m
   }
 }
 
-static void invoke_lemma(auto_flush &plouf, node *n, property_map const &pmap) {
+static void invoke_lemma(auto_flush &plouf, node *n, property_map const &pmap)
+{
   if (n->type != HYPOTHESIS) {
     plouf << display(n);
     invoke_lemma(plouf, n->get_hypotheses(), pmap);
@@ -574,16 +575,19 @@ static std::string display(node *n)
     interval const &mb = m->get_result().bnd(), &nb = n_res.bnd();
     if (!(nb <= mb))
     {
-      assert(false);
-#if 0
+      property const &res = m->get_result();
+      plouf << "  let h" << num_hyp << " : " << display(res) << " :=";
+      invoke_lemma(plouf, m, pmap);
+      plouf << " in ";
+      pmap[res.real] = std::make_pair(num_hyp++, &res);
       char const *suffix = "";
       if (lower(nb) == number::neg_inf) suffix = "_r";
       else if (upper(nb) == number::pos_inf) suffix = "_l";
       apply_theorem(plouf, std::string("subset") + suffix,
-                    n_res, &m->get_result());
-#endif
+                    n_res, &res, &pmap);
     }
-    invoke_lemma(plouf, m, pmap);
+    else
+      invoke_lemma(plouf, m, pmap);
     plouf << " in\n";
     break; }
   default:
