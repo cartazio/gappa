@@ -28,6 +28,8 @@ static char const *theorem_defs[][2] = {
   { "abs_of_uabs", "$gpred_abs.$t $x $1i $" },
   { "uabs_of_abs", "$gpred_abs.$t $1x $i $1p" },
   { "nzr_of_abs", "$gpred_nzr.$t $1x $1i $" },
+  { "bnd_of_bnd_abs_p", "$gpred_abs.$t $1x $1i $2i $i $" },
+  { "bnd_of_bnd_abs_n", "$gpred_abs.$t $1x $1i $2i $i $" },
 
   { "constant1", "$gpred_bnd.$t _ $i $" },
 
@@ -587,7 +589,10 @@ static std::string display(node *n)
                     n_res, &res, &pmap);
     }
     else
+    {
+      plouf << "  ";
       invoke_lemma(plouf, m, pmap);
+    }
     plouf << " in\n";
     break; }
   default:
