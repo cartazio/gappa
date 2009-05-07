@@ -19,6 +19,7 @@ static char const *theorem_defs[][2] = {
   { "abs_subset", "$gpred_abs.$t $1x $1i $i $" },
   { "rel_subset", "$gpred_rel.$t $1x $1y $1i $i $" },
 
+  { "intersect", "$gpred_bnd.$t $x $1i $2i $i $" },
   { "absurd_intersect_bh", "$gpred_bnd.$t $1x $1i $2l $" },
 
   { "bnd_of_abs", "$gpred_abs.$t $1x $1i $i $" },
@@ -75,6 +76,7 @@ static char const *theorem_defs[][2] = {
 
   { "rel_of_fix_float_ne", "$gfloat.$t _ _ $1c $1x $i $" },
 
+  { "fixed_round", "$gfixed.$t _ _ $1x $1i $i $" },
   { "float_round", "$gfloat.$t _ _ _ $1x $1i $i $" },
 
   { "float_absolute_wide_ne", "$gfloat.$t _ _ $1x $1i $i $" },
@@ -83,6 +85,7 @@ static char const *theorem_defs[][2] = {
 
   { "sub_xals", "$grewriting.$t _ _ _ $i $1p" },
   { "sub_xars", "$grewriting.$t _ _ _ $i $1p" },
+  { "mul_xals", "$grewriting.$t _ _ _ $i $1p" },
 
   { NULL, NULL }
 };
