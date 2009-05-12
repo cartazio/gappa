@@ -4,7 +4,6 @@
 #include "backends/backend.hpp"
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
-//#include "numbers/round.hpp"
 #include "parser/ast.hpp"
 #include "proofs/proof_graph.hpp"
 #include "proofs/property.hpp"
@@ -13,14 +12,24 @@
 #define COQRDEF "Reals.Rdefinitions."
 
 static char const *theorem_defs[][2] = {
-  { "subset",     "$gpred_bnd.$t $1x $1i $i $" },
-  { "subset_l",   "$gpred_bnd.$t $1x $1i $l $" },
-  { "subset_r",   "$gpred_bnd.$t $1x $1i $u $" },
-  { "abs_subset", "$gpred_abs.$t $1x $1i $i $" },
-  { "rel_subset", "$gpred_rel.$t $1x $1y $1i $i $" },
+  { "subset", "$gpred_bnd.$t $x $1i $i $" },
+  { "subset_l", "$gpred_bnd.$t $x $1i $l $" },
+  { "subset_r", "$gpred_bnd.$t $x $1i $u $" },
+  { "abs_subset", "$gpred_abs.$t $x $1i $i $" },
+  { "rel_subset", "$gpred_rel.$t $x $y $1i $i $" },
+  { "fix_subset", "$gpred_fixflt.$t $x $1c $c $" },
+  { "flt_subset", "$gpred_fixflt.$t $x $1c $c $" },
 
   { "intersect", "$gpred_bnd.$t $x $1i $2i $i $" },
+  { "intersect_hb", "$gpred_bnd.$t $x $1u $2i $i $" },
+  { "intersect_bh", "$gpred_bnd.$t $x $2l $1i $i $" },
+  { "intersect_aa", "$gpred_abs.$t $x $1i $2i $i $" },
+  { "intersect_rr", "$gpred_rel.$t $x $y $1i $2i $i $" },
+  { "absurd_intersect", "$gpred_bnd.$t $1x $1i $2i $" },
+  { "absurd_intersect_hb", "$gpred_bnd.$t $1x $1u $2i $" },
   { "absurd_intersect_bh", "$gpred_bnd.$t $1x $1i $2l $" },
+  { "absurd_intersect_aa", "$gpred_abs.$t $1x $1i $2i $" },
+  { "absurd_intersect_rr", "$gpred_rel.$t $1x $3x $1i $2i $" },
 
   { "bnd_of_abs", "$gpred_abs.$t $1x $1i $i $" },
   { "abs_of_bnd_p", "$gpred_abs.$t $1x $1i $i $" },
@@ -28,14 +37,12 @@ static char const *theorem_defs[][2] = {
   { "abs_of_bnd_n", "$gpred_abs.$t $1x $1i $i $" },
   { "abs_of_uabs", "$gpred_abs.$t $x $1i $" },
   { "uabs_of_abs", "$gpred_abs.$t $1x $i $1p" },
-  { "nzr_of_abs", "$gpred_nzr.$t $1x $1i $" },
   { "bnd_of_bnd_abs_p", "$gpred_abs.$t $1x $1i $2i $i $" },
   { "bnd_of_bnd_abs_n", "$gpred_abs.$t $1x $1i $2i $i $" },
 
   { "constant1", "$gpred_bnd.$t _ $i $" },
-
-  { "add_aa_n", "$gpred_abs.$t $1x $2x $1i $2i $i $" },
-  { "mul_aa",   "$gpred_abs.$t $1x $2x $1i $2i $i $" },
+  { "constant2", "$gpred_bnd.$t _ $i $" },
+  { "constant10", "$gpred_bnd.$t _ $i $" },
 
   { "neg", "$gpred_bnd.$t $1x $1i $i $" },
   { "add", "$gpred_bnd.$t $1x $2x $1i $2i $i $" },
@@ -63,8 +70,45 @@ static char const *theorem_defs[][2] = {
   { "sub_refl", "$gpred_bnd.$t _ $i $" },
   { "div_refl", "$gpred_bnd.$t $1x $i $" },
 
+  { "add_aa_p", "$gpred_abs.$t $1x $2x $1i $2i $i $" },
+  { "add_aa_o", "$gpred_abs.$t $1x $2x $1i $2i $i $" },
+  { "add_aa_n", "$gpred_abs.$t $1x $2x $1i $2i $i $" },
+  { "sub_aa_p", "$gpred_abs.$t $1x $2x $1i $2i $i $" },
+  { "sub_aa_o", "$gpred_abs.$t $1x $2x $1i $2i $i $" },
+  { "sub_aa_n", "$gpred_abs.$t $1x $2x $1i $2i $i $" },
+  { "mul_aa", "$gpred_abs.$t $1x $2x $1i $2i $i $" },
+  { "div_aa", "$gpred_abs.$t $1x $2x $1i $2i $i $" },
+
+  { "mul_rr", "$gpred_rel.$t $1x $1y $2x $2y $1i $2i $i $" },
+  { "div_rr", "$gpred_rel.$t $1x $1y $2x $3x $1i $2i $i $" },
+  { "compose", "$gpred_rel.$t $1x $1y $2x $2y $1i $2i $i $" },
+
   { "add_fix", "$gpred_fixflt.$t $1x $2x $1c $2c $c $" },
   { "sub_fix", "$gpred_fixflt.$t $1x $2x $1c $2c $c $" },
+  { "mul_fix", "$gpred_fixflt.$t $1x $2x $1c $2c $c $" },
+  { "mul_flt", "$gpred_fixflt.$t $1x $2x $1c $2c $c $" },
+
+  { "nzr_of_abs", "$gpred_nzr.$t $x $1i $" },
+  { "nzr_of_bnd_p", "$gpred_nzr.$t $x $1i $" },
+  { "nzr_of_bnd_n", "$gpred_nzr.$t $x $1i $" },
+  { "nzr_of_nzr_rel", "$gpred_nzr.$t $x $1x $2i $" },
+  { "nzr_of_nzr_rel_rev", "$gpred_nzr.$t $1x $x $2i $" },
+
+  { "bnd_of_nzr_rel", "$gpred_rel.$t $2x $1x $i $1p $2p" },
+  { "rel_of_nzr_bnd", "$gpred_rel.$t $x $1x $2i $" },
+  { "rel_of_equal", "$gpred_rel.$t $x $y $1i $i $" },
+  { "error_of_rel_pp", "$gpred_rel.$t $1x $2x $1i $2i $i $" },
+  { "error_of_rel_po", "$gpred_rel.$t $1x $2x $1i $2i $i $" },
+  { "error_of_rel_pn", "$gpred_rel.$t $1x $2x $1i $2i $i $" },
+  { "error_of_rel_op", "$gpred_rel.$t $1x $2x $1i $2i $i $" },
+  { "error_of_rel_oo", "$gpred_rel.$t $1x $2x $1i $2i $i $" },
+  { "error_of_rel_on", "$gpred_rel.$t $1x $2x $1i $2i $i $" },
+  { "error_of_rel_np", "$gpred_rel.$t $1x $2x $1i $2i $i $" },
+  { "error_of_rel_no", "$gpred_rel.$t $1x $2x $1i $2i $i $" },
+  { "error_of_rel_nn", "$gpred_rel.$t $1x $2x $1i $2i $i $" },
+
+  { "fix_of_singleton_bnd", "$gpred_fixflt.$t $x $1i $c $" },
+  { "flt_of_singleton_bnd", "$gpred_fixflt.$t $x $1i $c $" },
 
   { "fix_of_float", "$gfloat.$t _ _ _ _ $c $" },
   { "flt_of_float", "$gfloat.$t _ _ _ $c _ $" },
