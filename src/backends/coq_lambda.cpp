@@ -109,24 +109,25 @@ static char const *theorem_defs[][2] = {
 
   { "fix_of_singleton_bnd", "$gpred_fixflt.$t $x $1i $c $" },
   { "flt_of_singleton_bnd", "$gpred_fixflt.$t $x $1i $c $" },
-
-  { "fix_of_float", "$gfloat.$t _ _ _ _ $c $" },
-  { "flt_of_float", "$gfloat.$t _ _ _ $c _ $" },
-
-  { "float_of_fix_flt", "$gfloat.$t _ $1x $i $1c _ $2c _ $" },
-
   { "fix_of_flt_bnd", "$gpred_fixflt.$t $1x $2i $c $1c $" },
   { "flt_of_fix_bnd", "$gpred_fixflt.$t $1x $2i $1c $c $" },
 
-  { "bnd_of_bnd_fix", "$gfixed.$t $1x $2c $1i $i $" },
+  { "fix_of_float", "$gfloat.$t _ _ _ _ $c $" },
+  { "flt_of_float", "$gfloat.$t _ _ _ $c _ $" },
+  { "float_of_fix_flt", "$gfloat.$t _ $1x $i $1c _ $2c _ $" },
 
+  { "float_round", "$gfloat.$t _ _ _ $1x $1i $i $" },
+  { "float_enforce", "$gfloat.$t _ _ _ _ $1i $i $" },
+  { "float_absolute_ne", "$gfloat.$t _ _ $1x $1i $i $" },
+  { "float_absolute_wide_ne", "$gfloat.$t _ _ $1x $1i $i $" },
+  { "float_relative_ne", "$gfloat.$t _ _ $1x $1i $i $" },
   { "rel_of_fix_float_ne", "$gfloat.$t _ _ $1c $1x $i $" },
 
+  { "fix_of_fixed", "$gfixed.$t _ _ _ $c $" },
+  { "fixed_of_fix", "$gfixed.$t _ $1x $1c _ $i $" },
+  { "bnd_of_bnd_fix", "$gfixed.$t $1x $2c $1i $i $" },
+
   { "fixed_round", "$gfixed.$t _ _ $1x $1i $i $" },
-  { "float_round", "$gfloat.$t _ _ _ $1x $1i $i $" },
-
-  { "float_absolute_wide_ne", "$gfloat.$t _ _ $1x $1i $i $" },
-
   { "fixed_error_dn", "$gfixed.$t _ _ $i $" },
 
   { "opp_mibs", "$grewriting.$t _ _ $i $1p" },
