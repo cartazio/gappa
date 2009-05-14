@@ -1,3 +1,8 @@
+Version 0.12.0:
+ * back-ends
+   - added back-end for producing Coq lambda terms
+     (support is limited to what the Coq tactic can handle)
+
 Version 0.11.3:
  * Coq back-end
    - applied correct theorems for intervals with infinite bounds
