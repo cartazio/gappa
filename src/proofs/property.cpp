@@ -136,9 +136,6 @@ void property_tree::unique() {
     p->ref = 1;
     --ptr->ref;
     ptr = p;
-    for(std::vector< property_tree >::iterator i = ptr->subtrees.begin(),
-        end = ptr->subtrees.end(); i != end; ++i)
-      if (i->ptr) ++i->ptr->ref;
   }
 }
 

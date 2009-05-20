@@ -65,23 +65,19 @@ static bool is_positive(ast_prop const *p) {
   return is_positive(p->lhs) && is_positive(p->rhs);
 }
 
-static void generate_goal(property_tree &tree, ast_prop const *p) {
-  if (tree.empty())
-    tree = new property_tree::data(p->type != PROP_OR);
-  else
-    tree.unique();
+static void generate_goal(property_tree &tree, ast_prop const *p)
+{
   switch (p->type) {
   case PROP_ATOM:
     tree->leaves.push_back(generate_property(*p->atom, true));
     break;
   case PROP_AND:
   case PROP_OR: {
-    property_tree tmp, *dst;
+    property_tree *dst = &tree;
     if (tree->conjonction != (p->type == PROP_AND)) {
-      tmp = new property_tree::data(p->type == PROP_AND);
-      tree->subtrees.push_back(tmp);
-      dst = &tmp;
-    } else dst = &tree;
+      tree->subtrees.push_back(new property_tree::data(p->type == PROP_AND));
+      dst = &tree->subtrees.back();
+    }
     generate_goal(*dst, p->lhs);
     generate_goal(*dst, p->rhs);
     break; }
@@ -233,12 +229,12 @@ static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
     ctxt.hyp.push_back(i->second);
   }
 
-  if (s.rhs.size() == 1)
-    generate_goal(ctxt.goals, s.rhs[0]);
-  else if (!s.rhs.empty()) {
-    ctxt.goals = new property_tree::data(false);
-    for(ast_prop_vect::const_iterator i = s.rhs.begin(), end = s.rhs.end(); i != end; ++i)
-      generate_goal(ctxt.goals, *i);
+  ctxt.goals = new
+    property_tree::data(s.rhs.size() == 1 && s.rhs[0]->type != PROP_OR);
+  for (ast_prop_vect::const_iterator i = s.rhs.begin(),
+       i_end = s.rhs.end(); i != i_end; ++i)
+  {
+    generate_goal(ctxt.goals, *i);
   }
   contexts.push_back(ctxt);
 }
