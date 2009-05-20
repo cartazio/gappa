@@ -40,7 +40,6 @@ int main(int argc, char **argv)
   {
     std::cerr << "Warning: no path was found for " << dump_real_short(*i) << ".\n";
   }
-  std::vector< bool > proven_contexts;
   bool globally_proven = true;
   for(context_vect::const_iterator i = contexts.begin(), i_end = contexts.end(); i != i_end; ++i) {
     context const &current_context = *i;
@@ -67,12 +66,10 @@ int main(int argc, char **argv)
         enlarger(node_vect(1, n));
         proof_generator->theorem(n);
       }
-      proven_contexts.push_back(true);
       g->show_dangling();
     } else if (current_context.goals.empty()) {
       std::cerr << "Warning: no contradiction was found.\n";
       globally_proven = false;
-      proven_contexts.push_back(false);
     } else {
       node_vect nodes;
       bool proven = current_context.goals.get_nodes(g, nodes);
@@ -95,7 +92,6 @@ int main(int argc, char **argv)
         std::cerr << "Warning: some enclosures were not satisfied.\n";
         globally_proven = false;
       }
-      proven_contexts.push_back(proven);
       g->show_dangling();
     }
     delete g;
