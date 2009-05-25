@@ -189,7 +189,12 @@ static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
     ast_prop const *p = *i;
     ast_atom_bound const &atom = *p->atom;
     if (p->type != PROP_ATOM || !atom.lower == !atom.upper) continue;
-    s.lhs.push_back(new ast_prop(new ast_atom_bound(atom.real, atom.upper, atom.lower)));
+    ast_number const *u = atom.upper;
+    if (!atom.upper && !atom.real2) {
+      real_op const *o = boost::get<real_op const>(atom.real);
+      if (o && o->type == UOP_ABS) u = token_zero;
+    }
+    s.lhs.push_back(new ast_prop(new ast_atom_bound(atom.real, u, atom.lower)));
   }
 
   // register approximates, and intersects properties with common reals
