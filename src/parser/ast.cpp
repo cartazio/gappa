@@ -218,6 +218,28 @@ std::string dump_property(property const &p) {
   return s.str();
 }
 
+std::string dump_prop_tree(property_tree const &pt)
+{
+  std::ostringstream s;
+  if (pt.empty()) return "???";
+  bool first = true;
+  for (std::vector<property>::const_iterator i = pt->leaves.begin(),
+       i_end = pt->leaves.end(); i != i_end; ++i)
+  {
+    if (first) first = false;
+    else s << (pt->conjunction ? " /\\ " : " \\/ ");
+    s << dump_real_short(i->real);
+  }
+  for (std::vector<property_tree>::const_iterator i = pt->subtrees.begin(),
+       i_end = pt->subtrees.end(); i != i_end; ++i)
+  {
+    if (first) first = false;
+    else s << (pt->conjunction ? " /\\ " : " \\/ ");
+    s << '(' << dump_prop_tree(*i) << ')';
+  }
+  return s.str();
+}
+
 function_generator::function_generator(char const *name) {
   ast_ident * i = ast_ident::find(name);
   assert(i->type == ID_NONE);

@@ -75,8 +75,8 @@ struct property_tree {
     std::vector< property > leaves;
     std::vector< property_tree > subtrees;
     unsigned ref;
-    bool conjonction;
-    data(bool b): ref(0), conjonction(b) {}
+    bool conjunction;
+    data(bool b): ref(0), conjunction(b) {}
   };
  private:
   data *ptr;
@@ -101,9 +101,10 @@ struct property_tree {
 
   /**
    * Removes from the tree the leaves and subtrees satisfied by property @a p.
+   * @param force If true, the function removes undefined yet matching leaves.
    * @return false if the tree is not yet fully satisfied.
    */
-  bool remove(property const &p);
+  bool remove(property const &p, bool force = false);
 
   /**
    * Checks if the tree is satisfied by graph @a g.
@@ -111,7 +112,12 @@ struct property_tree {
    * @return false if some properties are not satisfied.
    */
   bool verify(graph_t *g, property *p) const;
-  bool get_nodes(graph_t *, std::vector< node * > &) const;
+
+  /**
+   * Gets the nodes of graph @a g satisfying the property.
+   * Removes the satisfied leaves and subtrees.
+   */
+  void get_nodes(graph_t *g, std::vector< node * > &);
 };
 
 struct context {

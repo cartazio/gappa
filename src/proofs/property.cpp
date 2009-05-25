@@ -143,13 +143,16 @@ void property_tree::unique() {
  * Helper class for filtering out leaves that are satisfied by a given
  * property.
  */
-struct remove_pred1 {
+struct remove_pred1
+{
   property const &prop;
-  bool unrelated;
-  remove_pred1(property const &p): prop(p), unrelated(false) {}
-  bool operator()(property const &p) {
+  bool force, unrelated;
+  remove_pred1(property const &p, bool f)
+    : prop(p), force(f), unrelated(false) {}
+  bool operator()(property const &p)
+  {
     if (p.real == prop.real) {
-      if (!is_defined(p.bnd())) return false;
+      if (!is_defined(p.bnd())) return force;
       if (prop.bnd() <= p.bnd()) return true;
     }
     unrelated = true;
@@ -163,10 +166,12 @@ struct remove_pred1 {
  */
 struct remove_pred2 {
   property const &prop;
-  bool unrelated;
-  remove_pred2(property const &p): prop(p), unrelated(false) {}
-  bool operator()(property_tree &t) {
-    bool b = t.remove(prop);
+  bool force, unrelated;
+  remove_pred2(property const &p, bool f)
+    : prop(p), force(f), unrelated(false) {}
+  bool operator()(property_tree &t)
+  {
+    bool b = t.remove(prop, force);
     if (t.empty()) return true;
     if (!b) unrelated = true;
     return false;
@@ -176,7 +181,7 @@ struct remove_pred2 {
 void property_tree::flatten() {
   if (ptr->subtrees.size() != 1) return;
   property_tree &t = ptr->subtrees[0];
-  if (!ptr->leaves.empty() && t.ptr->conjonction != ptr->conjonction) return;
+  if (!ptr->leaves.empty() && t.ptr->conjunction != ptr->conjunction) return;
   t.unique();
   data *p = t.ptr;
   p->leaves.insert(p->leaves.end(), ptr->leaves.begin(), ptr->leaves.end());
@@ -185,21 +190,22 @@ void property_tree::flatten() {
   ptr = p;
 }
 
-bool property_tree::remove(property const &p) {
+bool property_tree::remove(property const &p, bool force)
+{
   if (!ptr) return true;
   unique();
   assert(p.real.pred() == PRED_BND || p.real.pred() == PRED_REL);
   {
   // Filter out satisfied leaves.
-  remove_pred1 pred1(p);
+  remove_pred1 pred1(p, force);
   std::vector< property >::iterator end1 = ptr->leaves.end(),
     i1 = std::remove_if(ptr->leaves.begin(), end1, pred1);
-  if (i1 != end1 && !ptr->conjonction) goto kill_tree;
+  if (i1 != end1 && !ptr->conjunction) goto kill_tree;
   // Filter out satisfied subtrees.
-  remove_pred2 pred2(p);
+  remove_pred2 pred2(p, force);
   std::vector< property_tree >::iterator end2 = ptr->subtrees.end(),
     i2 = std::remove_if(ptr->subtrees.begin(), end2, pred2);
-  if (i2 != end2 && !ptr->conjonction) goto kill_tree;
+  if (i2 != end2 && !ptr->conjunction) goto kill_tree;
   ptr->leaves.erase(i1, end1);
   ptr->subtrees.erase(i2, end2);
   if (ptr->leaves.empty() && ptr->subtrees.empty()) goto kill_tree;
@@ -216,7 +222,7 @@ bool property_tree::verify(graph_t *g, property *p) const
 {
   if (!ptr) return false;
   graph_loader loader(g);
-  bool b = ptr->conjonction;
+  bool b = ptr->conjunction;
   for (std::vector< property >::const_iterator i = ptr->leaves.begin(),
        end = ptr->leaves.end(); i != end; ++i)
   {
@@ -268,10 +274,10 @@ bool property_tree::get_nodes_aux(goal_vect &goals) const
   {
     if (node *n = find_proof(*i)) {
       goals.push_back(std::make_pair(n, i->bnd()));
-      if (!ptr->conjonction) return true;
+      if (!ptr->conjunction) return true;
     } else all = false;
   }
-  if (ptr->conjonction) {
+  if (ptr->conjunction) {
     for(std::vector< property_tree >::const_iterator i = ptr->subtrees.begin(),
         end = ptr->subtrees.end(); i != end; ++i)
       if (!i->get_nodes_aux(goals)) all = false;
@@ -287,11 +293,12 @@ bool property_tree::get_nodes_aux(goal_vect &goals) const
   }
 }
 
-bool property_tree::get_nodes(graph_t *g, node_vect &goals) const {
+void property_tree::get_nodes(graph_t *g, node_vect &goals)
+{
   assert(ptr);
   graph_loader loader(g);
   goal_vect gs;
-  bool all = get_nodes_aux(gs);
+  get_nodes_aux(gs);
   typedef std::map< node *, interval > node_map;
   node_map m;
   for(goal_vect::const_iterator i = gs.begin(), end = gs.end(); i != end; ++i) {
@@ -308,9 +315,9 @@ bool property_tree::get_nodes(graph_t *g, node_vect &goals) const {
     property p(i->first->get_result());
     if (is_defined(i->second)) p.bnd() = i->second;
     goals.push_back(new goal_node(p, i->first));
+    remove(p, true);
   }
   g->replace_known(goals);
-  return all;
 }
 
 struct remove_pred3 {

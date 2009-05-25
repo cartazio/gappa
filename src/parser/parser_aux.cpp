@@ -74,7 +74,7 @@ static void generate_goal(property_tree &tree, ast_prop const *p)
   case PROP_AND:
   case PROP_OR: {
     property_tree *dst = &tree;
-    if (tree->conjonction != (p->type == PROP_AND)) {
+    if (tree->conjunction != (p->type == PROP_AND)) {
       tree->subtrees.push_back(new property_tree::data(p->type == PROP_AND));
       dst = &tree->subtrees.back();
     }

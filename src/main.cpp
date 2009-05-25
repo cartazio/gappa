@@ -72,7 +72,8 @@ int main(int argc, char **argv)
       globally_proven = false;
     } else {
       node_vect nodes;
-      bool proven = current_context.goals.get_nodes(g, nodes);
+      property_tree pt = current_context.goals;
+      pt.get_nodes(g, nodes);
       if (proof_generator) enlarger(nodes);
       typedef std::map< std::string, node * > named_nodes;
       named_nodes results;
@@ -88,8 +89,10 @@ int main(int argc, char **argv)
         detailed_io = false;
         if (proof_generator) proof_generator->theorem(n);
       }
-      if (!proven) {
-        std::cerr << "Warning: some enclosures were not satisfied.\n";
+      if (!pt.empty()) {
+        std::cerr << "Warning: some enclosures were not satisfied.\n"
+          "Missing ";
+        std::cerr << dump_prop_tree(pt) << '\n';
         globally_proven = false;
       }
       g->show_dangling();
