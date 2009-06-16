@@ -715,7 +715,9 @@ std::string coq_lambda_backend::rewrite
 
 std::string coq_lambda_backend::theorem(node *n)
 {
-  *out << "(* " << n->get_hypotheses().size();
+  int nb_hyps = n->get_hypotheses().size();
+  if (n->type == GOAL && n->get_subproofs()[0]->type == HYPOTHESIS) nb_hyps = 1;
+  *out << "(* " << nb_hyps;
   if (n->get_result().null()) *out << ",contradiction";
   *out << " *)\n(fun ";
   std::ostringstream buf;
