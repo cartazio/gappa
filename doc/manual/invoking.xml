@@ -1,21 +1,30 @@
 <section>
 <title>Input and output</title>
-<para>Gappa reads a script on its standard input. Such a script is made of
+<para>Gappa reads the script whose filename is passed as an argument to
+the tool, or on its standard input if none. Such a script is made of
 three parts: the definitions, the logical formula, and the hints. Warning
-messages, error messages, and results are displayed on the standard error
-output. Gappa sends to the standard output a formal proof of the logical
-formula; its format depends on the selected back-end.</para>
-<para>For example, the command-line below feeds Gappa with the
-<filename>test.g</filename> file and stores the generated Coq proof script
-in a <filename>test.v</filename> file. The proof can then be automatically
-checked by the Coq proof assistant. Since nothing is displayed, it means no
-errors were detected.</para>
+messages, error messages, and results, are displayed on the standard
+error output. Gappa also sends to the standard output a formal proof of
+the logical formula; its format depends on the selected back-end.
+Finally, if the tool was unable to prove some goals, its return code is a
+nonzero value.</para>
+
+<para>For example, the following command lines create a simple script in
+file <filename>test.g</filename>, pass it to Gappa, and store the
+generated Coq proof in file <filename>test.v</filename> file. They also
+test the return code of Gappa and send the generated proof to Coq so that
+it is automatically checked. Since the proof checker does not display
+anything, it means no errors were detected and the result computed by
+Gappa is correct.</para>
 <screen><![CDATA[$ echo "{ x in [-2,2] -> x * x in ? }" > test.g
 
-$ gappa -Bcoq < test.g > test.v
+$ gappa -Bcoq test.g > test.v
 
 Results for x in [-2, 2]:
 x * x in [0, 1b2 {4, 2^(2)}]
+
+$ echo "Return code is $?"
+Return code is 0
 
 $ coqc -I path/to/gappalib-coq test.v
 
@@ -36,9 +45,9 @@ scripts.</para>
 <section>
 <title>Null back-end.</title>
 <para>Option: <code>-Bnull</code></para>
-<para>Do not enable any back-end. This is the default.</para>
-<para>This is also the only back-end compatible with the
-<code>-Munconstrained</code> option.</para>
+<para>Do not enable any back-end. This is the default behavior. This is
+also the only back-end compatible with the <code>-Munconstrained</code>
+option.</para>
 </section>
 
 <section>
@@ -53,8 +62,16 @@ Coq.</para>
 <section>
 <title>HOL Light back-end</title>
 <para>Option: <code>-Bholl</code></para>
-<para>Similar to the previous option, but for the HOL Light proof-checker this
-time.</para>
+<para>Similar to the previous option, but for the HOL Light proof-checker.</para>
+</section>
+
+<section>
+<title>Coq back-end</title>
+<para>Option: <code>-Bcoq-lambda</code></para>
+<para>This back-end is used by the <code>gappa</code> tactic available
+for the Coq proof checker. It generates a lambda-term that can be
+directly loaded by the proof checker, but it only supports the features
+needed by the tactic: no bisection nor rewriting.</para>
 </section>
 
 </section>
@@ -73,9 +90,11 @@ for most uses.</para>
 <section>
 <title>Dichotomy depth</title>
 <para>Option: <code>-Edichotomy=</code><emphasis>integer</emphasis></para>
-<para>This option limits the depth of a dichotomy split. The default value is
-100. It means that an interval of width 1 is potentially split into 2^100
-intervals of width 2^-100.</para>
+<para>This option limits the depth of a dichotomy split. The default
+value is 100. It means that an interval of width 1 is potentially split
+into <texinline>2^{100}</texinline> intervals of width
+<texinline>2^{-100}</texinline> relatively to the original interval. This
+should be sufficient for most uses too.</para>
 </section>
 
 <section>
@@ -106,8 +125,10 @@ check that <code>x</code> is not zero before applying the lemma proving
 as it makes it possible to get some early results about them without having to
 prove that they are well-defined.</para>
 <para>At the end of its run, Gappa displays all the facts that are left
-unproven. In the example below, the property <code>NZR</code> means that a value
-is not zero.</para>
+unproven. In the following example, the property <code>NZR</code>
+indicates that Gappa possibly need to prove that a value (namely <code>x
+- 1</code>, which appears as a denominator and is equal to zero for
+<code>x</code> equal to 1) is nonzero.</para>
 <programlisting><![CDATA[{ x in [1,2] ->
   (x + 1) / (x + 1) in ? /\ (x - 1) / (x - 1) in ? }]]></programlisting>
 <screen>Results for x in [1, 2]:
@@ -120,15 +141,16 @@ of its run, it may contain false positive. This is especially true when one of
 the unproven properties actually relies on the proof of another one. Both will
 be displayed as unproven, although only the second one needs to be
 proved.</para>
-<para>This mode cannot be used when a proof back-end is selected.</para>
+<para>This mode cannot be used when a proof back-end is selected, as a
+generated proof would contain holes.</para>
 </section>
 
 <section>
 <title>Improving generated proofs</title>
 <para>Option: <code>-Mexpensive</code></para>
-<para>In this mode, Gappa tries to find shorter proofs. While this mode may
-considerably slow down the computations, its effectiveness is far from being
-guaranteed.</para>
+<para>In this mode, Gappa tries to find shorter proofs. Although this
+mode may considerably slow down the computations, its effectiveness is
+unfortunately far from being guaranteed.</para>
 </section>
 
 <section>

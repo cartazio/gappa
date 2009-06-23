@@ -1,4 +1,4 @@
-<section>
+<section id="example-x1mx">
 <title>A simple example to start from: x * (1 - x)</title>
 
 <section>
@@ -131,18 +131,19 @@ absolute error.</para>
 y rnd= x * (1 - x);                    # equivalent to y = rnd(x * rnd(1 - x))
 z = x * (1 - x);]]></programlisting>
 
-<para>The syntax of the notations is simple: The left hand side is a name
-representing the expression on the right hand side. Using one side or the other
-in the logical formula is strictly equivalent. Gappa will use the name on the
-left when displaying the results and generating the proofs though, in order to
-improve their readability.</para>
+<para>The syntax for notations is simple. The left-hand-side identifier
+is a name representing the expression on the right-hand side. Using one
+side or the other in the logical formula is strictly equivalent. Gappa
+will use the defined identifier when displaying the results and
+generating the proofs though, in order to improve their
+readability.</para>
 
 <para>The second and third notations have already been presented. The first
 one defines <code>x</code> as the rounded value of a real number <code>xx</code>.
 In the previous example, we had not expressed this property of <code>x</code>:
 it is a floating-point number. This additional piece of information will help
 Gappa to improve the bound on the error bound. Without it, a theorem like
-Sterbenz's cannot apply to the <code>1 - x</code> subtraction.</para>
+Sterbenz' lemma cannot apply to the <code>1 - x</code> subtraction.</para>
 </section>
 
 <section>
@@ -173,8 +174,9 @@ for the right hand side. Please note that this rewriting only applies when Gappa
 tries to bound the expression, not when it tries to bound a bigger
 expression.</para>
 
-<para>The two other hints indicate that Gappa should bound the left hand sides
-by doing a case split on the right hand side. It only works if the logical
+<para>The two other hints indicate that Gappa should bound the
+left-hand-side values by doing a <link linkend="hint-dichotomy">case
+split</link> on the right-hand side. It only works if the logical
 proposition requires explicit bounds for the expression on the left hand
 side.</para>
 
@@ -189,7 +191,7 @@ side.</para>
 @rnd = float< ieee_32, ne >;
 x = rnd(xx);                           # x is a floating-point number
 y rnd= x * (1 - x);                    # equivalent to y = rnd(x * rnd(1 - x))
-z = x * (1 - x);
+z = x * (1 - x);                       # the value we want to approximate
 
 # the logical property
 { x in [0,1] -> y in [0,0.25] /\ y - z in [-3b-27,3b-27] }

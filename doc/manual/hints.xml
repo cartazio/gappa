@@ -1,5 +1,8 @@
 <section>
-<title>Rewriting</title>
+<title>Providing hints</title>
+
+<section>
+<title>Rewriting rules</title>
 
 <para>Internally, Gappa tries to compute the range of mathematical terms. For
 example, if the tool has to bound the product of two factors, it will check if
@@ -35,7 +38,7 @@ divisors. Note that this option obviously prevents the proof generation.</para>
 </section>
 
 <section>
-<title>Approximations</title>
+<title>Approximated expressions</title>
 
 <para>As mentioned before, Gappa has an internal database of rewriting rules.
 Some of these rules need to know about accurate and approximate terms. Without
@@ -65,8 +68,8 @@ enables a rewriting rule that completes the proof.</para>
 # x ~ y;]]></programlisting>
 </section>
 
-<section>
-<title>Bisection</title>
+<section id="hint-dichotomy">
+<title>Dichotomy search</title>
 
 <para>The last kind of hint can be used when Gappa is unable to prove a formula
 but would be able to prove it if the hypothesis ranges were not so wide. Such a
@@ -128,5 +131,6 @@ example of a complex bisection: it asks Gappa to find a set of sub-ranges on
 on <code>v</code> is split into three sub-intervals.</para>
 
 <programlisting><![CDATA[b $ u, v in 3]]></programlisting>
+</section>
 
 </section>

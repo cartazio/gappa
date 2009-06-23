@@ -10,7 +10,7 @@ and <filename>src/backends</filename> directories.</para>
 </section>
 
 <section>
-<title>Defining new functions</title>
+<title>Defining new rounding operators</title>
 
 <section>
 <title>Function classes</title>

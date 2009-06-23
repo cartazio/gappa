@@ -1,5 +1,26 @@
 <section>
-<title>Input sections</title>
+<title>Sections of a Gappa script</title>
+
+<para>A Gappa script contains three parts. The first one is used to give names
+to some expressions in order to simplify the writing of the next parts. The
+second one is the logical formula one wants to prove with the tool. The third
+one gives some hints to Gappa on how to prove it.</para>
+
+<para>The following script shows these three parts on the
+<link linkend="example-x1mx">first example</link>.</para>
+<programlisting><![CDATA[# some notations for making the script readable
+@rnd = float< ieee_32, ne >;
+x = rnd(xx);
+y rnd= x * (1 - x);
+z = x * (1 - x);
+
+# the logical formula that Gappa will try (and succeed) to prove
+{ x in [0,1] -> y in [0,0.25] /\ y - z in [-3b-27,3b-27] }
+
+# three hints to help Gappa finding the proof
+z -> 0.25 - (x - 0.5) * (x - 0.5);
+y $ x;
+y - z $ x;]]></programlisting>
 
 <section>
 <title>Logical formula</title>
@@ -18,23 +39,64 @@ the rules of sequent calculus. Each of the new formulas will then be verified
 by Gappa. Ranges on the right of these sub-formulas can be left unspecified.
 Gappa will then suggest a range such that the logical formula is verified.</para>
 
-<programlisting><![CDATA[(1) x <= 1 /\ x - 2 in [-2,0] -> x + 1 in [0,2] \/ x + y in ?
-(2) x <= 1 /\ x - 2 in [-2,0] /\ y in [3,4] -> x + y in ?]]></programlisting>
+<programlisting><![CDATA[(1)  x <= 1 /\ x - 2 in [-2,0] -> x + 1 in [0,2] \/ x + y in ?
+(2)  x <= 1 /\ x - 2 in [-2,0] /\ y in [3,4] -> x + y in ?]]></programlisting>
 
-<para>In order to be useful in the proof of the whole formula, the second
-sub-formula requires the first one to hold true. If Gappa cannot verify the
-first sub-formula, it will skip the verification of the second one.</para>
+<section>
+<title>Inequalities</title>
 
-<para>Inequalities can be present on both sides of a sub-formula. On the left,
+<para>Inequalities can be used instead of enclosures. The tool will display
+them as intervals with an infinite bound.</para>
+
+<para>They can be present on both sides of a sub-formula. On the left,
 it will be used only if Gappa is already able to compute an enclosure of the
-expression by another way. On the right, Gappa will put a reverted copy on the
-left if allowed by classical logic, in order to increase the number of
-available hypotheses.</para>
+expression by another way.</para>
 
-<para>When proving a disjunction in a sub-formula, one of the sub-terms of this
-disjunction has to always hold with respect to the set of hypotheses. If this
-is not always the same sub-term that holds, Gappa will be unable to prove that
-the whole disjunction holds.</para>
+<para>On the right, Gappa will put a reverted copy on the
+left in order to increase the number of available hypotheses, if the equality
+was part of a disjunction at top level.</para>
+
+<para>For instance, given the first formula below, Gappa actually tries to
+prove the second one.</para>
+<programlisting><![CDATA[(before)  a <= 1 /\ b in [2,3] -> ((c >= 4 \/ d in [5,6]) /\ e in [7,8]) \/ f <= 9
+(after)   a <= 1 /\ b in [2,3] /\ f >= 9 -> ((c >= 4 \/ d in [5,6]) /\ e in [7,8]) \/ f <= 9]]></programlisting>
+
+<para>In particular, when displaying the results, the tool will display the new
+hypothesis on <code>f</code>:</para>
+<screen><![CDATA[Results for a in [-inf, 1] and b in [2, 3] and f in [9, inf]:]]></screen>
+
+<para>Inequalities that give an upper bound on an absolute value are treated
+differently. They are assumed to be full enclosures with a lower bound equal
+to zero. In other words, <code>|x| &lt;= 1</code> is syntactic sugar for
+<code>|x| in [0,1]</code>.</para>
+</section>
+
+<section>
+<title>Relative errors</title>
+
+<para>The relative error between an approximate value <code>x</code> and a more
+precise value <code>y</code> is expressed by <code>(x - y) / y</code>. For
+instance, when one wants to prove a bound on it, one can write:</para>
+<programlisting><![CDATA[{ ... -> |(x - y) / y| <= 0x1p-53 }]]></programlisting>
+
+<para>However, this bound can only be obtained if <code>y</code> is (proved to
+be) nonzero. Similarly, if a hypothesis was a bound on a relative error, this
+hypothesis would be usable by Gappa only if it can prove that its denominator
+is nonzero.</para>
+
+<para>Gappa provides another way of expressing relative errors which does not
+depend on the denominator being nonzero. It cannot be used as a subexpression;
+it can only be used as the left-hand side of an enclosure:</para>
+<programlisting><![CDATA[{ ... -> x -/ y in [-0x1p-53,0x1p-53] }]]></programlisting>
+
+<para>This enclosure on the relative error represents the following
+proposition: <texinline>\exists \epsilon \in [-2^{-53},2^{-53}],\ x = y
+\times (1 + \epsilon)</texinline>.</para>
+
+<para>When the bounds on a relative error are symmetric, the enclosure can be
+written as <code>|x -/ y| &lt;= ...</code> instead.</para>
+</section>
+
 </section>
 
 <section>
@@ -81,8 +143,10 @@ rules. Hints will be described in depth later.</para>
 
 </section>
 
+<!-- ###### -->
+
 <section>
-<title>Preferred expressions</title>
+<title>Preferred expressions and other tricks</title>
 
 <para>Gappa rewrites expressions by matching them with well-known patterns. The
 enclosure of an unmatchable expression will necessarily have to be computed
@@ -96,20 +160,23 @@ when expressing the computational errors.</para>
 <para>Let <code>exact</code> be an arithmetic expression and <code>approx</code>
 an approximation of <code>exact</code>. The approximation usually contains
 rounding operators while the exact expression does not. The absolute error
-between these two expressions is their difference: <code>approx - exact</code>.
-The relative error is the quotient between the absolute error and the exact
-value: <code>(approx - exact) / exact</code>.</para>
+between these two expressions is their difference: <code>approx - exact</code>.</para>
 
 <para>Writing the errors differently will prevent Gappa from applying
 theorems on rounding errors: <code>-(x - rnd(x))</code> may lead to a
 worse enclosure than <code>rnd(x) - x</code>.</para>
+
+<para>The situation is similar for the relative error. It should be
+expressed as the quotient between the absolute error and the exact value:
+<code>(approx - exact) / exact</code>. For enclosures of relative errors,
+this is the same: <code>approx -/ exact</code>.</para>
 </section>
 
 <section>
 <title>Global errors</title>
 
 <para>The <code>approx</code> and <code>exact</code> expressions need to have
-a similar structure in order for the rewriting rules to kick in. E.g. if
+a similar structure in order for the rewriting rules to kick in. E.g., if
 <code>exact</code> is a sum of two terms <code>a</code> and <code>b</code>,
 then <code>approx</code> has to be the sum of two terms <code>c</code> and
 <code>d</code> such that <code>c</code> and <code>d</code> are approximations
@@ -119,11 +186,21 @@ of <code>a</code> and <code>b</code> respectively.</para>
 <code>(a + b) - (c + d) -&gt; (a - c) + (b - d)</code>. Similarly, the
 rewriting rules for the multiplication keep the same ordering of sub-terms.
 For example, one of the rules is:
-<code>a * b - c * d -&gt; (a - c) * b + c * (b - d)</code>.</para>
+<code>a * b - c * d -&gt; (a - c) * b + c * (b - d)</code>. Therefore,
+one should try not to mess with the structure of expressions.</para>
 
-<para>If the two sides of an error expression do not have a similar structure,
-a user rewriting rule will have to be added in order to put them in a suitable
-state.</para>
+<para>If the two sides of an error expression happen to not have a
+similar structure, then a user rewriting rule has to be added in order to
+put them in a suitable state. For instance, let us assume we are
+interested in the absolute error between <code>a</code> and
+<code>d</code>, but they have dissimilar structures. Yet there are two
+expressions <code>b</code> and <code>c</code> that are equal and with
+structures similar to <code>a</code> for <code>b</code> and
+<code>d</code> for <code>c</code>. Then we just have to add the following
+hints to help Gappa:</para>
+<programlisting><![CDATA[b - c -> 0; # or "b-c in [0,0]" as a hypothesis
+a ~ b; # a is an approximation of b
+c ~ d; # c is an approximation of d]]></programlisting>
 </section>
 
 <section>
@@ -138,6 +215,43 @@ e in [0,0]</code>. Similarly, to test that only 17 bits are needed to
 represent this expression (assuming it is either zero or no closer to
 zero than <texinline>2^{-2001}</texinline>): <code>float&lt;17, -2001,
 ne&gt;(e) - e in [0,0]</code>.</para>
+
+<para>When some terms are known to be in a particular subset, Gappa can
+be made aware of it by defining these terms as rounded values of some
+other terms. For instance, if <code>x</code> is an integer between 5 and
+15 by hypothesis, the formula can be written by introducing a dummy
+variable <code>x_</code>:</para>
+<programlisting><![CDATA[x = int<dn>(x_); # the rounding direction does not matter
+{ x in [5,15] -> ... }]]></programlisting>
+
+<para>Note that Gappa is able to deduce from <code>x in [7.1,8.6]</code>
+that <code>x</code> (which is only a name for the expression
+<code>int&lt;dn&gt;(x_)</code>) is actually equal to 7. In particular,
+asking Gappa to perform a <link linkend="hint-dichotomy">dichotomy</link>
+on <code>x</code> will cause the tool to consider each integer value
+separately, if needed for the proof.</para>
+
+<para>Finally, an expression may be known to take a few separate values,
+but not equally distributed. In some particular cases, it may possible to
+use a complicated expression instead of a plain disjunction. This
+prevents Gappa from separately considering all the branches. For
+instance, if <code>x</code> can take only the three values 0, 2, and 17,
+one can write:</para>
+<programlisting><![CDATA[i = int<dn>(i_);
+x = i * (19b-1 * i - 15b-1);
+{ i in [-1,1] -> ... }
+$ i in 3; # this dichotomy hint helps Gappa to understand that i is either -1, 0, or 1]]></programlisting>
+</section>
+
+<section>
+<title>Disjunction</title>
+
+<para>When a formula contains a disjunction in its, one of the sides of
+this disjunction has to always hold with respect to the set of
+hypotheses. This is especially important when performing dichotomies.
+Even if Gappa is able to prove the formula in each particular branch of a
+dichotomy, if a different property of the disjunction is used each time,
+the tool will fail to prove the formula in the general case.</para>
 </section>
 
 </section>

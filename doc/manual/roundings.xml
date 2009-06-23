@@ -31,6 +31,11 @@ a real number that cannot be exactly represented in the destination format.</par
 <varlistentry><term><code>nu</code></term>
   <listitem><para>to nearest, tie breaking toward plus infinity</para></listitem></varlistentry>
 </variablelist>
+
+<para>The rounding directions mandated by the IEEE-754 standard are
+<code>ne</code> (default mode, rounding to nearest), <code>zr</code>,
+<code>dn</code>, <code>up</code>, and <code>na</code> (introduced for
+decimal arithmetic).</para>
 </section>
 
 <section>

@@ -65,70 +65,96 @@ the highest precedence.</para>
 
 <programlisting><![CDATA[    0 $accept: BLOB $end
 
-    1 BLOB: PROG '{' PROP '}' HINTS
+    1 BLOB: BLOB1 HINTS
 
-    2 PROP: REAL LE SNUMBER
-    3     | REAL IN '[' SNUMBER ',' SNUMBER ']'
-    4     | REAL IN '?'
-    5     | REAL GE SNUMBER
-    6     | PROP AND PROP
-    7     | PROP OR PROP
-    8     | PROP IMPL PROP
-    9     | NOT PROP
-   10     | '(' PROP ')'
+    2 BLOB1: PROG '{' PROP '}'
 
-   11 SNUMBER: NUMBER
-   12        | '+' NUMBER
-   13        | '-' NUMBER
+    3 PROP: REAL LE SNUMBER
+    4     | REAL IN '[' SNUMBER ',' SNUMBER ']'
+    5     | REAL IN '?'
+    6     | REAL GE SNUMBER
+    7     | REAL RDIV REAL IN '[' SNUMBER ',' SNUMBER ']'
+    8     | '|' REAL RDIV REAL '|' LE NUMBER
+    9     | REAL RDIV REAL IN '?'
+   10     | PROP AND PROP
+   11     | PROP OR PROP
+   12     | PROP IMPL PROP
+   13     | NOT PROP
+   14     | '(' PROP ')'
 
-   14 FUNCTION_PARAM: SNUMBER
-   15               | IDENT
+   15 SNUMBER: NUMBER
+   16        | '+' NUMBER
+   17        | '-' NUMBER
 
-   16 FUNCTION_PARAMS_AUX: FUNCTION_PARAM
-   17                    | FUNCTION_PARAMS_AUX ',' FUNCTION_PARAM
+   18 INTEGER: NUMBER
 
-   18 FUNCTION_PARAMS: /* empty */
-   19                | '<' FUNCTION_PARAMS_AUX '>'
+   19 SINTEGER: SNUMBER
 
-   20 FUNCTION: IDENT FUNCTION_PARAMS
+   20 FUNCTION_PARAM: SINTEGER
+   21               | IDENT
 
-   21 EQUAL: '='
-   22      | FUNCTION '='
+   22 FUNCTION_PARAMS_AUX: FUNCTION_PARAM
+   23                    | FUNCTION_PARAMS_AUX ',' FUNCTION_PARAM
 
-   23 PROG: /* empty */
-   24     | PROG IDENT EQUAL REAL ';'
-   25     | PROG '@' IDENT '=' FUNCTION ';'
+   24 FUNCTION_PARAMS: /* empty */
+   25                | '<' FUNCTION_PARAMS_AUX '>'
 
-   26 REAL: SNUMBER
-   27     | IDENT
-   28     | FUNCTION '(' REALS ')'
-   29     | REAL '+' REAL
-   30     | REAL '-' REAL
-   31     | REAL '*' REAL
-   32     | REAL '/' REAL
-   33     | '|' REAL '|'
-   34     | SQRT '(' REAL ')'
-   35     | '(' REAL ')'
-   36     | '+' REAL
-   37     | '-' REAL
+   26 FUNCTION: FUNID FUNCTION_PARAMS
 
-   38 REALS: REAL
-   39      | REALS ',' REAL
+   27 EQUAL: '='
+   28      | FUNCTION '='
 
-   40 DPOINTS: '(' SNUMBER
-   41        | DPOINTS ',' SNUMBER
-   42        | DPOINTS ')'
+   29 PROG: /* empty */
+   30     | PROG IDENT EQUAL REAL ';'
+   31     | PROG '@' IDENT '=' FUNCTION ';'
+   32     | PROG VARID
+   33     | PROG FUNID
+   34     | PROG '@' VARID
+   35     | PROG '@' FUNID
 
-   43 DVAR: REAL
-   44     | REAL IN NUMBER
-   45     | REAL IN DPOINTS
+   36 REAL: SNUMBER
+   37     | VARID
+   38     | IDENT
+   39     | FUNCTION '(' REALS ')'
+   40     | REAL '+' REAL
+   41     | REAL '-' REAL
+   42     | REAL '*' REAL
+   43     | REAL '/' REAL
+   44     | '|' REAL '|'
+   45     | SQRT '(' REAL ')'
+   46     | FMA '(' REAL ',' REAL ',' REAL ')'
+   47     | '(' REAL ')'
+   48     | '+' REAL
+   49     | '-' REAL
 
-   46 DVARS: DVAR
-   47      | DVARS ',' DVAR
+   50 REALS: REAL
+   51      | REALS ',' REAL
 
-   48 HINTS: /* empty */
-   49      | HINTS REAL IMPL REAL ';'
-   50      | HINTS REALS '$' DVARS ';'
-   51      | HINTS '$' DVARS ';'
-   52      | HINTS REAL '~' REAL ';']]></programlisting>
+   52 DPOINTS: SNUMBER
+   53        | DPOINTS ',' SNUMBER
+
+   54 DVAR: REAL
+   55     | REAL IN INTEGER
+   56     | REAL IN '(' DPOINTS ')'
+
+   57 DVARS: DVAR
+   58      | DVARS ',' DVAR
+
+   59 PRECOND: REAL NE SINTEGER
+   60        | REAL LE SINTEGER
+   61        | REAL GE SINTEGER
+   62        | REAL '<' SINTEGER
+   63        | REAL '>' SINTEGER
+
+   64 PRECONDS_AUX: PRECOND
+   65             | PRECONDS_AUX ',' PRECOND
+
+   66 PRECONDS: /* empty */
+   67         | '{' PRECONDS_AUX '}'
+
+   68 HINTS: /* empty */
+   69      | HINTS REAL IMPL REAL PRECONDS ';'
+   70      | HINTS REALS '$' DVARS ';'
+   71      | HINTS '$' DVARS ';'
+   72      | HINTS REAL '~' REAL ';']]></programlisting>
 </section>
