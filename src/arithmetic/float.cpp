@@ -192,20 +192,22 @@ interval float_rounding_class::absolute_error_from_approx_abs(interval const &i,
   return from_exponent(e_err, 0);
 }
 
-interval float_rounding_class::relative_error_from_exact_abs(interval const &i, std::string &name) const {
-  if (parameter_constrained &&
-      !is_empty(intersect(i, from_exponent(format.min_exp + format.prec - 1, 0))))
+interval float_rounding_class::relative_error_from_exact_abs(interval const &i, std::string &name) const
+{
+  bool fail = !is_empty(intersect(i, from_exponent(format.min_exp + format.prec - 1, 0)));
+  if (parameter_constrained && fail)
     return interval();
-  name = "float_relative" + std::string(1, ',') + direction_names[type];
+  name = fail ? "$FALSE" : "float_relative" + std::string(1, ',') + direction_names[type];
   if (rnd_to_nearest(type)) return from_exponent(-format.prec, 0);
   return from_exponent(1 - format.prec, rnd_global_direction_rel(type)); // cannot use i since it is ABS
 }
 
-interval float_rounding_class::relative_error_from_approx_abs(interval const &i, std::string &name) const {
-  if (parameter_constrained &&
-      !is_empty(intersect(i, from_exponent(format.min_exp + format.prec - 1, 0))))
+interval float_rounding_class::relative_error_from_approx_abs(interval const &i, std::string &name) const
+{
+  bool fail = !is_empty(intersect(i, from_exponent(format.min_exp + format.prec - 1, 0)));
+  if (parameter_constrained && fail)
     return interval();
-  name = "float_relative_inv" + std::string(1, ',') + direction_names[type];
+  name = fail ? "$FALSE" : "float_relative_inv" + std::string(1, ',') + direction_names[type];
   if (rnd_to_nearest(type)) return from_exponent(-format.prec, 0);
   return from_exponent(1 - format.prec, rnd_global_direction_rel(type)); // cannot use i since it is ABS
 }

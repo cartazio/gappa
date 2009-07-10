@@ -36,6 +36,7 @@ node *rewriting_scheme::generate_proof() const {
   node *n = find_proof(rewritten);
   if (!n) return NULL;
   std::vector< property > hyps;
+  bool fail = false;
   for (pattern_cond_vect::const_iterator i = conditions.begin(),
        i_end = conditions.end(); i != i_end; ++i)
   {
@@ -78,12 +79,13 @@ node *rewriting_scheme::generate_proof() const {
       }
     }
     if (parameter_constrained) return NULL;
+    fail = true;
     hyps.push_back(p);
   }
   property const &res = n->get_result();
   hyps.push_back(res);
   return create_theorem(hyps.size(), &*hyps.begin(), property(real, res.bnd()),
-                        name, identity_updater);
+                        fail ? "$FALSE" : name, identity_updater);
 }
 
 // REWRITING_FACTORY
