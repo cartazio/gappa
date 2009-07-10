@@ -303,6 +303,7 @@ modus_node::modus_node(theorem_node *n)
     {
       assert(!parameter_constrained);
       m = create_theorem(0, NULL, *i, "$FALSE");
+      m->nb_missing = 1;
     }
     assert(m && dominates(m, this));
     fill_hyps(v, ghyp, m);
