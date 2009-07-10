@@ -287,9 +287,8 @@ modus_node::modus_node(theorem_node *n)
   target = n;
   if (n->name == "$FALSE")
   {
-    assert(!parameter_constrained && n->hyp.size() == 0);
-    nb_missing = 1;
-    return;
+    assert(!parameter_constrained);
+    nb_missing = 1 + n->hyp.size();
   }
   int missing = 0;
   property_vect const &ghyp = graph->get_hypotheses();
