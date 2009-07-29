@@ -234,13 +234,17 @@ static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
     ctxt.hyp.push_back(i->second);
   }
 
-  ctxt.goals = new
-    property_tree::data(s.rhs.size() == 1 && s.rhs[0]->type != PROP_OR);
-  for (ast_prop_vect::const_iterator i = s.rhs.begin(),
-       i_end = s.rhs.end(); i != i_end; ++i)
+  if (!s.rhs.empty())
   {
-    generate_goal(ctxt.goals, *i);
+    ctxt.goals = new
+      property_tree::data(s.rhs.size() == 1 && s.rhs[0]->type != PROP_OR);
+    for (ast_prop_vect::const_iterator i = s.rhs.begin(),
+         i_end = s.rhs.end(); i != i_end; ++i)
+    {
+      generate_goal(ctxt.goals, *i);
+    }
   }
+
   contexts.push_back(ctxt);
 }
 
