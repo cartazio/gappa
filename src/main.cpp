@@ -60,7 +60,7 @@ int main(int argc, char **argv)
       if (!current_context.goals.empty())
         std::cerr << "Warning: hypotheses are in contradiction, any result is true.\n";
       else
-        std::cerr << "a contradiction was built from the hypotheses.\n";
+        std::cerr << "A contradiction was built from the hypotheses.\n";
       if (proof_generator) {
         node *n = g->get_contradiction();
         enlarger(node_vect(1, n));
