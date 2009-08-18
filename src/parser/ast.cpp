@@ -113,7 +113,7 @@ RUN_ONCE(load_numbers) {
   num.base = 0;
   num.exponent = 0;
   token_zero = normalize(num);
-  num.base = 10;
+  num.base = 1;
   num.exponent = 0;
   num.mantissa = "+1";
   token_one = normalize(num);
