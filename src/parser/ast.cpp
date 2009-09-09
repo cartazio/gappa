@@ -4,10 +4,12 @@
 #include <sstream>
 #include "utils.hpp"
 #include "numbers/interval_utility.hpp"
+#include "numbers/real.hpp"
 #include "numbers/round.hpp"
 #include "parser/ast.hpp"
 #include "proofs/schemes.hpp"
 
+extern std::string get_real_split(number const &f, int &exp, bool &zero);
 extern bool parameter_rfma;
 link_map accurates, approximates;
 
@@ -130,7 +132,7 @@ std::string dump_real(ast_real const *r, unsigned prio)
     std::string m = (n.mantissa.size() > 0 && n.mantissa[0] == '+') ? n.mantissa.substr(1) : n.mantissa;
     if (n.base == 0) return "0";
     if (n.exponent == 0) return m;
-    std::stringstream s;
+    std::ostringstream s;
     s << m << (n.base == 2 ? 'b' : 'e') << n.exponent;
     return s.str();
   }
@@ -169,8 +171,9 @@ std::string dump_real(ast_real const *r, unsigned prio)
   return "...";
 }
 
-std::string dump_real(predicated_real const &r) {
-  std::stringstream s;
+std::string dump_real(predicated_real const &r)
+{
+  std::ostringstream s;
   std::string v = dump_real(r.real());
   switch (r.pred()) {
   case PRED_BND: s << "BND(" << v << ')'; break;
@@ -193,7 +196,7 @@ std::string dump_real_short(predicated_real const &r)
     return v;
   case PRED_REL:
   {
-    std::stringstream s;
+    std::ostringstream s;
     s << v << " -/ " << dump_real(r.real2());
     return s.str();
   }
@@ -203,8 +206,9 @@ std::string dump_real_short(predicated_real const &r)
   }
 }
 
-std::string dump_property(property const &p) {
-  std::stringstream s;
+std::string dump_property(property const &p)
+{
+  std::ostringstream s;
   std::string r = dump_real(p.real.real());
   switch (p.real.pred()) {
   case PRED_BND: s << "BND(" << r << ", " << p.bnd() << ')'; break;
@@ -236,6 +240,54 @@ std::string dump_prop_tree(property_tree const &pt)
     if (first) first = false;
     else s << (pt->conjunction ? " /\\ " : " \\/ ");
     s << '(' << dump_prop_tree(*i) << ')';
+  }
+  return s.str();
+}
+
+static std::string dump_number(number const &f)
+{
+  std::ostringstream s;
+  bool zero;
+  int exp;
+  s << get_real_split(f, exp, zero);
+  if (!zero && exp) s << 'b' << exp;
+  return s.str();
+}
+
+std::string dump_property_nice(property const &p)
+{
+  std::ostringstream s;
+  std::string r = dump_real_short(p.real);
+  interval const &bnd = p.bnd();
+  if (lower(bnd) == number::neg_inf) {
+    s << r << " <= " << dump_number(upper(bnd));
+  } else if (upper(bnd) == number::pos_inf) {
+    s << r << " >= " << dump_number(lower(bnd));
+  } else {
+    s << r << " in [" << dump_number(lower(bnd)) << ','
+      << dump_number(upper(bnd)) << ']';
+  }
+  return s.str();
+}
+
+std::string dump_prop_tree_nice(property_tree const &pt)
+{
+  std::ostringstream s;
+  if (pt.empty()) return "1 <= 0";
+  bool first = true;
+  for (std::vector<property>::const_iterator i = pt->leaves.begin(),
+       i_end = pt->leaves.end(); i != i_end; ++i)
+  {
+    if (first) first = false;
+    else s << (pt->conjunction ? " /\\ " : " \\/ ");
+    s << dump_property_nice(*i);
+  }
+  for (std::vector<property_tree>::const_iterator i = pt->subtrees.begin(),
+       i_end = pt->subtrees.end(); i != i_end; ++i)
+  {
+    if (first) first = false;
+    else s << (pt->conjunction ? " /\\ " : " \\/ ");
+    s << '(' << dump_prop_tree_nice(*i) << ')';
   }
   return s.str();
 }

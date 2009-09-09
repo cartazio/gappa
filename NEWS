@@ -1,6 +1,9 @@
 Version 0.12.1:
  * proof graph
    - fixed sequents with empty goals not being recognized as proved
+ * main interface
+   - added option -Msequent to display goals as Gappa scripts
+   - added option -Monly-failure to limit output to failing goals
 
 Version 0.12.0:
  * back-ends

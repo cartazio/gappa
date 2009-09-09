@@ -12,6 +12,8 @@ bool parameter_rfma = false;
 bool parameter_constrained = true;
 bool parameter_expensive = false;
 bool parameter_statistics = false;
+bool parameter_sequent = false;
+bool parameter_only_failure = false;
 std::string parameter_schemes;
 bool warning_dichotomy_failure = true;
 bool warning_hint_difference = true;
@@ -37,6 +39,8 @@ static void help() {
     "  -Mexpensive                     work harder to get shorter proofs, maybe\n"
     "  -Mstatistics                    display statistics\n"
     "  -Mschemes[=FILE]                produce a dot graph (default: schemes.dot)\n"
+    "  -Msequent                       display proof contexts as Gappa scripts\n"
+    "  -Monly-failure                  do not display successful parts\n"
     "\n"
     "Warnings: (default: all)\n"
     "  -W[no-]dichotomy-failure\n"
@@ -89,9 +93,11 @@ bool parse_option(std::string const &s, bool embedded)
   case 'M': {
     if (embedded) return false;
     std::string o = s.substr(2);
-    if (o == "unconstrained") parameter_constrained = false; else
-    if (o == "expensive")     parameter_expensive = true; else
-    if (o == "statistics")    parameter_statistics = true; else
+    if (o == "unconstrained") parameter_constrained   = false; else
+    if (o == "expensive"    ) parameter_expensive     = true; else
+    if (o == "statistics"   ) parameter_statistics    = true; else
+    if (o == "sequent"      ) parameter_sequent       = true; else
+    if (o == "only-failure" ) parameter_only_failure  = true; else
     if (o.compare(0, 7, "schemes") == 0)
     {
       if (o.size() == 7) parameter_schemes = "schemes.dot";

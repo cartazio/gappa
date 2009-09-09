@@ -7,7 +7,9 @@
 #include "proofs/proof_graph.hpp"
 #include "proofs/schemes.hpp"
 
-extern bool parameter_constrained, parameter_statistics;
+extern bool
+  parameter_constrained, parameter_statistics, parameter_only_failure,
+  parameter_sequent;
 extern int yyparse(void);
 extern std::vector< graph_t * > graphs;
 extern bool detailed_io;
@@ -20,6 +22,33 @@ extern int
   stat_tested_th, stat_successful_th,
   stat_tested_real, stat_discarded_real,
   stat_intersected_pred, stat_discarded_pred;
+
+void display_context(context const &ctx)
+{
+  property_vect const &hyp = ctx.hyp;
+  if (parameter_sequent)
+  {
+    std::cerr << "\nScript:\n";
+    for(unsigned i = 0, nb_hyp = hyp.size(); i < nb_hyp; ++i) {
+      std::cerr << "  " << dump_property_nice(hyp[i])
+                << (i != nb_hyp - 1 ? " /\\\n" : " ->\n");
+    }
+    std::cerr << "  " << dump_prop_tree_nice(ctx.goals) << "\nResults:\n";
+  }
+  else
+  {
+    std::cerr << "\nResults";
+    if (unsigned nb_hyp = hyp.size()) {
+      std::cerr << " for ";
+      for(unsigned i = 0; i < nb_hyp; ++i) {
+        if (i != 0) std::cerr << " and ";
+        std::cerr << dump_real_short(hyp[i].real) << " in " << hyp[i].bnd();
+      }
+    }
+    std::cerr << ":\n";
+  }
+}
+
 
 int main(int argc, char **argv)
 {
@@ -41,33 +70,30 @@ int main(int argc, char **argv)
     std::cerr << "Warning: no path was found for " << dump_real_short(*i) << ".\n";
   }
   bool globally_proven = true;
-  for(context_vect::const_iterator i = contexts.begin(), i_end = contexts.end(); i != i_end; ++i) {
+  for (context_vect::const_iterator i = contexts.begin(),
+       i_end = contexts.end(); i != i_end; ++i)
+  {
     context const &current_context = *i;
-    property_vect const &hyp = current_context.hyp;
-    std::cerr << "\nResults";
-    if (unsigned nb_hyp = hyp.size()) {
-      std::cerr << " for ";
-      for(unsigned i = 0; i < nb_hyp; ++i) {
-        if (i != 0) std::cerr << " and ";
-        std::cerr << dump_real_short(hyp[i].real) << " in " << hyp[i].bnd();
-      }
-    }
-    std::cerr << ":\n";
     if (proof_generator) proof_generator->reset();
-    graph_t *g = new graph_t(NULL, hyp);
+    graph_t *g = new graph_t(NULL, current_context.hyp);
     if (g->populate(current_context.goals, dichotomies, 100*1000*1000))
     {
-      if (!current_context.goals.empty())
-        std::cerr << "Warning: hypotheses are in contradiction, any result is true.\n";
-      else
-        std::cerr << "A contradiction was built from the hypotheses.\n";
+      if (!parameter_only_failure)
+      {
+        display_context(current_context);
+        if (!current_context.goals.empty())
+          std::cerr << "Warning: hypotheses are in contradiction, any result is true.\n";
+        else
+          std::cerr << "A contradiction was built from the hypotheses.\n";
+      }
       if (proof_generator) {
         node *n = g->get_contradiction();
         enlarger(node_vect(1, n));
         proof_generator->theorem(n);
       }
-      g->show_dangling();
+      if (!parameter_only_failure) g->show_dangling();
     } else if (current_context.goals.empty()) {
+      display_context(current_context);
       std::cerr << "Warning: no contradiction was found.\n";
       globally_proven = false;
     } else {
@@ -77,16 +103,24 @@ int main(int argc, char **argv)
       if (proof_generator) enlarger(nodes);
       typedef std::map< std::string, node * > named_nodes;
       named_nodes results;
-      for(node_vect::const_iterator j = nodes.begin(), j_end = nodes.end(); j != j_end; ++j) {
+      for (node_vect::const_iterator j = nodes.begin(),
+           j_end = nodes.end(); j != j_end; ++j)
+      {
         node *n = *j;
         assert(n->type == GOAL);
         results[dump_real_short(n->get_result().real)] = n;
       }
-      for(named_nodes::const_iterator j = results.begin(), j_end = results.end(); j != j_end; ++j) {
+      bool display = !pt.empty() || !parameter_only_failure;
+      if (display) display_context(current_context);
+      for (named_nodes::const_iterator j = results.begin(),
+           j_end = results.end(); j != j_end; ++j)
+      {
         node *n = j->second;
-        detailed_io = true;
-        std::cerr << j->first << " in " << n->get_result().bnd() << '\n';
-        detailed_io = false;
+        if (display) {
+          detailed_io = true;
+          std::cerr << j->first << " in " << n->get_result().bnd() << '\n';
+          detailed_io = false;
+        }
         if (proof_generator) proof_generator->theorem(n);
       }
       if (!pt.empty()) {
@@ -95,7 +129,7 @@ int main(int argc, char **argv)
         std::cerr << dump_prop_tree(pt) << '\n';
         globally_proven = false;
       }
-      g->show_dangling();
+      if (display) g->show_dangling();
     }
     delete g;
   }
