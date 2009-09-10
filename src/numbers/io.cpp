@@ -61,10 +61,17 @@ std::string get_real_split(number const &f, int &exp, bool &zero) {
 
 bool detailed_io = false;
 
+static std::string mpfr_approx(mpfr_t const &f)
+{
+  char buf[20];
+  mpfr_snprintf(buf, 20, "%Rg", f);
+  return buf;
+}
+
 std::ostream &operator<<(std::ostream &stream, number const &value) {
   mpfr_t const &f = value.data->val;
   if (!detailed_io || mpfr_inf_p(f)) {
-    stream << mpfr_get_d(f, GMP_RNDN);
+    stream << mpfr_approx(f);
     return stream;
   }
   bool zero; int exp;
@@ -73,13 +80,13 @@ std::ostream &operator<<(std::ostream &stream, number const &value) {
   stream << s;
   if (!zero && exp != 0) stream << 'b' << exp;
   else if (s.size() < 5U + neg) return stream;
-  stream << " {" << mpfr_get_d(f, GMP_RNDN) << ", ";
+  stream << " {" << mpfr_approx(f) << ", ";
   if (neg) stream << '-';
   mpfr_t g;
   mpfr_init2(g, 20);
   mpfr_abs(g, f, GMP_RNDN);
   mpfr_log2(g, g, GMP_RNDN);
-  stream << "2^(" << mpfr_get_d(g, GMP_RNDN) << ")}";
+  stream << "2^(" << mpfr_approx(g) << ")}";
   mpfr_clear(g);
   return stream;
 }
