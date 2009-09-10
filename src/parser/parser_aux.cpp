@@ -13,7 +13,7 @@
 typedef std::set< ast_real const * > real_set;
 real_set free_variables;
 typedef std::set< predicated_real > preal_set;
-preal_set input_reals, output_reals;
+preal_set input_reals, input_partial_reals, output_reals;
 
 interval create_interval(ast_number const *, ast_number const *, bool);
 void find_unknown_reals(real_set &, ast_real const *);
@@ -231,6 +231,8 @@ static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
     // locate variables appearing in bounded expressions
     if (is_bounded(bnd))
       input_reals.insert(i->first);
+    else
+      input_partial_reals.insert(i->first);
     ctxt.hyp.push_back(i->second);
   }
 
