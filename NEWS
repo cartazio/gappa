@@ -4,6 +4,9 @@ Version 0.12.1:
  * main interface
    - added option -Msequent to display goals as Gappa scripts
    - added option -Monly-failure to limit output to failing goals
+   - improved output of extremely small/big bounds
+ * proof paths
+   - fixed inequalities (lower bound) on absolute values being ignored
 
 Version 0.12.0:
  * back-ends
