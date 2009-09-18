@@ -66,7 +66,7 @@ Coq.</para>
 </section>
 
 <section>
-<title>Coq back-end</title>
+<title>Coq lambda-term back-end</title>
 <para>Option: <code>-Bcoq-lambda</code></para>
 <para>This back-end is used by the <code>gappa</code> tactic available
 for the Coq proof checker. It generates a lambda-term that can be
@@ -160,21 +160,48 @@ unfortunately far from being guaranteed.</para>
 example, the second script of this <link linkend="example-fixed">example</link>
 gives:</para>
 <screen>Statistics:
-  4949 expressions were considered,
-    but then 0 of these got discarded.
-  14747 theorems were tried. Among these,
-    5963 were successfully instantiated,
-    yet 3247 of these were not good enough
-    and 2 were only partially better.</screen>
-<para>The first two lines show the amounts of intermediate expressions Gappa
-prepared. The first number is the amount of expressions that were considered,
-and the second number is the amount of expressions for which Gappa had not found
-any usable theorem. Once this set of expressions is ready, Gappa tries to find
-properties by applying theorems. The next statistics count these theorems.
-First, the amount of theorems Gappa tried to apply. Then, among the theorems for
-which Gappa could satisfy hypotheses, some gave a usable result, and some others
-did not (because a better property was already proved at the time the theorem
+  2121 expressions were considered,
+    but then 472 of these got discarded.
+  7738 theorems were tried. Among these,
+    4370 were successfully instantiated,
+    yet 1752 of these were not good enough
+    and 16 were only partially better.</screen>
+<para>The first two lines show how many intermediate expressions Gappa
+has prepared. The first number tells how many have been considered, and
+the second number tells how many of them were discarded because no
+theorem could handle them. Once this set of expressions is ready, Gappa
+tries to find properties by applying theorems. The next statistic how
+many theorems Gappa tried to apply. Among the theorems for which Gappa
+could satisfy hypotheses, some gave a usable result, and some others did
+not (because a better property was already proved at the time the theorem
 was considered).</para>
+</section>
+
+<section>
+<title>Displaying propositions as Gappa scripts</title>
+<para>Option: <code>-Msequent</code></para>
+<para>Gappa applies several transformations to the input proposition if it is too complicated. The left-hand sides of the resulting sub-propositions (conjunction of atoms implying conjunctions and disjunctions of atoms) are then displayed in the results. This mode causes the propositions to be displayed in a syntax close to Gappa's one and with their right-hand side, so that one can work directly on the simpler sub-propositions.</para>
+<programlisting><![CDATA[{ x in [0,1] \/ x in [2,3] -> not x + 1 in [0,1] }]]></programlisting>
+<screen><![CDATA[Script:
+  x in [1b1,3] /\
+  x + 1 in [0,1] ->
+  1 <= 0
+Results:
+A contradiction was built from the hypotheses.
+
+Script:
+  x in [0,1] /\
+  x + 1 in [0,1] ->
+  1 <= 0
+Results:
+Warning: no contradiction was found.]]></screen>
+<para>Note that <code>1 &lt;= 0</code> is only there to complete the scripts, since they happen to not have any right-hand side, which means that Gappa tries to prove false from the hypotheses.</para>
+</section>
+
+<section>
+<title>Focusing on failed properties</title>
+<para>Option: <code>-Monly-failure</code></para>
+<para>Gappa normally displays the results for all the logical sub-propositions it extracted from the input. If there are many of them, it may become hard to notice which properties were left unproved. This mode prevents successful properties from being displayed, hence making it easier to analyze failures.</para>
 </section>
 
 </section>

@@ -108,7 +108,7 @@ r2 - R -> (r2 - r1 * (2 - d * r1)) - (r1 - R) * (r1 - R) * d;]]></programlisting
 <screen>Warning: although present in a quotient, the expression (d) may have not been tested for non-zeroness.
 
 Results for d in [0.5, 1] and r0 - R in [-0.00390625, 0.00390625]:
-r2 - R in [-639017422849b-64 {-3.46412e-08, -2^(-24.7829)}, 1541b-39 {2.80306e-09, 2^(-28.4103)}]</screen>
+r2 - R in [-41710608584542209b-80 {-3.45022e-08, -2^(-24.7887)}, 8356605b-52 {1.85554e-09, 2^(-29.0055)}]</screen>
 
 </section>
 
@@ -176,7 +176,7 @@ r1 * (2 - d * r1) - R -> (r1 - R) * (r1 - R) * -d   { d <> 0};]]></programlistin
 <para>The answer is the same.</para>
 
 <screen>Results for d in [0.5, 1] and r0 - R in [-0.00390625, 0.00390625]:
-r2 - R in [-639017422849b-64 {-3.46412e-08, -2^(-24.7829)}, 1541b-39 {2.80306e-09, 2^(-28.4103)}]</screen>
+r2 - R in [-41710608584542209b-80 {-3.45022e-08, -2^(-24.7887)}, 8356605b-52 {1.85554e-09, 2^(-29.0055)}]</screen>
 
 </section>
 </section>
