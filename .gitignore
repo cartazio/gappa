@@ -5,6 +5,11 @@ config.status
 configure
 Makefile.in
 Makefile
+depcomp
+missing
+install-sh
+ylwrap
+ChangeLog
 aclocal.m4
 autom4te.cache
 stamp-h1
