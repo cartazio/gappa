@@ -113,7 +113,7 @@ static std::string display(ast_real const *r)
   } else if (real_op const *o = boost::get< real_op const >(r)) {
     static char const op[] = "X-XX+-*/XX";
     if (o->type == ROP_FUN) {
-      plouf << convert_name(o->fun->name());
+      plouf << convert_name(o->fun->description());
       for(ast_real_vect::const_iterator i = o->ops.begin(), end = o->ops.end(); i != end; ++i)
         plouf << " (" << display(*i) << ":real)";
     } else if (o->ops.size() == 1) {

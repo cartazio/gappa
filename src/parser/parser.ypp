@@ -189,7 +189,7 @@ EQUAL:
 | FUNCTION '='
   {
     function_class const *f = $1;
-    if (f->type != UOP_ID) failure(f->name() << " is not a rounding operator");
+    if (f->type != UOP_ID) failure(f->pretty_name() << " is not a rounding operator");
     rounding_mode = f;
   }
 
@@ -235,7 +235,7 @@ REAL:
     if ((f->type == UOP_ID && ops->size() != 1) ||
         (f->type != UOP_ID && f->type != COP_FMA && ops->size() != 2) ||
         (f->type == COP_FMA && ops->size() != 3))
-      failure("incorrect number of arguments when calling " << f->name());
+      failure("incorrect number of arguments when calling " << f->pretty_name());
     $$ = normalize(ast_real(real_op(f, *ops)));
     delete ops;
   }

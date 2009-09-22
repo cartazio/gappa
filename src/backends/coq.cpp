@@ -83,7 +83,8 @@ static std::string display(ast_real const *r)
   }
   auto_flush plouf;
   plouf << "Notation " << name << " := (";
-  if (ast_number const *const *nn = boost::get< ast_number const *const >(r)) {
+  if (ast_number const *const *nn = boost::get< ast_number const *const >(r))
+  {
     ast_number const &n = **nn;
     std::string m = (n.mantissa.size() > 0 && n.mantissa[0] == '+') ? n.mantissa.substr(1) : n.mantissa;
     if (n.base == 0) plouf << "Float1 0";
@@ -91,21 +92,31 @@ static std::string display(ast_real const *r)
     else plouf << "Float" << n.base << " (" << m << ") (" << n.exponent << ')';
   } else if (real_op const *o = boost::get< real_op const >(r)) {
     static char const op[] = "X-XX+-*/XX";
-    if (o->type == ROP_FUN) {
-      bool convert = o->fun->name().find("rounding") == 0;
+    if (o->type == ROP_FUN)
+    {
+      std::string description = o->fun->description();
+      bool convert = description.find("rounding") == 0;
       if (convert) plouf << "float2R (";
-      plouf << convert_name(o->fun->name()) << " (" << display(o->ops[0]) << ')';
-      for(ast_real_vect::const_iterator i = ++(o->ops.begin()), end = o->ops.end(); i != end; ++i)
+      plouf << convert_name(description) << " (" << display(o->ops[0]) << ')';
+      for (ast_real_vect::const_iterator i = ++(o->ops.begin()),
+           end = o->ops.end(); i != end; ++i)
         plouf << " (" << display(*i) << ')';
       if (convert) plouf << ')';
-    } else if (o->ops.size() == 1) {
+    }
+    else if (o->ops.size() == 1)
+    {
       std::string s(1, op[o->type]);
       if (o->type == UOP_ABS) s = "Rabs";
       else if (o->type == UOP_SQRT) s = "sqrt";
       plouf << '(' << s << ' ' << display(o->ops[0]) << ")%R";
-    } else
-      plouf << '(' << display(o->ops[0]) << ' ' << op[o->type] << ' ' << display(o->ops[1]) << ")%R";
-  } else assert(false);
+    }
+    else
+    {
+      plouf << '(' << display(o->ops[0]) << ' ' << op[o->type] << ' '
+            << display(o->ops[1]) << ")%R";
+    }
+  }
+  else assert(false);
   plouf << ").\n";
   return name;
 }

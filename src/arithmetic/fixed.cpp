@@ -15,7 +15,8 @@ struct fixed_format: gs_rounding {
   fixed_format(int e): min_exp(e) {}
 };
 
-struct fixed_rounding_class: function_class {
+struct fixed_rounding_class: function_class
+{
   fixed_format format;
   direction_type type;
   std::string ident;
@@ -26,7 +27,8 @@ struct fixed_rounding_class: function_class {
   virtual interval absolute_error                                  (std::string &) const;
   virtual interval absolute_error_from_exact_bnd (interval const &, std::string &) const;
   virtual interval absolute_error_from_approx_bnd(interval const &, std::string &) const;
-  virtual std::string name() const { return "rounding_fixed" + ident; }
+  virtual std::string description() const { return "rounding_fixed" + ident; }
+  virtual std::string pretty_name() const;
 };
 
 interval fixed_rounding_class::round(interval const &i, std::string &name) const {
@@ -53,7 +55,15 @@ interval fixed_rounding_class::absolute_error_from_approx_bnd(interval const &i,
   return from_exponent(format.min_exp, rnd_global_direction_abs(type, i));
 }
 
-struct fixed_rounding_generator: function_generator {
+std::string fixed_rounding_class::pretty_name() const
+{
+  std::ostringstream s;
+  s << "fixed<" << format.min_exp << ',' << direction_names[type] << '>';
+  return s.str();
+}
+
+struct fixed_rounding_generator: function_generator
+{
   fixed_rounding_generator(): function_generator("fixed") {}
   static function_class const *generate(direction_type, int);
   virtual function_class const *operator()(function_params const &) const;

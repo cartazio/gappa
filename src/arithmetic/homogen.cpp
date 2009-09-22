@@ -4,12 +4,14 @@
 #include "numbers/real.hpp"
 #include "numbers/round.hpp"
 
-struct homogen_rounding_class: function_class {
+struct homogen_rounding_class: function_class
+{
   default_function_generator generator;
   interval he;
   homogen_rounding_class();
   virtual interval absolute_error_from_exact_bnd(interval const &, std::string &) const;
-  virtual std::string name() const { return "homogen80x"; }
+  virtual std::string description() const { return "homogen80x"; }
+  virtual std::string pretty_name() const { return "homogen80x"; }
 };
 
 homogen_rounding_class::homogen_rounding_class()
@@ -24,12 +26,14 @@ interval homogen_rounding_class::absolute_error_from_exact_bnd(interval const &i
 
 static homogen_rounding_class dummy;
 
-struct homogen_init_rounding_class: function_class {
+struct homogen_init_rounding_class: function_class
+{
   default_function_generator generator;
   interval he;
   homogen_init_rounding_class();
   virtual interval absolute_error_from_approx_bnd(interval const &, std::string &) const;
-  virtual std::string name() const { return "homogen80x_init"; }
+  virtual std::string description() const { return "homogen80x_init"; }
+  virtual std::string pretty_name() const { return "homogen80x_init"; }
 };
 
 homogen_init_rounding_class::homogen_init_rounding_class()
@@ -48,7 +52,8 @@ struct floatx_rounding_class: function_class {
   default_function_generator generator;
   floatx_rounding_class();
   virtual interval round(interval const &, std::string &) const;
-  virtual std::string name() const { return "float80x"; }
+  virtual std::string description() const { return "float80x"; }
+  virtual std::string pretty_name() const { return "float80x"; }
 };
 
 floatx_rounding_class::floatx_rounding_class()

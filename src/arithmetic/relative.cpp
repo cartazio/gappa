@@ -9,7 +9,8 @@
 
 extern bool parameter_constrained;
 
-struct relative_function_class: function_class {
+struct relative_function_class: function_class
+{
   interval he, hz;
   int prec, min_exp;
   std::string ident;
@@ -17,7 +18,8 @@ struct relative_function_class: function_class {
   virtual interval round                         (interval const &, std::string &) const;
   virtual interval relative_error_from_exact_abs (interval const &, std::string &) const;
   virtual interval relative_error_from_approx_abs(interval const &, std::string &) const;
-  virtual std::string name() const { return "relative" + ident; }
+  virtual std::string description() const { return "relative" + ident; }
+  virtual std::string pretty_name() const;
 };
 
 relative_function_class::relative_function_class(real_op_type t, int p, int e, std::string const &i)
@@ -43,6 +45,15 @@ interval relative_function_class::relative_error_from_approx_abs(interval const 
     return interval();
   name = "rel_error_inv" + ident;
   return he;
+}
+
+std::string relative_function_class::pretty_name() const
+{
+  std::ostringstream s;
+  s << ident.substr(1, 3) << "_rel<" << prec;
+  if (min_exp != INT_MIN) s << ',' << min_exp;
+  s << '>';
+  return s.str();
 }
 
 struct relative_function_generator: function_generator {

@@ -32,7 +32,8 @@ RUN_ONCE(register_formats) {
   REGISTER_FORMAT(x86_80  , -16445,  64);
 }
 
-struct float_rounding_class: function_class {
+struct float_rounding_class: function_class
+{
   float_format format;
   direction_type type;
   std::string ident;
@@ -48,10 +49,12 @@ struct float_rounding_class: function_class {
   virtual interval absolute_error_from_approx_abs(interval const &, std::string &) const;
   virtual interval relative_error_from_exact_abs (interval const &, std::string &) const;
   virtual interval relative_error_from_approx_abs(interval const &, std::string &) const;
-  virtual std::string name() const { return "rounding_float" + ident; }
+  virtual std::string description() const { return "rounding_float" + ident; }
+  virtual std::string pretty_name() const;
 };
 
-struct float_rounding_generator: function_generator {
+struct float_rounding_generator: function_generator
+{
   float_rounding_generator(): function_generator("float") {}
   virtual function_class const *operator()(function_params const &) const;
 };
@@ -210,6 +213,13 @@ interval float_rounding_class::relative_error_from_approx_abs(interval const &i,
   name = fail ? "$FALSE" : "float_relative_inv" + std::string(1, ',') + direction_names[type];
   if (rnd_to_nearest(type)) return from_exponent(-format.prec, 0);
   return from_exponent(1 - format.prec, rnd_global_direction_rel(type)); // cannot use i since it is ABS
+}
+
+std::string float_rounding_class::pretty_name() const
+{
+  std::ostringstream s;
+  s << "float<" << format.prec << ',' << format.min_exp << ',' << direction_names[type] << '>';
+  return s.str();
 }
 
 // FIX_OF_FLOAT

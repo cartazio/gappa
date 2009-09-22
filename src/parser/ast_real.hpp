@@ -47,7 +47,8 @@ struct function_class {
   virtual interval relative_error_from_exact_abs (interval const &, std::string &) const;
   virtual interval relative_error_from_approx_bnd(interval const &, std::string &) const;
   virtual interval relative_error_from_approx_abs(interval const &, std::string &) const;
-  virtual std::string name() const = 0;
+  virtual std::string description() const = 0;
+  virtual std::string pretty_name() const = 0;
   virtual ~function_class() {}
 };
 
