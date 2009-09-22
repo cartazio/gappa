@@ -16,6 +16,7 @@ struct relative_function_class: function_class
   std::string ident;
   relative_function_class(real_op_type, int, int, std::string const &);
   virtual interval round                         (interval const &, std::string &) const;
+  virtual interval relative_error                                  (std::string &) const;
   virtual interval relative_error_from_exact_abs (interval const &, std::string &) const;
   virtual interval relative_error_from_approx_abs(interval const &, std::string &) const;
   virtual std::string description() const { return "relative" + ident; }
@@ -23,9 +24,11 @@ struct relative_function_class: function_class
 };
 
 relative_function_class::relative_function_class(real_op_type t, int p, int e, std::string const &i)
-  : function_class(t, TH_RND | TH_REL_EXA_ABS | TH_REL_APX_ABS), prec(p), min_exp(e), ident(i) {
+  : function_class(t, TH_RND | (e == INT_MIN ? TH_REL : (TH_REL_EXA_ABS | TH_REL_APX_ABS)))
+  , prec(p), min_exp(e), ident(i)
+{
   he = from_exponent(-p, 0);
-  hz = (min_exp != INT_MIN) ? from_exponent(min_exp, 0) : zero();
+  if (min_exp != INT_MIN) hz = from_exponent(min_exp, 0);
 }
 
 interval relative_function_class::round(interval const &i, std::string &name) const {
@@ -33,14 +36,25 @@ interval relative_function_class::round(interval const &i, std::string &name) co
   return i * (interval(number(1), number(1)) + he);
 }
 
-interval relative_function_class::relative_error_from_exact_abs(interval const &i, std::string &name) const {
+interval relative_function_class::relative_error(std::string &name) const
+{
+  assert(min_exp == INT_MIN);
+  name = "rel_error" + ident;
+  return he;
+}
+
+interval relative_function_class::relative_error_from_exact_abs(interval const &i, std::string &name) const
+{
+  assert(min_exp != INT_MIN);
   if (parameter_constrained && !is_empty(intersect(i, hz)))
     return interval();
   name = "rel_error" + ident;
   return he;
 }
 
-interval relative_function_class::relative_error_from_approx_abs(interval const &i, std::string &name) const {
+interval relative_function_class::relative_error_from_approx_abs(interval const &i, std::string &name) const
+{
+  assert(min_exp != INT_MIN);
   if (parameter_constrained && !is_empty(intersect(i, hz)))
     return interval();
   name = "rel_error_inv" + ident;
@@ -56,7 +70,8 @@ std::string relative_function_class::pretty_name() const
   return s.str();
 }
 
-struct relative_function_generator: function_generator {
+struct relative_function_generator: function_generator
+{
   char const *name;
   real_op_type type;
   typedef std::map< long long int, relative_function_class > relative_cache;
@@ -75,7 +90,8 @@ function_class const *relative_function_generator::operator()(function_params co
   relative_cache::const_iterator j = cache.find(h);
   if (j != cache.end()) return &j->second;
   std::ostringstream s;
-  s << ',' << std::string(name, 3) << ',' << prec << ',' << min_exp;
+  s << ',' << std::string(name, 3) << ',' << prec;
+  if (min_exp != INT_MIN) s << ',' << min_exp;
   j = cache.insert(std::make_pair(h, relative_function_class(type, prec, min_exp, s.str()))).first;
   return &j->second;
 }
