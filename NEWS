@@ -4,9 +4,12 @@ Version 0.12.1:
  * main interface
    - added option -Msequent to display goals as Gappa scripts
    - added option -Monly-failure to limit output to failing goals
-   - improved output of extremely small/big bounds
+   - improved display of extremely small/big bounds
+   - improved display of rounding operators
  * proof paths
    - fixed inequalities (lower bound) on absolute values being ignored
+ * arithmetic
+   - improved relative operators handling when exponents are not constrained
 
 Version 0.12.0:
  * back-ends
