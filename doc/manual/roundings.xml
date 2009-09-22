@@ -88,6 +88,9 @@ rounding direction.</para>
 <section>
 <title>Miscellaneous operators</title>
 
+<para>The following operators are underspecified and therefore not
+suitable for formal proofs.</para>
+
 <section>
 <title>Functions with relative error</title>
 
@@ -97,9 +100,14 @@ through unary rounding operators.</para>
 
 <programlisting><![CDATA[{add|sub|mul}_rel< precision [, minimum_exponent] >(..., ...)]]></programlisting>
 
-<para>If the minimum exponent is not provided, no domain will be excluded when
-considering the validity of the theorems, not even zero. Otherwise the domain
-<texinline>[-2^e,2^e]</texinline> is excluded.</para>
+<para>If the minimum exponent is not provided, the bound on the relative
+error is assumed to be valid on the entire domain. Otherwise the interval
+<texinline>[-2^e,2^e]</texinline> is excluded from the domain.</para>
+
+<para>Talking about the expression
+<code>add_rel&lt;20,-60&gt;(a,b)</code> is like talking about a fresh
+expression <code>c</code> such that <code><![CDATA[not |a + b| <= 1b-60
+-> |c -/ (a + b)| <= 1b-20]]></code>.</para>
 
 </section>
 
