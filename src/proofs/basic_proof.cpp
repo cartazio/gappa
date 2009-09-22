@@ -164,6 +164,33 @@ proof_scheme *absolute_error_from_approx_abs_scheme::factory(ast_real const *rea
   return new absolute_error_from_approx_abs_scheme(real, predicated_real(holders[1], PRED_ABS), f);
 }
 
+// RELATIVE_ERROR
+REGISTER_SCHEME_BEGIN(relative_error);
+  function_class const *function;
+  relative_error_scheme(predicated_real const &r, function_class const *f)
+    : proof_scheme(r), function(f) {}
+REGISTER_SCHEME_END_PREDICATE(relative_error);
+
+node *relative_error_scheme::generate_proof() const
+{
+  std::string name;
+  property res(real, function->relative_error(name));
+  assert(is_defined(res.bnd()));
+  return create_theorem(0, NULL, res, name);
+}
+
+preal_vect relative_error_scheme::needed_reals() const
+{
+  return preal_vect();
+}
+
+proof_scheme *relative_error_scheme::factory(predicated_real const &real)
+{
+  function_class const *f = relative_rounding_error(real);
+  if (!f || !(f->theorem_mask & function_class::TH_REL)) return NULL;
+  return new relative_error_scheme(real, f);
+}
+
 // RELATIVE_ERROR_FROM_EXACT_BND
 REGISTER_SCHEME_BEGIN(relative_error_from_exact_bnd);
   function_class const *function;
