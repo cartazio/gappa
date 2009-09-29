@@ -152,7 +152,7 @@ std::string dump_real(ast_real const *r, unsigned prio)
       return s.str();
     }
     static char const op[] = "X-XX+-*/XX";
-    static unsigned const pr[] = { 0, 3, 0, 0, 0, 0, 1, 2, 0, 0 };
+    static unsigned const pr[] = { 0, 2, 0, 0, 0, 0, 1, 1, 0, 0 };
     std::string s = dump_real(o->ops[0], pr[o->type]);
     if (o->ops.size() == 1)
       switch (o->type) {
