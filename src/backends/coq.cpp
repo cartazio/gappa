@@ -381,10 +381,12 @@ static std::string display(node *n) {
     interval const &mb = m->get_result().bnd(), &nb = n_res.bnd();
     if (!(nb <= mb))
     {
-      char const *suffix = "";
+      char const *prefix = "", *suffix = "";
+      if (m->get_result().real.pred() == PRED_REL) prefix = "rel_";
       if (lower(nb) == number::neg_inf) suffix = "_r";
       else if (upper(nb) == number::pos_inf) suffix = "_l";
-      plouf << " apply subset" << suffix << " with " << display(mb) << ". 2: finalize.\n";
+      plouf << " apply " << prefix << "subset" << suffix
+            << " with " << display(mb) << ". 2: finalize.\n";
     }
     invoke_lemma(plouf, m, pmap);
     plouf << "Qed.\n";

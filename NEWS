@@ -1,3 +1,7 @@
+Version 0.12.2:
+ * back-ends
+   - fixed output of underspecified REL goals
+
 Version 0.12.1:
  * proof graph
    - fixed sequents with empty goals not being recognized as proved

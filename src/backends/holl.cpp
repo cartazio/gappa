@@ -363,9 +363,16 @@ static std::string display(node *n) {
     node *m = pred[0];
     interval const &mb = m->get_result().bnd(), &nb = n_res.bnd();
     if (!(nb <= mb))
-      plouf << " apply subset with " << display(mb) << ". 2: finalize.\n";
+    {
+      char const *prefix = "", *suffix = "";
+      if (m->get_result().real.pred() == PRED_REL) prefix = "rel_";
+      if (lower(nb) == number::neg_inf) suffix = "_r";
+      else if (upper(nb) == number::pos_inf) suffix = "_l";
+      plouf << " APPLY " << prefix << "subset" << suffix
+            << " [\"" << display(mb) << "\"];;\n";
+    }
     invoke_lemma(plouf, m, pmap);
-    plouf << "Qed.\n";
+    plouf << " FINALIZE ();;\nQED ();;\n";
     break; }
   default:
     assert(false);

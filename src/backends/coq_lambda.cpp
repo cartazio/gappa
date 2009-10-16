@@ -674,14 +674,15 @@ static std::string display(node *n)
     if (!(nb <= mb))
     {
       property const &res = m->get_result();
-      plouf << "  let h" << num_hyp << " : " << display(res) << " :=";
+      plouf << "  let h" << num_hyp << " : " << display(res) << " := ";
       invoke_lemma(plouf, m, pmap);
       plouf << " in ";
       pmap[res.real] = std::make_pair(num_hyp++, &res);
-      char const *suffix = "";
+      char const *prefix = "", *suffix = "";
+      if (m->get_result().real.pred() == PRED_REL) prefix = "rel_";
       if (lower(nb) == number::neg_inf) suffix = "_r";
       else if (upper(nb) == number::pos_inf) suffix = "_l";
-      apply_theorem(plouf, std::string("subset") + suffix,
+      apply_theorem(plouf, prefix + std::string("subset") + suffix,
                     n_res, &res, &pmap);
     }
     else
