@@ -264,7 +264,9 @@ std::string dump_property_nice(property const &p)
   std::ostringstream s;
   std::string r = dump_real_short(p.real);
   interval const &bnd = p.bnd();
-  if (lower(bnd) == number::neg_inf) {
+  if (!is_defined(bnd)) {
+    s << r << " in ?";
+  } else if (lower(bnd) == number::neg_inf) {
     s << r << " <= " << dump_number(upper(bnd));
   } else if (upper(bnd) == number::pos_inf) {
     s << r << " >= " << dump_number(lower(bnd));
