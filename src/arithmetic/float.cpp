@@ -140,10 +140,8 @@ static bool influenced(number const &n, int e, int e_infl, int infl) {
 interval float_rounding_class::absolute_error_from_exact_bnd(interval const &i, std::string &name) const
 {
   // directed rounding only
-  rounding_fun f = direction_functions[type];
   number const &v1 = lower(i), &v2 = upper(i);
-  int e1 = exponent(round_number(v1, &format, f), format),
-      e2 = exponent(round_number(v2, &format, f), format),
+  int e1 = exponent(v1, format), e2 = exponent(v2, format),
       e0 = std::max(e1, e2);
   int e_err = rnd_to_nearest(type) ? e0 - 1 : e0;
   int e = e0 + format.prec - 1;
@@ -161,9 +159,8 @@ interval float_rounding_class::absolute_error_from_exact_bnd(interval const &i, 
 interval float_rounding_class::absolute_error_from_exact_abs(interval const &i, std::string &name) const
 {
   // symmetric rounding only
-  rounding_fun f = direction_functions[type];
   number const &v = upper(i);
-  int e0 = exponent(round_number(v, &format, f), format);
+  int e0 = exponent(v, format);
   int e_err = rnd_to_nearest(type) ? e0 - 1 : e0;
   int e = e0 + format.prec - 1;
   name = "float_absolute";
