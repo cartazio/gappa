@@ -81,7 +81,7 @@ static char const *theorem_defs[][2] = {
 
   { "mul_rr", "$gpred_rel.$t $1x $1y $2x $2y $1i $2i $i $" },
   { "div_rr", "$gpred_rel.$t $1x $1y $2x $3x $1i $2i $i $" },
-  { "compose", "$gpred_rel.$t $1x $1y $2x $2y $1i $2i $i $" },
+  { "compose", "$gpred_rel.$t $1x $1y $2y $1i $2i $i $" },
 
   { "add_fix", "$gpred_fixflt.$t $1x $2x $1c $2c $c $" },
   { "sub_fix", "$gpred_fixflt.$t $1x $2x $1c $2c $c $" },
@@ -95,7 +95,7 @@ static char const *theorem_defs[][2] = {
   { "nzr_of_nzr_rel_rev", "$gpred_nzr.$t $1x $x $2i $" },
 
   { "bnd_of_nzr_rel", "$gpred_rel.$t $2x $1x $i $1p $2p" },
-  { "rel_of_nzr_bnd", "$gpred_rel.$t $x $1x $2i $" },
+  { "rel_of_nzr_bnd", "$gpred_rel.$t $x $1x $2i $1p $2p" },
   { "rel_of_equal", "$gpred_rel.$t $x $y $1i $i $" },
   { "error_of_rel_pp", "$gpred_rel.$t $1x $2x $1i $2i $i $" },
   { "error_of_rel_po", "$gpred_rel.$t $1x $2x $1i $2i $i $" },
