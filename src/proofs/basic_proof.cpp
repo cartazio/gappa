@@ -90,7 +90,7 @@ node *absolute_error_from_exact_abs_scheme::generate_proof() const {
   if (!n) return NULL;
   property const &res1 = n->get_result();
   std::string name;
-  property res(real, function->absolute_error_from_exact_bnd(res1.bnd(), name));
+  property res(real, function->absolute_error_from_exact_abs(res1.bnd(), name));
   if (!is_defined(res.bnd())) return NULL;
   return create_theorem(1, &res1, res, name);
 }
