@@ -562,12 +562,6 @@ static std::string display(node *n)
     pmap[p.real] = std::make_pair(num_hyp++, &p);
   }
   node_vect const &pred = n->get_subproofs();
-  if (n->type == GOAL && pred[0]->type == HYPOTHESIS) {
-    property const &p = pred[0]->get_result();
-    plouf << " (h0 : " << display(p) << ")";
-    assert(num_hyp == 0);
-    pmap[p.real] = std::make_pair(num_hyp++, &p);
-  }
   property const &n_res = n->get_result();
   std::string p_res, prefix;
   if (n_res.null()) {
