@@ -533,7 +533,7 @@ static void invoke_lemma(auto_flush &plouf, node *n, property_map const &pmap)
 {
   if (n->type != HYPOTHESIS) {
     plouf << display(n);
-    invoke_lemma(plouf, n->get_hypotheses(), pmap);
+    invoke_lemma(plouf, n->graph->get_hypotheses(), pmap);
   } else {
     property_vect hyp;
     hyp.push_back(n->get_result());
@@ -551,7 +551,7 @@ static std::string display(node *n)
   if (n_id < 0) return name;
   auto_flush plouf;
   plouf << "let " << name;
-  property_vect const &n_hyp = n->get_hypotheses();
+  property_vect const &n_hyp = n->graph->get_hypotheses();
   property_map pmap;
   int num_hyp = 0;
   for (property_vect::const_iterator i = n_hyp.begin(),
@@ -718,7 +718,7 @@ std::string coq_lambda_backend::rewrite
 
 std::string coq_lambda_backend::theorem(node *n)
 {
-  int nb_hyps = n->get_hypotheses().size();
+  int nb_hyps = n->graph->get_hypotheses().size();
   if (n->type == GOAL && n->get_subproofs()[0]->type == HYPOTHESIS) nb_hyps = 1;
   *out << "(* " << nb_hyps;
   if (n->get_result().null()) *out << ",contradiction";

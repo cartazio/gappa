@@ -16,17 +16,6 @@ graph_t *top_graph = NULL;
 static unsigned visit_counter = 0;
 
 /**
- * Uncompresses the vector of global hypotheses this node (in)directly depends on.
- * The carrier vector is the hypotheses of the graph that owns this node.
- */
-property_vect const &node::get_hypotheses() const
-{
-  static property_vect empty;
-  if (type == HYPOTHESIS) return empty;
-  return graph->get_hypotheses();
-}
-
-/**
  * Tells if the node has yet to be visited by the current graph algorithm.
  * In that case, the function updates the #visited timestamp so that the next call returns false.
  */

@@ -231,7 +231,7 @@ static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_m
 static void invoke_lemma(auto_flush &plouf, node *n, property_map const &pmap) {
   if (n->type != HYPOTHESIS) {
     plouf << " PARTIAL_APPLY \"" << display(n) << "\";;";
-    invoke_lemma(plouf, n->get_hypotheses(), pmap);
+    invoke_lemma(plouf, n->graph->get_hypotheses(), pmap);
   } else {
     property_vect hyp;
     hyp.push_back(n->get_result());
@@ -248,7 +248,7 @@ static std::string display(node *n) {
   if (n_id < 0) return name;
   auto_flush plouf;
   plouf << "LEMMA \"" << name << "\" `";
-  property_vect const &n_hyp = n->get_hypotheses();
+  property_vect const &n_hyp = n->graph->get_hypotheses();
   property_map pmap;
   plouf << '(';
   int num_hyp = 0;

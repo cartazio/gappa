@@ -66,7 +66,6 @@ struct node
   node(node_id, graph_t *);
   /** Returns the property this node proves. */
   virtual property const &get_result() const = 0;
-  property_vect const &get_hypotheses() const;
   virtual node_vect const &get_subproofs() const;
   virtual ~node();
   void remove_known();

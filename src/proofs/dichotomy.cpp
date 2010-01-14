@@ -230,12 +230,6 @@ property dichotomy_node::maximal_for(node const *n) const {
   return res;
 }
 
-static char const *all_one() {
-  static char v[256];
-  for(int i = 0; i < 256; ++i) v[i] = -1;
-  return v;
-}
-
 dichotomy_helper::~dichotomy_helper() {
   assert(nb_ref == 0);
   for(graph_vect::iterator i = graphs.begin(), end = graphs.end(); i != end; ++i)
