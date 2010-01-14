@@ -30,12 +30,13 @@ class predicated_real {
 typedef std::vector< predicated_real > preal_vect;
 
 class property {
-  union {
-    char store_bnd[sizeof(interval)];
-    long store_int;
+  union store_t {
+    char _bnd[sizeof(interval)];
+    long _int;
   };
-  interval       &_bnd()       { return *reinterpret_cast< interval       * >(&store_bnd); }
-  interval const &_bnd() const { return *reinterpret_cast< interval const * >(&store_bnd); }
+  store_t store;
+  interval       &_bnd()       { return *reinterpret_cast< interval       * >(&store); }
+  interval const &_bnd() const { return *reinterpret_cast< interval const * >(&store); }
  public:
   predicated_real real;
   interval &bnd()
@@ -43,9 +44,9 @@ class property {
   interval const &bnd() const
   { assert(real.pred_bnd()); return _bnd(); }
   long &cst()
-  { assert(real.pred_cst()); return store_int; }
+  { assert(real.pred_cst()); return store._int; }
   long const &cst() const
-  { assert(real.pred_cst()); return store_int; }
+  { assert(real.pred_cst()); return store._int; }
   property();
   property(ast_real const *);
   property(ast_real const *, interval const &);
