@@ -1,3 +1,7 @@
+Version 0.13.0:
+ * Coq lambda back-end
+   - simplified generated proofs
+
 Version 0.12.3:
  * Coq lambda back-end
    - fixed incorrect invocation of some theorems
