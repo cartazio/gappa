@@ -221,7 +221,6 @@ class dichotomy_node: public dependent_node {
   ~dichotomy_node();
   virtual property const &get_result() const { return res; }
   using dependent_node::insert_pred;
-  virtual long get_hyps() const;
   virtual void enlarge(property const &p) { res = boundify(p, res); }
   virtual property maximal_for(node const *) const;
 };
@@ -235,14 +234,6 @@ static char const *all_one() {
   static char v[256];
   for(int i = 0; i < 256; ++i) v[i] = -1;
   return v;
-}
-
-long dichotomy_node::get_hyps() const {
-  static char const *s = all_one();
-  unsigned nb = graph->get_hypotheses().size();
-  if (nb <= sizeof(long) * 8) return -1;
-  assert(graph->get_hypotheses().size() <= 256 * 8);
-  return reinterpret_cast< long >(s);
 }
 
 dichotomy_helper::~dichotomy_helper() {

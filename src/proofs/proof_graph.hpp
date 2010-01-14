@@ -66,13 +66,11 @@ struct node
   node(node_id, graph_t *);
   /** Returns the property this node proves. */
   virtual property const &get_result() const = 0;
-  property_vect get_hypotheses() const;
+  property_vect const &get_hypotheses() const;
   virtual node_vect const &get_subproofs() const;
   virtual ~node();
   void remove_known();
   void remove_succ(node const *);
-  /** Returns the compressed vector of global hypotheses this node depends on. */
-  virtual long get_hyps() const { return 0; }
   virtual property maximal() const;
   /** Returns the widest result that node @a n (an immediate ancestor of this node) can prove without changing the result proved by this node. */
   virtual property maximal_for(node const *n) const = 0;
@@ -109,13 +107,11 @@ node *create_theorem(int, property const [], property const &, std::string const
 /** Node of type ::MODUS */
 class modus_node: public dependent_node
 {
-  long hyps;
  public:
   theorem_node *target;
   modus_node(theorem_node *);
   /** Returns the result stored in #target. */
   virtual property const &get_result() const { return target->res; }
-  virtual long get_hyps() const { return hyps; }
   virtual ~modus_node();
   virtual property maximal_for(node const *) const;
   virtual void enlarge(property const &);

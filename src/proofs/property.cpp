@@ -250,7 +250,6 @@ struct goal_node: node {
   goal_node(property const &p, node *n): node(GOAL, top_graph), res(p), pred(n)
   { n->succ.insert(this); }
   virtual property const &get_result() const { return res; }
-  virtual long get_hyps() const { return pred->get_hyps(); }
   virtual node_vect const &get_subproofs() const;
   virtual void enlarge(property const &) { assert(false); }
   virtual property maximal() const { return res; }

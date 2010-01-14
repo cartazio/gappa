@@ -16,62 +16,14 @@ graph_t *top_graph = NULL;
 static unsigned visit_counter = 0;
 
 /**
- * Creates a bit vector representing the empty subset for the properties of \a hyp.
- * If the bit vector fits inside a pointer word, it is stored directly. Otherwise a pointer to it is used.
- * The indirection is seldom used, as propositions usually have less than 32/64 global hypotheses.
- * @param h   A reference to the data to be stored, either the bit vector or a pointer to it.
- * @param hyp A vector of properties. The same vector should then be passed to the functions ::get_hyps and ::delete_hyps.
- * @return A pointer to the bit vector.
- */
-static char *new_hyps(long &h, property_vect const &hyp)
-{
-  unsigned nb = hyp.size();
-  if (nb <= sizeof(long) * 8)
-  {
-    h = 0;
-    return reinterpret_cast< char * >(&h);
-  }
-  char *v = new char[(nb + 7) / 8]();
-  h = reinterpret_cast< long >(v);
-  return v;
-}
-
-/**
- * Deletes a compressed property_vect.
- * @see ::new_hyps
- */
-static void delete_hyps(long h, property_vect const &hyp)
-{
-  if (hyp.size() > sizeof(long) * 8)
-    delete[] reinterpret_cast< char * >(h);
-}
-
-/**
- * Returns a pointer to the bit vector representing a compressed property_vect.
- * @see ::new_hyps
- */
-static char *get_hyps(long &h, property_vect const &hyp)
-{
-  if (hyp.size() > sizeof(long) * 8)
-    return reinterpret_cast< char * >(h);
-  else
-    return reinterpret_cast< char * >(&h);
-}
-
-/**
  * Uncompresses the vector of global hypotheses this node (in)directly depends on.
  * The carrier vector is the hypotheses of the graph that owns this node.
  */
-property_vect node::get_hypotheses() const
+property_vect const &node::get_hypotheses() const
 {
-  property_vect res;
-  long h = get_hyps();
-  if (h == 0) return res;
-  property_vect const &ghyp = graph->get_hypotheses();
-  char const *v = ::get_hyps(h, ghyp);
-  for (unsigned i = 0, nb = ghyp.size(); i < nb; ++i)
-    if (v[i / 8] & (1 << (i & 7))) res.push_back(ghyp[i]);
-  return res;
+  static property_vect empty;
+  if (type == HYPOTHESIS) return empty;
+  return graph->get_hypotheses();
 }
 
 /**
@@ -245,38 +197,6 @@ void dependent_node::clean_dependencies()
 }
 
 /**
- * Marks all the hypotheses about @a r, in the compressed property_vect represented by the bit vector @a v.
- */
-static void fill_hyps(char *v, property_vect const &hyp, predicated_real const &r)
-{
-  for(unsigned i = 0, nb = hyp.size(); i < nb; ++i)
-    if (hyp[i].real == r)
-      v[i / 8] |= 1 << (i & 7);
-}
-
-/**
- * Marks all the hypotheses used by the node @a n, in the compressed property_vect represented by the bit vector @a v.
- * @note While a ::HYPOTHESIS node does not really rely on any hypothesis, it still adds itself to @a v.
- */
-static void fill_hyps(char *v, property_vect const &hyp, node *n)
-{
-  if (n->type == HYPOTHESIS)
-  {
-    fill_hyps(v, hyp, n->get_result().real);
-    return;
-  }
-  property_vect const &nhyp = n->graph->get_hypotheses();
-  long h = n->get_hyps();
-  char const *nv = get_hyps(h, nhyp);
-  unsigned nb = nhyp.size();
-  if (&hyp == &nhyp)
-    for(unsigned i = 0, end = (nb + 7) / 8; i < end; ++i) v[i] |= nv[i];
-  else
-    for(unsigned i = 0; i < nb; ++i)
-      if (nv[i / 8] & (1 << (i & 7))) fill_hyps(v, hyp, nhyp[i].real);
-}
-
-/**
  * Creates a ::MODUS node. Finds predecessors needed by @a n with ::find_proof.
  * Merges the global hypotheses of predecessors to obtain the global hypotheses of this node.
  */
@@ -291,8 +211,6 @@ modus_node::modus_node(theorem_node *n)
     nb_missing = 1 + n->hyp.size();
   }
   int missing = 0;
-  property_vect const &ghyp = graph->get_hypotheses();
-  char *v = new_hyps(hyps, ghyp);
   node_set nodes;
   for (property_vect::const_iterator i = n->hyp.begin(),
        i_end = n->hyp.end(); i != i_end; ++i)
@@ -304,7 +222,6 @@ modus_node::modus_node(theorem_node *n)
       m = create_theorem(0, NULL, *i, "$FALSE");
     }
     assert(m && dominates(m, this));
-    fill_hyps(v, ghyp, m);
     if (m->type != HYPOTHESIS && nodes.insert(m).second)
       insert_pred(m);
     if (m->nb_missing)
@@ -323,7 +240,6 @@ modus_node::~modus_node()
   // axioms are not owned by modus node
   if (!target->name.empty())
     delete target;
-  delete_hyps(hyps, graph->get_hypotheses());
 }
 
 /**
@@ -362,12 +278,9 @@ node *create_theorem(int nb, property const h[], property const &p, std::string 
 class intersection_node: public dependent_node
 {
   property res;
-  long hyps;
  public:
   intersection_node(node *n1, node *n2);
-  ~intersection_node() { delete_hyps(hyps, graph->get_hypotheses()); }
   virtual property const &get_result() const { return res; }
-  virtual long get_hyps() const { return hyps; }
   virtual property maximal() const { return res.null() ? res : node::maximal(); }
   virtual property maximal_for(node const *) const;
   virtual void enlarge(property const &p) { res = boundify(p, res); }
@@ -397,10 +310,6 @@ intersection_node::intersection_node(node *n1, node *n2)
   assert(n1->type != HYPOTHESIS || n2->type != HYPOTHESIS);
   insert_pred(n1);
   insert_pred(n2);
-  property_vect const &ghyp = graph->get_hypotheses();
-  char *v = new_hyps(hyps, ghyp);
-  fill_hyps(v, ghyp, n1);
-  fill_hyps(v, ghyp, n2);
   if (is_empty(res.bnd()))
   {
     if (res1.real.pred() == PRED_REL)
