@@ -558,7 +558,6 @@ static std::string display(node *n)
        i_end = n_hyp.end(); i != i_end; ++i)
   {
     property const &p = *i;
-    plouf << " (h" << num_hyp << " : " << display(p) << ")";
     pmap[p.real] = std::make_pair(num_hyp++, &p);
   }
   node_vect const &pred = n->get_subproofs();
@@ -578,9 +577,8 @@ static std::string display(node *n)
     {
       node *m = *i;
       property const &res = m->get_result();
-      plouf << "  let h" << num_hyp << " : " << display(res) << " := ";
-      invoke_lemma(plouf, m, pmap);
-      plouf << " in\n";
+      plouf << "  let h" << num_hyp << " : " << display(res) << " := "
+            << display(m) << " in\n";
       pmap[res.real] = std::make_pair(num_hyp++, &res);
     }
     modus_node *mn = dynamic_cast< modus_node * >(n);
@@ -668,9 +666,8 @@ static std::string display(node *n)
     if (!(nb <= mb))
     {
       property const &res = m->get_result();
-      plouf << "  let h" << num_hyp << " : " << display(res) << " := ";
-      invoke_lemma(plouf, m, pmap);
-      plouf << " in ";
+      plouf << "  let h" << num_hyp << " : " << display(res) << " := "
+        << display(m) << " in ";
       pmap[res.real] = std::make_pair(num_hyp++, &res);
       char const *prefix = "", *suffix = "";
       if (m->get_result().real.pred() == PRED_REL) prefix = "rel_";
@@ -681,8 +678,7 @@ static std::string display(node *n)
     }
     else
     {
-      plouf << "  ";
-      invoke_lemma(plouf, m, pmap);
+      plouf << "  " << display(m);
     }
     plouf << " in\n";
     break; }
@@ -717,12 +713,23 @@ std::string coq_lambda_backend::theorem(node *n)
   *out << "(* " << nb_hyps;
   if (n->get_result().null()) *out << ",contradiction";
   *out << " *)\n(fun ";
-  std::ostringstream buf;
+  std::ostringstream buf1, buf2, buf3;
   out_vars = out;
-  out = &buf;
+  out = &buf1;
+  property_vect const &n_hyp = n->graph->get_hypotheses();
+  int num_hyp = 0;
+  for (property_vect::const_iterator i = n_hyp.begin(),
+       i_end = n_hyp.end(); i != i_end; ++i)
+  {
+    buf3 << " (h" << num_hyp << " : " << display(*i) << ")";
+    ++num_hyp;
+  }
+  out = &buf2;
   std::string s = display(n);
   out = out_vars;
-  *out << "=>\n" << buf.str() << s << ")\n";
+  *out << "=>\n" << buf1.str();
+  if (num_hyp) *out << "fun" << buf3.str() << " =>\n";
+  *out << buf2.str() << s << ")\n";
   return s;
 }
 
