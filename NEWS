@@ -1,6 +1,8 @@
 Version 0.13.0:
  * Coq lambda back-end
    - simplified generated proofs
+ * proof graph
+   - disabled sequent generation
 
 Version 0.12.3:
  * Coq lambda back-end
