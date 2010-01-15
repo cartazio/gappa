@@ -232,12 +232,13 @@ std::string dump_prop_tree(property_tree const &pt)
   std::ostringstream s;
   if (pt.empty()) return "???";
   bool first = true;
-  for (std::vector<property>::const_iterator i = pt->leaves.begin(),
+  for (std::vector<property_tree::leave>::const_iterator i = pt->leaves.begin(),
        i_end = pt->leaves.end(); i != i_end; ++i)
   {
     if (first) first = false;
     else s << (pt->conjunction ? " /\\ " : " \\/ ");
-    s << dump_real_short(i->real);
+    if (!i->second) s << "not ";
+    s << dump_real_short(i->first.real);
   }
   for (std::vector<property_tree>::const_iterator i = pt->subtrees.begin(),
        i_end = pt->subtrees.end(); i != i_end; ++i)
@@ -282,12 +283,13 @@ std::string dump_prop_tree_nice(property_tree const &pt)
   std::ostringstream s;
   if (pt.empty()) return "1 <= 0";
   bool first = true;
-  for (std::vector<property>::const_iterator i = pt->leaves.begin(),
+  for (std::vector<property_tree::leave>::const_iterator i = pt->leaves.begin(),
        i_end = pt->leaves.end(); i != i_end; ++i)
   {
     if (first) first = false;
     else s << (pt->conjunction ? " /\\ " : " \\/ ");
-    s << dump_property_nice(*i);
+    if (!i->second) s << "not ";
+    s << dump_property_nice(i->first);
   }
   for (std::vector<property_tree>::const_iterator i = pt->subtrees.begin(),
        i_end = pt->subtrees.end(); i != i_end; ++i)

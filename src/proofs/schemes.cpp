@@ -14,7 +14,7 @@
 extern std::string parameter_schemes;
 
 typedef std::set< predicated_real > preal_set;
-extern preal_set input_reals, input_partial_reals, output_reals;
+extern preal_set input_reals, output_reals;
 
 struct scheme_factories: std::vector< scheme_factory const * > {
   ~scheme_factories() { for(iterator i = begin(), i_end = end(); i != i_end; ++i) delete *i; }
@@ -371,13 +371,6 @@ preal_vect generate_proof_paths()
   // initialize hypothesis reals to handle contradictions
   for (preal_set::const_iterator i = input_reals.begin(),
        i_end = input_reals.end(); i != i_end; ++i)
-  {
-    real_dependency &r = initialize_dependencies(*i);
-    r.schemes.insert(NULL);
-    r.dependent.insert(NULL);
-  }
-  for (preal_set::const_iterator i = input_partial_reals.begin(),
-       i_end = input_partial_reals.end(); i != i_end; ++i)
   {
     real_dependency &r = initialize_dependencies(*i);
     r.schemes.insert(NULL);

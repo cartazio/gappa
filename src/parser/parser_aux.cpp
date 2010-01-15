@@ -13,7 +13,7 @@
 typedef std::set< ast_real const * > real_set;
 real_set free_variables;
 typedef std::set< predicated_real > preal_set;
-preal_set input_reals, input_partial_reals, output_reals;
+preal_set input_reals, output_reals;
 
 interval create_interval(ast_number const *, ast_number const *, bool);
 void find_unknown_reals(real_set &, ast_real const *);
@@ -54,35 +54,28 @@ static property generate_property(ast_atom_bound const &p, bool goal)
   return r;
 }
 
-static bool is_positive(ast_prop const *p) {
-  switch (p->type) {
-  case PROP_ATOM:	return true;
-  case PROP_IMPL:
-  case PROP_NOT:	return false;
-  case PROP_AND:
-  case PROP_OR:		break;
-  }
-  return is_positive(p->lhs) && is_positive(p->rhs);
-}
-
-static void generate_goal(property_tree &tree, ast_prop const *p)
+static void generate_tree(property_tree &tree, ast_prop const *p, bool positive)
 {
   switch (p->type) {
   case PROP_ATOM:
-    tree->leaves.push_back(generate_property(*p->atom, true));
+    tree->leaves.push_back(property_tree::leave
+      (generate_property(*p->atom, positive), positive));
     break;
+  case PROP_IMPL:
   case PROP_AND:
   case PROP_OR: {
     property_tree *dst = &tree;
-    if (tree->conjunction != (p->type == PROP_AND)) {
-      tree->subtrees.push_back(new property_tree::data(p->type == PROP_AND));
+    bool conjunction = (p->type == PROP_AND) ^ !positive;
+    if (tree->conjunction != conjunction) {
+      tree->subtrees.push_back(new property_tree::data(conjunction));
       dst = &tree->subtrees.back();
     }
-    generate_goal(*dst, p->lhs);
-    generate_goal(*dst, p->rhs);
+    generate_tree(*dst, p->lhs, positive ^ (p->type == PROP_IMPL));
+    generate_tree(*dst, p->rhs, positive);
     break; }
-  default:
-    assert(false);
+  case PROP_NOT:
+    generate_tree(tree, p->lhs, !positive);
+    break;
   }
 }
 
@@ -109,114 +102,33 @@ void check_approx(ast_real const *real)
     register_approx(o->ops[0], o->ops[1]);
 }
 
-struct sequent {
-  ast_prop_vect lhs, rhs;
-};
-
-static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
-  while (idl < s.lhs.size() || idr < s.rhs.size()) {
-    while (idl < s.lhs.size()) {
-      ast_prop const *p = s.lhs[idl];
-      switch (p->type) {
-      case PROP_NOT: {
-        s.lhs[idl] = s.lhs[s.lhs.size() - 1];
-        s.lhs.pop_back();
-        s.rhs.push_back(p->lhs);
-        break;
-      }
-      case PROP_AND: {
-        s.lhs[idl] = p->lhs;
-        s.lhs.push_back(p->rhs);
-        break;
-      }
-      case PROP_OR: {
-        sequent t = s;
-        s.lhs[idl] = p->lhs;
-        t.lhs[idl] = p->rhs;
-        parse_sequent(t, idl, idr);
-        break;
-      }
-      case PROP_IMPL: {
-        sequent t = s;
-        s.lhs[idl] = p->rhs;
-        t.lhs[idl] = t.lhs[t.lhs.size() - 1];
-        t.lhs.pop_back();
-        t.rhs.push_back(p->lhs);
-        parse_sequent(t, idl, idr);
-        break;
-      }
-      case PROP_ATOM:
-        ++idl;
-      }
-    }
-    while (idr < s.rhs.size()) {
-      ast_prop const *p = s.rhs[idr];
-      if (p->type == PROP_ATOM || (p->type == PROP_AND && is_positive(p))) { ++idr; continue; }
-      switch (p->type) {
-      case PROP_NOT: {
-        s.rhs[idr] = s.rhs[s.rhs.size() - 1];
-        s.rhs.pop_back();
-        s.lhs.push_back(p->lhs);
-        break;
-      }
-      case PROP_AND: {
-        sequent t = s;
-        s.rhs[idr] = p->lhs;
-        t.rhs[idr] = p->rhs;
-        parse_sequent(t, idl, idr);
-        break;
-      }
-      case PROP_OR: {
-        s.rhs[idr] = p->lhs;
-        s.rhs.push_back(p->rhs);
-        break;
-      }
-      case PROP_IMPL: {
-        s.rhs[idr] = p->rhs;
-        s.lhs.push_back(p->lhs);
-        break;
-      }
-      default:
-        assert(false);
-      }
-    }
-  }
-
-  // for any goal x>=b or x<=b, add the converse inequality as a hypothesis
-  for (ast_prop_vect::const_iterator i = s.rhs.begin(),
-       i_end = s.rhs.end(); i != i_end; ++i)
-  {
-    ast_prop const *p = *i;
-    ast_atom_bound const &atom = *p->atom;
-    if (p->type != PROP_ATOM || !atom.lower == !atom.upper) continue;
-    ast_number const *u = atom.upper;
-    if (!atom.upper && !atom.real2) {
-      real_op const *o = boost::get<real_op const>(atom.real);
-      if (o && o->type == UOP_ABS) u = token_zero;
-    }
-    s.lhs.push_back(new ast_prop(new ast_atom_bound(atom.real, u, atom.lower)));
-  }
+static void parse_property_tree(ast_prop const *p, context &ctx)
+{
+  property_tree tree(new property_tree::data(false));
+  generate_tree(tree, p, true);
 
   // register approximates, and intersects properties with common reals
   typedef std::map< predicated_real, property > input_set;
   input_set inputs;
-  for (ast_prop_vect::const_iterator i = s.lhs.begin(),
-       i_end = s.lhs.end(); i != i_end; ++i)
+  std::vector<property_tree::leave> new_leaves;
+
+  for (std::vector<property_tree::leave>::const_iterator i = tree->leaves.begin(),
+       i_end = tree->leaves.end(); i != i_end; ++i)
   {
-    ast_prop const *p = *i;
-    assert(p && p->type == PROP_ATOM);
-    ast_atom_bound const &atom = *p->atom;
-    if (atom.real2)
-      register_approx(atom.real, atom.real2);
+    if (i->second) {
+      new_leaves.push_back(*i);
+      continue;
+    }
+    property const &p = i->first;
+    if (p.real.real2())
+      register_approx(p.real.real(), p.real.real2());
     else
-      check_approx(atom.real);
-    property q = generate_property(atom, false);
-    std::pair< input_set::iterator, bool > ib = inputs.insert(std::make_pair(q.real, q));
+      check_approx(p.real.real());
+    std::pair< input_set::iterator, bool > ib = inputs.insert(std::make_pair(p.real, p));
     if (!ib.second) // there was already a known range
-      ib.first->second.intersect(q);
+      ib.first->second.intersect(p);
   }
 
-  context ctxt;
   for (input_set::const_iterator i = inputs.begin(),
        i_end = inputs.end(); i != i_end; ++i)
   {
@@ -229,25 +141,13 @@ static void parse_sequent(sequent &s, unsigned idl, unsigned idr) {
       return;
     }
     // locate variables appearing in bounded expressions
-    if (is_bounded(bnd))
-      input_reals.insert(i->first);
-    else
-      input_partial_reals.insert(i->first);
-    ctxt.hyp.push_back(i->second);
+    if (!is_bounded(bnd)) continue;
+    input_reals.insert(i->first);
+    ctx.hyp.push_back(i->second);
   }
 
-  if (!s.rhs.empty())
-  {
-    ctxt.goals = new
-      property_tree::data(s.rhs.size() == 1 && s.rhs[0]->type != PROP_OR);
-    for (ast_prop_vect::const_iterator i = s.rhs.begin(),
-         i_end = s.rhs.end(); i != i_end; ++i)
-    {
-      generate_goal(ctxt.goals, *i);
-    }
-  }
-
-  contexts.push_back(ctxt);
+  tree->leaves = new_leaves;
+  ctx.goals = tree;
 }
 
 static void delete_prop(ast_prop const *p) {
@@ -289,10 +189,12 @@ static void check_unbound()
   }
 }
 
-void generate_graph(ast_prop const *p) {
-  sequent s;
-  s.rhs.push_back(p);
-  parse_sequent(s, 0, 0);
+extern context goal;
+
+void generate_graph(ast_prop const *p)
+{
+  parse_property_tree(p, goal);
+  std::cerr << dump_prop_tree(goal.goals) << '\n';
   if (warning_unbound_variable)
     check_unbound();
   free_variables.clear();

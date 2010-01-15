@@ -151,11 +151,11 @@ struct remove_pred1
   bool force, unrelated;
   remove_pred1(property const &p, bool f)
     : prop(p), force(f), unrelated(false) {}
-  bool operator()(property const &p)
+  bool operator()(property_tree::leave const &p)
   {
-    if (p.real == prop.real) {
-      if (!is_defined(p.bnd())) return force;
-      if (prop.bnd() <= p.bnd()) return true;
+    if (p.second && p.first.real == prop.real) {
+      if (!is_defined(p.first.bnd())) return force;
+      if (prop.bnd() <= p.first.bnd()) return true;
     }
     unrelated = true;
     return false;
@@ -200,7 +200,7 @@ bool property_tree::remove(property const &p, bool force)
   {
   // Filter out satisfied leaves.
   remove_pred1 pred1(p, force);
-  std::vector< property >::iterator end1 = ptr->leaves.end(),
+  std::vector< leave >::iterator end1 = ptr->leaves.end(),
     i1 = std::remove_if(ptr->leaves.begin(), end1, pred1);
   if (i1 != end1 && !ptr->conjunction) goto kill_tree;
   // Filter out satisfied subtrees.
@@ -225,13 +225,14 @@ bool property_tree::verify(graph_t *g, property *p) const
   if (!ptr) return false;
   graph_loader loader(g);
   bool b = ptr->conjunction;
-  for (std::vector< property >::const_iterator i = ptr->leaves.begin(),
-       end = ptr->leaves.end(); i != end; ++i)
+  for (std::vector< leave >::const_iterator i = ptr->leaves.begin(),
+       i_end = ptr->leaves.end(); i != i_end; ++i)
   {
-    if (b == !!find_proof(*i)) continue;
+    if (!i->second) continue;
+    if (b == !!find_proof(i->first)) continue;
     // Either this tree node is a conjunction and property *i is not satisfied,
     // or it is a disjunction and property *i is satisfied.
-    if (b && p) *p = *i;
+    if (b && p) *p = i->first;
     return !b;
   }
   for (std::vector< property_tree >::const_iterator i = ptr->subtrees.begin(),
@@ -270,11 +271,12 @@ typedef std::vector< std::pair< node *, interval > > goal_vect;
 bool property_tree::get_nodes_aux(goal_vect &goals) const
 {
   bool all = true;
-  for (std::vector< property >::const_iterator i = ptr->leaves.begin(),
-       end = ptr->leaves.end(); i != end; ++i)
+  for (std::vector< leave >::const_iterator i = ptr->leaves.begin(),
+       i_end = ptr->leaves.end(); i != i_end; ++i)
   {
-    if (node *n = find_proof(*i)) {
-      goals.push_back(std::make_pair(n, i->bnd()));
+    if (!i->second) { all = false; continue; }
+    if (node *n = find_proof(i->first)) {
+      goals.push_back(std::make_pair(n, i->first.bnd()));
       if (!ptr->conjunction) return true;
     } else all = false;
   }
@@ -321,12 +323,19 @@ void property_tree::get_nodes(graph_t *g, node_vect &goals)
   g->replace_known(goals);
 }
 
-struct remove_pred3 {
+struct remove_pred3
+{
   ast_real_vect const &dst;
   remove_pred3(ast_real_vect const &v): dst(v) {}
-  bool operator()(property const &p) {
-    for(ast_real_vect::const_iterator i = dst.begin(), end = dst.end(); i != end; ++i)
-      if (p.real.pred() == PRED_BND && p.real.real() == *i && is_defined(p.bnd())) return false;
+  bool operator()(property_tree::leave const &p)
+  {
+    for (ast_real_vect::const_iterator i = dst.begin(),
+         i_end = dst.end(); i != i_end; ++i)
+    {
+      if (p.second && p.first.real.pred() == PRED_BND &&
+          p.first.real.real() == *i && is_defined(p.first.bnd()))
+        return false;
+    }
     return true;
   }
 };
@@ -345,7 +354,7 @@ void property_tree::restrict(ast_real_vect const &dst) {
   unique();
   remove_pred3 pred1(dst);
   remove_pred4 pred2(dst);
-  std::vector< property >::iterator end1 = ptr->leaves.end(),
+  std::vector< leave >::iterator end1 = ptr->leaves.end(),
     i1 = std::remove_if(ptr->leaves.begin(), end1, pred1);
   std::vector< property_tree >::iterator end2 = ptr->subtrees.end(),
     i2 = std::remove_if(ptr->subtrees.begin(), end2, pred2);

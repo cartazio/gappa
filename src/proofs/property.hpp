@@ -71,9 +71,11 @@ struct property_vect: std::vector< property > {
 struct node;
 struct graph_t;
 
-struct property_tree {
+struct property_tree
+{
+  typedef std::pair< property, bool > leave;
   struct data {
-    std::vector< property > leaves;
+    std::vector< leave > leaves;
     std::vector< property_tree > subtrees;
     unsigned ref;
     bool conjunction;
@@ -125,8 +127,5 @@ struct context {
   property_vect hyp;
   property_tree goals;
 };
-
-typedef std::vector< context > context_vect;
-extern context_vect contexts;
 
 #endif // PROOFS_PROPERTY_HPP

@@ -15,8 +15,8 @@ extern std::vector< graph_t * > graphs;
 extern bool detailed_io;
 extern backend *proof_generator;
 dichotomy_sequence dichotomies;
-context_vect contexts;
 property_tree current_goals;
+context goal;
 
 extern int
   stat_tested_th, stat_successful_th,
@@ -70,10 +70,8 @@ int main(int argc, char **argv)
     std::cerr << "Warning: no path was found for " << dump_real_short(*i) << ".\n";
   }
   bool globally_proven = true;
-  for (context_vect::const_iterator i = contexts.begin(),
-       i_end = contexts.end(); i != i_end; ++i)
   {
-    context const &current_context = *i;
+    context const &current_context = goal;
     if (proof_generator) proof_generator->reset();
     graph_t *g = new graph_t(NULL, current_context.hyp);
     if (g->populate(current_context.goals, dichotomies, 100*1000*1000))
