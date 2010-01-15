@@ -532,9 +532,17 @@ proof_paths_cleaner::~proof_paths_cleaner() {
 static proof_paths_cleaner dummy;
 #endif // LEAK_CHECKER
 
-node *find_proof(property const &res) {
+node *find_proof(property const &res, bool implies)
+{
   node *n = find_proof(res.real);
-  return (n && n->get_result().implies(res)) ? n : NULL;
+  if (!n) return NULL;
+  if (implies && !n->get_result().implies(res)) return NULL;
+  if (!implies) {
+    property p = n->get_result();
+    p.intersect(res);
+    if (!is_empty(p.bnd())) return NULL;
+  }
+  return n;
 }
 
 bool fill_hypotheses(property *hyp, preal_vect const &v) {

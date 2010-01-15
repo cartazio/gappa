@@ -151,11 +151,17 @@ struct remove_pred1
   bool force, unrelated;
   remove_pred1(property const &p, bool f)
     : prop(p), force(f), unrelated(false) {}
-  bool operator()(property_tree::leave const &p)
+  bool operator()(property_tree::leave &p)
   {
-    if (p.second && p.first.real == prop.real) {
-      if (!is_defined(p.first.bnd())) return force;
-      if (prop.bnd() <= p.first.bnd()) return true;
+    if (p.first.real == prop.real) {
+      if (!is_defined(p.first.bnd())) return force || !p.second;
+      if (p.second) {
+        if (prop.implies(p.first)) return true;
+      } else {
+        property q = p.first;
+        q.intersect(prop);
+        if (is_empty(q.bnd())) return true;
+      }
     }
     unrelated = true;
     return false;
@@ -228,8 +234,7 @@ bool property_tree::verify(graph_t *g, property *p) const
   for (std::vector< leave >::const_iterator i = ptr->leaves.begin(),
        i_end = ptr->leaves.end(); i != i_end; ++i)
   {
-    if (!i->second) continue;
-    if (b == !!find_proof(i->first)) continue;
+    if (b == !!find_proof(i->first, i->second)) continue;
     // Either this tree node is a conjunction and property *i is not satisfied,
     // or it is a disjunction and property *i is satisfied.
     if (b && p) *p = i->first;
@@ -274,8 +279,7 @@ bool property_tree::get_nodes_aux(goal_vect &goals) const
   for (std::vector< leave >::const_iterator i = ptr->leaves.begin(),
        i_end = ptr->leaves.end(); i != i_end; ++i)
   {
-    if (!i->second) { all = false; continue; }
-    if (node *n = find_proof(i->first)) {
+    if (node *n = find_proof(i->first, i->second)) {
       goals.push_back(std::make_pair(n, i->first.bnd()));
       if (!ptr->conjunction) return true;
     } else all = false;
