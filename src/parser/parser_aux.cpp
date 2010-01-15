@@ -164,7 +164,8 @@ static void parse_property_tree(ast_prop const *p, context &ctx)
   }
 
   tree->leaves = new_leaves;
-  ctx.goals = tree;
+  if (!tree->subtrees.empty() || !tree->leaves.empty())
+    ctx.goals = tree;
 }
 
 static void delete_prop(ast_prop const *p) {
