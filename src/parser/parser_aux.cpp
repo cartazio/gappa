@@ -107,11 +107,29 @@ static void parse_property_tree(ast_prop const *p, context &ctx)
   property_tree tree(new property_tree::data(false));
   generate_tree(tree, p, true);
 
-  // register approximates, and intersects properties with common reals
-  typedef std::map< predicated_real, property > input_set;
-  input_set inputs;
   std::vector<property_tree::leave> new_leaves;
 
+  // for any goal x>=b or x<=b, add the converse inequality as a hypothesis
+  for (std::vector<property_tree::leave>::const_iterator i = tree->leaves.begin(),
+       i_end = tree->leaves.end(); i != i_end; ++i)
+  {
+    property const &p = i->first;
+    if (!i->second || !is_defined(p.bnd()) || is_bounded(p.bnd())) continue;
+    number u = upper(p.bnd());
+    if (u == number::pos_inf && !p.real.real2()) {
+      real_op const *o = boost::get<real_op const>(p.real.real());
+      if (o && o->type == UOP_ABS) u = 0;
+    }
+    new_leaves.push_back(property_tree::leave
+      (property(p.real, interval(-u, -lower(p.bnd()))), false));
+  }
+
+  tree->leaves.insert(tree->leaves.end(), new_leaves.begin(), new_leaves.end());
+  new_leaves.clear();
+  typedef std::map< predicated_real, property > input_set;
+  input_set inputs;
+
+  // register approximates, and intersects properties with common reals
   for (std::vector<property_tree::leave>::const_iterator i = tree->leaves.begin(),
        i_end = tree->leaves.end(); i != i_end; ++i)
   {
@@ -141,8 +159,7 @@ static void parse_property_tree(ast_prop const *p, context &ctx)
       return;
     }
     // locate variables appearing in bounded expressions
-    if (!is_bounded(bnd)) continue;
-    input_reals.insert(i->first);
+    if (is_bounded(bnd)) input_reals.insert(i->first);
     ctx.hyp.push_back(i->second);
   }
 
