@@ -7,6 +7,8 @@
 #include "proofs/schemes.hpp"
 #include "proofs/updater.hpp"
 
+struct backend;
+extern backend *proof_generator;
 extern bool parameter_expensive;
 extern bool parameter_constrained;
 
@@ -187,13 +189,12 @@ void dependent_node::clean_dependencies()
 
 /**
  * Creates a ::MODUS node. Finds predecessors needed by @a n with ::find_proof.
- * Merges the global hypotheses of predecessors to obtain the global hypotheses of this node.
  */
 modus_node::modus_node(theorem_node *n)
-  : dependent_node(MODUS)
+  : dependent_node(MODUS), target(n)
 {
   assert(n);
-  target = n;
+  if (!proof_generator) return;
   if (n->name == "$FALSE")
   {
     assert(!parameter_constrained);
