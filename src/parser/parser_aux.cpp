@@ -156,7 +156,7 @@ static void parse_property_tree(ast_prop const *p, context &ctx)
     {
       std::cerr << "Warning: the hypotheses on " << dump_real_short(i->first)
                 << " are trivially contradictory, skipping.\n";
-      return;
+      exit(0);
     }
     // locate variables appearing in bounded expressions
     if (is_bounded(bnd)) input_reals.insert(i->first);
@@ -212,7 +212,6 @@ extern context goal;
 void generate_graph(ast_prop const *p)
 {
   parse_property_tree(p, goal);
-  std::cerr << dump_prop_tree(goal.goals) << '\n';
   if (warning_unbound_variable)
     check_unbound();
   free_variables.clear();
