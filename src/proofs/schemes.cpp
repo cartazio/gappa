@@ -598,6 +598,20 @@ bool graph_t::populate(property_tree const &goals, dichotomy_sequence const &dic
       if (s->real.pred() != PRED_BND) continue;
       current_goals.remove(n->get_result());
       if (current_goals.empty()) return false;	// now empty, there is nothing left to prove
+      if (current_goals->conjunction) continue;
+      std::vector<property_tree::leave> old_leaves = current_goals->leaves;
+      for (std::vector<property_tree::leave>::const_iterator i = old_leaves.begin(),
+           i_end = old_leaves.end(); i != i_end; ++i)
+      {
+        if (i->second || !is_bounded(i->first.bnd())) continue;
+        current_goals.remove(i->first);
+        node *m = create_theorem(0, NULL, i->first, "$LOGIC");
+        if (!try_real(m)) continue;
+        if (contradiction) return true;
+        insert_dependent(missing_schemes, i->first.real);
+        current_goals.remove(m->get_result());
+        if (current_goals.empty()) return false;
+      }
     }
     if (iter > iter_max)
       std::cerr << "Warning: maximum number of iterations reached.\n";

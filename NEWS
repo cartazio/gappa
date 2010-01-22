@@ -4,6 +4,7 @@ Version 0.13.0:
  * proof graph
    - disabled sequent generation
    - disabled proof tracking for the null back-end
+   - improved handling of deep logic negations
 
 Version 0.12.3:
  * Coq lambda back-end
