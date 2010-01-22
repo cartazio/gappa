@@ -186,16 +186,32 @@ struct remove_pred2 {
   }
 };
 
-void property_tree::flatten() {
-  if (ptr->subtrees.size() != 1) return;
-  property_tree &t = ptr->subtrees[0];
-  if (!ptr->leaves.empty() && t.ptr->conjunction != ptr->conjunction) return;
-  t.unique();
-  data *p = t.ptr;
-  p->leaves.insert(p->leaves.end(), ptr->leaves.begin(), ptr->leaves.end());
-  ++p->ref; // have to "incr" before decr; decr may erase t otherwise
-  decr();
-  ptr = p;
+void property_tree::flatten()
+{
+  bool possible = false;
+  for (std::vector<property_tree>::const_iterator i = ptr->subtrees.begin(),
+       i_end = ptr->subtrees.end(); i != i_end; ++i)
+  {
+    if (i->ptr->conjunction != ptr->conjunction &&
+        i->ptr->leaves.size() + i->ptr->subtrees.size() > 1) continue;
+    possible = true;
+    break;
+  }
+  if (!possible) return;
+  unique();
+  std::vector<property_tree> old_trees;
+  old_trees.swap(ptr->subtrees);
+  for (std::vector<property_tree>::const_iterator i = old_trees.begin(),
+       i_end = old_trees.end(); i != i_end; ++i)
+  {
+    if (i->ptr->conjunction != ptr->conjunction &&
+        i->ptr->leaves.size() + i->ptr->subtrees.size() > 1) {
+      ptr->subtrees.push_back(*i);
+      continue;
+    }
+    ptr->subtrees.insert(ptr->subtrees.end(), i->ptr->subtrees.begin(), i->ptr->subtrees.end());
+    ptr->leaves.insert(ptr->leaves.end(), i->ptr->leaves.begin(), i->ptr->leaves.end());
+  }
 }
 
 bool property_tree::remove(property const &p, bool force)
