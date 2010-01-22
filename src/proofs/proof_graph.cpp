@@ -364,7 +364,11 @@ graph_t::graph_t(graph_t *f, property_vect const &h)
       if (known_reals.count(i->real) == 0)
         partial_reals.insert(std::make_pair(i->real, new hypothesis_node(*i)));
     }
-    else try_real(new hypothesis_node(*i));
+    else
+    {
+      node *n = new hypothesis_node(*i);
+      try_real(n);
+    }
   }
 }
 
@@ -406,9 +410,11 @@ int stat_successful_th = 0, stat_discarded_pred = 0, stat_intersected_pred = 0;
  *
  * If the result is not a strict subset, an ::intersection_node with the alreay known result is created.
  *
- * @return true is the node is worth it.
+ * In both cases, the new node is passed back.
+ *
+ * @return true if the node is worth it.
  */
-bool graph_t::try_real(node *n)
+bool graph_t::try_real(node *&n)
 {
   assert(top_graph == this && !contradiction);
   assert(n && n->graph && n->graph->dominates(this));
@@ -425,6 +431,7 @@ bool graph_t::try_real(node *n)
     {
       ++stat_discarded_pred;
       delete n;
+      n = NULL;
       return false;
     }
     if (res1.implies(res2))
@@ -434,6 +441,7 @@ bool graph_t::try_real(node *n)
       {
         ++stat_discarded_pred;
         delete n;
+        n = NULL;
         return false;
       }
     }

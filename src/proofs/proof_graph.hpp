@@ -138,7 +138,7 @@ class graph_t
   graph_t(graph_t *, property_vect const &);
   ~graph_t();
   node *find_already_known(predicated_real const &) const;
-  bool try_real(node *);
+  bool try_real(node *&);
   /** Returns the hypotheses #hyp of this graph. */
   property_vect const &get_hypotheses() const { return hyp; }
   bool dominates(graph_t const *) const;
