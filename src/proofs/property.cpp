@@ -197,7 +197,23 @@ void property_tree::flatten()
     possible = true;
     break;
   }
-  if (!possible) return;
+  if (!possible)
+  {
+    if (ptr->subtrees.size() != 1) return;
+    property_tree &t = ptr->subtrees[0];
+    if (!ptr->leaves.empty() && t.ptr->conjunction != ptr->conjunction) return;
+    // The root is a singleton or its only subtree has a compatible
+    // modality; replace the root with it.
+    t.unique();
+    data *p = t.ptr;
+    p->leaves.insert(p->leaves.end(), ptr->leaves.begin(), ptr->leaves.end());
+    ++p->ref; // have to "incr" before decr; decr may erase t otherwise
+    decr();
+    ptr = p;
+    return;
+  }
+  // Some subtrees are singleton or have a modality compatible with the
+  // root; merge them into the root.
   unique();
   std::vector<property_tree> old_trees;
   old_trees.swap(ptr->subtrees);
