@@ -115,13 +115,17 @@ static void parse_property_tree(ast_prop const *p, context &ctx)
   {
     property const &p = i->first;
     if (!i->second || !is_defined(p.bnd()) || is_bounded(p.bnd())) continue;
-    number u = upper(p.bnd());
-    if (u == number::pos_inf && !p.real.real2()) {
-      real_op const *o = boost::get<real_op const>(p.real.real());
-      if (o && o->type == UOP_ABS) u = 0;
+    number l = upper(p.bnd()), u = lower(p.bnd());
+    if (l == number::pos_inf) {
+      l = number::neg_inf;
+      if (!p.real.real2()) {
+        real_op const *o = boost::get<real_op const>(p.real.real());
+        if (o && o->type == UOP_ABS) l = 0;
+      }
+    } else {
+      u = number::pos_inf;
     }
-    new_leaves.push_back(property_tree::leave
-      (property(p.real, interval(-u, -lower(p.bnd()))), false));
+    new_leaves.push_back(property_tree::leave(property(p.real, interval(l, u)), false));
   }
 
   tree->leaves.insert(tree->leaves.end(), new_leaves.begin(), new_leaves.end());
