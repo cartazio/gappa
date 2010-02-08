@@ -614,7 +614,12 @@ bool graph_t::populate(property_tree const &goals, dichotomy_sequence const &dic
         set_contradiction(n);
         return true;
       }
-      if (!goal_reduction || current_goals->conjunction) continue;
+      if (!goal_reduction) continue;
+      if (current_goals->conjunction) {
+        if (current_goals->leaves.size() + current_goals->subtrees.size() > 1)
+          continue;
+        current_goals->conjunction = false;
+      }
       std::vector<property_tree::leave> old_leaves = current_goals->leaves;
       for (std::vector<property_tree::leave>::const_iterator i = old_leaves.begin(),
            i_end = old_leaves.end(); i != i_end; ++i)
