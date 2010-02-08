@@ -17,6 +17,7 @@ extern backend *proof_generator;
 dichotomy_sequence dichotomies;
 property_tree current_goals;
 context goal;
+bool goal_reduction = true;
 
 extern int
   stat_tested_th, stat_successful_th,
@@ -61,6 +62,7 @@ int main(int argc, char **argv)
       return EXIT_FAILURE;
     }
     proof_generator->initialize(std::cout);
+    goal_reduction = false;
   }
   if (yyparse()) return EXIT_FAILURE;
   preal_vect missing_paths = generate_proof_paths();
@@ -79,7 +81,7 @@ int main(int argc, char **argv)
       if (!parameter_only_failure)
       {
         display_context(current_context);
-        if (!current_context.goals.empty())
+        if (!current_context.goals.empty() && !goal_reduction)
           std::cerr << "Warning: hypotheses are in contradiction, any result is true.\n";
         else
           std::cerr << "A contradiction was built from the hypotheses.\n";

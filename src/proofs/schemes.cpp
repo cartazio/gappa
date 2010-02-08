@@ -556,6 +556,8 @@ bool fill_hypotheses(property *hyp, preal_vect const &v) {
 
 int stat_tested_th = 0;
 
+extern bool goal_reduction;
+
 /**
  * Fills this graph by iteratively applying theorems until
  * \li @a goals is statisfied, or
@@ -590,15 +592,29 @@ bool graph_t::populate(property_tree const &goals, dichotomy_sequence const &dic
       s->visited = 0; // allows the scheme to be reused later, if needed
       ++stat_tested_th;
       node *n = s->generate_proof();
-      if (!n || !try_real(n)) continue;		// the scheme did not find anything useful
+      if (!n || !try_real(n)) {
+        // The scheme did not find anything useful.
+        continue;
+      }
       s->score += scheme_queue::success_score;
-      if (contradiction) return true;		// we have got a contradiction, everything is true
+      if (contradiction) {
+        // We have got a contradiction, everything is true.
+        return true;
+      }
       insert_dependent(missing_schemes, s->real, s);
-      if (current_goals.empty()) continue;	// originally empty, we are striving for a contradiction
+      if (current_goals.empty()) {
+        // Originally empty, we are striving for a contradiction.
+        continue;
+      }
       if (s->real.pred() != PRED_BND) continue;
       current_goals.remove(n->get_result());
-      if (current_goals.empty()) return false;	// now empty, there is nothing left to prove
-      if (current_goals->conjunction) continue;
+      if (current_goals.empty()) {
+        // Now empty, there is nothing left to prove.
+        if (!goal_reduction) return false;
+        set_contradiction(n);
+        return true;
+      }
+      if (!goal_reduction || current_goals->conjunction) continue;
       std::vector<property_tree::leave> old_leaves = current_goals->leaves;
       for (std::vector<property_tree::leave>::const_iterator i = old_leaves.begin(),
            i_end = old_leaves.end(); i != i_end; ++i)
@@ -610,7 +626,10 @@ bool graph_t::populate(property_tree const &goals, dichotomy_sequence const &dic
         if (contradiction) return true;
         insert_dependent(missing_schemes, i->first.real);
         current_goals.remove(m->get_result());
-        if (current_goals.empty()) return false;
+        if (current_goals.empty()) {
+          set_contradiction(m);
+          return true;
+        }
       }
     }
     if (iter > iter_max)

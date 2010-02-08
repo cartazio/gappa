@@ -19,6 +19,7 @@ interval create_interval(ast_number const *, ast_number const *, bool);
 void find_unknown_reals(real_set &, ast_real const *);
 
 extern bool warning_unbound_variable;
+extern bool goal_reduction;
 
 static property generate_property(ast_atom_bound const &p, bool goal)
 {
@@ -51,6 +52,7 @@ static property generate_property(ast_atom_bound const &p, bool goal)
     std::cerr << "Error: undefined intervals are restricted to conclusions.\n";
     exit(1);
   }
+  else goal_reduction = false;
   return r;
 }
 
