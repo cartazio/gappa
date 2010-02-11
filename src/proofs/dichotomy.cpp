@@ -193,13 +193,14 @@ struct dichotomy_failure {
   interval found;
 };
 
-struct dichotomy_helper {
+struct dichotomy_helper
+{
   graph_vect graphs;
   property_vect &tmp_hyp;
   int iter_max;
   int depth;
   unsigned nb_ref;
-  property_tree const &goals;
+  property_tree const &goals, &targets;
   dichotomy_sequence const &hints;
   dicho_graph last_graph;
   splitter *gen;
@@ -207,8 +208,10 @@ struct dichotomy_helper {
   void try_graph(dicho_graph);
   void dichotomize();
   dichotomy_node *generate_node(node *, property const &);
-  dichotomy_helper(property_vect &v, property_tree const &g, dichotomy_sequence const &h, splitter *s)
-    : tmp_hyp(v), depth(0), nb_ref(0), goals(g), hints(h), last_graph(dicho_graph(NULL, 0)), gen(s) {}
+  dichotomy_helper(property_vect &v, property_tree const &g,
+    property_tree const &t, dichotomy_sequence const &h, splitter *s)
+  : tmp_hyp(v), depth(0), nb_ref(0), goals(g), targets(t), hints(h),
+    last_graph(dicho_graph(NULL, 0)), gen(s) {}
   ~dichotomy_helper();
 };
 
@@ -248,7 +251,8 @@ dichotomy_node::~dichotomy_node() {
 dicho_graph dichotomy_helper::try_hypothesis(dichotomy_failure *exn) const
 {
   graph_t *g = new graph_t(top_graph, tmp_hyp);
-  if (g->populate(goals, hints, iter_max) || goals.verify(g, exn ? &exn->expected : NULL))
+  if (g->populate(goals, targets, hints, iter_max) ||
+      targets.verify(g, exn ? &exn->expected : NULL))
     return dicho_graph(g, iter_max);
   if (exn && !exn->expected.null()) {
     graph_loader loader(g);
@@ -378,7 +382,7 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
   for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
     if (i->real.real() != var.real) hyp2.push_back(*i);
   splitter *gen;
-  property_tree new_goals = goals;
+  property_tree targets = goals;
   if (var.splitter & 1)
     gen = new fixed_splitter(hyp2[0].bnd(), var.splitter / 2, iter_max);
   else if (var.splitter)
@@ -386,8 +390,8 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
   else if (hint.dst.empty())
     gen = new fixed_splitter(hyp2[0].bnd(), 4, iter_max);
   else {
-    new_goals.restrict(hint.dst);
-    if (new_goals.empty()) {
+    targets.restrict(hint.dst);
+    if (targets.empty()) {
       if (warning_dichotomy_failure)
         std::cerr << "Warning: case split on " << dump_real(var.real)
                   << " is not goal-driven anymore.\n";
@@ -395,7 +399,7 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
     }
     gen = new best_splitter(hyp2[0].bnd(), iter_max);
   }
-  dichotomy_helper *h = new dichotomy_helper(hyp2, new_goals, hints, gen);
+  dichotomy_helper *h = new dichotomy_helper(hyp2, goals, targets, hints, gen);
   try {
     h->dichotomize();
   } catch (dichotomy_failure const &e) {

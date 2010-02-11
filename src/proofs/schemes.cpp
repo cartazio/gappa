@@ -560,19 +560,20 @@ extern bool goal_reduction;
 
 /**
  * Fills this graph by iteratively applying theorems until
- * \li @a goals is statisfied, or
- * \li a contradiction is found, or
+ * \li @a targets are satisfied, or
+ * \li a contradiction (possibly with @a goals) is found, or
  * \li a fixpoint is reached for the results, or
  * \li an upper bound on the number of iterations is reached.
  *
  * @return true if a contradiction is found.
  */
-bool graph_t::populate(property_tree const &goals, dichotomy_sequence const &dichotomy, int iter_max)
+bool graph_t::populate(property_tree const &goals, property_tree const &targets,
+  dichotomy_sequence const &dichotomy, int iter_max)
 {
   if (contradiction)
     return true;
   iter_max = iter_max / (2 * dichotomy.size() + 1);
-  property_tree current_goals = goals;
+  property_tree current_goals = goals, current_targets = targets;
   graph_loader loader(this);
   for (dichotomy_sequence::const_iterator dichotomy_it = dichotomy.begin(),
        dichotomy_end = dichotomy.end(); /*nothing*/; ++dichotomy_it)
@@ -614,6 +615,8 @@ bool graph_t::populate(property_tree const &goals, dichotomy_sequence const &dic
         set_contradiction(n);
         return true;
       }
+      current_targets.remove(n->get_result());
+      if (current_targets.empty()) return false;
       if (!goal_reduction) continue;
       if (current_goals->conjunction) {
         if (current_goals->leaves.size() + current_goals->subtrees.size() > 1)
@@ -635,6 +638,8 @@ bool graph_t::populate(property_tree const &goals, dichotomy_sequence const &dic
           set_contradiction(m);
           return true;
         }
+        current_targets.remove(n->get_result());
+        if (current_targets.empty()) return false;
       }
     }
     if (iter > iter_max)

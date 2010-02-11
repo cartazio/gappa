@@ -142,7 +142,8 @@ class graph_t
   /** Returns the hypotheses #hyp of this graph. */
   property_vect const &get_hypotheses() const { return hyp; }
   bool dominates(graph_t const *) const;
-  bool populate(property_tree const &, dichotomy_sequence const &, int);
+  bool populate(property_tree const &, property_tree const &,
+    dichotomy_sequence const &, int);
   bool dichotomize(property_tree const &, dichotomy_hint const &, int);
   /** Returns the #contradiction node of this graph, if any. */
   node *get_contradiction() const { return contradiction; }

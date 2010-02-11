@@ -76,7 +76,7 @@ int main(int argc, char **argv)
     context const &current_context = goal;
     if (proof_generator) proof_generator->reset();
     graph_t *g = new graph_t(NULL, current_context.hyp);
-    if (g->populate(current_context.goals, dichotomies, 100*1000*1000))
+    if (g->populate(current_context.goals, current_context.goals, dichotomies, 100*1000*1000))
     {
       if (!parameter_only_failure)
       {
