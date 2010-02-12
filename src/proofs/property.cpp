@@ -141,51 +141,6 @@ void property_tree::unique() {
   }
 }
 
-/**
- * Helper class for filtering out leaves that are satisfied by a given
- * property.
- */
-struct remove_pred1
-{
-  property const &prop;
-  bool force, unrelated;
-  remove_pred1(property const &p, bool f)
-    : prop(p), force(f), unrelated(false) {}
-  bool operator()(property_tree::leave &p)
-  {
-    if (p.first.real == prop.real) {
-      if (!is_defined(p.first.bnd())) return force || !p.second;
-      if (p.second) {
-        if (prop.implies(p.first)) return true;
-      } else {
-        property q = p.first;
-        q.intersect(prop);
-        if (is_empty(q.bnd())) return true;
-      }
-    }
-    unrelated = true;
-    return false;
-  }
-};
-
-/**
- * Helper class for filtering out (and recursively pruning) subtrees that
- * are satisfied by a given property.
- */
-struct remove_pred2 {
-  property const &prop;
-  bool force, unrelated;
-  remove_pred2(property const &p, bool f)
-    : prop(p), force(f), unrelated(false) {}
-  bool operator()(property_tree &t)
-  {
-    bool b = t.remove(prop, force);
-    if (t.empty()) return true;
-    if (!b) unrelated = true;
-    return false;
-  }
-};
-
 void property_tree::flatten()
 {
   bool possible = false;
@@ -230,32 +185,70 @@ void property_tree::flatten()
   }
 }
 
-bool property_tree::remove(property const &p, bool force)
+/**
+ * Returns a positive value if @a p implies @a q, a negative value if
+ * @a p implies not @a q, zero otherwise.
+ */
+static int check_imply(property const &p, property const &q)
 {
-  if (!ptr) return true;
+  if (p.implies(q)) return 1;
+  property t = p;
+  t.intersect(q);
+  if (is_empty(t.bnd())) return -1;
+  return 0;
+}
+
+int property_tree::simplify(property const &p, bool force)
+{
+  int res = ptr->conjunction ? -1 : 1;
+  if (false) {
+    kill_tree:
+    decr();
+    ptr = NULL;
+    return res;
+  }
+  assert(ptr && (p.real.pred() == PRED_BND || p.real.pred() == PRED_REL));
   unique();
-  assert(p.real.pred() == PRED_BND || p.real.pred() == PRED_REL);
-  {
+
   // Filter out satisfied leaves.
-  remove_pred1 pred1(p, force);
-  std::vector< leave >::iterator end1 = ptr->leaves.end(),
-    i1 = std::remove_if(ptr->leaves.begin(), end1, pred1);
-  if (i1 != end1 && !ptr->conjunction) goto kill_tree;
+  std::vector<leave> leaves;
+  leaves.swap(ptr->leaves);
+  for (std::vector<leave>::const_iterator i = leaves.begin(),
+       i_end = leaves.end(); i != i_end; ++i)
+  {
+    if (i->first.real != p.real) ;
+    else if (!is_defined(i->first.bnd()))
+    {
+      // true by choice
+      if (force || !i->second) {
+        if (!ptr->conjunction) goto kill_tree;
+        continue;
+      }
+    }
+    else if (int valid = check_imply(p, i->first)) {
+      if ((valid < 0) ^ i->second ^ ptr->conjunction) goto kill_tree;
+      continue;
+    }
+    ptr->leaves.push_back(*i);
+  }
+
   // Filter out satisfied subtrees.
-  remove_pred2 pred2(p, force);
-  std::vector< property_tree >::iterator end2 = ptr->subtrees.end(),
-    i2 = std::remove_if(ptr->subtrees.begin(), end2, pred2);
-  if (i2 != end2 && !ptr->conjunction) goto kill_tree;
-  ptr->leaves.erase(i1, end1);
-  ptr->subtrees.erase(i2, end2);
+  std::vector<property_tree> subtrees;
+  subtrees.swap(ptr->subtrees);
+  for (std::vector<property_tree>::iterator i = subtrees.begin(),
+       i_end = subtrees.end(); i != i_end; ++i)
+  {
+    if (int valid = i->simplify(p, force)) {
+      if ((valid > 0) ^ ptr->conjunction) goto kill_tree;
+      continue;
+    }
+    ptr->subtrees.push_back(*i);
+  }
+
+  res = -res;
   if (ptr->leaves.empty() && ptr->subtrees.empty()) goto kill_tree;
   flatten();
-  return !pred1.unrelated && !pred2.unrelated;
-  }
- kill_tree:
-  decr();
-  ptr = NULL;
-  return true;
+  return 0;
 }
 
 bool property_tree::verify(graph_t *g, property *p) const
@@ -354,7 +347,7 @@ void property_tree::get_nodes(graph_t *g, node_vect &goals)
     property p(i->first->get_result());
     if (is_defined(i->second)) p.bnd() = i->second;
     goals.push_back(new goal_node(p, i->first));
-    remove(p, true);
+    simplify(p, true);
   }
   g->replace_known(goals);
 }

@@ -102,16 +102,16 @@ struct property_tree
   data *operator->() { unique(); return ptr; }
   bool empty() const { return !ptr; }
 
-  /**
-   * Removes from the tree the leaves and subtrees satisfied by property @a p.
+  /** Simplifies the tree according to property @a p.
    * @param force If true, the function removes undefined yet matching leaves.
-   * @return false if the tree is not yet fully satisfied.
+   * @return zero if the tree is not empty yet, a positive value if it is
+   *         true, a negative value if it is false.
    */
-  bool remove(property const &p, bool force = false);
+  int simplify(property const &p, bool force = false);
 
   /**
    * Checks if the tree is satisfied by graph @a g.
-   * @arg p Pointer to an optional storage for an unsatisfied property.
+   * @param p Pointer to an optional storage for an unsatisfied property.
    * @return false if some properties are not satisfied.
    */
   bool verify(graph_t *g, property *p) const;

@@ -607,16 +607,14 @@ bool graph_t::populate(property_tree const &goals, property_tree const &targets,
         // Originally empty, we are striving for a contradiction.
         continue;
       }
-      if (s->real.pred() != PRED_BND) continue;
-      current_goals.remove(n->get_result());
-      if (current_goals.empty()) {
+      if (s->real.pred() != PRED_BND && s->real.pred() != PRED_REL) continue;
+      if (int valid = current_goals.simplify(n->get_result())) {
         // Now empty, there is nothing left to prove.
-        if (!goal_reduction) return false;
+        if (!goal_reduction || valid < 0) return false;
         set_contradiction(n);
         return true;
       }
-      current_targets.remove(n->get_result());
-      if (current_targets.empty()) return false;
+      if (current_targets.simplify(n->get_result())) return false;
       if (!goal_reduction) continue;
       if (current_goals->conjunction) {
         if (current_goals->leaves.size() + current_goals->subtrees.size() > 1)
@@ -628,17 +626,16 @@ bool graph_t::populate(property_tree const &goals, property_tree const &targets,
            i_end = old_leaves.end(); i != i_end; ++i)
       {
         if (i->second || !is_bounded(i->first.bnd())) continue;
-        current_goals.remove(i->first);
         node *m = create_theorem(0, NULL, i->first, "$LOGIC");
         if (!try_real(m)) continue;
         if (contradiction) return true;
         insert_dependent(missing_schemes, i->first.real);
-        current_goals.remove(m->get_result());
-        if (current_goals.empty()) {
+        if (int valid = current_goals.simplify(m->get_result())) {
+          if (valid < 0) return false;
           set_contradiction(m);
           return true;
         }
-        current_targets.remove(n->get_result());
+        current_targets.simplify(m->get_result());
         if (current_targets.empty()) return false;
       }
     }
