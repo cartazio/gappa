@@ -104,7 +104,7 @@ bool point_splitter::next(interval &i, int &max)
   {
     i = intersect(bnd, interval(pos == 0  ? number::neg_inf : bnds[pos - 1],
                                 pos == sz ? number::pos_inf : bnds[pos]));
-    if (is_empty(i)) continue;
+    if (is_empty(i) || is_singleton(i)) continue;
     return true;
   }
   return false;
