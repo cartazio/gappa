@@ -625,8 +625,23 @@ bool graph_t::populate(property_tree const &goals, property_tree const &targets,
       for (std::vector<property_tree::leave>::const_iterator i = old_leaves.begin(),
            i_end = old_leaves.end(); i != i_end; ++i)
       {
-        if (i->second || !is_bounded(i->first.bnd())) continue;
-        node *m = create_theorem(0, NULL, i->first, "$LOGIC");
+        node *m;
+        if (!i->second) {
+          m = create_theorem(0, NULL, i->first, "$LOGIC");
+        } else {
+          m = find_proof(i->first.real);
+          if (!m) continue;
+          property const &p = m->get_result();
+          interval const &h = p.bnd(), &g = i->first.bnd();
+          if (is_singleton(g)) continue;
+          if (lower(h) >= lower(g)) {
+            m = create_theorem(0, NULL, property(p.real,
+              interval(upper(g), upper(h))), "$LOGIC");
+          } else if (upper(h) <= upper(g)) {
+            m = create_theorem(0, NULL, property(p.real,
+              interval(lower(h), lower(g))), "$LOGIC");
+          } else continue;
+        }
         if (!try_real(m)) continue;
         if (contradiction) return true;
         insert_dependent(missing_schemes, i->first.real);
