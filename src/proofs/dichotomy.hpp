@@ -8,7 +8,10 @@ struct dichotomy_var {
   unsigned long splitter;
 };
 
+class number;
+
 unsigned long fill_splitter(unsigned long, ast_number const *);
+unsigned long fill_splitter(unsigned long, number const &);
 
 typedef std::vector< dichotomy_var > dvar_vect;
 

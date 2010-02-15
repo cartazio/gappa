@@ -470,3 +470,11 @@ unsigned long fill_splitter(unsigned long s, ast_number const *n) {
   else v->push_back(m);
   return (unsigned long)v;
 }
+
+unsigned long fill_splitter(unsigned long s, number const &m)
+{
+  number_vect *v = (number_vect *)s;
+  if (!v) v = new number_vect(1, m);
+  else v->push_back(m);
+  return (unsigned long)v;
+}
