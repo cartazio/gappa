@@ -608,9 +608,9 @@ bool graph_t::populate(property_tree const &goals, property_tree const &targets,
         continue;
       }
       if (s->real.pred() != PRED_BND && s->real.pred() != PRED_REL) continue;
-      if (int valid = current_goals.simplify(n->get_result())) {
+      if (current_goals.simplify(n->get_result()) > 0) {
         // Now empty, there is nothing left to prove.
-        if (!goal_reduction || valid < 0) return false;
+        if (!goal_reduction) return false;
         set_contradiction(n);
         return true;
       }
@@ -646,8 +646,8 @@ bool graph_t::populate(property_tree const &goals, property_tree const &targets,
         if (!try_real(m)) continue;
         if (contradiction) return true;
         insert_dependent(missing_schemes, i->first.real);
-        if (int valid = current_goals.simplify(m->get_result())) {
-          if (valid < 0) return false;
+        if (current_goals.empty()) continue;
+        if (current_goals.simplify(m->get_result()) > 0) {
           set_contradiction(m);
           return true;
         }
