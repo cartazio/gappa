@@ -204,7 +204,7 @@ struct dichotomy_helper
   dichotomy_sequence const &hints;
   dicho_graph last_graph;
   splitter *gen;
-  dicho_graph try_hypothesis(dichotomy_failure * = NULL) const;
+  dicho_graph try_hypothesis(dichotomy_failure *, bool) const;
   void try_graph(dicho_graph);
   void dichotomize();
   dichotomy_node *generate_node(node *, property const &);
@@ -248,10 +248,30 @@ dichotomy_node::~dichotomy_node() {
     delete helper;
 }
 
-dicho_graph dichotomy_helper::try_hypothesis(dichotomy_failure *exn) const
+extern bool goal_reduction;
+
+dicho_graph dichotomy_helper::try_hypothesis(dichotomy_failure *exn, bool first) const
 {
   graph_t *g = new graph_t(top_graph, tmp_hyp);
-  if (g->populate(goals, targets, hints, iter_max) ||
+
+  property_tree current_goals = goals;
+  if (goal_reduction && !current_goals.empty())
+  {
+    graph_loader loader(g);
+    property p = tmp_hyp[0];
+    if (current_goals.simplify(p) > 0) {
+      found_it:
+      node *n = create_theorem(0, NULL, p, "$LOGIC");
+      g->set_contradiction(n);
+      return dicho_graph(g, iter_max);
+    }
+    if (!first && !current_goals.empty()) {
+      p.bnd() = interval(number::neg_inf, lower(p.bnd()));
+      if (current_goals.simplify(p, false) > 0) goto found_it;
+    }
+  }
+
+  if (g->populate(current_goals, targets, hints, iter_max) ||
       targets.verify(g, exn ? &exn->expected : NULL))
     return dicho_graph(g, iter_max);
   if (exn && !exn->expected.null()) {
@@ -278,7 +298,7 @@ void dichotomy_helper::try_graph(dicho_graph g2)
     p.bnd() = interval(lower(p.bnd()), upper(g2.first->get_hypotheses()[0].bnd()));
     tmp_hyp[0] = p;
     iter_max = g1.second + g2.second;
-    dicho_graph g = try_hypothesis();
+    dicho_graph g = try_hypothesis(NULL, graphs.empty());
     if (g.first)
     {
       // joined graph was successful, keep it as the last graph instead of g1 and g2
@@ -334,7 +354,7 @@ void dichotomy_helper::dichotomize() {
   {
     h = bnd;
     exn.hyp = tmp_hyp[0];
-    dicho_graph g = try_hypothesis(&exn);
+    dicho_graph g = try_hypothesis(&exn, !last_graph.first);
     if (g.first)
     {
       try_graph(g);
