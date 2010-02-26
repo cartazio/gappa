@@ -81,10 +81,12 @@ int main(int argc, char **argv)
       if (!parameter_only_failure)
       {
         display_context(current_context);
-        if (!current_context.goals.empty() && !goal_reduction)
-          std::cerr << "Warning: hypotheses are in contradiction, any result is true.\n";
-        else
-          std::cerr << "A contradiction was built from the hypotheses.\n";
+        if (!goal_reduction) {
+          if (!current_context.goals.empty())
+            std::cerr << "Warning: hypotheses are in contradiction, any result is true.\n";
+          else
+            std::cerr << "A contradiction was built from the hypotheses.\n";
+        }
       }
       if (proof_generator) {
         node *n = g->get_contradiction();
