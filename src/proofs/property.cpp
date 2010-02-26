@@ -198,7 +198,7 @@ static int check_imply(property const &p, property const &q)
   return 0;
 }
 
-int property_tree::simplify(property const &p, bool force)
+int property_tree::simplify(property const &p, bool positive, bool force)
 {
   int res = ptr->conjunction ? -1 : 1;
   if (false) {
@@ -216,17 +216,28 @@ int property_tree::simplify(property const &p, bool force)
   for (std::vector<leave>::const_iterator i = leaves.begin(),
        i_end = leaves.end(); i != i_end; ++i)
   {
-    if (i->first.real != p.real) ;
+    if (i->first.real != p.real)
+      ;
     else if (!is_defined(i->first.bnd()))
     {
-      // true by choice
+      // True by choice.
       if (force || !i->second) {
         if (!ptr->conjunction) goto kill_tree;
         continue;
       }
     }
-    else if (int valid = check_imply(p, i->first)) {
-      if ((valid < 0) ^ i->second ^ ptr->conjunction) goto kill_tree;
+    else if (positive)
+    {
+      if (int valid = check_imply(p, i->first)) {
+        // From p, one can deduce either i->first, or not i->first.
+        if ((valid < 0) ^ i->second ^ ptr->conjunction) goto kill_tree;
+        continue;
+      }
+    }
+    else if (!i->second && i->first.implies(p))
+    {
+      // From not p, one can deduce not i->first.
+      if (!ptr->conjunction) goto kill_tree;
       continue;
     }
     ptr->leaves.push_back(*i);
@@ -238,7 +249,7 @@ int property_tree::simplify(property const &p, bool force)
   for (std::vector<property_tree>::iterator i = subtrees.begin(),
        i_end = subtrees.end(); i != i_end; ++i)
   {
-    if (int valid = i->simplify(p, force)) {
+    if (int valid = i->simplify(p, positive, force)) {
       if ((valid > 0) ^ ptr->conjunction) goto kill_tree;
       continue;
     }
@@ -347,7 +358,7 @@ void property_tree::get_nodes(graph_t *g, node_vect &goals)
     property p(i->first->get_result());
     if (is_defined(i->second)) p.bnd() = i->second;
     goals.push_back(new goal_node(p, i->first));
-    simplify(p, true);
+    simplify(p, true, true);
   }
   g->replace_known(goals);
 }

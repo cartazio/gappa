@@ -107,7 +107,7 @@ struct property_tree
    * @return zero if the tree is not empty yet, a positive value if it is
    *         true, a negative value if it is false.
    */
-  int simplify(property const &p, bool force = false);
+  int simplify(property const &p, bool positive = true, bool force = false);
 
   /**
    * Checks if the tree is satisfied by graph @a g.
