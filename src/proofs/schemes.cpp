@@ -615,7 +615,7 @@ bool graph_t::populate(property_tree const &goals, property_tree const &targets,
         return true;
       }
       if (current_targets.simplify(n->get_result())) return false;
-      if (!goal_reduction) continue;
+      if (!goal_reduction || current_goals.empty()) continue;
       if (current_goals->conjunction) {
         if (current_goals->leaves.size() + current_goals->subtrees.size() > 1)
           continue;
