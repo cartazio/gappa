@@ -657,7 +657,39 @@ bool graph_t::populate(property_tree const &goals, property_tree const &targets,
     }
     if (iter > iter_max)
       std::cerr << "Warning: maximum number of iterations reached.\n";
-    if (dichotomy_it == dichotomy_end) return false;
+    if (dichotomy_it == dichotomy_end)
+    {
+      if (!goal_reduction || current_goals.empty()) return false;
+      static ast_real_set already;
+      splitting s;
+      current_goals.get_splitting(s);
+      unsigned max_pts = 0;
+      splitting::value_type const *sv = NULL;
+      for (splitting::const_iterator i = s.begin(), i_end = s.end(); i != i_end; ++i)
+      {
+        if (i->first.real2() || i->second.size() <= max_pts ||
+            already.find(i->first.real()) != already.end()) continue;
+        max_pts = i->second.size();
+        sv = &*i;
+      }
+      if (max_pts <= 1) return false;
+      ast_real_set save = already;
+      unsigned long ds = 0;
+      number prev = number::neg_inf;
+      for (std::multiset<number>::const_iterator i = sv->second.begin(),
+           i_end = sv->second.end(); i != i_end; ++i)
+      {
+        if (*i == prev) continue;
+        ds = fill_splitter(ds, *i);
+        prev = *i;
+      }
+      already.insert(sv->first.real());
+      dichotomy_var dv = { sv->first.real(), ds };
+      dichotomy_hint dh = { ast_real_vect(), dvar_vect(1, dv) };
+      bool b = dichotomize(current_goals, dh, iter_max) && contradiction;
+      already = save;
+      return b;
+    }
     if (dichotomize(current_goals, *dichotomy_it, iter_max) && contradiction)
       return true;
   }
