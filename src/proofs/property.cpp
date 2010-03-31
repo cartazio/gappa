@@ -234,10 +234,10 @@ int property_tree::simplify(property const &p, bool positive, bool force)
         continue;
       }
     }
-    else if (!i->second && i->first.implies(p))
+    else if (i->first.implies(p))
     {
       // From not p, one can deduce not i->first.
-      if (!ptr->conjunction) goto kill_tree;
+      if (i->second ^ !ptr->conjunction) goto kill_tree;
       continue;
     }
     ptr->leaves.push_back(*i);
