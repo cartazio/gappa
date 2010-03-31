@@ -5,7 +5,9 @@ check: check-indep check-coq check-holl
 
 check-backend:
 	@logfile="failures-$(BACKEND)-$$(date -Idate).log"; \
-	cat /dev/null > log.tmp; \
+	logtmp="log-$(BACKEND).tmp"; \
+	outputtmp="output-$(BACKEND).tmp"; \
+	cat /dev/null > "$$logtmp"; \
 	cat /dev/null > "$$logfile"; \
 	for f in $(EXTRA_DIST); do \
 	  execute=0; \
@@ -14,23 +16,23 @@ check-backend:
 	    execute=$$?; \
 	  fi; \
 	  if [ $$execute -eq 0 ]; then \
-	    ../src/gappa -B$(BACKEND) < "$$f" > /dev/null 2> output.tmp; \
+	    ../src/gappa -B$(BACKEND) < "$$f" > /dev/null 2> "$$outputtmp"; \
 	    return_code=$$?; \
 	    if [ $${return_code} -ne 0 ]; then \
-	      (echo "*** $$f exited with error code $${return_code}"; cat output.tmp; echo) >> "$$logfile"; \
-	      echo "$$f exited with error code $${return_code}" >> log.tmp; \
+	      (echo "*** $$f exited with error code $${return_code}"; cat "$$outputtmp"; echo) >> "$$logfile"; \
+	      echo "$$f exited with error code $${return_code}" >> "$$logtmp"; \
 	    fi; \
-	    rm output.tmp; \
+	    rm "$$outputtmp"; \
 	  fi; \
 	done; \
-	nb=$$(cat log.tmp | wc -l); \
+	nb=$$(cat "$$logtmp" | wc -l); \
 	if [ $$nb -gt 0 ]; then \
 	  echo "*** Failures for $(BACKEND) backend:"; \
-	  cat log.tmp; \
+	  cat "$$logtmp"; \
 	else \
 	  rm "$$logfile"; \
 	fi; \
-	rm log.tmp
+	rm "$$logtmp"
 
 check-indep:
 	$(MAKE) check-backend BACKEND=null
