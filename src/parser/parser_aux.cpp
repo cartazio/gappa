@@ -21,6 +21,29 @@ void find_unknown_reals(real_set &, ast_real const *);
 extern bool warning_unbound_variable;
 extern bool goal_reduction;
 
+static void register_approx(ast_real const *r1, ast_real const *r2)
+{
+  accurates[r1].insert(r2);
+  approximates[r2].insert(r1);
+}
+
+void check_approx(ast_real const *real)
+{
+  real_op const *o = boost::get< real_op const >(real);
+  if (!o) return;
+  // look for an approx/accurate pair
+  if (o->type == UOP_ABS)
+    o = boost::get< real_op const >(o->ops[0]);
+  ast_real const *r = NULL;
+  if (o && o->type == BOP_DIV)
+  {
+    r = o->ops[1];
+    o = boost::get< real_op const >(o->ops[0]);
+  }
+  if (o && o->type == BOP_SUB && (!r || r == o->ops[1]))
+    register_approx(o->ops[0], o->ops[1]);
+}
+
 static property generate_property(ast_atom_bound const &p, bool goal)
 {
   predicated_real pr;
@@ -32,6 +55,12 @@ static property generate_property(ast_atom_bound const &p, bool goal)
   property r(pr);
   if (p.lower || p.upper)
   {
+    input_reals.insert(pr);
+    if (pr.real2())
+      register_approx(pr.real(), pr.real2());
+    else
+      check_approx(pr.real());
+
     interval &bnd = r.bnd();
     bnd = create_interval(p.lower, p.upper, !goal);
     if (is_empty(bnd))
@@ -81,29 +110,6 @@ static void generate_tree(property_tree &tree, ast_prop const *p, bool positive)
   }
 }
 
-static void register_approx(ast_real const *r1, ast_real const *r2)
-{
-  accurates[r1].insert(r2);
-  approximates[r2].insert(r1);
-}
-
-void check_approx(ast_real const *real)
-{
-  real_op const *o = boost::get< real_op const >(real);
-  if (!o) return;
-  // look for an approx/accurate pair
-  if (o->type == UOP_ABS)
-    o = boost::get< real_op const >(o->ops[0]);
-  ast_real const *r = NULL;
-  if (o && o->type == BOP_DIV)
-  {
-    r = o->ops[1];
-    o = boost::get< real_op const >(o->ops[0]);
-  }
-  if (o && o->type == BOP_SUB && (!r || r == o->ops[1]))
-    register_approx(o->ops[0], o->ops[1]);
-}
-
 static void parse_property_tree(ast_prop const *p, context &ctx)
 {
   property_tree tree(new property_tree::data(false));
@@ -144,10 +150,6 @@ static void parse_property_tree(ast_prop const *p, context &ctx)
       continue;
     }
     property const &p = i->first;
-    if (p.real.real2())
-      register_approx(p.real.real(), p.real.real2());
-    else
-      check_approx(p.real.real());
     std::pair< input_set::iterator, bool > ib = inputs.insert(std::make_pair(p.real, p));
     if (!ib.second) // there was already a known range
       ib.first->second.intersect(p);
@@ -164,8 +166,6 @@ static void parse_property_tree(ast_prop const *p, context &ctx)
                 << " are trivially contradictory, skipping.\n";
       exit(0);
     }
-    // locate variables appearing in bounded expressions
-    if (is_bounded(bnd)) input_reals.insert(i->first);
     ctx.hyp.push_back(i->second);
   }
 
