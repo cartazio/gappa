@@ -71,6 +71,8 @@ struct property_vect: std::vector< property > {
 struct node;
 struct graph_t;
 
+typedef std::map<predicated_real, std::multiset<number> > splitting;
+
 struct property_tree
 {
   typedef std::pair< property, bool > leave;
@@ -121,6 +123,8 @@ struct property_tree
    * Removes the satisfied leaves and subtrees.
    */
   void get_nodes(graph_t *g, std::vector< node * > &);
+
+  void get_splitting(splitting &) const;
 };
 
 struct context {

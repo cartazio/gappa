@@ -405,3 +405,23 @@ void property_tree::restrict(ast_real_vect const &dst) {
     ptr = NULL;
   } else flatten();
 }
+
+void property_tree::get_splitting(splitting &res) const
+{
+  for (std::vector< leave >::const_iterator i = ptr->leaves.begin(),
+       i_end = ptr->leaves.end(); i != i_end; ++i)
+  {
+    interval const &b = i->first.bnd();
+    if (!is_defined(b)) continue;
+    std::multiset<number> &nums = res[i->first.real];
+    number const &l = lower(b), &u = upper(b);
+    if (l == u) continue;
+    if (l != number::neg_inf) nums.insert(l);
+    if (u != number::pos_inf) nums.insert(u);
+  }
+  for (std::vector<property_tree>::const_iterator i = ptr->subtrees.begin(),
+       i_end = ptr->subtrees.end(); i != i_end; ++i)
+  {
+    i->get_splitting(res);
+  }
+}
