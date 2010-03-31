@@ -668,7 +668,8 @@ bool graph_t::populate(property_tree const &goals, property_tree const &targets,
       for (splitting::const_iterator i = s.begin(), i_end = s.end(); i != i_end; ++i)
       {
         if (i->first.real2() || i->second.size() <= max_pts ||
-            already.find(i->first.real()) != already.end()) continue;
+            already.find(i->first.real()) != already.end() ||
+            !find_proof(i->first.real())) continue;
         max_pts = i->second.size();
         sv = &*i;
       }
