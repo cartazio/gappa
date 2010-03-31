@@ -558,6 +558,47 @@ int stat_tested_th = 0;
 
 extern bool goal_reduction;
 
+static bool reduce_goal(property_tree &current_goals,
+  property_tree &current_targets, scheme_queue *missing_schemes)
+{
+  std::vector<property_tree::leave> old_leaves = current_goals->leaves;
+  for (std::vector<property_tree::leave>::const_iterator i = old_leaves.begin(),
+       i_end = old_leaves.end(); i != i_end; ++i)
+  {
+    std::cerr << "Considering " << dump_property_nice(i->first) << '\n';
+    if (!is_defined(i->first.bnd())) continue;
+    node *m;
+    if (!i->second) {
+      std::cerr << "Creating " << dump_property_nice(i->first) << '\n';
+      m = create_theorem(0, NULL, i->first, "$LOGIC");
+    } else {
+      m = find_proof(i->first.real);
+      if (!m) continue;
+      property const &p = m->get_result();
+      interval const &h = p.bnd(), &g = i->first.bnd();
+      if (is_singleton(g)) continue;
+      if (lower(h) >= lower(g)) {
+        m = create_theorem(0, NULL, property(p.real,
+          interval(upper(g), upper(h))), "$LOGIC");
+      } else if (upper(h) <= upper(g)) {
+        m = create_theorem(0, NULL, property(p.real,
+          interval(lower(h), lower(g))), "$LOGIC");
+      } else continue;
+    }
+    if (!top_graph->try_real(m)) continue;
+    if (top_graph->get_contradiction()) return true;
+    if (missing_schemes) insert_dependent(*missing_schemes, i->first.real);
+    if (current_goals.empty()) continue;
+    if (current_goals.simplify(m->get_result()) > 0) {
+      top_graph->set_contradiction(m);
+      return true;
+    }
+    current_targets.simplify(m->get_result());
+    if (current_targets.empty()) return true;
+  }
+  return false;
+}
+
 /**
  * Fills this graph by iteratively applying theorems until
  * \li @a targets are satisfied, or
@@ -575,6 +616,11 @@ bool graph_t::populate(property_tree const &goals, property_tree const &targets,
   iter_max = iter_max / (2 * dichotomy.size() + 1);
   property_tree current_goals = goals, current_targets = targets;
   graph_loader loader(this);
+
+  if (goal_reduction && !current_goals.empty() &&
+      reduce_goal(current_goals, current_targets, NULL))
+    return contradiction;
+
   for (dichotomy_sequence::const_iterator dichotomy_it = dichotomy.begin(),
        dichotomy_end = dichotomy.end(); /*nothing*/; ++dichotomy_it)
   {
@@ -621,39 +667,7 @@ bool graph_t::populate(property_tree const &goals, property_tree const &targets,
           continue;
         current_goals->conjunction = false;
       }
-      std::vector<property_tree::leave> old_leaves = current_goals->leaves;
-      for (std::vector<property_tree::leave>::const_iterator i = old_leaves.begin(),
-           i_end = old_leaves.end(); i != i_end; ++i)
-      {
-        if (!is_defined(i->first.bnd())) continue;
-        node *m;
-        if (!i->second) {
-          m = create_theorem(0, NULL, i->first, "$LOGIC");
-        } else {
-          m = find_proof(i->first.real);
-          if (!m) continue;
-          property const &p = m->get_result();
-          interval const &h = p.bnd(), &g = i->first.bnd();
-          if (is_singleton(g)) continue;
-          if (lower(h) >= lower(g)) {
-            m = create_theorem(0, NULL, property(p.real,
-              interval(upper(g), upper(h))), "$LOGIC");
-          } else if (upper(h) <= upper(g)) {
-            m = create_theorem(0, NULL, property(p.real,
-              interval(lower(h), lower(g))), "$LOGIC");
-          } else continue;
-        }
-        if (!try_real(m)) continue;
-        if (contradiction) return true;
-        insert_dependent(missing_schemes, i->first.real);
-        if (current_goals.empty()) continue;
-        if (current_goals.simplify(m->get_result()) > 0) {
-          set_contradiction(m);
-          return true;
-        }
-        current_targets.simplify(m->get_result());
-        if (current_targets.empty()) return false;
-      }
+      if (reduce_goal(current_goals, current_targets, &missing_schemes)) return contradiction;
     }
     if (iter > iter_max)
       std::cerr << "Warning: maximum number of iterations reached.\n";
