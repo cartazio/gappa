@@ -186,15 +186,22 @@ void property_tree::flatten()
 }
 
 /**
- * Returns a positive value if @a p implies @a q, a negative value if
- * @a p implies not @a q, zero otherwise.
+ * Returns a positive value if (not) @a p implies @a q, a negative value if
+ * (not) @a p implies not @a q, zero otherwise.
  */
-static int check_imply(property const &p, property const &q)
+static int check_imply(bool positive, property const &p, property const &q)
 {
-  if (p.implies(q)) return 1;
-  property t = p;
-  t.intersect(q);
-  if (is_empty(t.bnd())) return -1;
+  if (positive)
+  {
+    if (p.implies(q)) return 1;
+    property t = p;
+    t.intersect(q);
+    if (is_empty(t.bnd())) return -1;
+  }
+  else
+  {
+    if (q.implies(p)) return -1;
+  }
   return 0;
 }
 
@@ -226,18 +233,10 @@ int property_tree::simplify(property const &p, bool positive, bool force)
         continue;
       }
     }
-    else if (positive)
+    else if (int valid = check_imply(positive, p, i->first))
     {
-      if (int valid = check_imply(p, i->first)) {
-        // From p, one can deduce either i->first, or not i->first.
-        if ((valid < 0) ^ i->second ^ ptr->conjunction) goto kill_tree;
-        continue;
-      }
-    }
-    else if (i->first.implies(p))
-    {
-      // From not p, one can deduce not i->first.
-      if (i->second ^ !ptr->conjunction) goto kill_tree;
+      // From (not) p, one can deduce either i->first or not i->first.
+      if ((valid < 0) ^ i->second ^ ptr->conjunction) goto kill_tree;
       continue;
     }
     ptr->leaves.push_back(*i);
