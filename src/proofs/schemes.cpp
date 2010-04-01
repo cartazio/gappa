@@ -565,11 +565,9 @@ static bool reduce_goal(property_tree &current_goals,
   for (std::vector<property_tree::leave>::const_iterator i = old_leaves.begin(),
        i_end = old_leaves.end(); i != i_end; ++i)
   {
-    std::cerr << "Considering " << dump_property_nice(i->first) << '\n';
     if (!is_defined(i->first.bnd())) continue;
     node *m;
     if (!i->second) {
-      std::cerr << "Creating " << dump_property_nice(i->first) << '\n';
       m = create_theorem(0, NULL, i->first, "$LOGIC");
     } else {
       m = find_proof(i->first.real);
