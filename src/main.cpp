@@ -76,7 +76,8 @@ int main(int argc, char **argv)
     context const &current_context = goal;
     if (proof_generator) proof_generator->reset();
     graph_t *g = new graph_t(NULL, current_context.hyp);
-    if (g->populate(current_context.goals, current_context.goals, dichotomies, 100*1000*1000))
+    g->populate(current_context.goals, current_context.goals, dichotomies, 100*1000*1000);
+    if (node *n = g->get_contradiction())
     {
       if (!parameter_only_failure)
       {
@@ -89,7 +90,6 @@ int main(int argc, char **argv)
         }
       }
       if (proof_generator) {
-        node *n = g->get_contradiction();
         enlarger(node_vect(1, n));
         proof_generator->theorem(n);
       }

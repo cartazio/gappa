@@ -286,8 +286,8 @@ dicho_graph dichotomy_helper::try_hypothesis(dichotomy_failure *exn,
     }
   }
 
-  if (g->populate(current_goals, targets, hints, iter_max) ||
-      targets.verify(g, exn ? &exn->expected : NULL))
+  g->populate(current_goals, targets, hints, iter_max);
+  if (g->get_contradiction() || targets.verify(g, exn ? &exn->expected : NULL))
     return dicho_graph(g, iter_max);
   if (exn && !exn->expected.null()) {
     graph_loader loader(g);
@@ -394,9 +394,8 @@ void dichotomy_helper::dichotomize() {
 /**
  * Applies a ::dichotomy_hint.
  * @param goals subset of the user goal that drives the bisection.
- * @return true if a contradiction is found.
  */
-bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint, int iter_max)
+void graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint, int iter_max)
 {
   assert(top_graph == this);
   dichotomy_sequence hints;
@@ -413,7 +412,7 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
     if (warning_dichotomy_failure)
       std::cerr << "Warning: case split on " << dump_real(var.real)
                 << " has no range to split.\n";
-    return false;
+    return;
   }
   property_vect hyp2;
   hyp2.push_back(varn->get_result());
@@ -434,7 +433,7 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
       if (warning_dichotomy_failure)
         std::cerr << "Warning: case split on " << dump_real(var.real)
                   << " is not goal-driven anymore.\n";
-      return false;
+      return;
     }
     gen = new best_splitter(hyp2[0].bnd(), iter_max);
   }
@@ -458,7 +457,7 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
       detailed_io = false;
     }
     delete h;
-    return false;
+    return;
   }
   bool only_contradictions = true;
   typedef std::set< predicated_real > preal_set;
@@ -480,7 +479,7 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
     for(graph_vect::const_iterator i = h->graphs.begin(), end = h->graphs.end(); i != end; ++i)
       n->insert_pred(i->first->get_contradiction());
     set_contradiction(n);
-    return true;
+    return;
   }
   ++h->nb_ref;
   for(preal_set::const_iterator i = reals.begin(), end = reals.end(); i != end; ++i) {
@@ -493,11 +492,10 @@ bool graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
     if (warning_dichotomy_failure)
       std::cerr << "Warning: case split on " << dump_real(var.real)
                 << " has not produced any interesting new result.\n";
-    return false;
+    return;
   }
   for(graph_vect::const_iterator i = h->graphs.begin(), i_end = h->graphs.end(); i != i_end; ++i)
     i->first->purge();
-  return true;
 }
 
 interval create_interval(ast_number const *, ast_number const * = NULL, bool = true);

@@ -603,21 +603,18 @@ static bool reduce_goal(property_tree &current_goals,
  * \li a contradiction (possibly with @a goals) is found, or
  * \li a fixpoint is reached for the results, or
  * \li an upper bound on the number of iterations is reached.
- *
- * @return true if a contradiction is found.
  */
-bool graph_t::populate(property_tree const &goals, property_tree const &targets,
+void graph_t::populate(property_tree const &goals, property_tree const &targets,
   dichotomy_sequence const &dichotomy, int iter_max)
 {
-  if (contradiction)
-    return true;
+  if (contradiction) return;
   iter_max = iter_max / (2 * dichotomy.size() + 1);
   property_tree current_goals = goals, current_targets = targets;
   graph_loader loader(this);
 
   if (goal_reduction && !current_goals.empty() &&
       reduce_goal(current_goals, current_targets, NULL))
-    return contradiction;
+    return;
 
   for (dichotomy_sequence::const_iterator dichotomy_it = dichotomy.begin(),
        dichotomy_end = dichotomy.end(); /*nothing*/; ++dichotomy_it)
@@ -644,7 +641,7 @@ bool graph_t::populate(property_tree const &goals, property_tree const &targets,
       s->score += scheme_queue::success_score;
       if (contradiction) {
         // We have got a contradiction, everything is true.
-        return true;
+        return;
       }
       insert_dependent(missing_schemes, s->real, s);
       if (current_goals.empty()) {
@@ -654,24 +651,23 @@ bool graph_t::populate(property_tree const &goals, property_tree const &targets,
       if (s->real.pred() != PRED_BND && s->real.pred() != PRED_REL) continue;
       if (current_goals.simplify(n->get_result()) > 0) {
         // Now empty, there is nothing left to prove.
-        if (!goal_reduction) return false;
-        set_contradiction(n);
-        return true;
+        if (goal_reduction) set_contradiction(n);
+        return;
       }
-      if (current_targets.simplify(n->get_result())) return false;
+      if (current_targets.simplify(n->get_result())) return;
       if (!goal_reduction || current_goals.empty()) continue;
       if (current_goals->conjunction) {
         if (current_goals->leaves.size() + current_goals->subtrees.size() > 1)
           continue;
         current_goals->conjunction = false;
       }
-      if (reduce_goal(current_goals, current_targets, &missing_schemes)) return contradiction;
+      if (reduce_goal(current_goals, current_targets, &missing_schemes)) return;
     }
     if (iter > iter_max)
       std::cerr << "Warning: maximum number of iterations reached.\n";
     if (dichotomy_it == dichotomy_end)
     {
-      if (!goal_reduction || current_goals.empty()) return false;
+      if (!goal_reduction || current_goals.empty()) return;
       static ast_real_set already;
       splitting s;
       current_goals.get_splitting(s);
@@ -685,7 +681,7 @@ bool graph_t::populate(property_tree const &goals, property_tree const &targets,
         max_pts = i->second.size();
         sv = &*i;
       }
-      if (max_pts <= 1) return false;
+      if (max_pts <= 1) return;
       ast_real_set save = already;
       unsigned long ds = 0;
       number prev = number::neg_inf;
@@ -699,11 +695,11 @@ bool graph_t::populate(property_tree const &goals, property_tree const &targets,
       already.insert(sv->first.real());
       dichotomy_var dv = { sv->first.real(), ds };
       dichotomy_hint dh = { ast_real_vect(), dvar_vect(1, dv) };
-      bool b = dichotomize(current_goals, dh, iter_max) && contradiction;
+      dichotomize(current_goals, dh, iter_max);
       already = save;
-      return b;
+      return;
     }
-    if (dichotomize(current_goals, *dichotomy_it, iter_max) && contradiction)
-      return true;
+    dichotomize(current_goals, *dichotomy_it, iter_max);
+    if (contradiction) return;
   }
 }
