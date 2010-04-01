@@ -412,11 +412,11 @@ void property_tree::get_splitting(splitting &res) const
   {
     interval const &b = i->first.bnd();
     if (!is_defined(b)) continue;
-    std::multiset<number> &nums = res[i->first.real];
+    split_point_mset &nums = res[i->first.real];
     number const &l = lower(b), &u = upper(b);
     if (l == u) continue;
-    if (l != number::neg_inf) nums.insert(l);
-    if (u != number::pos_inf) nums.insert(u);
+    if (l != number::neg_inf) nums.insert(split_point(l, false));
+    if (u != number::pos_inf) nums.insert(split_point(u, true));
   }
   for (std::vector<property_tree>::const_iterator i = ptr->subtrees.begin(),
        i_end = ptr->subtrees.end(); i != i_end; ++i)

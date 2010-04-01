@@ -71,10 +71,14 @@ struct property_vect: std::vector< property > {
 struct node;
 struct graph_t;
 
-typedef std::map<predicated_real, std::multiset<number> > splitting;
+struct split_point;
+
+typedef std::multiset<split_point> split_point_mset;
+typedef std::map<predicated_real, split_point_mset> splitting;
 
 struct property_tree
 {
+  //* Second member is true if the property is in the goal.
   typedef std::pair< property, bool > leave;
   struct data {
     std::vector< leave > leaves;

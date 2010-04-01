@@ -56,4 +56,18 @@ inline bool is_pos(::number const &v)  { return mpfr_sgn(v.data->val) > 0; }
 
 } } } }
 
+struct split_point
+{
+  number pt;
+  bool inleft;
+  split_point(number const &n, bool b): pt(n), inleft(b) {}
+  bool operator<(split_point const &s) const
+  {
+    int c = mpfr_cmp(pt.mpfr_data(), s.pt.mpfr_data());
+    return c < 0 || (c == 0 && !inleft && s.inleft);
+  }
+  bool operator==(split_point const &s) const
+  { return pt == s.pt && inleft == s.inleft; }
+};
+
 #endif // NUMBER_REAL_HPP

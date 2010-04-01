@@ -689,12 +689,12 @@ bool graph_t::populate(property_tree const &goals, property_tree const &targets,
       ast_real_set save = already;
       unsigned long ds = 0;
       number prev = number::neg_inf;
-      for (std::multiset<number>::const_iterator i = sv->second.begin(),
+      for (split_point_mset::const_iterator i = sv->second.begin(),
            i_end = sv->second.end(); i != i_end; ++i)
       {
-        if (*i == prev) continue;
+        if (i->pt == prev) continue;
         ds = fill_splitter(ds, *i);
-        prev = *i;
+        prev = i->pt;
       }
       already.insert(sv->first.real());
       dichotomy_var dv = { sv->first.real(), ds };

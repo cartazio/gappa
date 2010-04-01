@@ -25,15 +25,15 @@ struct splitter
    * @param iter_max amount of work to perform on the output interval.
    * @return false if the interval cannot be split anymore.
    */
-  virtual bool split(interval &bnd, int &iter_max)
-  { (void)&bnd; (void)&iter_max; return false; }
+  virtual bool split(interval &bnd, int &iter_max, bool &remove_left, bool &remove_right)
+  { (void)&bnd; (void)&iter_max; (void)&remove_left; (void)&remove_right; return false; }
   /**
    * Returns the next interval in @a bnd.
    * @param bnd output interval.
    * @param iter_max amount of work to perform on the output interval.
    * @return false if all the intervals have been handled.
    */
-  virtual bool next(interval &bnd, int &iter_max) = 0;
+  virtual bool next(interval &bnd, int &iter_max, bool &remove_left, bool &remove_right) = 0;
   virtual ~splitter() {}
   /**
    * Indicates whether intervals should be merged afterwards.
@@ -55,14 +55,14 @@ struct fixed_splitter: splitter
   int iter_max;  /**< Amount of work to perform on each sub-interval. */
   fixed_splitter(interval const &i, int n, int max)
     : bnd(i), left(i), pos(0), nb(n), iter_max(max / n) {}
-  virtual bool next(interval &, int &);
+  virtual bool next(interval &, int &, bool &, bool &);
 };
 
 /**
  * Splits the whole interval into two parts at ratio #pos / #nb.
  * Returns the sub-interval that has yet to be handled in the #left part.
  */
-bool fixed_splitter::next(interval &i, int &max)
+bool fixed_splitter::next(interval &i, int &max, bool &remove_left, bool &remove_right)
 {
   if (pos++ == nb) return false;
   max = iter_max;
@@ -74,10 +74,12 @@ bool fixed_splitter::next(interval &i, int &max)
   std::pair< interval, interval > ii = ::split(bnd, (double)pos / nb);
   i = intersect(left, ii.first);
   left = ii.second;
+  remove_left = pos > 1;
+  remove_right = false;
   return true;
 }
 
-typedef std::vector< number > number_vect;
+typedef std::vector<split_point> number_vect;
 
 /**
  * Generator of user-specified sub-intervals.
@@ -90,21 +92,23 @@ struct point_splitter: splitter
   int iter_max;  /**< Amount of work to perform on each sub-interval. */
   point_splitter(interval const &i, number_vect const *b, int max)
     : bnd(i), bnds(*b), pos(-1), iter_max(max / bnds.size()) {}
-  virtual bool next(interval &, int &);
+  virtual bool next(interval &, int &, bool &, bool &);
 };
 
 /**
  * Iteratively increments #pos until an intersection between #bnd and the user-specified intervals is found.
  * Returns this intersection.
  */
-bool point_splitter::next(interval &i, int &max)
+bool point_splitter::next(interval &i, int &max, bool &remove_left, bool &remove_right)
 {
   max = iter_max;
   for(int sz = bnds.size(); pos++ < sz;)
   {
-    i = intersect(bnd, interval(pos == 0  ? number::neg_inf : bnds[pos - 1],
-                                pos == sz ? number::pos_inf : bnds[pos]));
+    i = intersect(bnd, interval(pos == 0  ? number::neg_inf : bnds[pos - 1].pt,
+                                pos == sz ? number::pos_inf : bnds[pos].pt));
     if (is_empty(i) || is_singleton(i)) continue;
+    remove_left = pos > 0 && bnds[pos - 1].inleft && lower(i) > lower(bnd);
+    remove_right = pos < sz && !bnds[pos].inleft && upper(i) < upper(bnd);
     return true;
   }
   return false;
@@ -122,8 +126,8 @@ struct best_splitter: splitter
   std::stack< std::pair< interval, int > > stack;
   int iter_max; /**< Amount of work to perform on the whole interval. */
   best_splitter(interval const &i, int);
-  virtual bool split(interval &, int &);
-  virtual bool next(interval &, int &);
+  virtual bool split(interval &, int &, bool &, bool &);
+  virtual bool next(interval &, int &, bool &, bool &);
   virtual bool merge() { return true; }
   int get_iter_max() const;
 };
@@ -156,7 +160,7 @@ int best_splitter::get_iter_max() const
  * Splits the interval at the top of the stack. Replaces it by the right part.
  * Pushes the left part and returns it. Sets an increased depth to both parts.
  */
-bool best_splitter::split(interval &i, int &max)
+bool best_splitter::split(interval &i, int &max, bool &remove_left, bool &remove_right)
 {
   std::pair< interval, int > &p = stack.top();
   if (p.second >= parameter_dichotomy_depth) return false;
@@ -167,18 +171,22 @@ bool best_splitter::split(interval &i, int &max)
   i = ii.first;
   stack.push(std::make_pair(i, p.second));
   max = get_iter_max();
+  remove_left = false;
+  remove_right = true;
   return true;
 }
 
 /**
  * Pops the interval at the top of the stack and returns the next one.
  */
-bool best_splitter::next(interval &i, int &max)
+bool best_splitter::next(interval &i, int &max, bool &remove_left, bool &remove_right)
 {
   stack.pop();
   if (stack.empty()) return false;
   i = stack.top().first;
   max = get_iter_max();
+  remove_left = false;
+  remove_right = stack.size() > 1;
   return true;
 }
 
@@ -204,7 +212,7 @@ struct dichotomy_helper
   dichotomy_sequence const &hints;
   dicho_graph last_graph;
   splitter *gen;
-  dicho_graph try_hypothesis(dichotomy_failure *, bool) const;
+  dicho_graph try_hypothesis(dichotomy_failure *, bool, bool) const;
   void try_graph(dicho_graph);
   void dichotomize();
   dichotomy_node *generate_node(node *, property const &);
@@ -250,7 +258,8 @@ dichotomy_node::~dichotomy_node() {
 
 extern bool goal_reduction;
 
-dicho_graph dichotomy_helper::try_hypothesis(dichotomy_failure *exn, bool first) const
+dicho_graph dichotomy_helper::try_hypothesis(dichotomy_failure *exn,
+  bool remove_left, bool remove_right) const
 {
   graph_t *g = new graph_t(top_graph, tmp_hyp);
 
@@ -265,9 +274,15 @@ dicho_graph dichotomy_helper::try_hypothesis(dichotomy_failure *exn, bool first)
       g->set_contradiction(n);
       return dicho_graph(g, iter_max);
     }
-    if (!first && !current_goals.empty()) {
-      p.bnd() = interval(number::neg_inf, lower(p.bnd()));
-      if (current_goals.simplify(p, false) > 0) goto found_it;
+    if (!current_goals.empty()) {
+      number n = lower(tmp_hyp[0].bnd());
+      p.bnd() = remove_left ? interval(number::neg_inf, n) : interval(n, number::pos_inf);
+      if (current_goals.simplify(p, !remove_left) > 0) goto found_it;
+    }
+    if (!current_goals.empty()) {
+      number n = upper(tmp_hyp[0].bnd());
+      p.bnd() = remove_right ? interval(n, number::pos_inf) : interval(number::neg_inf, n);
+      if (current_goals.simplify(p, !remove_right) > 0) goto found_it;
     }
   }
 
@@ -298,7 +313,7 @@ void dichotomy_helper::try_graph(dicho_graph g2)
     p.bnd() = interval(lower(p.bnd()), upper(g2.first->get_hypotheses()[0].bnd()));
     tmp_hyp[0] = p;
     iter_max = g1.second + g2.second;
-    dicho_graph g = try_hypothesis(NULL, graphs.empty());
+    dicho_graph g = try_hypothesis(NULL, graphs.empty(), false);
     if (g.first)
     {
       // joined graph was successful, keep it as the last graph instead of g1 and g2
@@ -347,25 +362,29 @@ dichotomy_node *dichotomy_helper::generate_node(node *varn, property const &p)
 void dichotomy_helper::dichotomize() {
   interval &h = tmp_hyp[0].bnd();
   interval bnd;
-  bool b = gen->next(bnd, iter_max);
-  assert(b);
+  bool rleft, rright;
+  bool b = gen->next(bnd, iter_max, rleft, rright);
+  assert(b && !rleft);
   dichotomy_failure exn;
   for (;;)
   {
     h = bnd;
     exn.hyp = tmp_hyp[0];
-    dicho_graph g = try_hypothesis(&exn, !last_graph.first);
+    dicho_graph g = try_hypothesis(&exn, rleft, rright);
     if (g.first)
     {
       try_graph(g);
-      if (!gen->next(bnd, iter_max))
+      bool old_rright = rright;
+      if (!gen->next(bnd, iter_max, rleft, rright))
       {
         graphs.push_back(last_graph);
         last_graph = dicho_graph(NULL, 0);
+        (void)&old_rright;
+        assert(!old_rright);
         return;
       }
     }
-    else if (is_singleton(exn.hyp.bnd()) || !gen->split(bnd, iter_max))
+    else if (is_singleton(exn.hyp.bnd()) || !gen->split(bnd, iter_max, rleft, rright))
     {
       throw exn;
     }
@@ -486,12 +505,13 @@ interval create_interval(ast_number const *, ast_number const * = NULL, bool = t
 unsigned long fill_splitter(unsigned long s, ast_number const *n) {
   number_vect *v = (number_vect *)s;
   number m = lower(create_interval(n));
-  if (!v) v = new number_vect(1, m);
-  else v->push_back(m);
+  split_point mb(m, true);
+  if (!v) v = new number_vect(1, mb);
+  else v->push_back(mb);
   return (unsigned long)v;
 }
 
-unsigned long fill_splitter(unsigned long s, number const &m)
+unsigned long fill_splitter(unsigned long s, split_point const &m)
 {
   number_vect *v = (number_vect *)s;
   if (!v) v = new number_vect(1, m);
