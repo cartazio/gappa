@@ -276,6 +276,14 @@ class intersection_node: public dependent_node
   virtual void enlarge(property const &p) { res = boundify(p, res); }
 };
 
+static void get_inner_intersection_node(node *&n, int i)
+{
+  if (n->type != INTERSECTION) return;
+  node *m = n->get_subproofs()[i];
+  if (n->get_result().real != m->get_result().real) return;
+  n = m;
+}
+
 /**
  * Creates a node proving a property that is an intersection between the results of two nodes @a n1 and @a n2.
  *
@@ -293,8 +301,8 @@ intersection_node::intersection_node(node *n1, node *n2)
   res.intersect(res2);
   if (lower(res1.bnd()) > lower(res2.bnd())) std::swap(n1, n2);
   // to simplify the graph, no intersection should be nested
-  if (n1->type == INTERSECTION) n1 = n1->get_subproofs()[0];
-  if (n2->type == INTERSECTION) n2 = n2->get_subproofs()[1];
+  get_inner_intersection_node(n1, 0);
+  get_inner_intersection_node(n2, 1);
   // by disallowing both nodes to be hypotheses, we are sure that even if the
   // output real is also an input, it is a meaningful input; enforced by the parser
   assert(n1->type != HYPOTHESIS || n2->type != HYPOTHESIS);
@@ -304,9 +312,8 @@ intersection_node::intersection_node(node *n1, node *n2)
   {
     if (res1.real.pred() == PRED_REL)
     {
-      // "always 0" is not a contradiction, so bail out and hope nobody encounters it
-      std::cerr << "Sorry, not implemented: Contradiction on relative errors.\n";
-      exit(1);
+      // "always 0" is not a contradiction, so state that the real is "0" instead
+      res = property(res1.real.real2(), interval(0, 0));
       return;
     }
     res = property();
@@ -450,6 +457,7 @@ bool graph_t::try_real(node *&n)
       ++stat_intersected_pred;
       n = new intersection_node(old, n);
       if (n == contradiction) return true;
+      if (n->get_result().real != res2.real) return try_real(n);
     }
     dst = n;
     old->remove_known();
@@ -469,8 +477,9 @@ bool graph_t::try_real(node *&n)
         ++n->nb_good; // n has just become a known real, this data is needed in case a contradiction is found
         n = new intersection_node(n, m);
         if (n == contradiction) return true;
-        dst = n;
         --old->nb_good;
+        if (n->get_result().real != res2.real) return try_real(n);
+        dst = n;
       }
       else delete m;
     }
