@@ -25,11 +25,11 @@ static char const *theorem_defs[][2] = {
   { "intersect_bh", "$gpred_bnd.$t $x $2l $1i $i $" },
   { "intersect_aa", "$gpred_abs.$t $x $1i $2i $i $" },
   { "intersect_rr", "$gpred_rel.$t $x $y $1i $2i $i $" },
+  { "intersect_rr0", "$gpred_rel.$t $1x $1y $1i $2i $i $" },
   { "absurd_intersect", "$gpred_bnd.$t $1x $1i $2i $" },
   { "absurd_intersect_hb", "$gpred_bnd.$t $1x $1u $2i $" },
   { "absurd_intersect_bh", "$gpred_bnd.$t $1x $1i $2l $" },
   { "absurd_intersect_aa", "$gpred_abs.$t $1x $1i $2i $" },
-  { "absurd_intersect_rr", "$gpred_rel.$t $1x $3x $1i $2i $" },
 
   { "bnd_of_abs", "$gpred_abs.$t $1x $1i $i $" },
   { "abs_of_bnd_p", "$gpred_abs.$t $1x $1i $i $" },
@@ -604,7 +604,7 @@ static std::string display(node *n)
           suffix = "_aa";
           break;
         case PRED_REL:
-          suffix = "_rr";
+          suffix = res.real == n_res.real ? "_rr" : "_rr0";
           break;
         default:
           assert(false);

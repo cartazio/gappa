@@ -302,7 +302,7 @@ static std::string display(node *n) {
           suffix = "_aa";
           break;
         case PRED_REL:
-          suffix = "_rr";
+          suffix = res.real == n_res.real ? "_rr" : "_rr0";
           break;
         default:
           assert(false);
