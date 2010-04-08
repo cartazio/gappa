@@ -329,7 +329,8 @@ property intersection_node::maximal_for(node const *n) const
 {
   node_vect const &v = get_subproofs();
   number l = number::neg_inf, u = number::pos_inf;
-  if (res.null())
+  predicated_real const &r = n->get_result().real;
+  if (res.null() || res.real != r)
   {
     // TODO: improve bounds
     if (n == v[0]) u = upper(v[0]->get_result().bnd());
@@ -342,7 +343,7 @@ property intersection_node::maximal_for(node const *n) const
     else
       l = lower(res.bnd());
   }
-  return property(n->get_result().real, interval(l, u));
+  return property(r, interval(l, u));
 }
 
 /**
