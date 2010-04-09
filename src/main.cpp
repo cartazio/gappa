@@ -73,7 +73,7 @@ int main(int argc, char **argv)
     context const &current_context = goal;
     if (proof_generator) proof_generator->reset();
     graph_t *g = new graph_t(NULL, current_context.hyp);
-    g->populate(current_context.goals, current_context.goals, dichotomies, 100*1000*1000);
+    g->populate(current_context.goals, property_tree(), dichotomies, 100*1000*1000);
     if (node *n = g->get_contradiction())
     {
       display_context(current_context);

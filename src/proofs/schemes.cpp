@@ -591,8 +591,8 @@ static bool reduce_goal(property_tree &current_goals,
       top_graph->set_contradiction(m);
       return true;
     }
-    current_targets.simplify(m->get_result());
-    if (current_targets.empty()) return true;
+    if (!current_targets.empty() && current_targets.simplify(m->get_result()))
+      return true;
   }
   return false;
 }
@@ -654,7 +654,7 @@ void graph_t::populate(property_tree const &goals, property_tree const &targets,
         if (goal_reduction) set_contradiction(n);
         return;
       }
-      if (current_targets.simplify(n->get_result())) return;
+      if (!current_targets.empty() && current_targets.simplify(n->get_result())) return;
       if (!goal_reduction || current_goals.empty()) continue;
       if (current_goals->conjunction) {
         if (current_goals->leaves.size() + current_goals->subtrees.size() > 1)
