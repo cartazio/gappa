@@ -265,7 +265,7 @@ bool property_tree::verify(graph_t *g, property *p) const
 {
   if (!ptr) return false;
   graph_loader loader(g);
-  bool b = ptr->conjunction;
+  bool b = ptr->conjunction || (ptr->leaves.size() + ptr->subtrees.size() <= 1);
   for (std::vector< leave >::const_iterator i = ptr->leaves.begin(),
        i_end = ptr->leaves.end(); i != i_end; ++i)
   {
