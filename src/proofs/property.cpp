@@ -315,11 +315,12 @@ bool property_tree::get_nodes_aux(goal_vect &goals) const
        i_end = ptr->leaves.end(); i != i_end; ++i)
   {
     if (node *n = find_proof(i->first, i->second)) {
-      goals.push_back(std::make_pair(n, i->first.bnd()));
+      interval b = i->second ? i->first.bnd() : n->get_result().bnd();
+      goals.push_back(std::make_pair(n, b));
       if (!ptr->conjunction) return true;
     } else all = false;
   }
-  if (ptr->conjunction) {
+  if (ptr->conjunction || (ptr->leaves.size() + ptr->subtrees.size() <= 1)) {
     for(std::vector< property_tree >::const_iterator i = ptr->subtrees.begin(),
         end = ptr->subtrees.end(); i != end; ++i)
       if (!i->get_nodes_aux(goals)) all = false;
