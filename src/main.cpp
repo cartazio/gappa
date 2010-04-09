@@ -11,7 +11,6 @@ extern bool
   parameter_constrained, parameter_statistics, parameter_only_failure,
   parameter_sequent;
 extern int yyparse(void);
-extern std::vector< graph_t * > graphs;
 extern bool detailed_io;
 extern backend *proof_generator;
 dichotomy_sequence dichotomies;
