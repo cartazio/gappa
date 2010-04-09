@@ -287,7 +287,8 @@ dicho_graph dichotomy_helper::try_hypothesis(dichotomy_failure *exn,
   }
 
   g->populate(current_goals, targets, hints, iter_max);
-  if (g->get_contradiction() || targets.verify(g, exn ? &exn->expected : NULL))
+  if (g->get_contradiction() ||
+      (targets.empty() ? current_goals : targets).verify(g, exn ? &exn->expected : NULL))
     return dicho_graph(g, iter_max);
   if (exn && !exn->expected.null()) {
     graph_loader loader(g);
@@ -420,7 +421,7 @@ void graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
   for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
     if (i->real.real() != var.real) hyp2.push_back(*i);
   splitter *gen;
-  property_tree targets = goals;
+  property_tree targets;
   if (var.splitter & 1)
     gen = new fixed_splitter(hyp2[0].bnd(), var.splitter / 2, iter_max);
   else if (var.splitter)
@@ -428,6 +429,7 @@ void graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
   else if (hint.dst.empty())
     gen = new fixed_splitter(hyp2[0].bnd(), 4, iter_max);
   else {
+    targets = goals;
     targets.restrict(hint.dst);
     if (targets.empty()) {
       if (warning_dichotomy_failure)
