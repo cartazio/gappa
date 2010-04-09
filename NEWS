@@ -5,6 +5,8 @@ Version 0.13.0:
    - disabled sequent generation
    - disabled proof tracking for the null back-end
    - improved handling of deep logic negations
+ * main interface
+   - removed option -Monly-failure since there is only one proposition
 
 Version 0.12.3:
  * Coq lambda back-end

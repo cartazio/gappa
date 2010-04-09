@@ -198,12 +198,6 @@ Warning: no contradiction was found.]]></screen>
 <para>Note that <code>1 &lt;= 0</code> is only there to complete the scripts, since they happen to not have any right-hand side, which means that Gappa tries to prove false from the hypotheses.</para>
 </section>
 
-<section>
-<title>Focusing on failed properties</title>
-<para>Option: <code>-Monly-failure</code></para>
-<para>Gappa normally displays the results for all the logical sub-propositions it extracted from the input. If there are many of them, it may become hard to notice which properties were left unproved. This mode prevents successful properties from being displayed, hence making it easier to analyze failures.</para>
-</section>
-
 </section>
 
 <section>
