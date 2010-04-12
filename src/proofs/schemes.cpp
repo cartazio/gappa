@@ -561,6 +561,13 @@ extern bool goal_reduction;
 static bool reduce_goal(property_tree &current_goals,
   property_tree &current_targets, scheme_queue *missing_schemes)
 {
+  if (!goal_reduction || current_goals.empty()) return false;
+  if (current_goals->conjunction) {
+    if (current_goals->leaves.size() + current_goals->subtrees.size() > 1)
+      return false;
+    current_goals->conjunction = false;
+  }
+
   std::vector<property_tree::leave> old_leaves = current_goals->leaves;
   for (std::vector<property_tree::leave>::const_iterator i = old_leaves.begin(),
        i_end = old_leaves.end(); i != i_end; ++i)
@@ -612,8 +619,7 @@ void graph_t::populate(property_tree const &goals, property_tree const &targets,
   property_tree current_goals = goals, current_targets = targets;
   graph_loader loader(this);
 
-  if (goal_reduction && !current_goals.empty() &&
-      reduce_goal(current_goals, current_targets, NULL))
+  if (reduce_goal(current_goals, current_targets, NULL))
     return;
 
   for (dichotomy_sequence::const_iterator dichotomy_it = dichotomy.begin(),
@@ -655,12 +661,6 @@ void graph_t::populate(property_tree const &goals, property_tree const &targets,
         return;
       }
       if (!current_targets.empty() && current_targets.simplify(n->get_result())) return;
-      if (!goal_reduction || current_goals.empty()) continue;
-      if (current_goals->conjunction) {
-        if (current_goals->leaves.size() + current_goals->subtrees.size() > 1)
-          continue;
-        current_goals->conjunction = false;
-      }
       if (reduce_goal(current_goals, current_targets, &missing_schemes)) return;
     }
     if (iter > iter_max)
