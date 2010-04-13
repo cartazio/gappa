@@ -561,12 +561,10 @@ extern bool goal_reduction;
 static bool reduce_goal(property_tree &current_goals,
   property_tree &current_targets, scheme_queue *missing_schemes)
 {
-  if (!goal_reduction || current_goals.empty()) return false;
-  if (current_goals->conjunction) {
-    if (current_goals->leaves.size() + current_goals->subtrees.size() > 1)
-      return false;
-    current_goals->conjunction = false;
-  }
+  if (!goal_reduction || current_goals.empty() ||
+      (current_goals->conjunction &&
+       current_goals->leaves.size() + current_goals->subtrees.size() > 1))
+    return false;
 
   std::vector<property_tree::leave> old_leaves = current_goals->leaves;
   for (std::vector<property_tree::leave>::const_iterator i = old_leaves.begin(),
