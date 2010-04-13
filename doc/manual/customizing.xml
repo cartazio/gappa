@@ -19,29 +19,37 @@ and <filename>src/backends</filename> directories.</para>
 class is an interface to the name of the function, its associated real
 operator, and six theorems.</para>
 
-<programlisting><![CDATA[struct function_class {
-  real_op_type type;
-  int theorem_mask;
-  function_class(real_op_type t, int m): type(t), theorem_mask(m) {}
-  virtual std::string name() const = 0;
-  virtual interval round                      (interval const &, std::string &) const;
-  virtual interval enforce                    (interval const &, std::string &) const;
-  virtual interval absolute_error                               (std::string &) const;
-  virtual interval absolute_error_from_real   (interval const &, std::string &) const;
-  virtual interval absolute_error_from_rounded(interval const &, std::string &) const;
-  virtual interval relative_error_from_real   (interval const &, std::string &) const;
-  virtual interval relative_error_from_rounded(interval const &, std::string &) const;
-  virtual ~function_class() {}
+<programlisting><![CDATA[struct function_class
+{
+  function_class(real_op_type t, int mask);
+  virtual interval round                         (interval const &, std::string &) const;
+  virtual interval enforce                       (interval const &, std::string &) const;
+  virtual interval absolute_error                                  (std::string &) const;
+  virtual interval relative_error                                  (std::string &) const;
+  virtual interval absolute_error_from_exact_bnd (interval const &, std::string &) const;
+  virtual interval absolute_error_from_exact_abs (interval const &, std::string &) const;
+  virtual interval absolute_error_from_approx_bnd(interval const &, std::string &) const;
+  virtual interval absolute_error_from_approx_abs(interval const &, std::string &) const;
+  virtual interval relative_error_from_exact_bnd (interval const &, std::string &) const;
+  virtual interval relative_error_from_exact_abs (interval const &, std::string &) const;
+  virtual interval relative_error_from_approx_bnd(interval const &, std::string &) const;
+  virtual interval relative_error_from_approx_abs(interval const &, std::string &) const;
+  virtual std::string description() const = 0;
+  virtual std::string pretty_name() const = 0;
+  virtual ~function_class();
 };]]></programlisting>
 
-<para>The name is a string given through the virtual method <code>name</code>.
-It will be used when generating the notations of the proof. If the description
-of the final function needs more than a name, additional parameters can be
-provided by adding them to the name after a comma. The back-end will take care
-of the formatting of the final string. This remark also applies to names
-returned by the theorem methods (see below).</para>
+<para>The <code>description</code> function should return the internal
+name of the rounding operator. It will be used when generating the
+notations of the proof. When the generated notation cannot be reduced to
+a simple name, comma-separated additional parameters can be appended. The
+back-end will take care of formatting the final string. This remark also
+applies to names returned by the theorem methods (see below). The
+<code>pretty_name</code> function returns a name that can be used in
+messages displayed to the user. Ideally, this string can be reused in an
+input script.</para>
 
-<para>The <code>type</code> is the associated real operator. This will be
+<para>The <code>real_op_type</code> value is the associated real operator. This will be
 <code>UOP_ID</code> (the unary identity function) for standard rounding
 operators. But it can be more complex if needed:</para>
 
@@ -64,24 +72,28 @@ operator (the diamond in this example).</para>
 
 <para>For these rules and the following theorems to be useful, the expressions
 <texinline>f(a, b)</texinline> and <texinline>a \diamond b</texinline> have to
-be close to zero. Bounding their distance is the purpose of the last five
+be close to each other. Bounding their distance is the purpose of the last ten
 theorems. The first two theorems compute the range of <texinline>f(a, b)</texinline>
 itself.</para>
 
 <para>It is better for the proof engine not to consider theorems that never
-return a useful range. The second argument of the <code>function_class</code>
+return a useful range. The <code>mask</code> argument of the <code>function_class</code>
 constructor is a combination of the following flags. They indicate which
-theorem methods have been overloaded.</para>
+theorems are known. The corresponding methods should therefore have been overloaded.</para>
 
-<programlisting><![CDATA[struct function_class {
-  static const int TH_RND, TH_ENF, TH_ABS, TH_ABS_REA, TH_ABS_RND, TH_REL_REA, TH_REL_RND;
+<programlisting><![CDATA[struct function_class
+{
+  static const int TH_RND, TH_ENF, TH_ABS, TH_REL,
+    TH_ABS_EXA_BND, TH_ABS_EXA_ABS, TH_ABS_APX_BND, TH_ABS_APX_ABS,
+    TH_REL_EXA_BND, TH_REL_EXA_ABS, TH_REL_APX_BND, TH_REL_APX_ABS;
 };]]></programlisting>
 
-<para>All the theorem virtual methods have a similar signature. If the result
-is the undefined interval <code>interval()</code>, the theorem does not apply.
-Otherwise, the last parameter is updated with the name of the theorem which
-has to be applied. The proof generator will generate an internal node from the
-two intervals and the name.</para>
+<para>All the virtual methods for theorems have a similar specification.
+If the result is the undefined interval <code>interval()</code>, the
+theorem does not apply. Otherwise, the last parameter is updated with the
+name of the theorem that was used for computing the returned interval.
+The proof generator will then generate an internal node from the two
+intervals and the name.</para>
 
 <variablelist>
 <varlistentry><term><code>round</code></term>
@@ -93,23 +105,38 @@ range of it.</para></listitem></varlistentry>
 <varlistentry><term><code>absolute_error</code></term>
 <listitem><para>Given no range, compute the range of
 <texinline>f(a, b) - a \diamond b</texinline>.</para></listitem></varlistentry>
-<varlistentry><term><code>absolute_error_from_real</code></term>
+<varlistentry><term><code>relative_error</code></term>
+<listitem><para>Given no range, compute the range of
+<texinline>\frac{f(a, b) - a \diamond b}{a \diamond b}</texinline>.</para></listitem></varlistentry>
+<varlistentry><term><code>absolute_error_from_exact_bnd</code></term>
 <listitem><para>Given the range of <texinline>a \diamond b</texinline>, compute the
 range of <texinline>f(a, b) - a \diamond b</texinline>.</para></listitem></varlistentry>
-<varlistentry><term><code>absolute_error_from_rounded</code></term>
+<varlistentry><term><code>absolute_error_from_exact_abs</code></term>
+<listitem><para>Given the range of <texinline>|a \diamond b|</texinline>, compute the
+range of <texinline>f(a, b) - a \diamond b</texinline>.</para></listitem></varlistentry>
+<varlistentry><term><code>absolute_error_from_approx_bnd</code></term>
 <listitem><para>Given the range of <texinline>f(a, b)</texinline>, compute the
 range of <texinline>f(a, b) - a \diamond b</texinline>.</para></listitem></varlistentry>
-<varlistentry><term><code>relative_error_from_real</code></term>
+<varlistentry><term><code>absolute_error_from_approx_abs</code></term>
+<listitem><para>Given the range of <texinline>|f(a, b)|</texinline>, compute the
+range of <texinline>f(a, b) - a \diamond b</texinline>.</para></listitem></varlistentry>
+<varlistentry><term><code>relative_error_from_exact_bnd</code></term>
+<listitem><para>Given the range of <texinline>a \diamond b</texinline>, compute the
+range of <texinline>\frac{f(a, b) - a \diamond b}{a \diamond b}</texinline>.</para></listitem></varlistentry>
+<varlistentry><term><code>relative_error_from_exact_abs</code></term>
 <listitem><para>Given the range of <texinline>|a \diamond b|</texinline>, compute the
 range of <texinline>\frac{f(a, b) - a \diamond b}{a \diamond b}</texinline>.</para></listitem></varlistentry>
-<varlistentry><term><code>relative_error_from_rounded</code></term>
+<varlistentry><term><code>relative_error_from_approx_bnd</code></term>
+<listitem><para>Given the range of <texinline>f(a, b)</texinline>, compute the
+range of <texinline>\frac{f(a, b) - a \diamond b}{a \diamond b}</texinline>.</para></listitem></varlistentry>
+<varlistentry><term><code>relative_error_from_approx_abs</code></term>
 <listitem><para>Given the range of <texinline>|f(a, b)|</texinline>, compute the
 range of <texinline>\frac{f(a, b) - a \diamond b}{a \diamond b}</texinline>.</para></listitem></varlistentry>
 </variablelist>
 
 <para>The <code>enforce</code> theorem is meant to trim the bounds of a range.
 For example, if this expression is an integer between 1.7 and 3.5, then it is
-also a real number between 2 and 3. This property is especially when doing a
+also a real number between 2 and 3. This property is especially useful when doing a
 dichotomy resolution, since some of the smaller intervals may be reduced to a
 single exact value through this theorem.</para>
 
@@ -128,9 +155,10 @@ reasons, [1,1] and [2,2] are the most interesting answers.</para>
 
 <para>Because functions can be templated by parameters. They have to be
 generated by the parser on the fly. This is done by invoking the functional
-method of an object derived from the <code>function_generator</code> class. A
-fresh <code>function_class</code> object should not be generated each time;
-they have to be cached so that they look identical.</para>
+method of an object derived from the <code>function_generator</code>
+class. For identical parameters, the same <code>function_class</code>
+object should be returned, which means that they have to be
+cached.</para>
 
 <programlisting><![CDATA[struct function_generator {
   function_generator(const char *);
