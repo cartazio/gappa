@@ -1,7 +1,7 @@
 <section>
 <title>Logical formulas</title>
 
-<para>These sections describe some of the property of the logical
+<para>These sections describe some properties of the logical
 fragment Gappa manipulates. Notice that this fragment is sound, as the
 generated formal proofs depend on the support libraries, and these
 libraries are formally proved by relying only on the axioms of basic

@@ -4,13 +4,13 @@ involve manipulating C++ classes defined in the <filename>src/arithmetic</filena
 and <filename>src/backends</filename> directories.</para>
 
 <section>
-<title>Defining a new back-end</title>
+<title>Defining a generator for a new formal system</title>
 
 <para>To be written.</para>
 </section>
 
 <section>
-<title>Defining new rounding operators</title>
+<title>Defining rounding operators for a new arithmetic</title>
 
 <section>
 <title>Function classes</title>
@@ -93,7 +93,9 @@ If the result is the undefined interval <code>interval()</code>, the
 theorem does not apply. Otherwise, the last parameter is updated with the
 name of the theorem that was used for computing the returned interval.
 The proof generator will then generate an internal node from the two
-intervals and the name.</para>
+intervals and the name. When defining a new rounding operator,
+overloading does not have to be comprehensive; some functions may be
+ignored and the engine will work around the missing theorems.</para>
 
 <variablelist>
 <varlistentry><term><code>round</code></term>
