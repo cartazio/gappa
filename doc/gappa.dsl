@@ -17,6 +17,8 @@
 (define %mono-font-family% "Computer Modern Typewriter")
 (define %verbatim-size-factor% #f)
 (define %block-start-indent% 2em)
+(define %footnote-ulinks% #t)
+(define bop-footnotes #t)
 
 (element (inlineequation graphic) (empty-sosofo))
 (element (informalequation graphic) (empty-sosofo))
