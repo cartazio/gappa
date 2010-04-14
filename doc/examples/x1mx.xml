@@ -6,7 +6,7 @@
 
 <para>Let us analyze the following function.</para>
 
-<programlisting><![CDATA[float f(float x)
+<programlisting language="c"><![CDATA[float f(float x)
 {
   assert(0 <= x && x <= 1);
   return x * (1 - x);

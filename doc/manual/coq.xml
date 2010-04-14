@@ -1,5 +1,63 @@
 <section>
 <title>Coq and Gappa</title>
 
-<para>To be written.</para>
+<para>The <ulink url="http://gappa.gforge.inria.fr/">Gappa Coq
+Library</ulink> adds a <code>gappa</code> tactic to the <ulink
+url="http://coq.inria.fr/">Coq Proof Assistant</ulink>. This tactic
+invokes Gappa to solve properties about floating-point or fixed-point
+arithmetic. It can also solve simple inequalities over real
+numbers.</para>
+
+<para>The tactic is provided by the <code>Gappa_tactic</code> module. It
+expects to find a Gappa executable (called <code>gappa</code>) in the
+user program path.</para>
+
+<programlisting language="coq"><![CDATA[Require Import Reals.
+Require Import Gappa_tactic.
+Open Scope R_scope.
+
+Lemma test_gappa :
+  forall x y : R,
+  3/4 <= x <= 3 ->
+  0 <= sqrt x <= 1775 * (powerRZ 2 (-10)).
+Proof.
+  gappa.
+Qed.]]></programlisting>
+
+<para>The tactic recognizes rounding operators when introduced by the
+<code>gappa_rounding</code> function. These operators can be built from
+the constants defined by the support library,
+<foreignphrase>e.g.</foreignphrase>, <code>rounding_fixed</code> or
+<code>roundNE</code>.</para>
+
+<para>The script below proves that the difference between two
+double precision floating-point numbers in <texinline>[\frac{52}{16},
+\frac{53}{16}]</texinline> and <texinline>[\frac{22}{16},
+\frac{30}{16}]</texinline> is exactly representable as a double-precision
+floating-point number. (The direction of the rounding does not matter for
+this example; it has been arbitrarily chosen as rounding toward zero.)</para>
+
+<programlisting language="coq"><![CDATA[Definition rnd := gappa_rounding (rounding_float roundZR 53 1074).
+
+Lemma test_gappa2 :
+  forall a_ b_ a b : R,
+  a = rnd a_ ->
+  b = rnd b_ ->
+  52 / 16 <= a <= 53 / 16 ->
+  22 / 16 <= b <= 30 / 16 ->
+  0 <= rnd (a - b) - (a - b) <= 0.
+Proof.
+  unfold rnd; gappa.
+Qed.]]></programlisting>
+
+<para>The tactic only handles goals and hypotheses that are pair of
+inequalities on real numbers: <texinline>b_1 \le e \le b_2</texinline>.
+The bounds have to be explicit dyadic numbers. As syntactic sugar for
+these inequality pairs, the tactic also recognizes properties written as
+<texinline>|e| \le b</texinline> and <texinline>e_1 = e_2</texinline>.
+The goal of the lemma could therefore have been written in the following
+two ways.</para>
+
+<programlisting language="coq"><![CDATA[Rabs (rnd (a - b) - (a - b)) <= 0]]></programlisting>
+<programlisting language="coq"><![CDATA[rnd (a - b) = a - b]]></programlisting>
 </section>
