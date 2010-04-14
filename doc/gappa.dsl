@@ -19,6 +19,7 @@
 (define %block-start-indent% 2em)
 (define %footnote-ulinks% #t)
 (define bop-footnotes #t)
+(define %two-side% #t)
 
 (element (inlineequation graphic) (empty-sosofo))
 (element (informalequation graphic) (empty-sosofo))
