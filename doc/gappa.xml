@@ -55,6 +55,13 @@ is specially designed to deal with formulas that could appear when certifying
 numerical codes. In particular, Gappa makes it simple to bound computational
 errors due to floating-point arithmetic.</para>
 
+<para>Gappa is free software; you can redistribute it and/or modify it
+under the terms of the CeCILL Free Software License Agreement or under
+the terms of the GNU General Public License. (Refer to the files from the
+source archive for the precise wording of these two licences.) Gappa can
+be downloaded on its <ulink url="http://gappa.gforge.inria.fr/">project
+page</ulink>.</para>
+
 </chapter>
 
 <chapter>
