@@ -2,7 +2,7 @@
 <title>Syntax error messages</title>
 
 <section>
-<title>Error: $bison at line $17 column $42.</title>
+<title>Error: foobar at line 17 column 42.</title>
 <para>The Bison front-end has detected a syntax error at the given location.
 The error message is usually unusable, so let us hope the location is enough
 for you to find what the problem is.</para>
@@ -11,14 +11,14 @@ for you to find what the problem is.</para>
 </section>
 
 <section>
-<title>Error: unrecognized option '$titi'.</title>
+<title>Error: unrecognized option 'bar'.</title>
 <para>Gappa was invoked with an unknown option.</para>
-<para>Variant: unrecognized option '$titi' at line $42. This error is
+<para>Variant: unrecognized option 'bar' at line 42. This error is
 displayed for options embedded in the script.</para>
 </section>
 
 <section>
-<title>Error: the symbol $toto is redefined...</title>
+<title>Error: the symbol foo is redefined...</title>
 <para>A symbol cannot be defined more than once, even if the right hand sides
 of every definitions are equivalent.</para>
 <programlisting>a = 1;
@@ -29,7 +29,7 @@ a = 1;</programlisting>
 </section>
 
 <section>
-<title>Error: $toto is not a rounding operator...</title>
+<title>Error: foo is not a rounding operator...</title>
 <para>Only rounding operators (unary function close to the identity function)
 can be prepended to the equal sign in a definition.</para>
 <programlisting><![CDATA[x add_rel<25,-100>= 1;]]></programlisting>
@@ -37,7 +37,7 @@ can be prepended to the equal sign in a definition.</para>
 </section>
 
 <section>
-<title>Error: invalid parameters for $toto...</title>
+<title>Error: invalid parameters for foo...</title>
 <para>A function template has been instantiated with an incorrect number of
 parameters or with parameters of the wrong type.</para>
 <programlisting><![CDATA[x = float<ieee_32,0>(y);]]></programlisting>
@@ -45,7 +45,7 @@ parameters or with parameters of the wrong type.</para>
 </section>
 
 <section>
-<title>Error: incorrect number of arguments when calling $toto...</title>
+<title>Error: incorrect number of arguments when calling foo...</title>
 <para>There are either less or more expressions between parentheses than
 expected by the function.</para>
 <programlisting><![CDATA[x = int<zr>(y, z);]]></programlisting>
@@ -69,7 +69,7 @@ mark on the right hand side of an implication can still cause Gappa to fail.</pa
 </section>
 
 <section>
-<title>Error: the range of $toto is an empty interval.</title>
+<title>Error: the range of foo is an empty interval.</title>
 <para>An interval has been interpreted as having reverted bounds.</para>
 <programlisting><![CDATA[{ x in [2,1] }]]></programlisting>
 <screen><![CDATA[Error: the range of x is an empty interval.]]></screen>
@@ -96,7 +96,7 @@ y -> y * (x - x) / (x - x);]]></programlisting>
 <title>Warning messages</title>
 
 <section>
-<title>Warning: the hypotheses on $toto are trivially contradictory, skipping.</title>
+<title>Warning: the hypotheses on foo are trivially contradictory, skipping.</title>
 <para>If an expression is enclosed in several hypotheses, and if the
 intersection of their ranges is empty, then the proposition is trivially true.
 As a consequence, Gappa skips the proposition instead of proving it.</para>
@@ -105,7 +105,7 @@ As a consequence, Gappa skips the proposition instead of proving it.</para>
 </section>
 
 <section>
-<title>Warning: $toto is being renamed to $titi.</title>
+<title>Warning: foo is being renamed to bar.</title>
 <para>When a definition <code>toto = expr</code> is given to Gappa, the name
 <code>toto</code> is associated to the expression <code>expr</code>. This name
 is then used whenever Gappa needs to output <code>expr</code>. If another
@@ -121,7 +121,7 @@ b - b in [0, 0]</screen>
 </section>
 
 <section>
-<title>Warning: although present in a quotient, the expression $toto may not
+<title>Warning: although present in a quotient, the expression foo may not
 have been tested for non-zeroness.</title>
 <para>When Gappa verifies that both sides of a user rewriting rule are
 equivalent, it does not generate additional constraints to verify that
@@ -135,7 +135,7 @@ E.g. <code>1 / (1/ x) -&gt; x { x &lt;&gt; 0 }</code>.</para>
 </section>
 
 <section>
-<title>Warning: $toto and $titi are not trivially equal.</title>
+<title>Warning: foo and bar are not trivially equal.</title>
 <para>When Gappa verifies the rule <code>toto -&gt; titi</code>, it first
 performs the subtraction of both sides. Then it normalizes this expression in
 the field of polynomial fractions with integer coefficients. If this result is
@@ -158,7 +158,7 @@ Warning: sqrt(x * x) and |x| are not trivially equal.
 </section>
 
 <section>
-<title>Warning: $titi is a variable without definition, yet it is unbound.</title>
+<title>Warning: bar is a variable without definition, yet it is unbound.</title>
 <para>Neither an expression is associated to the identifier <code>titi</code>
 nor it is a sub-term of any of the bounded expressions of the logical property.
 This may mean an identifier was in fact mistyped.</para>
@@ -173,7 +173,7 @@ This may mean an identifier was in fact mistyped.</para>
 <title>Warning messages during proof computation</title>
 
 <section>
-<title>Warning: no path was found for $toto.</title>
+<title>Warning: no path was found for foo.</title>
 <para>The expression <code>toto</code> appears in one of the goals, yet Gappa
 does not have any theorem that could be used to compute this expression or one
 of its sub-terms.</para>
@@ -224,7 +224,7 @@ Missing x + 2</screen>
 </section>
 
 <section>
-<title>Warning: when $toto is in $i1, $titi is in $i2 potentially outside of $i3.</title>
+<title>Warning: when foo is in i1, bar is in i2 potentially outside of i3.</title>
 <para>When Gappa applies a case splitting <code>titi $ toto</code>, it splits
 the interval of <code>toto</code> until the goal containing <code>titi</code>
 holds for any sub-interval. If the maximal dichotomy depth has been reached yet
@@ -237,7 +237,7 @@ x + 1 $ x;]]></programlisting>
 Warning: when x is in [7b-2 {1.75, 2^(0.807355)}, 15b-3 {1.875, 2^(0.906891)}], x + 1 is in [11b-2 {2.75, 2^(1.45943)}, 23b-3 {2.875, 2^(1.52356)}] potentially outside of [1b1 {2, 2^(1)}, 11b-2 {2.75, 2^(1.45943)}].
 Warning: some enclosures were not satisfied.
 Missing x + 1</screen>
-<para>Variant: when $toto is in $i1, $titi is not computable. This warning is
+<para>Variant: when foo is in i1, bar is not computable. This warning is
 displayed if no bounds on <code>titi</code> can even be computed.</para>
 <programlisting><![CDATA[{ x in [-2,1] -> x / x in [1,1]  }
 x / x $ x;
@@ -249,7 +249,7 @@ Warning: some enclosures were not satisfied.</screen>
 </section>
 
 <section>
-<title>Warning: case split on $toto has not produced any interesting new result.</title>
+<title>Warning: case split on foo has not produced any interesting new result.</title>
 <para>This warning is displayed when Gappa is successful in finding a case
 split that satisfies the goals, yet the results obtained on the sub-intervals
 are not interesting: they have already been proved through a simpler analysis.</para>
@@ -262,7 +262,7 @@ x + 1 in [1b1 {2, 2^(1)}, 3]</screen>
 </section>
 
 <section>
-<title>Warning: case split on $toto has no range to split.</title>
+<title>Warning: case split on foo has no range to split.</title>
 <para>This warning is displayed when Gappa is unable to find the initial range
 on which to split cases.</para>
 <programlisting><![CDATA[{ x in [-1,1] -> 1 in ? }
@@ -274,7 +274,7 @@ Warning: case split on 1 / x has no range to split.
 </section>
 
 <section>
-<title>Warning: case split on $toto is not goal-driven anymore.</title>
+<title>Warning: case split on foo is not goal-driven anymore.</title>
 <para>This warning is displayed when Gappa is supposed to find the best case
 split for proving a property, yet it does not know the range for this property
 or it has already proved it.</para>
