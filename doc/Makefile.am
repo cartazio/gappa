@@ -26,12 +26,13 @@ pdf-doc:
 	$(XSLTPROC) -o gappa-preprocessed.xml "$(srcdir)/gappa-preprocess.xsl" "$(srcdir)/gappa.xml"
 	openjade -t tex -i tex -d "$(srcdir)/gappa.dsl" /usr/share/xml/declaration/xml.dcl gappa-preprocessed.xml
 	rm gappa-preprocessed.xml
-	mkdir tmp
+	mkdir tmp tmp/images
 	mv gappa-preprocessed.tex tmp/gappa.tex
 	"$(srcdir)/unescape_math.pl" tmp/gappa.tex
 	sed -e 's/\\Rightarrow/\\rightarrow/g' tmp/gappa.tex > tmp/gappa.tex.2
 	mv tmp/gappa.tex.2 tmp/gappa.tex
 	echo "\\def\\TwoSideStartOnRight{1}" > tmp/jadetex.cfg
+	cp "$(srcdir)/images/gwhy-sqrt.png" tmp/images/
 	(cd tmp ; pdfjadetex gappa.tex ; pdfjadetex gappa.tex ; pdfjadetex gappa.tex ; pdfjadetex gappa.tex) > /dev/null
 	mv tmp/gappa.pdf .
 	rm -rf tmp/

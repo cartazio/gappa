@@ -14,6 +14,7 @@
   <xsl:param name="chunk.first.sections" select="1"/>
   <xsl:param name="variablelist.as.table" select="0"/>
   <xsl:param name="highlight.source" select="1"/>
+  <xsl:param name="ignore.image.scaling" select="1"/>
 
 <xsl:template name="header.navigation">
   <xsl:param name="prev" select="/foo"/>
