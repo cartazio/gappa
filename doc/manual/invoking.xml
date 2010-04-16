@@ -157,7 +157,7 @@ unfortunately far from being guaranteed.</para>
 <title>Gathering statistics</title>
 <para>Option: <code>-Mstatistics</code></para>
 <para>At the end of its computations, Gappa displays some statistics. For
-example, the second script of this <link linkend="example-fixed">example</link>
+example, the second script of <xref linkend="example-fixed"/>
 gives:</para>
 <screen>Statistics:
   2121 expressions were considered,

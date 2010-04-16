@@ -6,8 +6,9 @@ to some expressions in order to simplify the writing of the next parts. The
 second one is the logical formula one wants to prove with the tool. The third
 one gives some hints to Gappa on how to prove it.</para>
 
-<para>The following script shows these three parts on the
-<link linkend="example-x1mx">first example</link>.</para>
+<para>The following script shows these three parts for the example of
+<xref linkend="example-x1mx"/>.</para>
+
 <programlisting><![CDATA[# some notations for making the script readable
 @rnd = float< ieee_32, ne >;
 x = rnd(xx);

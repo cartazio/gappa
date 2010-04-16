@@ -178,5 +178,7 @@ r1 * (2 - d * r1) - R -> (r1 - R) * (r1 - R) * -d   { d <> 0};]]></programlistin
 <screen>Results for d in [0.5, 1] and r0 - R in [-0.00390625, 0.00390625]:
 r2 - R in [-41710608584542209b-80 {-3.45022e-08, -2^(-24.7887)}, 8356605b-52 {1.85554e-09, 2^(-29.0055)}]</screen>
 
+<para>Another example of a Newton iteration is given in <xref linkend="why"/>.</para>
+
 </section>
 </section>
