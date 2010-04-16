@@ -132,7 +132,7 @@ proof obligations are displayed on the right; here it is the
 postcondition of the <code>sqrt</code> function.</para>
 
 <para>Gappa is not able to prove Newton's relation nor does it know that
-<texinline>x \times \sqrt{x}^{-1} = x</texinline> holds. These assertions
+<texinline>x \times \sqrt{x}^{-1} = \sqrt{x}</texinline> holds. These assertions
 are therefore left unproved. Due to loop unrolling, Newton's relation
 appears three times. To factor these occurrences, a lemma describing the
 relation has been added to the C code. The <ulink
