@@ -5,8 +5,10 @@ EXTRA_DIST = gappa.xml gappa-preprocess.xsl gappa.xsl gappa.css gappa.dsl unesca
 html-doc:
 	rm -rf tmp/ html/
 	$(XSLTPROC) -o gappa-preprocessed.xml "$(srcdir)/gappa-preprocess.xsl" "$(srcdir)/gappa.xml"
-	$(XSLTPROC) -o html/ "$(srcdir)/gappa.xsl" gappa-preprocessed.xml
-	rm gappa-preprocessed.xml
+	mkdir html
+	cp gappa-preprocessed.xml "$(srcdir)/gappa.xsl" html/
+	(cd html/ ; java -cp "/usr/share/java/saxon.jar:/usr/share/java/xslthl.jar" com.icl.saxon.StyleSheet gappa-preprocessed.xml gappa.xsl)
+	rm html/gappa-preprocessed.xml html/gappa.xsl
 	cp "$(srcdir)/gappa.css" html/
 	mkdir html/images
 	cp "$(srcdir)/images"/*.png html/images/
