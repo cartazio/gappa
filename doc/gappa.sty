@@ -1,0 +1,20 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{gappa}[2010/04/19 Gappa Documentation]
+
+\RequirePackageWithOptions{docbook}
+
+\setlength{\evensidemargin}{\paperwidth-\textwidth-\oddsidemargin}
+\renewcommand{\DBKrevhistory}{}
+
+\lstdefinelanguage{Gappa}{
+  comment=[l]\#,
+  otherkeywords={->, ~, /\\, \\/, ?, \{, \}, $}, %$
+  morekeywords={in}
+}
+
+\lstdefinelanguage{Coq}{
+  comment=[n]{(*}{*)},
+  otherkeywords={->, /\\, \\/, =>},
+  morekeywords={Goal, Proof, Definition, Theorem, Lemma, Qed, Time, forall, Require, Notation, Variable, Section, End, fun, let}
+}
+
