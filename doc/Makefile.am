@@ -4,11 +4,13 @@ EXTRA_DIST = gappa.xml gappa-preprocess.xsl gappa.xsl gappa.css gappa.dsl unesca
 
 html-doc:
 	rm -rf tmp/ html/
-	$(XSLTPROC) -o gappa-preprocessed.xml "$(srcdir)/gappa-preprocess.xsl" "$(srcdir)/gappa.xml"
 	mkdir html
-	cp gappa-preprocessed.xml "$(srcdir)/gappa.xsl" html/
-	(cd html/ ; java -cp "/usr/share/java/saxon.jar:/usr/share/java/xslthl.jar" com.icl.saxon.StyleSheet gappa-preprocessed.xml gappa.xsl)
-	rm html/gappa-preprocessed.xml html/gappa.xsl
+	cp "$(srcdir)/gappa.xml" "$(srcdir)"/gappa*.xsl html/
+	mkdir html/manual html/examples
+	cp "$(srcdir)/manual"/*.xml html/manual/
+	cp "$(srcdir)/examples"/*.xml html/examples/
+	(cd html/ ; java -cp "/usr/share/java/saxon.jar:/usr/share/java/xslthl.jar" com.icl.saxon.StyleSheet gappa.xml gappa-html.xsl)
+	rm -r html/gappa.xml html/gappa*.xsl html/manual/ html/examples/
 	cp "$(srcdir)/gappa.css" html/
 	mkdir html/images
 	cp "$(srcdir)/images"/*.png html/images/
@@ -25,8 +27,8 @@ html-doc:
 
 pdf-doc:
 	rm -rf tmp/
-	$(XSLTPROC) -o gappa-preprocessed.xml "$(srcdir)/gappa-preprocess.xsl" "$(srcdir)/gappa.xml"
-	openjade -t tex -i tex -d "$(srcdir)/gappa.dsl" /usr/share/xml/declaration/xml.dcl gappa-preprocessed.xml
+	$(XSLTPROC) -o gappa-preprocessed.xml "$(srcdir)/gappa-pdf.xsl" "$(srcdir)/gappa.xml"
+	openjade -wno-valid -t tex -i tex -d "$(srcdir)/gappa.dsl" /usr/share/xml/declaration/xml.dcl gappa-preprocessed.xml
 	rm gappa-preprocessed.xml
 	mkdir tmp tmp/images
 	mv gappa-preprocessed.tex tmp/gappa.tex

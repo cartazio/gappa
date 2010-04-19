@@ -18,6 +18,8 @@
   <xsl:param name="highlight.xslthl.config" select="'http://docbook.sourceforge.net/release/xsl/current/highlighting/xslthl-config.xml'"/>
   <xsl:param name="ignore.image.scaling" select="1"/>
 
+  <xsl:include href="gappa-preprocess.xsl"/>
+
 <xsl:template name="header.navigation">
   <xsl:param name="prev" select="/foo"/>
   <xsl:param name="next" select="/foo"/>
