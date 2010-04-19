@@ -3,6 +3,7 @@
 
   <!-- import the real stylesheet -->
   <xsl:import href="http://docbook.sourceforge.net/release/xsl/current/xhtml/chunk.xsl"/>
+  <xsl:import href="http://docbook.sourceforge.net/release/xsl/current/xhtml/highlight.xsl"/>
 
   <xsl:param name="tex.math.in.alt" select="'latex'"/>
   <xsl:param name="html.stylesheet" select="'gappa.css'"/>
@@ -14,6 +15,7 @@
   <xsl:param name="chunk.first.sections" select="1"/>
   <xsl:param name="variablelist.as.table" select="0"/>
   <xsl:param name="highlight.source" select="1"/>
+  <xsl:param name="highlight.xslthl.config" select="'http://docbook.sourceforge.net/release/xsl/current/highlighting/xslthl-config.xml'"/>
   <xsl:param name="ignore.image.scaling" select="1"/>
 
 <xsl:template name="header.navigation">
