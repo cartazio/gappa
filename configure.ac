@@ -9,17 +9,17 @@ AC_PROG_INSTALL
 
 
 XSLTPROC=xsltproc
-AC_ARG_WITH([xsltproc], AS_HELP_STRING([--with-xsltproc=PATH], [location of the xsltproc binary]),
+AC_ARG_WITH([xsltproc], AS_HELP_STRING([--with-xsltproc=PATH], [location of the xsltproc binary (documentation)]),
 	[XSLTPROC="$withval"])
 AC_SUBST([XSLTPROC])
 
 DVI2BITMAP=dvi2bitmap
-AC_ARG_WITH([dvi2bitmap], AS_HELP_STRING([--with-dvi2bitmap=PATH], [location of the dvi2bitmap binary]),
+AC_ARG_WITH([dvi2bitmap], AS_HELP_STRING([--with-dvi2bitmap=PATH], [location of the dvi2bitmap binary (documentation)]),
 	[DVI2BITMAP="$withval"])
 AC_SUBST([DVI2BITMAP])
 
 DBLATEX=dblatex
-AC_ARG_WITH([dblatex], AS_HELP_STRING([--with-dblatex=PATH], [location of the dblatex binary]),
+AC_ARG_WITH([dblatex], AS_HELP_STRING([--with-dblatex=PATH], [location of the dblatex binary (documentation)]),
 	[DBLATEX="$withval"])
 AC_SUBST([DBLATEX])
 
