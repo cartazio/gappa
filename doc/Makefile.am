@@ -2,9 +2,13 @@ XSL_PASS_1 = gappa.xml gappa-preprocess.xsl $(wildcard manual/*.xml) $(wildcard 
 
 EXTRA_DIST = $(XSL_PASS_1) gappa-html.xsl gappa-pdf.xsl gappa.css gappa.sty \
              $(wildcard images/*.png) \
-             doxygen/Doxyfile
+             doxygen/Doxyfile \
+             changelog.pl
 
-gappa-preprocessed.xml: $(XSL_PASS_1)
+gappa-news.xml: ../NEWS
+	"$(srcdir)/changelog.pl" > gappa-news.xml
+
+gappa-preprocessed.xml: $(XSL_PASS_1) gappa-news.xml
 	$(XSLTPROC) -o gappa-preprocessed.xml "$(srcdir)/gappa-preprocess.xsl" "$(srcdir)/gappa.xml"
 
 html-doc: gappa-preprocessed.xml

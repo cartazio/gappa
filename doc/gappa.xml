@@ -15,6 +15,7 @@
   <!ENTITY gappa-newton      SYSTEM "examples/newton.xml">
   <!ENTITY gappa-tang        SYSTEM "examples/tang.xml">
   <!ENTITY gappa-x1mx        SYSTEM "examples/x1mx.xml">
+  <!ENTITY gappa-news        SYSTEM "gappa-news.xml">
 ]>
 <book>
 
@@ -108,6 +109,11 @@ url="http://www.lri.fr/~melquion/">Guillaume Melquiond</ulink>.</para>
 <appendix>
 <title>Warning and error messages</title>
 &gappa-warnings;
+</appendix>
+
+<appendix>
+<title>Changes</title>
+&gappa-news;
 </appendix>
 
 </book>
