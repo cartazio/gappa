@@ -1,6 +1,6 @@
 XSL_PASS_1 = gappa.xml gappa-preprocess.xsl $(wildcard manual/*.xml) $(wildcard examples/*.xml)
 
-EXTRA_DIST = $(XSL_PASS_1) gappa-html.xsl gappa.css gappa.sty \
+EXTRA_DIST = $(XSL_PASS_1) gappa-html.xsl gappa-pdf.xsl gappa.css gappa.sty \
              $(wildcard images/*.png) \
              doxygen/Doxyfile
 
@@ -26,7 +26,7 @@ html-doc: gappa-preprocessed.xml
 	rm -rf tmp/
 
 pdf-doc: gappa-preprocessed.xml
-	dblatex -P latex.class.options=twoside -P ulink.show=1 -P ulink.footnotes=1 -s gappa -o gappa.pdf gappa-preprocessed.xml
+	dblatex -p gappa-pdf.xsl -s gappa -o gappa.pdf gappa-preprocessed.xml
 
 clean-local:
 	rm -rf gappa.pdf html/
