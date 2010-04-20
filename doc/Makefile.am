@@ -27,7 +27,7 @@ html-doc: gappa-preprocessed.xml
 	rm -rf tmp/
 
 pdf-doc: gappa-preprocessed.xml
-	dblatex -p gappa-pdf.xsl -s gappa -o gappa.pdf gappa-preprocessed.xml
+	$(DBLATEX) -p "$(srcdir)/gappa-pdf.xsl" -s "$(srcdir)/gappa.sty" -o gappa.pdf gappa-preprocessed.xml
 
 clean-local:
 	rm -rf gappa.pdf html/

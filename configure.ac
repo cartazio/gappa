@@ -18,6 +18,10 @@ AC_ARG_WITH([dvi2bitmap], AS_HELP_STRING([--with-dvi2bitmap=PATH], [location of 
 	[DVI2BITMAP="$withval"])
 AC_SUBST([DVI2BITMAP])
 
+DBLATEX=dblatex
+AC_ARG_WITH([dblatex], AS_HELP_STRING([--with-dblatex=PATH], [location of the dblatex binary]),
+	[DBLATEX="$withval"])
+AC_SUBST([DBLATEX])
 
 AC_LANG(C++)
 AC_CHECK_LIB(gmp, __gmpz_init, ,
