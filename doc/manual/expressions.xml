@@ -9,8 +9,8 @@ one gives some hints to Gappa on how to prove it.</para>
 <para>The following script shows these three parts for the example of
 <xref linkend="example-x1mx"/>.</para>
 
-<programlisting><![CDATA[# some notations for making the script readable
-@rnd = float< ieee_32, ne >;
+<programlisting language="gappa"><![CDATA[# some notations for making the script readable
+@rnd = float<ieee_32, ne>;
 x = rnd(xx);
 y rnd= x * (1 - x);
 z = x * (1 - x);
@@ -33,14 +33,14 @@ mathematical expressions. Enclosures are either bounded ranges or
 inequalities. Any identifier without definition is assumed to be universally
 quantified over the set of real numbers.</para>
 
-<programlisting><![CDATA[{ x - 2 in [-2,0] /\ (x + 1 in [0,2] -> y in [3,4]) -> not x <= 1 \/ x + y in ? }]]></programlisting>
+<programlisting language="gappa"><![CDATA[{ x - 2 in [-2,0] /\ (x + 1 in [0,2] -> y in [3,4]) -> not x <= 1 \/ x + y in ? }]]></programlisting>
 
 <para>The logical formula is first modified and loosely broken according to
 the rules of sequent calculus. Each of the new formulas will then be verified
 by Gappa. Ranges on the right of these sub-formulas can be left unspecified.
 Gappa will then suggest a range such that the logical formula is verified.</para>
 
-<programlisting><![CDATA[(1)  x <= 1 /\ x - 2 in [-2,0] -> x + 1 in [0,2] \/ x + y in ?
+<programlisting language="gappa"><![CDATA[(1)  x <= 1 /\ x - 2 in [-2,0] -> x + 1 in [0,2] \/ x + y in ?
 (2)  x <= 1 /\ x - 2 in [-2,0] /\ y in [3,4] -> x + y in ?]]></programlisting>
 
 <section>
@@ -78,7 +78,7 @@ to zero. In other words, <code>|x| &lt;= 1</code> is syntactic sugar for
 <para>The relative error between an approximate value <code>x</code> and a more
 precise value <code>y</code> is expressed by <code>(x - y) / y</code>. For
 instance, when one wants to prove a bound on it, one can write:</para>
-<programlisting><![CDATA[{ ... -> |(x - y) / y| <= 0x1p-53 }]]></programlisting>
+<programlisting language="gappa"><![CDATA[{ ... -> |(x - y) / y| <= 0x1p-53 }]]></programlisting>
 
 <para>However, this bound can only be obtained if <code>y</code> is (proved to
 be) nonzero. Similarly, if a hypothesis was a bound on a relative error, this
@@ -88,7 +88,7 @@ is nonzero.</para>
 <para>Gappa provides another way of expressing relative errors which does not
 depend on the denominator being nonzero. It cannot be used as a subexpression;
 it can only be used as the left-hand side of an enclosure:</para>
-<programlisting><![CDATA[{ ... -> x -/ y in [-0x1p-53,0x1p-53] }]]></programlisting>
+<programlisting language="gappa"><![CDATA[{ ... -> x -/ y in [-0x1p-53,0x1p-53] }]]></programlisting>
 
 <para>This enclosure on the relative error represents the following
 proposition: <texinline>\exists \epsilon \in [-2^{-53},2^{-53}],\ x = y
@@ -126,7 +126,7 @@ put once and for all on the left of the equal symbol. For example, with the
 following script, Gappa will complain that <code>y</code> and <code>z</code>
 are two different names for the same expression.</para>
 
-<programlisting><![CDATA[@rnd = float< ieee_32, ne>;
+<programlisting language="gappa"><![CDATA[@rnd = float<ieee_32, ne>;
 y = rnd(x * rnd(1 - x));
 z rnd= x * (1 - x);
 { y - z >= 0 }]]></programlisting>
@@ -199,7 +199,7 @@ expressions <code>b</code> and <code>c</code> that are equal and with
 structures similar to <code>a</code> for <code>b</code> and
 <code>d</code> for <code>c</code>. Then we just have to add the following
 hints to help Gappa:</para>
-<programlisting><![CDATA[b - c -> 0; # or "b-c in [0,0]" as a hypothesis
+<programlisting language="gappa"><![CDATA[b - c -> 0; # or "b-c in [0,0]" as a hypothesis
 a ~ b; # a is an approximation of b
 c ~ d; # c is an approximation of d]]></programlisting>
 </section>
@@ -222,7 +222,7 @@ be made aware of it by defining these terms as rounded values of some
 other terms. For instance, if <code>x</code> is an integer between 5 and
 15 by hypothesis, the formula can be written by introducing a dummy
 variable <code>x_</code>:</para>
-<programlisting><![CDATA[x = int<dn>(x_); # the rounding direction does not matter
+<programlisting language="gappa"><![CDATA[x = int<dn>(x_); # the rounding direction does not matter
 { x in [5,15] -> ... }]]></programlisting>
 
 <para>Note that Gappa is able to deduce from <code>x in [7.1,8.6]</code>
@@ -238,7 +238,7 @@ use a complicated expression instead of a plain disjunction. This
 prevents Gappa from separately considering all the branches. For
 instance, if <code>x</code> can take only the three values 0, 2, and 17,
 one can write:</para>
-<programlisting><![CDATA[i = int<dn>(i_);
+<programlisting language="gappa"><![CDATA[i = int<dn>(i_);
 x = i * (19b-1 * i - 15b-1);
 { i in [-1,1] -> ... }
 $ i in 3; # this dichotomy hint helps Gappa to understand that i is either -1, 0, or 1]]></programlisting>

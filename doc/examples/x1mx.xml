@@ -48,7 +48,7 @@ even (<code>ne</code>).</para>
 <para>The following Gappa script finds an interval such that the logical formula
 describing our previous function is true.</para>
 
-<programlisting><![CDATA[{ x in [0,1] -> float<ieee_32,ne>(x * float<ieee_32,ne>(1 - x)) in ? }]]></programlisting>
+<programlisting language="gappa"><![CDATA[{ x in [0,1] -> float<ieee_32,ne>(x * float<ieee_32,ne>(1 - x)) in ? }]]></programlisting>
 
 <para>Gappa answers that the result is between 0 and 1. Without any help from
 the user, they are the best bounds Gappa is able to prove.</para>
@@ -70,13 +70,13 @@ These notations are all written before the logical formula.</para>
 also the absolute error, we need to write the expression twice. So we give it
 the name <code>y</code>.</para>
 
-<programlisting><![CDATA[y = float<ieee_32,ne>(x * float<ieee_32,ne>(1 - x));
+<programlisting language="gappa"><![CDATA[y = float<ieee_32,ne>(x * float<ieee_32,ne>(1 - x));
 { x in [0,1] -> y in ? /\ y - x * (1 - x) in ? }]]></programlisting>
 
 <para>We can simplify the input a bit further by giving a name to the rounding
 operator too.</para>
 
-<programlisting><![CDATA[@rnd = float< ieee_32, ne >;
+<programlisting language="gappa"><![CDATA[@rnd = float<ieee_32, ne>;
 y = rnd(x * rnd(1 - x));
 { x in [0,1] -> y in ? /\ y - x * (1 - x) in ? }]]></programlisting>
 
@@ -84,7 +84,7 @@ y = rnd(x * rnd(1 - x));
 make it difficult to directly express the initial C code. So we factor the
 operators by putting them before the equal sign.</para>
 
-<programlisting><![CDATA[@rnd = float< ieee_32, ne >;
+<programlisting language="gappa"><![CDATA[@rnd = float<ieee_32, ne>;
 y rnd= x * (1 - x);
 { x in [0,1] -> y in ? /\ y - x * (1 - x) in ? }]]></programlisting>
 
@@ -96,7 +96,7 @@ equivalent to <code>a = rnd(b)</code>. It is equivalent to <code>a = b</code>.</
 function to clearly show that both expressions have a similar arithmetic
 structure.</para>
 
-<programlisting><![CDATA[@rnd = float< ieee_32, ne >;
+<programlisting language="gappa"><![CDATA[@rnd = float< ieee_32, ne >;
 y rnd= x * (1 - x);
 z = x * (1 - x);
 
@@ -127,7 +127,7 @@ absolute error.</para>
 <section>
 <title>Notations</title>
 
-<programlisting><![CDATA[x = rnd(xx);                           # x is a floating-point number
+<programlisting language="gappa"><![CDATA[x = rnd(xx);                           # x is a floating-point number
 y rnd= x * (1 - x);                    # equivalent to y = rnd(x * rnd(1 - x))
 z = x * (1 - x);]]></programlisting>
 
@@ -149,7 +149,7 @@ Sterbenz' lemma cannot apply to the <code>1 - x</code> subtraction.</para>
 <section>
 <title>Logical formulas and numbers</title>
 
-<programlisting><![CDATA[{ x in [0,1] -> y in [0,0.25] /\ y - z in [-3b-27,3b-27] }]]></programlisting>
+<programlisting language="gappa"><![CDATA[{ x in [0,1] -> y in [0,0.25] /\ y - z in [-3b-27,3b-27] }]]></programlisting>
 
 <para>Numbers and bounds can be written either in the usual scientific decimal
 notation or by using a power-of-two exponent: <code>3b-27</code> means
@@ -164,7 +164,7 @@ bound on the absolute error.</para>
 <para>Although we have given additional data through the type of <code>x</code>,
 Gappa is not yet able to prove the formula. It needs some user hints.</para>
 
-<programlisting><![CDATA[z -> 0.25 - (x - 0.5) * (x - 0.5);     # x * (1 - x) == 1/4 - (x - 1/2)^2
+<programlisting language="gappa"><![CDATA[z -> 0.25 - (x - 0.5) * (x - 0.5);     # x * (1 - x) == 1/4 - (x - 1/2)^2
 y $ x;                                 # bound y by splitting the interval on x
 y - z $ x;                             # bound y - z by splitting ...]]></programlisting>
 
@@ -187,8 +187,8 @@ side.</para>
 
 <para>As a conclusion, here is the full listing of this example.</para>
 
-<programlisting><![CDATA[# some notations
-@rnd = float< ieee_32, ne >;
+<programlisting language="gappa"><![CDATA[# some notations
+@rnd = float<ieee_32, ne>;
 x = rnd(xx);                           # x is a floating-point number
 y rnd= x * (1 - x);                    # equivalent to y = rnd(x * rnd(1 - x))
 z = x * (1 - x);                       # the value we want to approximate

@@ -15,7 +15,7 @@ because the expression is badly correlated. In this case, the user can provide
 an alternate expression. If Gappa finds an enclosure for this secondary
 expression, it will use its range in an enclosure for the primary expression.</para>
 
-<programlisting><![CDATA[primary -> secondary;]]></programlisting>
+<programlisting language="gappa"><![CDATA[primary -> secondary;]]></programlisting>
 
 <para>In order for this transformation to be valid, any evaluation of the
 primary expression must be contained in the enclosure of the secondary
@@ -62,7 +62,7 @@ following syntax.</para>
 if they had not already been guessed by Gappa. In particular, the second one
 enables a rewriting rule that completes the proof.</para>
 
-<programlisting><![CDATA[@floor = int<dn>;
+<programlisting language="gappa"><![CDATA[@floor = int<dn>;
 { x - y in [-0.1,0.1] -> floor(x) - y in ? }
 # floor(x) ~ x;
 # x ~ y;]]></programlisting>
@@ -79,7 +79,7 @@ can also happen when the proof of the formula is not the same everywhere on the
 domain, as in the following example. In both cases, the user can ask Gappa to
 split the ranges into tighter ranges and see if it helps proving the formula.</para>
 
-<programlisting><![CDATA[@rnd = float< ieee_32, ne >;
+<programlisting language="gappa"><![CDATA[@rnd = float< ieee_32, ne >;
 x = rnd(x_);
 y = x - 1;
 z = x * (rnd(y) - y);
@@ -95,7 +95,7 @@ expression <code>rnd(x_)</code>.</para>
 as many equally wide sub-intervals as asked by the user. The second one splits
 an interval along the points provided by the user.</para>
 
-<programlisting><![CDATA[$ x in 6;               # split the range of "x" in six sub-intervals
+<programlisting language="gappa"><![CDATA[$ x in 6;               # split the range of "x" in six sub-intervals
 $ x in (0.5,1.9999999); # split the range of "x" in three sub-intervals, the middle one being [0.5,~2]
 $ x;                    # equivalent to: $ x in 4;]]></programlisting>
 
@@ -104,7 +104,7 @@ split such that a goal of the logical formula holds true. This requires the
 range of this goal to be specified, and the enclosed expression has to be
 indicated on the left of the <code>$</code> symbol.</para>
 
-<programlisting><![CDATA[{ x in [0,3] -> |z| <= 1b-26 }
+<programlisting language="gappa"><![CDATA[{ x in [0,3] -> |z| <= 1b-26 }
 |z| $ x;]]></programlisting>
 
 <para>Contrarily to the first two kinds of bisection, this third one keeps the
@@ -119,7 +119,7 @@ the maximum depth of dichotomy has been reached. This depth can be set with the
 <para>More than one bisection hint can be used. And hints of the third kind can
 try to satisfy more than one goal at once.</para>
 
-<programlisting><![CDATA[a, b, c $ u;
+<programlisting language="gappa"><![CDATA[a, b, c $ u;
 a, d $ v;]]></programlisting>
 
 <para>These two hints will be used one after the other. In particular, none
@@ -130,7 +130,7 @@ example of a complex bisection: it asks Gappa to find a set of sub-ranges on
 <code>u</code> such that the goal on <code>b</code> is satisfied when the range
 on <code>v</code> is split into three sub-intervals.</para>
 
-<programlisting><![CDATA[b $ u, v in 3]]></programlisting>
+<programlisting language="gappa"><![CDATA[b $ u, v in 3]]></programlisting>
 </section>
 
 </section>

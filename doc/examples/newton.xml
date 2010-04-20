@@ -22,7 +22,7 @@ enough to the infinitely precise reciprocal <code>R = 1/d</code>.</para>
 <para>First, we define <code>R</code> as the reciprocal, and
 <code>d</code> and <code>r0</code> as two fixed-point numbers.</para>
 
-<programlisting><![CDATA[d = fixed<-24,dn>(d_);
+<programlisting language="gappa"><![CDATA[d = fixed<-24,dn>(d_);
 R = 1 / d;
 r0 = fixed<-8,dn>(r0_);]]></programlisting>
 
@@ -33,7 +33,7 @@ implementation only have an impact on the internal representation of the
 values, not on the values themselves, so Gappa is only aware of them
 through the displacements of the least significant bits.</para>
 
-<programlisting><![CDATA[r1 fixed<-14,dn>= r0 * (2 - fixed<-16,dn>(d) * r0);
+<programlisting language="gappa"><![CDATA[r1 fixed<-14,dn>= r0 * (2 - fixed<-16,dn>(d) * r0);
 r2 fixed<-30,dn>= r1 * (2 - d * r1);]]></programlisting>
 
 <para>The property we are looking for expresses the absolute error
@@ -41,7 +41,7 @@ between <code>r2</code> and <code>R</code>, knowing that <code>r0</code>
 is an approximation of <code>R</code> and that <code>d</code> is
 bounded.</para>
 
-<programlisting><![CDATA[{ r0 - R in [-1b-8,1b-8] /\ d in [0.5,1] -> r2 - R in ? }]]></programlisting>
+<programlisting language="gappa"><![CDATA[{ r0 - R in [-1b-8,1b-8] /\ d in [0.5,1] -> r2 - R in ? }]]></programlisting>
 
 <para>We expect Gappa to prove that <code>r2</code> is <texinline>R \pm
 2^{-24}</texinline>. Unfortunately, this is not the case.</para>
@@ -66,7 +66,7 @@ an exact division. So we have to split the absolute error into two terms: a
 rounding error we expect Gappa to compute, and the convergence due to Newton's
 iteration.</para>
 
-<programlisting><![CDATA[{ r0 - R in [-1b-8,1b-8] /\ d in [0.5,1] ->
+<programlisting language="gappa"><![CDATA[{ r0 - R in [-1b-8,1b-8] /\ d in [0.5,1] ->
   r1 - r0 * (2 - d * r0) in ? /\ r0 * (2 - d * r0) - R in ? }]]></programlisting>
 
 <para>Gappa now gives the answer below. Notice that the range of the rounding
@@ -83,7 +83,7 @@ since we also have to split <code>r1 - R</code>, we perform both operations in
 one single rewriting
 rule.</para>
 
-<programlisting><![CDATA[r1 - R -> (r1 - r0 * (2 - d * r0)) - (r0 - R) * (r0 - R) * d;]]></programlisting>
+<programlisting language="gappa"><![CDATA[r1 - R -> (r1 - r0 * (2 - d * r0)) - (r0 - R) * (r0 - R) * d;]]></programlisting>
 
 <para>A similar rule is then used for <code>r2 - R</code>.</para>
 </section>
@@ -91,7 +91,7 @@ rule.</para>
 <section>
 <title>Full listing 1</title>
 
-<programlisting><![CDATA[d = fixed<-24,dn>(d_);
+<programlisting language="gappa"><![CDATA[d = fixed<-24,dn>(d_);
 R = 1 / d;
 r0 = fixed<-8,dn>(r0_);
 
@@ -124,7 +124,7 @@ that the left hand sides of the rewriting rules are equal to their right hand
 side. Here, Gappa just has to prove that <code>d</code> is not zero. This is
 indicated at the end of the rule.</para>
 
-<programlisting><![CDATA[r1 - R -> (r1 - r0 * (2 - d * r0)) - (r0 - R) * (r0 - R) * d   {d <> 0};]]></programlisting>
+<programlisting language="gappa"><![CDATA[r1 - R -> (r1 - r0 * (2 - d * r0)) - (r0 - R) * (r0 - R) * d   {d <> 0};]]></programlisting>
 
 <para>Second, the rewriting rules are too specialized. For example, in the first
 one, the occurrences of <code>r1</code> could be replaced by any other real
@@ -133,19 +133,19 @@ wanted to split <code>r1 - R</code> into a rounding error and an algorithmic
 error. So we could just say that <code>r1</code> is an approximation of
 <code>r0 * (2 - d * r0)</code>.</para>
 
-<programlisting>r1 ~ r0 * (2 - d * r0);</programlisting>
+<programlisting language="gappa">r1 ~ r0 * (2 - d * r0);</programlisting>
 
 <para>We are left with hinting Gappa at the quadratic convergence of Newton's
 iterations.</para>
 
-<programlisting><![CDATA[r0 * (2 - d * r0) - R -> (r0 - R) * (r0 - R) * -d   { d <> 0};]]></programlisting>
+<programlisting language="gappa"><![CDATA[r0 * (2 - d * r0) - R -> (r0 - R) * (r0 - R) * -d   { d <> 0};]]></programlisting>
 
 <para>When generating a script for an external proof checker, Gappa will add
 this rewriting rule as a global hypothesis. For example, when selecting the Coq
 back-end with the option <code>-Bcoq</code>, the output contains the line
 below.</para>
 
-<programlisting><![CDATA[Hypothesis a1 : (_d <> 0)%R -> r11 = r3.]]></programlisting>
+<programlisting language="coq"><![CDATA[Hypothesis a1 : (_d <> 0)%R -> r11 = r3.]]></programlisting>
 
 <para>In this hypothesis, <code>_d</code> is the <code>d</code> variable of the
 example, while <code>r11</code> and <code>r3</code> are short notations for
@@ -159,7 +159,7 @@ tactic.</para>
 <section>
 <title>Full listing 2</title>
 
-<programlisting><![CDATA[d = fixed<-24,dn>(d_);
+<programlisting language="gappa"><![CDATA[d = fixed<-24,dn>(d_);
 R = 1 / d;
 r0 = fixed<-8,dn>(r0_);
 

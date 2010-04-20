@@ -19,7 +19,7 @@ and <filename>src/backends</filename> directories.</para>
 class is an interface to the name of the function, its associated real
 operator, and six theorems.</para>
 
-<programlisting><![CDATA[struct function_class
+<programlisting language="cpp"><![CDATA[struct function_class
 {
   function_class(real_op_type t, int mask);
   virtual interval round                         (interval const &, std::string &) const;
@@ -53,7 +53,7 @@ input script.</para>
 <code>UOP_ID</code> (the unary identity function) for standard rounding
 operators. But it can be more complex if needed:</para>
 
-<programlisting><![CDATA[enum real_op_type { UOP_ID, UOP_NEG, UOP_ABS, BOP_ADD, BOP_SUB, BOP_MUL, BOP_DIV, ... };]]></programlisting>
+<programlisting language="cpp"><![CDATA[enum real_op_type { UOP_ID, UOP_NEG, UOP_ABS, BOP_ADD, BOP_SUB, BOP_MUL, BOP_DIV, ... };]]></programlisting>
 
 <para>The type will indicate to the parser the number of arguments the function
 requires. For example, if the <code>BOP_DIAM</code> type is associated to the
@@ -81,7 +81,7 @@ return a useful range. The <code>mask</code> argument of the <code>function_clas
 constructor is a combination of the following flags. They indicate which
 theorems are known. The corresponding methods should therefore have been overloaded.</para>
 
-<programlisting><![CDATA[struct function_class
+<programlisting language="cpp"><![CDATA[struct function_class
 {
   static const int TH_RND, TH_ENF, TH_ABS, TH_REL,
     TH_ABS_EXA_BND, TH_ABS_EXA_ABS, TH_ABS_APX_BND, TH_ABS_APX_ABS,
@@ -162,7 +162,7 @@ class. For identical parameters, the same <code>function_class</code>
 object should be returned, which means that they have to be
 cached.</para>
 
-<programlisting><![CDATA[struct function_generator {
+<programlisting language="cpp"><![CDATA[struct function_generator {
   function_generator(const char *);
   virtual function_class const *operator()(function_params const &) const = 0;
   virtual ~function_generator() {}
@@ -177,7 +177,7 @@ class can be used instead to register it. The first parameter of the constructor
 is the function name. The second one is the address of the
 <code>function_class</code> object.</para>
 
-<programlisting><![CDATA[default_function_generator::default_function_generator(const char *, function_class const *);]]></programlisting>
+<programlisting language="cpp"><![CDATA[default_function_generator::default_function_generator(const char *, function_class const *);]]></programlisting>
 </section>
 
 </section>

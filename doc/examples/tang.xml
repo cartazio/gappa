@@ -19,7 +19,7 @@ the C code below, the absolute error between <code>e</code> and the exponential
 0.54 ulp. Variable <code>n</code> is an integer and all the other variables are
 single-precision floating-point numbers.</para>
 
-<programlisting>r2 = -n * l2;
+<programlisting language="c">r2 = -n * l2;
 r = r1 + r2;
 q = r * r * (a1 + r * a2);
 p = r1 + (r2 + q);
@@ -41,7 +41,7 @@ polynomial <texinline>x + a_1 \cdot x^2 + a_2 \cdot x^3</texinline> and
 <section>
 <title>Gappa description</title>
 
-<programlisting><![CDATA[a1 = 8388676b-24;
+<programlisting language="gappa"><![CDATA[a1 = 8388676b-24;
 a2 = 11184876b-26;
 l2 = 12566158b-48;
 s1 = 8572288b-23;
@@ -87,7 +87,7 @@ yet matching the structure of <code>E0</code>. Since <code>Z</code> has no
 equivalent term in <code>E</code>, we insert an artificial term <code>0</code>
 in the corresponding place in <code>Er</code>.</para>
 
-<programlisting>E = s1 + (s2 + S * (r1 + (r2 + R * R * (a1 + R * a2))));
+<programlisting language="gappa">E = s1 + (s2 + S * (r1 + (r2 + R * R * (a1 + R * a2))));
 Er = S * (1 + R + a1 * R * R + a2 * R * R * R + 0);
 ...
 e - E0 -> (e - E) + (Er - E0);</programlisting>
@@ -97,7 +97,7 @@ e - E0 -> (e - E) + (Er - E0);</programlisting>
 <section>
 <title>Full listing</title>
 
-<programlisting><![CDATA[@rnd = float< ieee_32, ne >;
+<programlisting language="gappa"><![CDATA[@rnd = float< ieee_32, ne >;
 
 a1 = 8388676b-24;
 a2 = 11184876b-26;
