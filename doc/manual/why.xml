@@ -9,6 +9,9 @@ and postconditions into proof obligations suitable for Gappa.</para>
 first and then Why (in order to build the Jessie plugin), one gets a tool
 for directly certifying C programs with Gappa.</para>
 
+<section>
+<title>Example: floating-point square root</title>
+
 <para>The example below demonstrates the usage of these tools. The C
 file defines a <code>sqrt</code> function that computes the square root
 with a relative accuracy of <texinline>2^{-43}</texinline> for an input
@@ -71,6 +74,11 @@ completely unroll the loop before passing it to Jessie. Finally, once the
 reciprocal square root has been computed, it is multiplied by
 <varname>x</varname> to obtain the square root.</para>
 
+</section>
+
+<section>
+<title>Passing hints through annotations</title>
+
 <para>The <code>assert</code> annotations cause Frama-C/Jessie to
 generate additional proof obligations. These facts are then available to
 the following proof obligations as hypotheses. In this example, the
@@ -97,6 +105,11 @@ relevant. For instance, if the relative distance between
 <varname>u</varname> and <texinline>1 / \sqrt{x}</texinline> had been
 <texinline>2^{-1}</texinline> instead of <texinline>2^{-10}</texinline>,
 Gappa would still have succeeded.</para>
+
+</section>
+
+<section>
+<title>Execution results</title>
 
 <para>Passing the program above to the Frama-C/Jessie tool produces the
 following console output...</para>
@@ -145,5 +158,7 @@ mathematical identities on real-valued expressions, so they could easily
 be checked with an interactive proof assistant or a computer algebra
 system. (And they should be, at least for Newton's relation, because of
 its error-prone expression.)</para>
+
+</section>
 
 </section>
