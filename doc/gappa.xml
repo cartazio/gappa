@@ -38,7 +38,7 @@ expressions in some intervals. For example, a formal proof of the property
 \ \land\ a-c \in [1.9,2.05] \quad \Rightarrow \quad b+1 \in [2,3.5]</texinformal>
 can be generated thanks to the following Gappa script.</para>
 
-<programlisting><![CDATA[{
+<programlisting language="gappa"><![CDATA[{
   c in [-0.3,-0.1] /\
   (2 * a in [3,4] -> b + c in [1,2]) /\
   a - c in [1.9,2.05]
@@ -60,7 +60,8 @@ under the terms of the CeCILL Free Software License Agreement or under
 the terms of the GNU General Public License. (Refer to the files from the
 source archive for the precise wording of these two licences.) Gappa can
 be downloaded on its <ulink url="http://gappa.gforge.inria.fr/">project
-page</ulink>.</para>
+page</ulink>. The tool and its documentation have been written by <ulink
+url="http://www.lri.fr/~melquion/">Guillaume Melquiond</ulink>.</para>
 
 </chapter>
 
