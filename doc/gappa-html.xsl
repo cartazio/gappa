@@ -18,22 +18,6 @@
   <xsl:param name="highlight.xslthl.config" select="'http://docbook.sourceforge.net/release/xsl/current/highlighting/xslthl-config.xml'"/>
   <xsl:param name="ignore.image.scaling" select="1"/>
 
-  <xsl:include href="gappa-preprocess.xsl"/>
-
-  <xsl:variable name="preprocessed">
-    <xsl:apply-templates mode="preprocess"/>
-  </xsl:variable>
-  <xsl:template match="/">
-    <xsl:choose>
-      <xsl:when test="/book[@preproc='1']">
-        <xsl:apply-imports/>
-      </xsl:when>
-      <xsl:otherwise xmlns:exslt="http://exslt.org/common">
-        <xsl:apply-templates select="exslt:node-set($preprocessed)"/>
-      </xsl:otherwise>
-    </xsl:choose>
-  </xsl:template>
-
 <xsl:template name="header.navigation">
   <xsl:param name="prev" select="/foo"/>
   <xsl:param name="next" select="/foo"/>
