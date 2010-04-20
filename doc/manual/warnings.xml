@@ -239,12 +239,12 @@ Warning: some enclosures were not satisfied.
 Missing x + 1</screen>
 <para>Variant: when foo is in i1, bar is not computable. This warning is
 displayed if no bounds on <code>titi</code> can even be computed.</para>
-<programlisting language="gappa"><![CDATA[{ x in [-2,1] -> x / x in [1,1]  }
-x / x $ x;
-Missing x / x]]></programlisting>
+<programlisting language="gappa"><![CDATA[{ x in [-2,1] -> x / x in [1,1] }
+x / x $ x;]]></programlisting>
 <screen>Results for x in [-2, 1]:
 Warning: when x is in [-1b-99 {-1.57772e-30, -2^(-99)}, 1b-100 {7.88861e-31, 2^(-100)}], x / x is not computable.
-Warning: some enclosures were not satisfied.</screen>
+Warning: some enclosures were not satisfied.
+Missing x / x</screen>
 <para>Option switch: <code>-W[no-]dichotomy-failure</code>.</para>
 </section>
 
