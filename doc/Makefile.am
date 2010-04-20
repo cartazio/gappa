@@ -10,7 +10,8 @@ gappa-preprocessed.xml: $(XSL_PASS_1)
 html-doc: gappa-preprocessed.xml
 	rm -rf tmp/ html/
 	mkdir html
-	java -cp "/usr/share/java/saxon.jar:/usr/share/java/xslthl.jar" com.icl.saxon.StyleSheet gappa-preprocessed.xml gappa-html.xsl
+	@#java -cp "/usr/share/java/saxon.jar:/usr/share/java/xslthl.jar" com.icl.saxon.StyleSheet gappa-preprocessed.xml "$(srcdir)/gappa-html.xsl"
+	$(XSLTPROC) "$(srcdir)/gappa-html.xsl" gappa-preprocessed.xml
 	cp "$(srcdir)/gappa.css" html/
 	mkdir html/images
 	cp "$(srcdir)/images"/*.png html/images/
