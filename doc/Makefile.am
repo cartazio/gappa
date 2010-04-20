@@ -9,15 +9,13 @@ gappa-preprocessed.xml: $(XSL_PASS_1)
 
 html-doc: gappa-preprocessed.xml
 	rm -rf tmp/ html/
-	mkdir html html/manual html/examples
-	cp "$(srcdir)"/gappa*.xsl html/
-	cd html/ ; java -cp "/usr/share/java/saxon.jar:/usr/share/java/xslthl.jar" com.icl.saxon.StyleSheet ../gappa-preprocessed.xml gappa-html.xsl
-	rm -r html/gappa*.xsl html/manual/ html/examples/
+	mkdir html
+	java -cp "/usr/share/java/saxon.jar:/usr/share/java/xslthl.jar" com.icl.saxon.StyleSheet gappa-preprocessed.xml gappa-html.xsl
 	cp "$(srcdir)/gappa.css" html/
 	mkdir html/images
 	cp "$(srcdir)/images"/*.png html/images/
 	mkdir tmp
-	mv html/tex-math-equations.tex tmp/
+	mv tex-math-equations.tex tmp/
 	sed -e 's/dvi2bitmap outputfile/dvi2bitmap mark outputfile/' tmp/tex-math-equations.tex > tmp/tex-math-equations.tex.2
 	mv tmp/tex-math-equations.tex.2 tmp/tex-math-equations.tex
 	cd tmp ; latex tex-math-equations.tex

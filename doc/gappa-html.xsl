@@ -17,6 +17,7 @@
   <xsl:param name="highlight.source" select="1"/>
   <xsl:param name="highlight.xslthl.config" select="'http://docbook.sourceforge.net/release/xsl/current/highlighting/xslthl-config.xml'"/>
   <xsl:param name="ignore.image.scaling" select="1"/>
+  <xsl:param name="base.dir" select="'html/'"/>
 
 <xsl:template name="header.navigation">
   <xsl:param name="prev" select="/foo"/>
