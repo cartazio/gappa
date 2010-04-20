@@ -96,13 +96,16 @@
 % Define syntax highlighters for Gappa...
 \lstdefinelanguage{Gappa}{
   comment=[l]\#,
-  otherkeywords={->, ~, /\\, \\/, ?, \{, \}, $}, %$
-  morekeywords={in}
+  otherkeywords={->, ~, /\\, \\/, ?, \{, \}, \@, $}, %$
+  morekeywords={in, not}
 }
 
 % ... and Coq.
 \lstdefinelanguage{Coq}{
   comment=[n]{(*}{*)},
   otherkeywords={->, /\\, \\/, =>},
-  morekeywords={Goal, Proof, Definition, Theorem, Lemma, Qed, Time, forall, Require, Notation, Variable, Section, End, fun, let}
+  morekeywords={Goal, Proof, Definition, Theorem, Lemma, Qed, Time, Require, Import, Notation, Variable, Section, End, Hypothesis, Open, Scope, forall, fun, let}
 }
+
+% Add an alias for C++.
+\lstdefinelanguage{Cpp}[]{C++}{}
