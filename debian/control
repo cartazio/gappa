@@ -4,7 +4,7 @@ Priority: extra
 Maintainer: Guillaume Melquiond <guillaume.melquiond@gmail.com>
 Build-Depends: debhelper (>= 7), autotools-dev, libmpfr-dev (>= 2.4), libboost-dev (>= 1.32)
 Standards-Version: 3.8.3
-Homepage: http://www.gforge.inria.fr/gappa/
+Homepage: http://gappa.gforge.inria.fr/
 
 Package: gappa
 Architecture: any
