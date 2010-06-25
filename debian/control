@@ -1,0 +1,19 @@
+Source: gappa
+Section: math
+Priority: extra
+Maintainer: Guillaume Melquiond <guillaume.melquiond@gmail.com>
+Build-Depends: debhelper (>= 7), autotools-dev, libmpfr-dev (>= 2.4), libboost-dev (>= 1.32)
+Standards-Version: 3.8.3
+Homepage: http://www.gforge.inria.fr/gappa/
+
+Package: gappa
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Verification tool for floating-point programs
+ Gappa is a tool intended to help verifying and formally proving
+ properties on numerical programs dealing with floating-point or
+ fixed-point arithmetic. It has been used to write robust floating-point
+ filters for CGAL and it is used to certify elementary functions in
+ CRlibm. While Gappa is intended to be used directly, it can also act as
+ a backend prover for the Why software verification plateform or as an
+ automatic tactic for the Coq proof assistant.
