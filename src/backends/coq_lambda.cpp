@@ -295,13 +295,10 @@ static std::string display(ast_real const *r)
     if (o->type == ROP_FUN)
     {
       std::string description = o->fun->description();
-      bool convert = description.find("rounding") == 0;
-      if (convert) plouf << GAPPADEF "float2R (";
       plouf << convert_name(description) << ' ' << display(o->ops[0]);
       for (ast_real_vect::const_iterator i = ++(o->ops.begin()),
            end = o->ops.end(); i != end; ++i)
         plouf << ' ' << display(*i);
-      if (convert) plouf << ')';
     }
     else
     {
