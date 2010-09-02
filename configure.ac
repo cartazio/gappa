@@ -43,6 +43,6 @@ std::tr1::unordered_map<int, double> toto],
 [AC_MSG_RESULT([yes])
 AC_DEFINE([HAVE_UMAP], [1], [Define to 1 if your Standard Library supports tr1/unordered_map.])], [AC_MSG_RESULT([no])])
 
-AC_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS(config.h)
 AC_CONFIG_FILES([Makefile doc/Makefile src/Makefile testsuite/Makefile])
 AC_OUTPUT
