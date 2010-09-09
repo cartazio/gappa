@@ -8,8 +8,9 @@
       <author><firstname>Marc</firstname><surname>Daumas</surname></author>
       <author><firstname>Guillaume</firstname><surname>Melquiond</surname></author>
     </authorgroup>
-    <title><ulink url="http://dx.doi.org/10.1145/1644001.1644003">Certification of bounds on expressions involving rounded operators</ulink></title>
+    <title>Certification of bounds on expressions involving rounded operators</title>
     <pagenums>1-20</pagenums>
+    <biblioid class="doi">10.1145/1644001.1644003</biblioid>
   </biblioset>
   <biblioset relation='journal'>
     <title>ACM Transactions on Mathematical Software</title>
@@ -48,8 +49,9 @@
       <author><firstname>Claude-Pierre</firstname><surname>Jeannerod</surname></author>
       <author><firstname>Guillaume</firstname><surname>Revy</surname></author>
     </authorgroup>
-    <title><ulink url="http://dx.doi.org/10.1109/ACSSC.2009.5469948">Optimizing correctly-rounded reciprocal square roots for embedded VLIW cores</ulink></title>
+    <title>Optimizing correctly-rounded reciprocal square roots for embedded VLIW cores</title>
     <pagenums>731-735</pagenums>
+    <biblioid class="doi">10.1109/ACSSC.2009.5469948</biblioid>
   </biblioset>
   <biblioset relation='proceedings'>
     <title>Proceedings of the 43rd Asilomar conference on Signals, systems and computers</title>
