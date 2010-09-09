@@ -22,8 +22,11 @@
       <xsl:choose>
         <xsl:when test="biblioset">
           <xsl:variable name="pubsnumber">
-            <xsl:if test="biblioset[@relation='journal']">
-              <xsl:value-of select="biblioset/volumenum"/>(<xsl:value-of select="biblioset/issuenum"/>):
+            <xsl:if test="biblioset/volumenum">
+              <xsl:value-of select="biblioset/volumenum"/>
+              <xsl:if test="biblioset/issuenum">
+                (<xsl:value-of select="biblioset/issuenum"/>)
+              </xsl:if>:
             </xsl:if>
             <xsl:value-of select="biblioset/pagenums"/>
           </xsl:variable>
