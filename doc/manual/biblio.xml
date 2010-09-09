@@ -47,6 +47,42 @@
 <biblioentry>
   <biblioset relation='article'>
     <authorgroup>
+      <author><firstname>Guillaume</firstname><surname>Melquiond</surname></author>
+      <author><firstname>Sylvain</firstname><surname>Pion</surname></author>
+    </authorgroup>
+    <title>Formally certified floating-point filters for homogeneous geometric predicates</title>
+    <pagenums>57­-70</pagenums>
+    <biblioid class="doi">10.1051/ita:2007005</biblioid>
+  </biblioset>
+  <biblioset relation='journal'>
+    <title>Theoretical Informatics and Applications</title>
+    <volumenum>41</volumenum>
+    <issuenum>1</issuenum>
+    <pubdate>2007</pubdate>
+  </biblioset>
+</biblioentry>
+
+<biblioentry>
+  <biblioset relation='article'>
+    <authorgroup>
+      <author><firstname>Sylvie</firstname><surname>Boldo</surname></author>
+      <author><firstname>Jean-Christophe</firstname><surname>Filliâtre</surname></author>
+      <author><firstname>Guillaume</firstname><surname>Melquiond</surname></author>
+    </authorgroup>
+    <title>Combining Coq and Gappa for certifying floating-point programs</title>
+    <pagenums>59-74</pagenums>
+    <biblioid class="doi">10.1007/978-3-642-02614-0_10</biblioid>
+  </biblioset>
+  <biblioset relation='proceedings'>
+    <title>Proceedings of the 16th Calculemus Symposium</title>
+    <address>Grand Bend, ON, Canada</address>
+    <pubdate>2009</pubdate>
+  </biblioset>
+</biblioentry>
+
+<biblioentry>
+  <biblioset relation='article'>
+    <authorgroup>
       <author><firstname>Claude-Pierre</firstname><surname>Jeannerod</surname></author>
       <author><firstname>Guillaume</firstname><surname>Revy</surname></author>
     </authorgroup>
@@ -58,6 +94,22 @@
     <title>Proceedings of the 43rd Asilomar conference on Signals, systems and computers</title>
     <address>Pacific Grove, CA, USA</address>
     <pubdate>2009</pubdate>
+  </biblioset>
+</biblioentry>
+
+<biblioentry>
+  <biblioset relation='article'>
+    <authorgroup>
+      <author><firstname>Florent</firstname><surname>de Dinechin</surname></author>
+      <author><firstname>Christoph</firstname><surname>Lauter</surname></author>
+      <author><firstname>Guillaume</firstname><surname>Melquiond</surname></author>
+    </authorgroup>
+    <title>Certifying the floating-point implementation of an elementary function using Gappa</title>
+    <biblioid class="doi">10.1109/TC.2010.128</biblioid>
+  </biblioset>
+  <biblioset relation='journal'>
+    <title>IEEE Transactions on Computers</title>
+    <pubdate>2010</pubdate>
   </biblioset>
 </biblioentry>
 
