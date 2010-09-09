@@ -41,7 +41,7 @@
           </xsl:variable>
           <xsl:for-each select="biblioset/*">
             <xsl:apply-templates select=".">
-              <xsl:with-param name="pubsnumber" select="normalize-space($pubsnumber)"/>
+              <xsl:with-param name="pubsnumber" select="translate(normalize-space($pubsnumber), ' ', '')"/>
               <xsl:with-param name="uri" select="normalize-space($uri)"/>
             </xsl:apply-templates>
           </xsl:for-each>
