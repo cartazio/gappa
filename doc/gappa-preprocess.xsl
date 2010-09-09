@@ -36,11 +36,14 @@
           </xsl:for-each>
         </xsl:when>
         <xsl:otherwise>
-          <xsl:apply-templates/>
+          <xsl:apply-templates>
+            <xsl:with-param name="doi" select="biblioid[@class='doi']"/>
+          </xsl:apply-templates>
         </xsl:otherwise>
       </xsl:choose>
     </biblioentry>
   </xsl:template>
+
 
   <xsl:template match="biblioset/pagenums|biblioset/volumenum|biblioset/issuenum"/>
   <xsl:template match="biblioid"/>
@@ -58,6 +61,15 @@
         <xsl:apply-templates/>
       </xsl:otherwise>
     </xsl:choose>
+  </xsl:template>
+
+  <xsl:template match="biblioentry/title">
+    <xsl:param name="doi"/>
+    <title>
+      <xsl:call-template name="print-title">
+        <xsl:with-param name="doi" select="$doi"/>
+      </xsl:call-template>
+    </title>
   </xsl:template>
 
   <xsl:template match="biblioset/title">

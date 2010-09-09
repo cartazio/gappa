@@ -32,9 +32,10 @@
     <author><firstname>Damien</firstname><surname>Stehlé</surname></author>
     <author><firstname>Serge</firstname><surname>Torres</surname></author>
   </authorgroup>
-  <title><ulink url="http://dx.doi.org/10.1007/978-0-8176-4705-6_15">Handbook of Floating-Point Arithmetic</ulink></title>
+  <title>Handbook of Floating-Point Arithmetic</title>
   <publisher><publishername>Birkhäuser</publishername></publisher>
   <pubdate>2010</pubdate>
+  <biblioid class="doi">10.1007/978-0-8176-4705-6_15</biblioid>
 </biblioentry>
 
 </bibliography>
