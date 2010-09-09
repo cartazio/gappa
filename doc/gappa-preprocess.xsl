@@ -99,7 +99,9 @@
       </xsl:when>
       <xsl:otherwise>
         <subtitle><emphasis><xsl:apply-templates/></emphasis></subtitle>
-        <pubsnumber><xsl:value-of select="$pubsnumber"/></pubsnumber>
+        <xsl:if test="boolean($pubsnumber)">
+          <pubsnumber><xsl:value-of select="$pubsnumber"/></pubsnumber>
+        </xsl:if>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
