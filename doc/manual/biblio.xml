@@ -66,6 +66,24 @@
   <biblioset relation='article'>
     <authorgroup>
       <author><firstname>Sylvie</firstname><surname>Boldo</surname></author>
+      <author><firstname>Marc</firstname><surname>Daumas</surname></author>
+      <author><firstname>Pascal</firstname><surname>Giorgi</surname></author>
+    </authorgroup>
+    <title>Formal proof for delayed finite field arithmetic using floating point operators</title>
+    <pagenums>113-122</pagenums>
+    <biblioid class="uri">http://hal.archives-ouvertes.fr/hal-00135090/</biblioid>
+  </biblioset>
+  <biblioset relation='proceedings'>
+    <title>Proceedings of the 8th Conference on Real Numbers and Computers</title>
+    <address>Santiago de Compostella</address>
+    <pubdate>2008</pubdate>
+  </biblioset>
+</biblioentry>
+
+<biblioentry>
+  <biblioset relation='article'>
+    <authorgroup>
+      <author><firstname>Sylvie</firstname><surname>Boldo</surname></author>
       <author><firstname>Jean-Christophe</firstname><surname>Filliâtre</surname></author>
       <author><firstname>Guillaume</firstname><surname>Melquiond</surname></author>
     </authorgroup>
@@ -94,6 +112,66 @@
     <title>Proceedings of the 43rd Asilomar conference on Signals, systems and computers</title>
     <address>Pacific Grove, CA, USA</address>
     <pubdate>2009</pubdate>
+  </biblioset>
+</biblioentry>
+
+<biblioentry>
+  <biblioset relation='article'>
+    <authorgroup>
+      <author><firstname>Michael D.</firstname><surname>Linderman</surname></author>
+      <author><firstname>Matthew</firstname><surname>Ho</surname></author>
+      <author><firstname>David L.</firstname><surname>Dill</surname></author>
+      <author><firstname>Teresa H.</firstname><surname>Meng</surname></author>
+      <author><firstname>Garry P.</firstname><surname>Nolan</surname></author>
+    </authorgroup>
+    <title>Towards program optimization through automated analysis of numerical precision</title>
+    <pagenums>230-237</pagenums>
+    <biblioid class="doi">10.1145/1772954.1772987</biblioid>
+  </biblioset>
+  <biblioset relation='proceedings'>
+    <title>Proceedings of the 8th International Symposium on Code Generation and Optimization</title>
+    <address>Toronto, ON, Canada</address>
+    <pubdate>2010</pubdate>
+  </biblioset>
+</biblioentry>
+
+<biblioentry>
+  <biblioset relation='article'>
+    <authorgroup>
+      <author><firstname>Vincent</firstname><surname>Lefèvre</surname></author>
+      <author><firstname>Philippe</firstname><surname>Théveny</surname></author>
+      <author><firstname>Florent</firstname><surname>de Dinechin</surname></author>
+      <author><firstname>Claude-Pierre</firstname><surname>Jeannerod</surname></author>
+      <author><firstname>Christophe</firstname><surname>Mouilleron</surname></author>
+      <author><firstname>David</firstname><surname>Pfannholzer</surname></author>
+      <author><firstname>Nathalie</firstname><surname>Revol</surname></author>
+    </authorgroup>
+    <title>LEMA: towards a language for reliable arithmetic</title>
+    <pagenums>41-52</pagenums>
+    <biblioid class="doi">10.1145/1838599.1838622</biblioid>
+  </biblioset>
+  <biblioset relation='journal'>
+    <title>ACM SIGSAM Bulletin</title>
+    <volumenum>44</volumenum>
+    <issuenum>1/2</issuenum>
+    <pubdate>2010</pubdate>
+  </biblioset>
+</biblioentry>
+
+<biblioentry>
+  <biblioset relation='article'>
+    <authorgroup>
+      <author><firstname>Sylvie</firstname><surname>Boldo</surname></author>
+      <author><firstname>Thi Minh Tuyen</firstname><surname>Nguyen</surname></author>
+    </authorgroup>
+    <title>Hardware-independent proofs of numerical programs</title>
+    <pagenums>14-23</pagenums>
+    <biblioid class="uri">http://shemesh.larc.nasa.gov/NFM2010/papers/nfm2010_14_23.pdf</biblioid>
+  </biblioset>
+  <biblioset relation='proceedings'>
+    <title>Proceedings of the 2nd NASA Formal Methods Symposium</title>
+    <address>Washington DC, USA</address>
+    <pubdate>2010</pubdate>
   </biblioset>
 </biblioentry>
 
