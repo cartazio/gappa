@@ -2,6 +2,7 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
   "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd"
 [
+  <!ENTITY gappa-biblio      SYSTEM "manual/biblio.xml">
   <!ENTITY gappa-coq         SYSTEM "manual/coq.xml">
   <!ENTITY gappa-customizing SYSTEM "manual/customizing.xml">
   <!ENTITY gappa-expressions SYSTEM "manual/expressions.xml">
@@ -98,6 +99,11 @@ url="http://www.lri.fr/~melquion/">Guillaume Melquiond</ulink>.</para>
 <chapter>
 <title>Customizing Gappa</title>
 &gappa-customizing;
+</chapter>
+
+<chapter>
+<title>Bibliography</title>
+&gappa-biblio;
 </chapter>
 
 <appendix>

@@ -1,0 +1,62 @@
+<bibliography>
+
+<title>Description of Gappa</title>
+
+<biblioentry>
+  <biblioset relation='article'>
+    <authorgroup>
+      <author><firstname>Marc</firstname><surname>Daumas</surname></author>
+      <author><firstname>Guillaume</firstname><surname>Melquiond</surname></author>
+    </authorgroup>
+    <title><ulink url="http://dx.doi.org/10.1145/1644001.1644003">Certification of bounds on expressions involving rounded operators</ulink></title>
+    <pagenums>1-20</pagenums>
+  </biblioset>
+  <biblioset relation='journal'>
+    <title>ACM Transactions on Mathematical Software</title>
+    <volumenum>37</volumenum>
+    <issuenum>1</issuenum>
+    <pubdate>2010</pubdate>
+  </biblioset>
+  <!--<biblioid class="doi">10.1145/1644001.1644003</biblioid>-->
+</biblioentry>
+
+<biblioentry>
+  <authorgroup>
+    <author><firstname>Jean-Michel</firstname><surname>Muller</surname></author>
+    <author><firstname>Nicolas</firstname><surname>Brisebarre</surname></author>
+    <author><firstname>Florent</firstname><surname>de Dinechin</surname></author>
+    <author><firstname>Claude-Pierre</firstname><surname>Jeannerod</surname></author>
+    <author><firstname>Vincent</firstname><surname>Lefèvre</surname></author>
+    <author><firstname>Guillaume</firstname><surname>Melquiond</surname></author>
+    <author><firstname>Nathalie</firstname><surname>Revol</surname></author>
+    <author><firstname>Damien</firstname><surname>Stehlé</surname></author>
+    <author><firstname>Serge</firstname><surname>Torres</surname></author>
+  </authorgroup>
+  <title><ulink url="http://dx.doi.org/10.1007/978-0-8176-4705-6_15">Handbook of Floating-Point Arithmetic</ulink></title>
+  <publisher><publishername>Birkhäuser</publishername></publisher>
+  <pubdate>2010</pubdate>
+</biblioentry>
+
+</bibliography>
+
+<bibliography>
+
+<title>Applications of Gappa</title>
+
+<biblioentry>
+  <biblioset relation='article'>
+    <authorgroup>
+      <author><firstname>Claude-Pierre</firstname><surname>Jeannerod</surname></author>
+      <author><firstname>Guillaume</firstname><surname>Revy</surname></author>
+    </authorgroup>
+    <title><ulink url="http://dx.doi.org/10.1109/ACSSC.2009.5469948">Optimizing correctly-rounded reciprocal square roots for embedded VLIW cores</ulink></title>
+    <pagenums>731-735</pagenums>
+  </biblioset>
+  <biblioset relation='proceedings'>
+    <title>Proceedings of the 43rd Asilomar conference on Signals, systems and computers</title>
+    <address>Pacific Grove, CA, USA</address>
+    <pubdate>2009</pubdate>
+  </biblioset>
+</biblioentry>
+
+</bibliography>
