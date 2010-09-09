@@ -65,6 +65,23 @@
 <biblioentry>
   <biblioset relation='article'>
     <authorgroup>
+      <author><firstname>Arnaud</firstname><surname>Tisserand</surname></author>
+    </authorgroup>
+    <title>High-performance hardware operators for polynomial evaluation</title>
+    <pagenums>14-23</pagenums>
+    <biblioid class="doi">10.1504/IJHPSA.2007.013288</biblioid>
+  </biblioset>
+  <biblioset relation='journal'>
+    <title>International Journal of High Performance Systems Architecture</title>
+    <volumenum>1</volumenum>
+    <issuenum>1</issuenum>
+    <pubdate>2007</pubdate>
+  </biblioset>
+</biblioentry>
+
+<biblioentry>
+  <biblioset relation='article'>
+    <authorgroup>
       <author><firstname>Sylvie</firstname><surname>Boldo</surname></author>
       <author><firstname>Marc</firstname><surname>Daumas</surname></author>
       <author><firstname>Pascal</firstname><surname>Giorgi</surname></author>
@@ -109,8 +126,28 @@
     <biblioid class="doi">10.1109/ACSSC.2009.5469948</biblioid>
   </biblioset>
   <biblioset relation='proceedings'>
-    <title>Proceedings of the 43rd Asilomar conference on Signals, systems and computers</title>
+    <title>Proceedings of the 43rd Asilomar Conference on Signals, Systems and Computers</title>
     <address>Pacific Grove, CA, USA</address>
+    <pubdate>2009</pubdate>
+  </biblioset>
+</biblioentry>
+
+<biblioentry>
+  <biblioset relation='article'>
+    <authorgroup>
+      <author><firstname>Claude-Pierre</firstname><surname>Jeannerod</surname></author>
+      <author><firstname>Hervé</firstname><surname>Knochel</surname></author>
+      <author><firstname>Christophe</firstname><surname>Monat</surname></author>
+      <author><firstname>Guillaume</firstname><surname>Revy</surname></author>
+      <author><firstname>Gilles</firstname><surname>Villard</surname></author>
+    </authorgroup>
+    <title>A new binary floating-point division algorithm and its software implementation on the ST231 processor</title>
+    <pagenums>95-103</pagenums>
+    <biblioid class="doi">10.1109/ARITH.2009.19</biblioid>
+  </biblioset>
+  <biblioset relation='proceedings'>
+    <title>Proceedings of the 19th Symposium on Computer Arithmetic</title>
+    <address>Portland, OR, USA</address>
     <pubdate>2009</pubdate>
   </biblioset>
 </biblioentry>
@@ -171,6 +208,23 @@
   <biblioset relation='proceedings'>
     <title>Proceedings of the 2nd NASA Formal Methods Symposium</title>
     <address>Washington DC, USA</address>
+    <pubdate>2010</pubdate>
+  </biblioset>
+</biblioentry>
+
+<biblioentry>
+  <biblioset relation='article'>
+    <authorgroup>
+      <author><firstname>Ali</firstname><surname>Ayad</surname></author>
+      <author><firstname>Claude</firstname><surname>Marché</surname></author>
+    </authorgroup>
+    <title>Multi-prover verification of floating-point programs</title>
+    <pagenums>127-141</pagenums>
+    <biblioid class="doi">10.1007/978-3-642-14203-1_11</biblioid>
+  </biblioset>
+  <biblioset relation='proceedings'>
+    <title>Proceedings of the 5th International Joint Conference on Automated Reasoning</title>
+    <address>Edinburgh, Scotland</address>
     <pubdate>2010</pubdate>
   </biblioset>
 </biblioentry>
