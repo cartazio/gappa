@@ -17,6 +17,10 @@
   </xsl:template>
 
   <!-- Bibliography -->
+  <xsl:template name="get-uri">
+    <xsl:if test="@class='doi'">http://dx.doi.org/</xsl:if><xsl:apply-templates/>
+  </xsl:template>
+
   <xsl:template match="biblioentry">
     <biblioentry>
       <xsl:choose>
@@ -30,33 +34,40 @@
             </xsl:if>
             <xsl:value-of select="biblioset/pagenums"/>
           </xsl:variable>
-          <xsl:variable name="doi" select="biblioset/biblioid[@class='doi']"/>
+          <xsl:variable name="uri">
+            <xsl:for-each select="biblioset/biblioid">
+              <xsl:call-template name="get-uri"/>
+            </xsl:for-each>
+          </xsl:variable>
           <xsl:for-each select="biblioset/*">
             <xsl:apply-templates select=".">
-              <xsl:with-param name="pubsnumber" select="$pubsnumber"/>
-              <xsl:with-param name="doi" select="$doi"/>
+              <xsl:with-param name="pubsnumber" select="normalize-space($pubsnumber)"/>
+              <xsl:with-param name="uri" select="normalize-space($uri)"/>
             </xsl:apply-templates>
           </xsl:for-each>
         </xsl:when>
         <xsl:otherwise>
           <xsl:apply-templates>
-            <xsl:with-param name="doi" select="biblioid[@class='doi']"/>
+            <xsl:with-param name="uri">
+              <xsl:for-each select="biblioid">
+                <xsl:call-template name="get-uri"/>
+              </xsl:for-each>
+            </xsl:with-param>
           </xsl:apply-templates>
         </xsl:otherwise>
       </xsl:choose>
     </biblioentry>
   </xsl:template>
 
-
   <xsl:template match="biblioset/pagenums|biblioset/volumenum|biblioset/issuenum"/>
   <xsl:template match="biblioid"/>
 
   <xsl:template name="print-title">
-    <xsl:param name="doi"/>
+    <xsl:param name="uri"/>
     <xsl:choose>
-      <xsl:when test="boolean($doi)">
+      <xsl:when test="boolean($uri)">
         <ulink>
-          <xsl:attribute name="url">http://dx.doi.org/<xsl:value-of select="$doi"/></xsl:attribute>
+          <xsl:attribute name="url"><xsl:value-of select="$uri"/></xsl:attribute>
           <xsl:apply-templates/>
         </ulink>
       </xsl:when>
@@ -67,22 +78,22 @@
   </xsl:template>
 
   <xsl:template match="biblioentry/title">
-    <xsl:param name="doi"/>
+    <xsl:param name="uri"/>
     <title>
       <xsl:call-template name="print-title">
-        <xsl:with-param name="doi" select="$doi"/>
+        <xsl:with-param name="uri" select="$uri"/>
       </xsl:call-template>
     </title>
   </xsl:template>
 
   <xsl:template match="biblioset/title">
     <xsl:param name="pubsnumber"/>
-    <xsl:param name="doi"/>
+    <xsl:param name="uri"/>
     <xsl:choose>
       <xsl:when test="../@relation='article'">
         <subtitle>
           <xsl:call-template name="print-title">
-            <xsl:with-param name="doi" select="$doi"/>
+            <xsl:with-param name="uri" select="$uri"/>
           </xsl:call-template>
         </subtitle>
       </xsl:when>
