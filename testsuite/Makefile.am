@@ -25,14 +25,16 @@ check-backend:
 	    rm "$$outputtmp"; \
 	  fi; \
 	done; \
-	nb=$$(cat "$$logtmp" | wc -l); \
-	if [ $$nb -gt 0 ]; then \
+	return_code=0; \
+	if [ -s $$logtmp ]; then \
 	  echo "*** Failures for $(BACKEND) backend:"; \
 	  cat "$$logtmp"; \
+	  return_code=1; \
 	else \
 	  rm "$$logfile"; \
 	fi; \
-	rm "$$logtmp"
+	rm "$$logtmp"; \
+	exit $${return_code}
 
 check-indep:
 	$(MAKE) check-backend BACKEND=null
