@@ -24,11 +24,8 @@ Proof.
   gappa.
 Qed.]]></programlisting>
 
-<para>The tactic recognizes rounding operators when introduced by the
-<code>gappa_rounding</code> function. These operators can be built from
-the constants defined by the support library,
-<foreignphrase>e.g.</foreignphrase>, <code>rounding_fixed</code> or
-<code>roundNE</code>.</para>
+<para>The tactic recognizes fully-applied <code>rounding_fixed</code> and
+<code>rounding_float</code> functions as rounding operators.</para>
 
 <para>The script below proves that the difference between two
 double precision floating-point numbers in <texinline>[\frac{52}{16},
@@ -37,7 +34,7 @@ double precision floating-point numbers in <texinline>[\frac{52}{16},
 floating-point number. (The direction of the rounding does not matter for
 this example; it has been arbitrarily chosen as rounding toward zero.)</para>
 
-<programlisting language="coq"><![CDATA[Definition rnd := gappa_rounding (rounding_float roundZR 53 1074).
+<programlisting language="coq"><![CDATA[Definition rnd := rounding_float roundZR 53 1074.
 
 Lemma test_gappa2 :
   forall a_ b_ a b : R,
