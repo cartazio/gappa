@@ -113,7 +113,7 @@ interval float_rounding_class::round(interval const &i, std::string &name) const
   rounding_fun f = direction_functions[type];
   number a = round_number(lower(i), &format, f);
   number b = round_number(upper(i), &format, f);
-  name = "float_round";
+  name = std::string("float_round,") + direction_names[type];
   return interval(a, b);
 }
 

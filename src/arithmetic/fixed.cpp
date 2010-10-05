@@ -46,7 +46,7 @@ interval fixed_rounding_class::round(interval const &i, std::string &name) const
   rounding_fun f = direction_functions[type];
   number a = round_number(lower(i), &format, f);
   number b = round_number(upper(i), &format, f);
-  name = "fixed_round";
+  name = std::string("fixed_round,") + direction_names[type];
   return interval(a, b);
 }
 
