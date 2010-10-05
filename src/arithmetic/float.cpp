@@ -95,7 +95,7 @@ function_class const *float_rounding_generator::operator()(function_params const
   float_cache::const_iterator j = cache.find(h);
   if (j != cache.end()) return &j->second;
   std::ostringstream s;
-  s << ',' << direction_names[d] << ',' << f.prec << ',' << -f.min_exp;
+  s << ',' << direction_names[d] << ',' << f.prec << ',' << f.min_exp;
   j = cache.insert(std::make_pair(h, float_rounding_class(f, d, s.str()))).first;
   return &j->second;
 }

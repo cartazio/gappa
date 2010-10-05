@@ -24,27 +24,51 @@
 
 extern std::string get_real_split(number const &f, int &exp, bool &zero);
 
-static std::string convert_name(std::string const &name) {
+static std::string convert_name(std::string const &name)
+{
   if (name == "sqrt") return "sqrtG";
-  std::string::size_type p2 = name.find(',');
-  if (p2 == std::string::npos) return name;
-  std::string prefix = name.substr(0, p2);
-  bool rounding = prefix == "rounding_fixed" || prefix == "rounding_float";
-  bool fragile = false;
+  std::string::size_type p0 = name.find(',');
+  if (p0 == std::string::npos) return name;
+  std::string prefix = name.substr(0, p0);
   std::ostringstream res;
+  if (prefix == "rounding_fixed")
+  {
+    std::string::size_type p1 = name.find(',', p0 + 1);
+    assert(p1 != std::string::npos);
+    res << "(round radix2 (FIX_exp (" << name.substr(p1 + 1) << ")) ";
+    assert(p1 == p0 + 3);
+    std::string mode = name.substr(p0 + 1, 2);
+    if (mode == "ne") res << "rndNE";
+    else res << "rnd" << (char)std::toupper(mode[0]) << (char)std::toupper(mode[1]);
+    res << ") ";
+    return res.str();
+  }
+  if (prefix == "rounding_float")
+  {
+    std::string::size_type p1 = name.find(',', p0 + 1);
+    assert(p1 != std::string::npos);
+    std::string::size_type p2 = name.find(',', p1 + 1);
+    assert(p2 != std::string::npos);
+    res << "(round radix2 (FLT_exp ("
+        << name.substr(p2 + 1) << ") (" << name.substr(p1 + 1, p2 - p1 - 1) << ")) ";
+    assert(p1 == p0 + 3);
+    std::string mode = name.substr(p0 + 1, 2);
+    if (mode == "ne") res << "rndNE";
+    else res << "rnd" << (char)std::toupper(mode[0]) << (char)std::toupper(mode[1]);
+    res << ") ";
+    return res.str();
+  }
+  bool fragile = false;
   res << prefix;
   do {
-    std::string::size_type p1 = p2 + 1;
-    p2 = name.find(',', p1);
-    std::string s(name, p1, p2 == std::string::npos ? p2 : p2 - p1);
+    std::string::size_type p1 = p0 + 1;
+    p0 = name.find(',', p1);
+    std::string s(name, p1, p0 == std::string::npos ? p0 : p0 - p1);
     if (!std::isalpha(s[0])) {
       res << " (" << s << ')';
       fragile = true;
-    } else if (rounding && s.length() == 2) {
-      res << " round" << (char)std::toupper(s[0]) << (char)std::toupper(s[1]);
-      fragile = true;
     } else res << '_' << s;
-  } while (p2 != std::string::npos);
+  } while (p0 != std::string::npos);
   if (!fragile) return res.str();
   return '(' + res.str() + ')';
 }
@@ -404,6 +428,7 @@ struct coq_backend: backend {
   void initialize(std::ostream &o) {
     out = &o;
     o << "Require Import Gappa_library.\n"
+         "Require Import Fcore.\n"
          "Section Generated_by_Gappa.\n";
   }
   void finalize() { *out << "End Generated_by_Gappa.\n"; }
