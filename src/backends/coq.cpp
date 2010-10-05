@@ -391,8 +391,12 @@ static std::string display(node *n) {
       interval const &mb = res.bnd(), &nb = n_res.bnd();
       if (!res.null()) { // not a contradictory result
         assert(mb <= nb);
-        if (!(nb <= mb))
-          plouf << " apply subset with " << display(mb) << ". 2: finalize.\n";
+        if (!(nb <= mb)) {
+          char const *prefix = "", *suffix = "";
+          if (m->get_result().real.pred() == PRED_REL) prefix = "rel_";
+          plouf << " apply " << prefix << "subset with " << display(mb)
+                << ". 2: finalize.\n";
+        }
       }
       invoke_lemma(plouf, m, pmap);
       if (i + 1 != i_end)
