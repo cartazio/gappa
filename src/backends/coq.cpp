@@ -392,7 +392,7 @@ static std::string display(node *n) {
       if (!res.null()) { // not a contradictory result
         assert(mb <= nb);
         if (!(nb <= mb)) {
-          char const *prefix = "", *suffix = "";
+          char const *prefix = "";
           if (m->get_result().real.pred() == PRED_REL) prefix = "rel_";
           plouf << " apply " << prefix << "subset with " << display(mb)
                 << ". 2: finalize.\n";
