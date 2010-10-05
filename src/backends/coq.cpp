@@ -427,8 +427,8 @@ struct coq_backend: backend {
   coq_backend(): backend("coq") {}
   void initialize(std::ostream &o) {
     out = &o;
-    o << "Require Import Gappa_library.\n"
-         "Require Import Fcore.\n"
+    o << "Require Import Fcore.\n"
+         "Require Import Gappa_library.\n"
          "Section Generated_by_Gappa.\n";
   }
   void finalize() { *out << "End Generated_by_Gappa.\n"; }
