@@ -8,5 +8,6 @@
   <xsl:param name="doc.collab.show" select="0"/>
   <xsl:param name="latex.output.revhistory" select="0"/>
   <xsl:param name="toc.section.depth" select="2"/>
+  <xsl:param name="latex.bibwidelabel">99</xsl:param>
 
 </xsl:stylesheet>

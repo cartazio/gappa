@@ -5,13 +5,16 @@ EXTRA_DIST = $(XSL_PASS_1) gappa-html.xsl gappa-pdf.xsl gappa.css gappa.sty \
              doxygen/Doxyfile \
              changelog.pl
 
+html-doc: html/index.html
+pdf-doc: gappa.pdf
+
 gappa-news.xml: ../NEWS
 	"$(srcdir)/changelog.pl" > gappa-news.xml
 
 gappa-preprocessed.xml: $(XSL_PASS_1) gappa-news.xml
 	$(XSLTPROC) -o gappa-preprocessed.xml "$(srcdir)/gappa-preprocess.xsl" "$(srcdir)/gappa.xml"
 
-html-doc: gappa-preprocessed.xml
+html/index.html: gappa-preprocessed.xml gappa-html.xsl
 	rm -rf tmp/ html/
 	mkdir html
 	@#java -cp "/usr/share/java/saxon.jar:/usr/share/java/xslthl.jar" com.icl.saxon.StyleSheet gappa-preprocessed.xml "$(srcdir)/gappa-html.xsl"
@@ -30,7 +33,7 @@ html-doc: gappa-preprocessed.xml
 	mv tmp/*.png html/
 	rm -rf tmp/
 
-pdf-doc: gappa-preprocessed.xml
+gappa.pdf: gappa-preprocessed.xml gappa-pdf.xsl gappa.sty
 	$(DBLATEX) -p "$(srcdir)/gappa-pdf.xsl" -s "$(srcdir)/gappa.sty" -o gappa.pdf gappa-preprocessed.xml
 
 clean-local:

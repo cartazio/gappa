@@ -1,4 +1,4 @@
-AC_INIT([Gappa], [0.13.0],
+AC_INIT([Gappa], [0.14.0],
         [Guillaume Melquiond <guillaume.melquiond@inria.fr>],
         [gappa])
 AM_INIT_AUTOMAKE
@@ -43,6 +43,6 @@ std::tr1::unordered_map<int, double> toto],
 [AC_MSG_RESULT([yes])
 AC_DEFINE([HAVE_UMAP], [1], [Define to 1 if your Standard Library supports tr1/unordered_map.])], [AC_MSG_RESULT([no])])
 
-AC_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS(config.h)
 AC_CONFIG_FILES([Makefile doc/Makefile src/Makefile testsuite/Makefile])
 AC_OUTPUT
