@@ -1,3 +1,7 @@
+Version 0.14.1:
+ * build system
+   - fixed some platform-specific issues
+
 Version 0.14.0:
  * Coq back-end
    - added support for Coq support library 0.14
