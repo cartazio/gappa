@@ -4,7 +4,7 @@ CLEANFILES = $(wildcard failures-*.log)
 check: check-indep check-coq check-holl
 
 check-backend:
-	@logfile="failures-$(BACKEND)-$$(date -Idate).log"; \
+	@logfile="failures-$(BACKEND)-$$(date '+%Y-%m-%d').log"; \
 	logtmp="log-$(BACKEND).tmp"; \
 	outputtmp="output-$(BACKEND).tmp"; \
 	cat /dev/null > "$$logtmp"; \
