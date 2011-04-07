@@ -4,20 +4,16 @@ AM_YFLAGS = -d
 
 bin_PROGRAMS = gappa
 
-# Dependencies:
-# proofs/rewriting.cpp initialization requires parser/ast.cpp initialization
-# backends/*.cpp initialization requires backends/backends.cpp initialization
-
 gappa_SOURCES = \
 	arithmetic/fixed.cpp \
 	arithmetic/float.cpp \
 	arithmetic/homogen.cpp \
 	arithmetic/relative.cpp \
+	backends/backend.cpp \
+	backends/backend.hpp \
 	backends/coq.cpp \
 	backends/coq_lambda.cpp \
 	backends/holl.cpp \
-	backends/backend.cpp \
-	backends/backend.hpp \
 	numbers/interval.cpp \
 	numbers/interval.hpp \
 	numbers/interval_arith.hpp \
@@ -28,6 +24,7 @@ gappa_SOURCES = \
 	numbers/round.cpp \
 	numbers/round.hpp \
 	parser/ast_real.hpp \
+	parser/ast.cpp \
 	parser/ast.hpp \
 	parser/lexer.lpp \
 	parser/parser_aux.cpp \
@@ -48,7 +45,6 @@ gappa_SOURCES = \
 	proofs/schemes.hpp \
 	proofs/updater.cpp \
 	proofs/updater.hpp \
-	parser/ast.cpp \
 	main.cpp \
 	parameters.cpp \
 	parameters.hpp \

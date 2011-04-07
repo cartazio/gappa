@@ -13,7 +13,6 @@
 #include <cassert>
 #include <set>
 #include <sstream>
-#include "utils.hpp"
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
 #include "numbers/round.hpp"
@@ -102,34 +101,34 @@ ast_real const *unround(real_op_type type, ast_real_vect const &v) {
   }  
 }
 
-static cache< ast_ident > ast_ident_cache;
-ast_ident *ast_ident::find(std::string const &s) { return ast_ident_cache.find(ast_ident(s)); }
-static cache< ast_number > ast_number_cache;
-ast_number *normalize(ast_number const &v) { return ast_number_cache.find(v); }
-static cache< ast_real > ast_real_cache;
-ast_real *normalize(ast_real const &v) {
+static cache<ast_ident> *ast_ident_cache;
+ast_ident *ast_ident::find(std::string const &s)
+{
+  if (!ast_ident_cache) ast_ident_cache = new cache<ast_ident>;
+  return ast_ident_cache->find(ast_ident(s));
+}
+
+static cache<ast_number> *ast_number_cache;
+ast_number *normalize(ast_number const &v)
+{
+  if (!ast_number_cache) ast_number_cache = new cache<ast_number>;
+  return ast_number_cache->find(v);
+}
+
+static cache<ast_real> *ast_real_cache;
+
+ast_real *normalize(ast_real const &v)
+{
+  if (!ast_real_cache) ast_real_cache = new cache<ast_real>;
   bool b;
-  ast_real *p = ast_real_cache.find(v, &b);
-  if (!b) return p;
+  ast_real *p = ast_real_cache->find(v, &b);
+  if (!b || p->has_placeholder) return p;
   real_op *o = boost::get< real_op >(p);
   if (!o || !o->fun || o->fun->type == ROP_UNK) return p;
   ast_real const *a = unround(o->fun->type, o->ops);
   accurates[p].insert(a);
   approximates[a].insert(p);
   return p;
-}
-
-ast_number const *token_zero, *token_one;
-
-RUN_ONCE(load_numbers) {
-  ast_number num;
-  num.base = 0;
-  num.exponent = 0;
-  token_zero = normalize(num);
-  num.base = 1;
-  num.exponent = 0;
-  num.mantissa = "+1";
-  token_one = normalize(num);
 }
 
 std::string dump_real(ast_real const *r, unsigned prio)

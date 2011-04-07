@@ -12,6 +12,7 @@
 #include <iostream>
 #include <boost/preprocessor/cat.hpp>
 #include "backends/backend.hpp"
+#include "utils.hpp"
 #include "numbers/real.hpp"
 #include "numbers/interval.hpp"
 #include "numbers/interval_utility.hpp"
@@ -21,6 +22,19 @@
 
 extern backend *proof_generator;
 extern bool parameter_constrained;
+
+ast_number const *token_zero, *token_one;
+
+RUN_ONCE(load_numbers) {
+  ast_number num;
+  num.base = 0;
+  num.exponent = 0;
+  token_zero = normalize(num);
+  num.base = 1;
+  num.exponent = 0;
+  num.mantissa = "+1";
+  token_one = normalize(num);
+}
 
 // REWRITING_SCHEME
 struct rewriting_scheme: proof_scheme {

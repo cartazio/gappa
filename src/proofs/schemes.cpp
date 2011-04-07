@@ -30,10 +30,11 @@ extern preal_set input_reals, output_reals;
 struct scheme_factories: std::vector< scheme_factory const * > {
   ~scheme_factories() { for(iterator i = begin(), i_end = end(); i != i_end; ++i) delete *i; }
 };
-static scheme_factories factories;
+static scheme_factories *factories;
 
 scheme_factory::scheme_factory(predicated_real const &r): target(r) {
-  factories.push_back(this);
+  if (!factories) factories = new scheme_factories;
+  factories->push_back(this);
 }
 
 struct factorx_wrapper: scheme_factory {
@@ -226,8 +227,9 @@ static real_dependency &initialize_dependencies(predicated_real const &real) {
   it = reals.insert(std::make_pair(real, real_dependency())).first;
   real_dependency &dep = it->second;
   scheme_set &l = dep.schemes;
-  for (scheme_factories::iterator i = factories.begin(),
-       i_end = factories.end(); i != i_end; ++i) {
+  for (scheme_factories::iterator i = factories->begin(),
+       i_end = factories->end(); i != i_end; ++i)
+  {
     scheme_factory const &f = **i;
     ast_real_vect holders;
     if (!f.target.null()) {
