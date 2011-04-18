@@ -13,6 +13,7 @@
 #include <fstream>
 #include <list>
 #include <map>
+#include <typeinfo>
 #include <set>
 #include <string>
 #include <vector>
@@ -498,20 +499,32 @@ preal_vect generate_proof_paths()
   if (!parameter_schemes.empty())
   {
     std::ofstream out(parameter_schemes.c_str());
-    int num_th = 0;
-    out << "digraph {\n";
+    out << "digraph {\n  node [shape=record];\n";
     for (real_dependencies::iterator i = reals.begin(), i_end = reals.end(); i != i_end; ++i)
     {
       real_dependency &r = i->second;
-      out << "  \"" << dump_real(i->first) << "\";\n";
+      std::string var = dump_real(i->first);
+      out << "  \"" << var << "\" [label=\"{";
+      for (std::string::const_iterator j = var.begin(), j_end = var.end(); j != j_end; ++j)
+      {
+        switch (*j) {
+          case '<': out << "&lt;"; break;
+          case '>': out << "&gt;"; break;
+          case '|': out << "&#124;"; break;
+          default: out << *j;
+        }
+      }
+      int num_th = 0;
+      for (scheme_set::iterator j = r.schemes.begin(), j_end = r.schemes.end(); j != j_end; ++j)
+        out << "|<" << ++num_th << '>' << typeid(**j).name();
+      out << "}\"];\n";
+      num_th = 0;
       for (scheme_set::iterator j = r.schemes.begin(), j_end = r.schemes.end(); j != j_end; ++j)
       {
         ++num_th;
-        out << "  \"" << dump_real(i->first) << "\" -> \"T" << num_th << "\";\n"
-            << "  \"T" << num_th << "\" [shape=box];\n";
         preal_vect v = (*j)->needed_reals();
         for (preal_vect::const_iterator k = v.begin(), k_end = v.end(); k != k_end; ++k)
-          out << "  \"T" << num_th << "\" -> \"" << dump_real(*k) << "\";\n";
+          out << "  \"" << var << "\":" << num_th << " -> \"" << dump_real(*k) << "\";\n";
       }
     }
     out << "}\n";
