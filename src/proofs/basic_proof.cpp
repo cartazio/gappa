@@ -820,6 +820,46 @@ proof_scheme *add_sub_fix_scheme::factory(predicated_real const &real) {
   return new add_sub_fix_scheme(real, hyps, p->type == BOP_SUB ? "sub_fix" : "add_fix");
 }
 
+// SUB_FLT
+REGISTER_SCHEME_BEGIN(sub_flt);
+  preal_vect needed;
+  char const *name;
+  sub_flt_scheme(predicated_real const &r, preal_vect const &v, char const *n)
+    : proof_scheme(r), needed(v), name(n) {}
+REGISTER_SCHEME_END_PATTERN(sub_flt, predicated_real(pattern(0) - pattern(1), PRED_FLT));
+
+node *sub_flt_scheme::generate_proof() const
+{
+  property hyps[3];
+  if (!fill_hypotheses(hyps, needed)) return NULL;
+  static interval r(-0.5, 1);
+  if (!(hyps[2].bnd() <= r)) return NULL;
+  return create_theorem(3, hyps, property(real, std::max(hyps[0].cst(), hyps[1].cst())), name);
+}
+
+preal_vect sub_flt_scheme::needed_reals() const
+{
+  return needed;
+}
+
+proof_scheme *sub_flt_scheme::factory(predicated_real const &real, ast_real_vect const &holders)
+{
+  if (holders[0] == holders[1]) return NULL;
+  if (is_constant(holders[0]) && is_constant(holders[1])) return NULL;
+  preal_vect hyps;
+  hyps.push_back(predicated_real(holders[0], PRED_FLT));
+  hyps.push_back(predicated_real(holders[1], PRED_FLT));
+  hyps.push_back(predicated_real(holders[0], holders[1], PRED_REL));
+  char const *name = "sub_flt";
+  real_op const *r = boost::get< real_op const >(real.real());
+  assert(r && r->type == BOP_SUB);
+  if (r->ops[0] == holders[1]) name = "sub_flt_rev";
+  return new sub_flt_scheme(real, hyps, name);
+}
+
+static factory_creator sub_flt_scheme_register2(&sub_flt_scheme::factory,
+  predicated_real(pattern(1) - pattern(0), PRED_FLT));
+
 // MUL_FIX_FLT
 REGISTER_SCHEME_BEGIN(mul_fix_flt);
   preal_vect needed;
