@@ -1258,6 +1258,40 @@ proof_scheme *compose_rel_scheme::factory2(predicated_real const &real, ast_real
 static factory_creator compose_rel_scheme_register2(&compose_rel_scheme::factory2,
   predicated_real(pattern(2), pattern(0), PRED_REL));
 
+// COMPOSE_REL_SWAP
+REGISTER_SCHEME_BEGIN(compose_rel_swap);
+  preal_vect needed;
+  compose_rel_swap_scheme(predicated_real const &r, preal_vect const &v)
+    : proof_scheme(r), needed(v) {}
+REGISTER_SCHEME_END_PATTERN(compose_rel_swap,
+  predicated_real(pattern(2) * pattern(1), pattern(3), PRED_REL));
+
+node *compose_rel_swap_scheme::generate_proof() const
+{
+  property hyps[2];
+  if (!fill_hypotheses(hyps, needed)) return NULL;
+  property res(real, compose_relative(hyps[0].bnd(), hyps[1].bnd()));
+  if (!is_defined(res.bnd())) return NULL;
+  return create_theorem(2, hyps, res, "compose_swap", &compose_updater);
+}
+
+preal_vect compose_rel_swap_scheme::needed_reals() const
+{
+  return needed;
+}
+
+proof_scheme *compose_rel_swap_scheme::factory(predicated_real const &real, ast_real_vect const &holders)
+{
+  static ast_real const *one = normalize(token_one);
+  real_op const *p = boost::get<real_op const>(holders[0]);
+  if (!p || p->type != BOP_DIV || p->ops[0] != one) return NULL;
+  ast_real const *r = normalize(real_op(holders[3], BOP_MUL, p->ops[1]));
+  preal_vect hyps;
+  hyps.push_back(predicated_real(holders[2], r, PRED_REL));
+  hyps.push_back(predicated_real(holders[1], holders[0], PRED_REL));
+  return new compose_rel_swap_scheme(real, hyps);
+}
+
 // ERROR_OF_REL
 REGISTER_SCHEME_BEGIN(error_of_rel);
   preal_vect needed;
