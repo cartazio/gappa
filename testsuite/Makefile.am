@@ -16,7 +16,7 @@ check-backend:
 	    execute=$$?; \
 	  fi; \
 	  if [ $$execute -eq 0 ]; then \
-	    ../src/gappa -B$(BACKEND) < "$$f" > /dev/null 2> "$$outputtmp"; \
+	    timeout 5 ../src/gappa -B$(BACKEND) < "$$f" > /dev/null 2> "$$outputtmp"; \
 	    return_code=$$?; \
 	    if [ $${return_code} -ne 0 ]; then \
 	      (echo "*** $$f exited with error code $${return_code}"; cat "$$outputtmp"; echo) >> "$$logfile"; \
