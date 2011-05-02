@@ -44,7 +44,7 @@ bool match_visitor::visit(ast_real const *src, ast_real const *dst) const
   placeholder const *p = boost::get< placeholder const >(dst);
   if (!p) return boost::apply_visitor(*this, *src, *dst);
   unsigned i = p->num;
-  if (*p == -1) {
+  if (p->num == -1) {
     // -1 is used to force two holders when only pattern(0) is present
     i = 0;
     if (holders.size() < 2) holders.resize(2, NULL);
@@ -71,9 +71,11 @@ struct rewrite_visitor: boost::static_visitor< ast_real const * > {
   rewrite_visitor(ast_real_vect const &h): holders(h) {}
 };
 
-ast_real const *rewrite_visitor::operator()(placeholder const &i) const {
-  assert((unsigned)i.num < holders.size());
-  ast_real const *r = holders[i.num];
+ast_real const *rewrite_visitor::operator()(placeholder const &i) const
+{
+  unsigned j = i.num == -1 ? 0 : i.num;
+  assert(j < holders.size());
+  ast_real const *r = holders[j];
   assert(r);
   return r;
 }
