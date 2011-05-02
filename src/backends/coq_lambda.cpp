@@ -398,6 +398,9 @@ static std::string display(property const &p)
     case PRED_FLT:
       s << GAPPADEF "FLT " << display(real) << " (" << p.cst() << ')';
       break;
+    case PRED_EQL:
+      s << display(real) << " = " << display(p.real.real2());
+      break;
     case PRED_NZR:
       s << GAPPADEF "NZR " << display(real);
       break;
@@ -558,7 +561,7 @@ static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_m
     }
     else
     {
-      assert(t == PRED_NZR);
+      assert(t == PRED_NZR || t == PRED_EQL);
       plouf << " h" << h;
     }
   }

@@ -37,6 +37,7 @@ property::property(predicated_real const &r): real(r) {
   case PRED_BND: new(&store) interval; break;
   case PRED_FIX: store._int = INT_MIN; break;
   case PRED_FLT: store._int = INT_MAX; break;
+  case PRED_EQL:
   case PRED_NZR: break;
   }
 }
@@ -82,6 +83,7 @@ bool property::implies(property const &p) const {
   case PRED_BND: return _bnd() <= p._bnd();
   case PRED_FIX: return store._int >= p.store._int;
   case PRED_FLT: return store._int <= p.store._int;
+  case PRED_EQL:
   case PRED_NZR: return true;
   }
   assert(false);
@@ -96,6 +98,7 @@ bool property::strict_implies(property const &p) const {
   case PRED_BND: return _bnd() < p._bnd();
   case PRED_FIX: return store._int > p.store._int;
   case PRED_FLT: return store._int < p.store._int;
+  case PRED_EQL:
   case PRED_NZR: return false;
   }
   assert(false);
@@ -110,6 +113,7 @@ void property::intersect(property const &p) {
   case PRED_BND: _bnd() = ::intersect(_bnd(), p._bnd()); break;
   case PRED_FIX: store._int = std::max(store._int, p.store._int); break;
   case PRED_FLT: store._int = std::min(store._int, p.store._int); break;
+  case PRED_EQL:
   case PRED_NZR: break;
   }
 }
@@ -123,6 +127,7 @@ void property::hull(property const &p) {
   case PRED_BND: _bnd() = ::hull(_bnd(), p._bnd()); break;
   case PRED_FIX: store._int = std::min(store._int, p.store._int); break;
   case PRED_FLT: store._int = std::max(store._int, p.store._int); break;
+  case PRED_EQL:
   case PRED_NZR: break;
   }
 }

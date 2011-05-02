@@ -17,7 +17,12 @@
 #include "numbers/interval.hpp"
 #include "parser/ast_real.hpp"
 
-enum predicate_type { PRED_BND = 0, PRED_ABS, PRED_REL, PRED_FIX = 4, PRED_FLT, PRED_NZR = 8 };
+enum predicate_type
+{
+  PRED_BND = 0, PRED_ABS, PRED_REL,
+  PRED_FIX = 4, PRED_FLT,
+  PRED_EQL = 8, PRED_NZR
+};
 
 class predicated_real {
   long d1, d2;
