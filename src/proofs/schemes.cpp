@@ -220,7 +220,8 @@ static void delete_scheme(proof_scheme const *s, predicated_real const *restrict
 
 int stat_tested_real = 0, stat_discarded_real = 0;
 
-static real_dependency &initialize_dependencies(predicated_real const &real) {
+static real_dependency &initialize_dependencies(predicated_real const &real)
+{
   real_dependencies::iterator it = reals.find(real);
   if (it != reals.end()) return it->second;
   // no dependencies yet, let's generate them
@@ -233,30 +234,37 @@ static real_dependency &initialize_dependencies(predicated_real const &real) {
   {
     scheme_factory const &f = **i;
     ast_real_vect holders;
-    if (!f.target.null()) {
-      if (f.target.pred() != real.pred()) continue;
-      ast_real const *r1 = f.target.real(), *r2 = f.target.real2();
-      if (!match(real.real(), r1, holders) ||
-          (r2 && !match(real.real2(), r2, holders)))
-        continue;
-      if (holders.size() >= 2 && (!holders[0] || !holders[1])) {
-        assert(holders[0] || holders[1]);
-        int p = !holders[1];
-        link_map const *lm = p ? &approximates : &accurates;
-        link_map::const_iterator k = lm->find(holders[1 - p]);
-        if (k == lm->end()) continue;
-        ast_real_set const &s = k->second;
-        for (ast_real_set::const_iterator j = s.begin(), j_end = s.end(); j != j_end; ++j) {
-          holders[p] = *j;
-          if (proof_scheme *s = f(real, holders)) l.insert(s);
-        }
-        continue;
-      }
+    if (f.target.null())
+    {
+      // no embedded pattern (or no hole left in the pattern, see below)
+      no_hole:
+      if (proof_scheme *s = f(real, holders)) l.insert(s);
+      continue;
     }
-    if (proof_scheme *s = f(real, holders)) l.insert(s);
+    // there is an embedded pattern, match it against the current real
+    if (f.target.pred() != real.pred()) continue;
+    ast_real const *r1 = f.target.real(), *r2 = f.target.real2();
+    if (!match(real.real(), r1, holders) ||
+        (r2 && !match(real.real2(), r2, holders)))
+      continue;
+    // the embedded pattern is a match, try generating schemes
+    if (holders.size() < 2 || (holders[0] && holders[1]))
+      goto no_hole;
+    assert(holders[0] || holders[1]);
+    int p = !holders[1];
+    // pattern position p is not filled, use approx/accurate pairs
+    link_map const *lm = p ? &approximates : &accurates;
+    link_map::const_iterator k = lm->find(holders[1 - p]);
+    if (k == lm->end()) continue;
+    ast_real_set const &s = k->second;
+    for (ast_real_set::const_iterator j = s.begin(), j_end = s.end(); j != j_end; ++j) {
+      holders[p] = *j;
+      if (proof_scheme *s = f(real, holders)) l.insert(s);
+    }
   }
   // create the dependencies
-  for (scheme_set::const_iterator i = l.begin(), i_end = l.end(); i != i_end; ++i) {
+  for (scheme_set::const_iterator i = l.begin(), i_end = l.end(); i != i_end; ++i)
+  {
     proof_scheme const *s = *i;
     preal_vect v = s->needed_reals();
     for(preal_vect::const_iterator j = v.begin(), j_end = v.end(); j != j_end; ++j)
