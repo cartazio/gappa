@@ -534,11 +534,10 @@ std::string coq_backend::rewrite(ast_real const *src, ast_real const *dst,
   plouf << display(src) << " = " << display(dst) << ".\n";
   if (first_bool) s_bool << "true";
   std::string name = composite('b', a_id);
-  plouf << "Lemma " << name << " : " << s_hyps.str() << " forall zi : FF, BND "
-        << display(dst) << " zi -> " << s_bool.str() << " = true -> BND "
-        << display(src) << " zi.\n intros" << s_intros.str()
-        << " zi hz hb.\n" << s_dec.str() << " rewrite a" << a_id
-        << ".\n exact hz.\n" << s_proof.str() << "Qed.\n";
+  plouf << "Lemma " << name << " : " << s_hyps.str() << s_bool.str()
+        << " = true -> " << display(src) << " = " << display(dst)
+        << ".\n intros" << s_intros.str() << " hb.\n" << s_dec.str()
+        << " apply a" << a_id << ".\n" << s_proof.str() << "Qed.\n";
   return name;
 }
 
