@@ -285,28 +285,33 @@ proof_scheme *flt_of_float_scheme::factory(predicated_real const &real) {
 REGISTER_SCHEME_BEGIN(float_of_fix_flt);
   preal_vect needed;
   long min_exp, prec;
-  float_of_fix_flt_scheme(ast_real const *r, preal_vect const &v, long e, long p)
+  float_of_fix_flt_scheme(predicated_real const &r, preal_vect const &v, long e, long p)
     : proof_scheme(r), needed(v), min_exp(e), prec(p) {}
-REGISTER_SCHEME_END(float_of_fix_flt);
+REGISTER_SCHEME_END_PATTERN(float_of_fix_flt, predicated_real(pattern(0), pattern(1), PRED_EQL));
 
-node *float_of_fix_flt_scheme::generate_proof() const {
+node *float_of_fix_flt_scheme::generate_proof() const
+{
   property hyps[2];
   if (!fill_hypotheses(hyps, needed)) return NULL;
   if (hyps[0].cst() < min_exp || hyps[1].cst() > prec) return NULL;
-  return create_theorem(2, hyps, property(real, zero()), "float_of_fix_flt");
+  return create_theorem(2, hyps, property(real), "float_of_fix_flt");
 }
 
 preal_vect float_of_fix_flt_scheme::needed_reals() const {
   return needed;
 }
 
-proof_scheme *float_of_fix_flt_scheme::factory(ast_real const *real) {
-  ast_real const *holders[2];
-  float_rounding_class const *f = dynamic_cast< float_rounding_class const * >(absolute_rounding_error(real, holders));
+proof_scheme *float_of_fix_flt_scheme::factory(predicated_real const &real, ast_real_vect const &holders)
+{
+  ast_real const *r = holders[1];
+  real_op const *o = boost::get<real_op const>(holders[0]);
+  if (!o || !o->fun || o->fun->type != UOP_ID || r != o->ops[0])
+    return NULL;
+  float_rounding_class const *f = dynamic_cast<float_rounding_class const *>(o->fun);
   if (!f) return NULL;
   preal_vect needed;
-  needed.push_back(predicated_real(holders[0], PRED_FIX));
-  needed.push_back(predicated_real(holders[0], PRED_FLT));
+  needed.push_back(predicated_real(r, PRED_FIX));
+  needed.push_back(predicated_real(r, PRED_FLT));
   return new float_of_fix_flt_scheme(real, needed, f->format.min_exp, f->format.prec);
 }
 
