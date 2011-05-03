@@ -104,6 +104,36 @@ ast_real const *rewrite(ast_real const *dst, ast_real_vect const &holders) {
   return rewrite_visitor(holders).visit(dst);
 }
 
+struct unhide_visitor: boost::static_visitor< ast_real const * >
+{
+  ast_real const *visit(ast_real const *dst) const;
+  template< typename T > ast_real const *operator()(T const &r) const { return normalize(ast_real(r)); }
+  ast_real const *operator()(undefined_real const &) const { assert(false); }
+  ast_real const *operator()(real_op const &r) const;
+  ast_real const *operator()(hidden_real const &h) const { return visit(h.real); }
+};
+
+ast_real const *unhide_visitor::operator()(real_op const &r) const
+{
+  ast_real_vect ops;
+  unsigned s = r.ops.size();
+  ops.reserve(s);
+  for(unsigned i = 0; i < s; ++i)
+    ops.push_back(visit(r.ops[i]));
+  return normalize(ast_real(real_op(r.type, r.fun, ops)));
+}
+
+ast_real const *unhide_visitor::visit(ast_real const *dst) const
+{
+  if (!dst->has_placeholder) return dst;
+  return boost::apply_visitor(*this, *dst);
+}
+
+ast_real const *unhide(ast_real const *dst)
+{
+  return unhide_visitor().visit(dst);
+}
+
 struct missing_visitor: boost::static_visitor<void>
 {
   void visit(ast_real const *dst);
