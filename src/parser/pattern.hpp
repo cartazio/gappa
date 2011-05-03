@@ -17,6 +17,7 @@
 
 bool match(ast_real const *src, ast_real const *dst, ast_real_vect &, bool = false);
 ast_real const *rewrite(ast_real const *, ast_real_vect const &);
+int count_missing(ast_real const *);
 
 bool relative_error(ast_real const *, ast_real const *[2]);
 function_class const *absolute_rounding_error(ast_real const *, ast_real const *[2]);

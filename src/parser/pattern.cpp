@@ -104,6 +104,41 @@ ast_real const *rewrite(ast_real const *dst, ast_real_vect const &holders) {
   return rewrite_visitor(holders).visit(dst);
 }
 
+struct missing_visitor: boost::static_visitor<void>
+{
+  void visit(ast_real const *dst);
+  template<typename T> void operator()(T const &) {}
+  void operator()(undefined_real const &) { assert(false); }
+  void operator()(real_op const &r);
+  void operator()(placeholder const &i);
+  void operator()(hidden_real const &h) { visit(h.real); }
+  int last;
+  missing_visitor(): last(-1) {}
+};
+
+void missing_visitor::operator()(placeholder const &i)
+{
+  int j = i.num == -1 ? 1 : i.num;
+  if (j >= last) last = j;
+}
+
+void missing_visitor::operator()(real_op const &r)
+{
+  for (unsigned i = 0; i < r.ops.size(); ++i) visit(r.ops[i]);
+}
+
+void missing_visitor::visit(ast_real const *dst)
+{
+  if (dst->has_placeholder) boost::apply_visitor(*this, *dst);
+}
+
+int count_missing(ast_real const *r)
+{
+  missing_visitor mv;
+  mv.visit(r);
+  return mv.last + 1;
+}
+
 typedef std::set< ast_real const * > real_set;
 
 struct unknown_visitor: boost::static_visitor< void > {
