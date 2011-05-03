@@ -81,7 +81,9 @@ static char const *theorem_defs[][2] = {
 
   { "sub_refl", "$gpred_bnd.$t _ $i $" },
   { "div_refl", "$gpred_bnd.$t $1x $i $" },
+  { "sub_of_eql", "$gpred_bnd.$t $1x $1y $i $" },
 
+  { "neg_a", "$gpred_abs.$t $1x $i $1p" },
   { "add_aa_p", "$gpred_abs.$t $1x $2x $1i $2i $i $" },
   { "add_aa_o", "$gpred_abs.$t $1x $2x $1i $2i $i $" },
   { "add_aa_n", "$gpred_abs.$t $1x $2x $1i $2i $i $" },
@@ -128,7 +130,7 @@ static char const *theorem_defs[][2] = {
 
   { "fix_of_float", "$gfloat.$t _ _ _ _ $c $" },
   { "flt_of_float", "$gfloat.$t _ _ _ $c _ $" },
-  { "float_of_fix_flt", "$gfloat.$t _ $1x $i $1c _ $2c _ $" },
+  { "float_of_fix_flt", "$gfloat.$t _ $1x $1c _ $2c _ $" },
 
   { "float_round", "$gfloat.$t _ _ _ $1x $1i $i $" },
   { "float_enforce", "$gfloat.$t _ _ _ _ $1i $i $" },
