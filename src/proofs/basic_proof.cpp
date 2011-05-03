@@ -1054,7 +1054,7 @@ node *compose_rel_swap_scheme::generate_proof(property const hyps[]) const
 {
   property res(real, compose_relative(hyps[0].bnd(), hyps[1].bnd()));
   if (!is_defined(res.bnd())) return NULL;
-  return create_theorem(2, hyps, res, "compose_swap", &compose_updater);
+  return create_theorem(3, hyps, res, "compose_swap", &compose_updater);
 }
 
 proof_scheme *compose_rel_swap_scheme::factory(predicated_real const &real, ast_real_vect const &holders)
@@ -1066,6 +1066,7 @@ proof_scheme *compose_rel_swap_scheme::factory(predicated_real const &real, ast_
   preal_vect hyps;
   hyps.push_back(predicated_real(holders[2], r, PRED_REL));
   hyps.push_back(predicated_real(holders[1], holders[0], PRED_REL));
+  hyps.push_back(predicated_real(p->ops[1], PRED_NZR));
   return new compose_rel_swap_scheme(real, hyps);
 }
 
