@@ -367,6 +367,32 @@ proof_scheme *enforce_bound_scheme::factory(ast_real const *real) {
   return new enforce_bound_scheme(real, p->fun);
 }
 
+// SUB_OF_EQL
+REGISTER_SCHEME_BEGIN(sub_of_eql);
+  predicated_real needed;
+  sub_of_eql_scheme(predicated_real const &r, predicated_real const &n)
+    : proof_scheme(r), needed(n) {}
+REGISTER_SCHEME_END_PATTERN(sub_of_eql, predicated_real(pattern(0) - pattern(1), PRED_BND));
+
+node *sub_of_eql_scheme::generate_proof() const
+{
+  node *n = find_proof(needed);
+  if (!n) return NULL;
+  property res(real, interval(0, 0));
+  return create_theorem(1, &n->get_result(), res, "sub_of_eql");
+}
+
+preal_vect sub_of_eql_scheme::needed_reals() const
+{
+  return preal_vect(1, needed);
+}
+
+proof_scheme *sub_of_eql_scheme::factory(predicated_real const &real, ast_real_vect const &holders)
+{
+  if (holders[0] == holders[1] || is_constant(real.real())) return NULL;
+  return new sub_of_eql_scheme(real, predicated_real(holders[0], holders[1], PRED_EQL));
+}
+
 // COMPUTATION
 REGISTER_SCHEME_BEGIN(computation);
   real_op const *naked_real;
