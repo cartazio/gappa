@@ -42,71 +42,47 @@ struct rewriting_scheme: proof_scheme
   predicated_real rewritten;
   std::string name;
   pattern_cond_vect conditions;
+  preal_vect needed_reals(predicated_real const &, pattern_cond_vect const &) const;
   rewriting_scheme(predicated_real const &src, predicated_real const &dst,
                    std::string const &n, pattern_cond_vect const &c)
-    : proof_scheme(src), rewritten(dst), name(n), conditions(c) {}
-  virtual node *generate_proof() const;
-  virtual preal_vect needed_reals() const;
+    : proof_scheme(src, needed_reals(dst, c)), rewritten(dst), name(n), conditions(c) {}
+  virtual node *generate_proof(property const hyps[]) const;
 };
 
-preal_vect rewriting_scheme::needed_reals() const
+preal_vect rewriting_scheme::needed_reals(predicated_real const &d,
+  pattern_cond_vect const &c) const
 {
   preal_vect res;
-  if (!rewritten.null()) res.push_back(rewritten);
-  for (pattern_cond_vect::const_iterator i = conditions.begin(),
-       end = conditions.end(); i != end; ++i)
+  for (pattern_cond_vect::const_iterator i = c.begin(), i_end = c.end();
+       i != i_end; ++i)
     res.push_back(predicated_real(i->real, i->type == COND_NZ ? PRED_NZR : PRED_BND));
+  if (!d.null()) res.push_back(d);
   return res;
 }
 
-node *rewriting_scheme::generate_proof() const
+node *rewriting_scheme::generate_proof(property const hyps[]) const
 {
-  std::vector< property > hyps;
+  int j = 0;
   bool fail = false;
   for (pattern_cond_vect::const_iterator i = conditions.begin(),
-       i_end = conditions.end(); i != i_end; ++i)
+       i_end = conditions.end(); i != i_end; ++i, ++j)
   {
-    if (i->type == COND_NZ)
-    {
-      node *m = find_proof(predicated_real(i->real, PRED_NZR));
-      if (!m) return NULL;
-      hyps.push_back(m->get_result());
-      continue;
-    }
-    property p(predicated_real(i->real, PRED_BND));
+    if (i->type == COND_NZ) continue;
+    interval const &bnd = hyps[j].bnd();
     number n(i->value);
+    bool good = true;
     switch (i->type)
     {
-      case COND_LE:
-      case COND_LT:
-        p.bnd() = interval(number::neg_inf, n); break;
-      case COND_GE:
-      case COND_GT:
-        p.bnd() = interval(n, number::pos_inf); break;
-      case COND_NE: break;
-      default: assert(false);
+      case COND_LE: good = n >= upper(bnd); break;
+      case COND_LT: good = n >  upper(bnd); break;
+      case COND_GE: good = n <= lower(bnd); break;
+      case COND_GT: good = n <  lower(bnd); break;
+      case COND_NE: good = n > upper(bnd) || n < lower(bnd); break;
+      case COND_NZ: break;
     }
-    if (node *m = find_proof(p))
-    {
-      property const &res = m->get_result();
-      interval const &b = res.bnd();
-      bool good = true;
-      switch(i->type)
-      {
-        case COND_LT: good = n > upper(b); break;
-        case COND_GT: good = n < lower(b); break;
-        case COND_NE: good = n > upper(b) || n < lower(b); break;
-        default: ;
-      }
-      if (good)
-      {
-        hyps.push_back(res);
-        continue;
-      }
-    }
+    if (good) continue;
     if (parameter_constrained) return NULL;
     fail = true;
-    hyps.push_back(p);
   }
   theorem_updater *tu = NULL;
   property p(real);
@@ -115,12 +91,10 @@ node *rewriting_scheme::generate_proof() const
     // straight rewriting, an interval is actually forwarded
     node *n = find_proof(rewritten);
     if (!n) return NULL;
-    property const &res = n->get_result();
-    hyps.push_back(res);
-    p.bnd() = res.bnd();
+    p.bnd() = hyps[j++].bnd();
     tu = identity_updater;
   }
-  return create_theorem(hyps.size(), &*hyps.begin(), p, fail ? "$FALSE" : name, tu);
+  return create_theorem(j, hyps, p, fail ? "$FALSE" : name, tu);
 }
 
 static rewriting_scheme *generate_rewriting_scheme(predicated_real const &src,
@@ -185,27 +159,18 @@ proof_scheme *bnd_rewriting_factory::operator()(predicated_real const &src,
 // PROXY REWRITING
 struct proxy_rewriting_scheme: proof_scheme
 {
-  preal_vect needed;
   std::string name;
-  virtual node *generate_proof() const;
-  virtual preal_vect needed_reals() const;
+  virtual node *generate_proof(property const hyps[]) const;
   proxy_rewriting_scheme(predicated_real const &r, preal_vect const &p,
     std::string const &n)
-  : proof_scheme(r), needed(p), name(n) {}
+  : proof_scheme(r, p), name(n) {}
 };
 
-node *proxy_rewriting_scheme::generate_proof() const
+node *proxy_rewriting_scheme::generate_proof(property const hyps[]) const
 {
-  property hyps[2];
-  if (!fill_hypotheses(hyps, needed)) return NULL;
   property res = hyps[1];
   res.real = real;
   return create_theorem(2, hyps, res, name, identity_updater);
-}
-
-preal_vect proxy_rewriting_scheme::needed_reals() const
-{
-  return needed;
 }
 
 struct proxy_rewriting_factory: scheme_factory

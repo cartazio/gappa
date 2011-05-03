@@ -17,13 +17,14 @@
 
 typedef std::vector< predicated_real > preal_vect;
 
-struct proof_scheme {
-  virtual node *generate_proof() const = 0;
-  virtual preal_vect needed_reals() const = 0;
+struct proof_scheme
+{
+  virtual node *generate_proof(property const []) const = 0;
   virtual ~proof_scheme() {}
-  proof_scheme(ast_real const *r): real(r, PRED_BND), visited(0), score(0) {}
-  proof_scheme(predicated_real const &r): real(r), visited(0), score(0) {}
+  proof_scheme(predicated_real const &r, preal_vect const &n)
+    : real(r), needed_reals(n), visited(0), score(0) {}
   predicated_real real;
+  preal_vect needed_reals;
   mutable unsigned visited;
   bool can_visit() const;
   mutable int score;
@@ -47,8 +48,7 @@ struct factory_creator {
 
 #define REGISTER_SCHEME_BEGIN(name) \
   class name##_scheme: proof_scheme { \
-    virtual node *generate_proof() const; \
-    virtual preal_vect needed_reals() const
+    virtual node *generate_proof(property const []) const
 
 #define REGISTER_SCHEME_END(name) \
    public: \

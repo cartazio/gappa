@@ -208,7 +208,7 @@ static void delete_scheme(proof_scheme const *s, predicated_real const *restrict
   // if there is a restriction, we are removing a scheme that depends on a real,
   // otherwise we are removing a scheme from a real; in both cases, we should
   // not modify the dependencies of this real
-  preal_vect v = s->needed_reals();
+  preal_vect v = s->needed_reals;
   for(preal_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i) {
     predicated_real const &real = *i;
     if (restricted_real && real == *restricted_real) continue;
@@ -266,7 +266,7 @@ static real_dependency &initialize_dependencies(predicated_real const &real)
   for (scheme_set::const_iterator i = l.begin(), i_end = l.end(); i != i_end; ++i)
   {
     proof_scheme const *s = *i;
-    preal_vect v = s->needed_reals();
+    preal_vect v = s->needed_reals;
     for(preal_vect::const_iterator j = v.begin(), j_end = v.end(); j != j_end; ++j)
       initialize_dependencies(*j).dependent.insert(s);
   }
@@ -283,7 +283,7 @@ typedef std::list< predicated_real > preal_list;
  */
 static bool depends_only_on(proof_scheme const *s, predicated_real const &real)
 {
-  preal_vect v = s->needed_reals();
+  preal_vect v = s->needed_reals;
   if (v.empty()) return false;
   ++visit_counter;
   reals[real].visited = visit_counter;
@@ -301,7 +301,7 @@ static bool depends_only_on(proof_scheme const *s, predicated_real const &real)
     {
       proof_scheme const *t = *i;
       if (!t) return false;
-      preal_vect w = t->needed_reals();
+      preal_vect w = t->needed_reals;
       if (w.empty()) return false;
       for (preal_vect::const_iterator j = w.begin(), j_end = w.end(); j != j_end; ++j)
         if (reals[*j].can_visit()) pending_reals.push_back(*j);
@@ -349,7 +349,7 @@ static void mark_useful_reals(predicated_real const &real)
     {
       proof_scheme const *s = *i;
       if (!s) continue;
-      preal_vect w = s->needed_reals();
+      preal_vect w = s->needed_reals;
       for (preal_vect::const_iterator j = w.begin(), j_end = w.end(); j != j_end; ++j)
         if (reals[*j].can_visit()) pending_reals.push_back(*j);
     }
@@ -363,15 +363,15 @@ static bool is_useless_scheme(proof_scheme const *s)
 {
   predicated_real rfix = s->real;
   if (rfix.pred() != PRED_FIX) return false;
-  preal_vect v = s->needed_reals();
+  preal_vect v = s->needed_reals;
   if (v.size() != 2) return false;
   predicated_real rflt = v[0], rabs = v[1];
   if (rflt != predicated_real(rfix.real(), PRED_FLT)) return false;
   if (rabs != predicated_real(rfix.real(), PRED_ABS)) return false;
   real_dependency const &r = reals[rflt];
   if (r.schemes.size() != 2) return false;
-  v = (*r.schemes.begin())->needed_reals();
-  preal_vect v2 = (*++r.schemes.begin())->needed_reals();
+  v = (*r.schemes.begin())->needed_reals;
+  preal_vect v2 = (*++r.schemes.begin())->needed_reals;
   if (v.size() < v2.size()) std::swap(v, v2);
   if (v.size() != 2 || v2.size() != 1) return false;
   if (v[0] != rfix || v[1] != rabs || v2[0] != rabs) return false;
@@ -406,7 +406,7 @@ preal_vect generate_proof_paths()
     for (scheme_set::iterator j = r.schemes.begin(), j_end = r.schemes.end(); j != j_end; ++j)
     {
       proof_scheme const *s = *j;
-      if (!s || !s->needed_reals().empty()) continue;
+      if (!s || !s->needed_reals.empty()) continue;
       s->visited = visit_counter;
       mark_dependent_schemes(s->real);
     }
@@ -498,7 +498,7 @@ preal_vect generate_proof_paths()
     for (scheme_set::iterator j = r.schemes.begin(), j_end = r.schemes.end(); j != j_end; ++j)
     {
       proof_scheme const *s = *j;
-      if (s->needed_reals().empty())
+      if (s->needed_reals.empty())
         source_schemes.push_back(s);
     }
     r.dependent.erase(NULL);
@@ -530,7 +530,7 @@ preal_vect generate_proof_paths()
       for (scheme_set::iterator j = r.schemes.begin(), j_end = r.schemes.end(); j != j_end; ++j)
       {
         ++num_th;
-        preal_vect v = (*j)->needed_reals();
+        preal_vect v = (*j)->needed_reals;
         for (preal_vect::const_iterator k = v.begin(), k_end = v.end(); k != k_end; ++k)
           out << "  \"" << var << "\":" << num_th << " -> \"" << dump_real(*k) << "\";\n";
       }
@@ -671,9 +671,14 @@ void graph_t::populate(property_tree const &goals, property_tree const &targets,
     {
       s->visited = 0; // allows the scheme to be reused later, if needed
       ++stat_tested_th;
-      node *n = s->generate_proof();
+      property hyps[s->needed_reals.size()];
+      if (!fill_hypotheses(hyps, s->needed_reals)) {
+        // The scheme is missing some hypotheses.
+        continue;
+      }
+      node *n = s->generate_proof(hyps);
       if (!n || !try_real(n)) {
-        // The scheme did not find anything useful.
+        // The scheme failed or did not find anything new.
         continue;
       }
       s->score += scheme_queue::success_score;
@@ -681,6 +686,7 @@ void graph_t::populate(property_tree const &goals, property_tree const &targets,
         // We have got a contradiction, everything is true.
         return;
       }
+      //std::cout << dump_property(n->get_result()) << '\t' << typeid(*s).name() << '\n';
       insert_dependent(missing_schemes, s->real, s);
       if (current_goals.empty()) {
         // Originally empty, we are striving for a contradiction.
