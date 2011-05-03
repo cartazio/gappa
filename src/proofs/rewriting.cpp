@@ -36,8 +36,9 @@ RUN_ONCE(load_numbers) {
   token_one = normalize(num);
 }
 
-// REWRITING_SCHEME
-struct rewriting_scheme: proof_scheme {
+// REWRITING
+struct rewriting_scheme: proof_scheme
+{
   predicated_real rewritten;
   std::string name;
   pattern_cond_vect conditions;
@@ -50,16 +51,16 @@ struct rewriting_scheme: proof_scheme {
 
 preal_vect rewriting_scheme::needed_reals() const
 {
-  preal_vect res(1, rewritten);
+  preal_vect res;
+  if (!rewritten.null()) res.push_back(rewritten);
   for (pattern_cond_vect::const_iterator i = conditions.begin(),
        end = conditions.end(); i != end; ++i)
     res.push_back(predicated_real(i->real, i->type == COND_NZ ? PRED_NZR : PRED_BND));
   return res;
 }
 
-node *rewriting_scheme::generate_proof() const {
-  node *n = find_proof(rewritten);
-  if (!n) return NULL;
+node *rewriting_scheme::generate_proof() const
+{
   std::vector< property > hyps;
   bool fail = false;
   for (pattern_cond_vect::const_iterator i = conditions.begin(),
@@ -107,46 +108,25 @@ node *rewriting_scheme::generate_proof() const {
     fail = true;
     hyps.push_back(p);
   }
-  property const &res = n->get_result();
-  hyps.push_back(res);
-  return create_theorem(hyps.size(), &*hyps.begin(), property(real, res.bnd()),
-                        fail ? "$FALSE" : name, identity_updater);
+  theorem_updater *tu = NULL;
+  property p(real);
+  if (!rewritten.null())
+  {
+    // REL rewriting, an interval is actually forwarded
+    node *n = find_proof(rewritten);
+    if (!n) return NULL;
+    property const &res = n->get_result();
+    hyps.push_back(res);
+    p.bnd() = res.bnd();
+    tu = identity_updater;
+  }
+  return create_theorem(hyps.size(), &*hyps.begin(), p, fail ? "$FALSE" : name, tu);
 }
 
-// REWRITING_FACTORY
-struct rewriting_factory: scheme_factory
+static rewriting_scheme *generate_rewriting_scheme(predicated_real const &src,
+  predicated_real const &dst, std::string const &name, rewriting_rule const *rule,
+  ast_real_vect const &holders)
 {
-  predicated_real dst;
-  std::string name;
-  rewriting_rule const *rule;
-  pattern_cond_vect cond;
-  virtual proof_scheme *operator()(predicated_real const &, ast_real_vect const &) const;
-  rewriting_factory(predicated_real const &p1, predicated_real const &p2,
-                    std::string const &n, rewriting_rule const *r)
-    : scheme_factory(p1), dst(p2), name(n), rule(r), cond() {}
-  rewriting_factory(predicated_real const &p1, predicated_real const &p2,
-                    std::string const &n, pattern_cond_vect const &c)
-    : scheme_factory(p1), dst(p2), name(n), rule(NULL), cond(c) {}
-};
-
-proof_scheme *rewriting_factory::operator()(predicated_real const &src,
-                                            ast_real_vect const &holders) const
-{
-  if (!rule)
-  {
-    // user-defined rule, no placeholders nor exclusions
-    assert(holders.empty());
-    return new rewriting_scheme(src, dst, name, cond);
-  }
-
-  // hard-coded rule
-  predicate_type t = dst.pred();
-  ast_real const *r = rewrite(dst.real(), holders);
-
-  predicated_real d = t == PRED_REL
-    ? predicated_real(r, rewrite(dst.real2(), holders), t)
-    : predicated_real(r, t);
-
   for (pattern_excl_vect::const_iterator i = rule->excl.begin(),
        i_end = rule->excl.end(); i != i_end; ++i)
   {
@@ -157,7 +137,135 @@ proof_scheme *rewriting_factory::operator()(predicated_real const &src,
   pattern_cond_vect c(rule->cond);
   for (pattern_cond_vect::iterator i = c.begin(), end = c.end(); i != end; ++i)
     i->real = rewrite(i->real, holders);
-  return new rewriting_scheme(src, d, name, c);
+  return new rewriting_scheme(src, dst, name, c);
+}
+
+struct rewriting_factory: scheme_factory
+{
+  std::string name;
+  rewriting_rule const *rule;
+  pattern_cond_vect cond;
+  virtual proof_scheme *operator()(predicated_real const &, ast_real_vect const &) const;
+  rewriting_factory(ast_real const *src, ast_real const *dst, std::string const &n,
+    rewriting_rule const *r, pattern_cond_vect const &c)
+  : scheme_factory(predicated_real(src, unhide(dst), PRED_EQL)), name(n), rule(r), cond(c) {}
+};
+
+proof_scheme *rewriting_factory::operator()(predicated_real const &src,
+  ast_real_vect const &holders) const
+{
+  if (rule)
+    return generate_rewriting_scheme(src, predicated_real(), name, rule, holders);
+  // user-defined rule, no exclusions, nor placeholders in conditions
+  return new rewriting_scheme(src, predicated_real(), name, cond);
+}
+
+struct rel_rewriting_factory: scheme_factory
+{
+  predicated_real dst;
+  std::string name;
+  rewriting_rule const *rule;
+  virtual proof_scheme *operator()(predicated_real const &, ast_real_vect const &) const;
+  rel_rewriting_factory(predicated_real const &p1, predicated_real const &p2,
+    std::string const &n, rewriting_rule const *r)
+  : scheme_factory(p1), dst(p2), name(n), rule(r) {}
+};
+
+proof_scheme *rel_rewriting_factory::operator()(predicated_real const &src,
+  ast_real_vect const &holders) const
+{
+  return generate_rewriting_scheme(src,
+    predicated_real(rewrite(dst.real(), holders), rewrite(dst.real2(), holders),
+      PRED_REL), name, rule, holders);
+}
+
+// PROXY REWRITING
+struct proxy_rewriting_scheme: proof_scheme
+{
+  preal_vect needed;
+  std::string name;
+  virtual node *generate_proof() const;
+  virtual preal_vect needed_reals() const;
+  proxy_rewriting_scheme(predicated_real const &r, preal_vect const &p,
+    std::string const &n)
+  : proof_scheme(r), needed(p), name(n) {}
+};
+
+node *proxy_rewriting_scheme::generate_proof() const
+{
+  property hyps[2];
+  if (!fill_hypotheses(hyps, needed)) return NULL;
+  property res = hyps[1];
+  res.real = real;
+  return create_theorem(2, hyps, res, name, identity_updater);
+}
+
+preal_vect proxy_rewriting_scheme::needed_reals() const
+{
+  return needed;
+}
+
+struct proxy_rewriting_factory: scheme_factory
+{
+  predicated_real dst;
+  ast_real const *rsrc, *rdst;
+  std::string name;
+  rewriting_rule const *rule;
+  virtual proof_scheme *operator()(predicated_real const &, ast_real_vect const &) const;
+  proxy_rewriting_factory(ast_real const *r1, ast_real const *r2,
+    predicated_real const &p1, predicated_real const &p2, std::string const &n,
+    rewriting_rule const *rr)
+  : scheme_factory(p1), dst(p2), rsrc(r1), rdst(r2), name(n), rule(rr) {}
+};
+
+proof_scheme *proxy_rewriting_factory::operator()(predicated_real const &src,
+  ast_real_vect const &holders) const
+{
+  if (rule)
+  {
+    for (pattern_excl_vect::const_iterator i = rule->excl.begin(),
+         i_end = rule->excl.end(); i != i_end; ++i)
+    {
+      if (rewrite(i->first, holders) == rewrite(i->second, holders))
+        return NULL;
+    }
+  }
+
+  predicate_type t = dst.pred();
+  ast_real const *r = rewrite(dst.real(), holders);
+  preal_vect needed;
+  needed.push_back(predicated_real(rewrite(rsrc, holders), rewrite(unhide(rdst), holders), PRED_EQL));
+  needed.push_back(t == PRED_REL
+    ? predicated_real(r, rewrite(dst.real2(), holders), t)
+    : predicated_real(r, t));
+  return new proxy_rewriting_scheme(src, needed, name);
+}
+
+// REWRITING GENERATION
+static void generate_all_rewrite(ast_real const *src, ast_real const *dst,
+  std::string const &n, rewriting_rule const *r, pattern_cond_vect const &c,
+  bool only_bnd)
+{
+  new rewriting_factory(src, dst, n, r, c);
+  typedef predicated_real pr;
+  static struct { predicate_type t; char const *n; } const ths[] = {
+    { PRED_BND, "bnd_rewrite" },
+    { PRED_ABS, "abs_rewrite" },
+    { PRED_FIX, "fix_rewrite" },
+    { PRED_FLT, "flt_rewrite" },
+    { PRED_NZR, "nzr_rewrite" },
+  };
+  if (only_bnd) {
+    new proxy_rewriting_factory(src, dst, pr(src, PRED_BND), pr(dst, PRED_BND), ths[0].n, r);
+    return;
+  }
+  for (unsigned i = 0; i != sizeof(ths) / sizeof(ths[0]); ++i)
+    new proxy_rewriting_factory(src, dst, pr(src, ths[i].t), pr(dst, ths[i].t), ths[i].n, r);
+  pattern free(count_missing(src));
+  new proxy_rewriting_factory(src, dst, pr(src, free, PRED_REL),
+    pr(dst, free, PRED_REL), "rel_rewrite_1", r);
+  new proxy_rewriting_factory(src, dst, pr(free, src, PRED_REL),
+    pr(free, dst, PRED_REL), "rel_rewrite_2", r);
 }
 
 void register_user_rewrite(ast_real const *r1, ast_real const *r2, hint_cond_vect *hc)
@@ -178,11 +286,9 @@ void register_user_rewrite(ast_real const *r1, ast_real const *r2, hint_cond_vec
     }
   }
   std::string name = proof_generator ? proof_generator->rewrite(r1, r2, pc) : "$AXIOM";
-  predicated_real p1(r1, PRED_BND), p2(r2, PRED_BND);
-  new rewriting_factory(p1, p2, name, pc);
+  generate_all_rewrite(r1, r2, name, NULL, pc, false);
 }
 
-// REWRITING_RULE
 rewriting_vect rewriting_rules;
 
 rewriting_rule::rewriting_rule
@@ -191,14 +297,12 @@ rewriting_rule::rewriting_rule
   : src(r1), dst(r2), cond(c), excl(e)
 {
   rewriting_rules.push_back(this);
-  predicated_real p1(r1, PRED_BND), p2(r2, PRED_BND);
   ast_real const *h1[2], *h2[2];
-  if (relative_error(r1, h1) && relative_error(r2, h2))
-  {
-    p1 = predicated_real(h1[1], h1[0], PRED_REL);
-    p2 = predicated_real(h2[1], h2[0], PRED_REL);
-  }
-  new rewriting_factory(p1, p2, n, this);
+  if (relative_error(r1, h1) && relative_error(r2, h2)) {
+    new rel_rewriting_factory(
+      predicated_real(h1[1], h1[0], PRED_REL),
+      predicated_real(h2[1], h2[0], PRED_REL), n, this);
+  } else generate_all_rewrite(r1, r2, n, this, pattern_cond_vect(), true);
 }
 
 // PATTERN OPERATIONS
