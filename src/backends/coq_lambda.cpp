@@ -96,6 +96,7 @@ static char const *theorem_defs[][2] = {
   { "mul_rr", "$gpred_rel.$t $1x $1y $2x $2y $1i $2i $i $" },
   { "div_rr", "$gpred_rel.$t $1x $1y $2x $3x $1i $2i $i $" },
   { "compose", "$gpred_rel.$t $1x $1y $2y $1i $2i $i $" },
+  { "compose_swap", "$gpred_rel.$t $1x $y $2x $3x $1i $2i $i $" },
 
   { "add_fix", "$gpred_fixflt.$t $1x $2x $1c $2c $c $" },
   { "sub_fix", "$gpred_fixflt.$t $1x $2x $1c $2c $c $" },
@@ -145,6 +146,7 @@ static char const *theorem_defs[][2] = {
 
   { "fixed_round", "$gfixed.$t _ _ $1x $1i $i $" },
   { "fixed_error_dn", "$gfixed.$t _ _ $i $" },
+  { "fixed_error_ne", "$gfixed.$t _ _ $i $" },
 
   { "opp_mibs", "$grewriting.$t _ _ $i $1p" },
   { "add_xals", "$grewriting.$t _ _ _ $i $1p" },
