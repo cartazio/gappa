@@ -54,7 +54,6 @@ S1 = yh + (yl + yhts);               # remove last round on $s$
 
 $ My in (0);
 
-yh ~ Yhl;
 (yh - Yhl) / Yhl -> 1 / (1 + yl / yh) - 1;
 
 S1 ~ PolySinY;
