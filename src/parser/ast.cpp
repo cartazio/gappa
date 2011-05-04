@@ -255,7 +255,7 @@ std::string dump_prop_tree(property_tree const &pt)
     if (first) first = false;
     else s << (pt->conjunction ? " /\\ " : " \\/ ");
     if (!i->second) s << "not ";
-    s << dump_real_short(i->first.real);
+    s << dump_real(i->first.real);
   }
   for (std::vector<property_tree>::const_iterator i = pt->subtrees.begin(),
        i_end = pt->subtrees.end(); i != i_end; ++i)
@@ -279,6 +279,13 @@ static std::string dump_number(number const &f)
 
 std::string dump_property_nice(property const &p)
 {
+  if (p.real.pred() == PRED_EQL)
+  {
+    std::ostringstream s;
+    s << dump_real(p.real.real()) << " = " << dump_real(p.real.real2());
+    return s.str();
+  }
+  if (!p.real.pred_bnd()) return "@" + dump_property(p);
   std::ostringstream s;
   std::string r = dump_real_short(p.real);
   interval const &bnd = p.bnd();

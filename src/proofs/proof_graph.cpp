@@ -377,8 +377,7 @@ graph_t::graph_t(graph_t *f, property_vect const &h)
   }
   for (property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
   {
-    interval const &bnd = i->bnd();
-    if (!is_bounded(bnd))
+    if (i->real.pred_bnd() && !is_bounded(i->bnd()))
     {
       if (known_reals.count(i->real) == 0)
         partial_reals.insert(std::make_pair(i->real, new hypothesis_node(*i)));

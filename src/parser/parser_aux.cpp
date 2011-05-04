@@ -49,22 +49,33 @@ void check_approx(ast_real const *real)
     register_approx(o->ops[0], o->ops[1]);
 }
 
-static property generate_property(ast_atom_bound const &p, bool goal)
+static property generate_property(ast_atom const &p, bool goal)
 {
-  predicated_real pr;
-  if (p.real2)
-    pr = predicated_real(p.real, p.real2, PRED_REL);
-  else
-    pr = predicated_real(p.real, PRED_BND);
+  predicated_real pr(p.real, p.real2, p.type);
   output_reals.insert(pr);
+  switch (p.type) {
+  case PRED_FIX:
+  case PRED_FLT:
+    input_reals.insert(pr);
+    return property(pr, p.cst);
+  case PRED_EQL:
+  case PRED_NZR:
+    input_reals.insert(pr);
+    return property(pr);
+  case PRED_BND:
+  case PRED_ABS:
+  case PRED_REL:
+    break;
+  }
+
   property r(pr);
   if (p.lower || p.upper)
   {
     input_reals.insert(pr);
-    if (pr.real2())
-      register_approx(pr.real(), pr.real2());
+    if (p.real2)
+      register_approx(p.real, p.real2);
     else
-      check_approx(pr.real());
+      check_approx(p.real);
 
     interval &bnd = r.bnd();
     bnd = create_interval(p.lower, p.upper, !goal);
@@ -163,6 +174,8 @@ static void parse_property_tree(ast_prop const *p, context &ctx)
   for (input_set::const_iterator i = inputs.begin(),
        i_end = inputs.end(); i != i_end; ++i)
   {
+    ctx.hyp.push_back(i->second);
+    if (!i->second.real.pred_bnd()) continue;
     interval const &bnd = i->second.bnd();
     // bail out early if there is an empty set on an input
     if (is_empty(bnd))
@@ -171,7 +184,6 @@ static void parse_property_tree(ast_prop const *p, context &ctx)
                 << " are trivially contradictory, skipping.\n";
       exit(0);
     }
-    ctx.hyp.push_back(i->second);
   }
 
   tree->leaves = new_leaves;
@@ -179,16 +191,16 @@ static void parse_property_tree(ast_prop const *p, context &ctx)
     ctx.goals = tree;
 }
 
-static void delete_prop(ast_prop const *p) {
+static void delete_prop(ast_prop const *p)
+{
   switch (p->type) {
-  case PROP_NOT:
-    delete_prop(p->lhs);
-    break;
   case PROP_AND:
   case PROP_OR:
   case PROP_IMPL:
-    delete_prop(p->lhs);
     delete_prop(p->rhs);
+    // no break
+  case PROP_NOT:
+    delete_prop(p->lhs);
     break;
   case PROP_ATOM:
     delete p->atom;

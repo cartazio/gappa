@@ -210,6 +210,7 @@ static int check_imply(bool positive, property const &p, property const &q)
   if (positive)
   {
     if (p.implies(q)) return 1;
+    if (!p.real.pred_bnd()) return 0;
     property t = p;
     t.intersect(q);
     if (is_empty(t.bnd())) return -1;
@@ -230,7 +231,7 @@ int property_tree::simplify(property const &p, bool positive, bool force)
     ptr = NULL;
     return res;
   }
-  assert(ptr && (p.real.pred() == PRED_BND || p.real.pred() == PRED_REL));
+  assert(ptr);
   unique();
 
   // Filter out satisfied leaves.
@@ -241,7 +242,7 @@ int property_tree::simplify(property const &p, bool positive, bool force)
   {
     if (i->first.real != p.real)
       ;
-    else if (!is_defined(i->first.bnd()))
+    else if (i->first.real.pred_bnd() && !is_defined(i->first.bnd()))
     {
       // True by choice.
       if (force || !i->second) {
@@ -331,7 +332,9 @@ bool property_tree::get_nodes_aux(goal_vect &goals) const
        i_end = ptr->leaves.end(); i != i_end; ++i)
   {
     if (node *n = find_proof(i->first, i->second)) {
-      interval b = i->second ? i->first.bnd() : n->get_result().bnd();
+      interval b;
+      if (i->first.real.pred_bnd())
+        b = i->second ? i->first.bnd() : n->get_result().bnd();
       goals.push_back(std::make_pair(n, b));
       if (!ptr->conjunction) return true;
     } else all = false;
@@ -427,6 +430,7 @@ void property_tree::get_splitting(splitting &res) const
   for (std::vector< leave >::const_iterator i = ptr->leaves.begin(),
        i_end = ptr->leaves.end(); i != i_end; ++i)
   {
+    if (!i->first.real.pred_bnd()) continue;
     interval const &b = i->first.bnd();
     if (!is_defined(b)) continue;
     split_point_mset &nums = res[i->first.real];

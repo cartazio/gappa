@@ -572,6 +572,7 @@ node *find_proof(property const &res, bool implies)
   if (!n) return NULL;
   if (implies && !n->get_result().implies(res)) return NULL;
   if (!implies) {
+    if (!res.real.pred_bnd()) return NULL;
     property p = n->get_result();
     p.intersect(res);
     if (!is_empty(p.bnd())) return NULL;

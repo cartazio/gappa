@@ -74,7 +74,7 @@ static unsigned long read_integer_param(ast_number const *n)
 %pure-parser
 %locations
 
-%token IDENT FUNID VARID IN NUMBER SQRT FMA NE LE GE RDIV
+%token IDENT FUNID VARID IN NUMBER SQRT FMA NE LE GE RDIV FIX FLT
 
 %union {
   ast_number const	*number;
@@ -129,17 +129,22 @@ PROP:
   REAL LE SNUMBER
   {
     real_op const *p = boost::get< real_op const >($1);
-    $$ = new ast_prop(new ast_atom_bound($1, (!p || p->type != UOP_ABS) ? NULL : token_zero, $3));
+    $$ = new ast_prop(ast_atom_bnd($1, (!p || p->type != UOP_ABS) ? NULL : token_zero, $3));
   }
+| FIX '(' REAL ',' SINTEGER ')'
+			{ $$ = new ast_prop(ast_atom_fix($3, atoi($5->mantissa.c_str()))); }
+| FLT '(' REAL ',' INTEGER ')'
+			{ $$ = new ast_prop(ast_atom_flt($3, atoi($5->mantissa.c_str()))); }
 | REAL IN '[' SNUMBER ',' SNUMBER ']'
-			{ $$ = new ast_prop(new ast_atom_bound($1, $4, $6)); }
-| REAL IN '?'		{ $$ = new ast_prop(new ast_atom_bound($1, NULL, NULL)); }
-| REAL GE SNUMBER	{ $$ = new ast_prop(new ast_atom_bound($1, $3, NULL)); }
+			{ $$ = new ast_prop(ast_atom_bnd($1, $4, $6)); }
+| REAL IN '?'		{ $$ = new ast_prop(ast_atom_bnd($1, NULL, NULL)); }
+| REAL GE SNUMBER	{ $$ = new ast_prop(ast_atom_bnd($1, $3, NULL)); }
 | REAL RDIV REAL IN '[' SNUMBER ',' SNUMBER ']'
-			{ $$ = new ast_prop(new ast_atom_bound($1, $3, $6, $8)); }
+			{ $$ = new ast_prop(ast_atom_rel($1, $3, $6, $8)); }
 | '|' REAL RDIV REAL '|' LE NUMBER
-			{ $$ = new ast_prop(new ast_atom_bound($2, $4, negative_number($7), $7)); }
-| REAL RDIV REAL IN '?'	{ $$ = new ast_prop(new ast_atom_bound($1, $3, NULL, NULL)); }
+			{ $$ = new ast_prop(ast_atom_rel($2, $4, negative_number($7), $7)); }
+| REAL RDIV REAL IN '?'	{ $$ = new ast_prop(ast_atom_rel($1, $3, NULL, NULL)); }
+| REAL '=' REAL		{ $$ = new ast_prop(ast_atom_eql($1, $3)); }
 | PROP AND PROP		{ $$ = new ast_prop($1, PROP_AND,  $3); }
 | PROP OR PROP		{ $$ = new ast_prop($1, PROP_OR,   $3); }
 | PROP IMPL PROP	{ $$ = new ast_prop($1, PROP_IMPL, $3); }

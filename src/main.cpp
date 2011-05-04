@@ -52,7 +52,7 @@ void display_context(context const &ctx)
       std::cerr << " for ";
       for(unsigned i = 0; i < nb_hyp; ++i) {
         if (i != 0) std::cerr << " and ";
-        std::cerr << dump_real_short(hyp[i].real) << " in " << hyp[i].bnd();
+        std::cerr << dump_property_nice(hyp[i]);
       }
     }
     std::cerr << ":\n";
@@ -77,7 +77,7 @@ int main(int argc, char **argv)
   for (preal_vect::const_iterator i = missing_paths.begin(),
        i_end = missing_paths.end(); i != i_end; ++i)
   {
-    std::cerr << "Warning: no path was found for " << dump_real_short(*i) << ".\n";
+    std::cerr << "Warning: no path was found for " << dump_real(*i) << ".\n";
   }
   bool globally_proven = true;
   {
@@ -115,15 +115,16 @@ int main(int argc, char **argv)
       {
         node *n = *j;
         assert(n->type == GOAL);
-        results[dump_real_short(n->get_result().real)] = n;
+        results[dump_real(n->get_result().real)] = n;
       }
       display_context(current_context);
       for (named_nodes::const_iterator j = results.begin(),
            j_end = results.end(); j != j_end; ++j)
       {
         node *n = j->second;
+        property const &res = n->get_result();
         detailed_io = true;
-        std::cerr << j->first << " in " << n->get_result().bnd() << '\n';
+        std::cerr << dump_property_nice(res) << '\n';
         detailed_io = false;
         if (proof_generator) proof_generator->theorem(n);
       }
