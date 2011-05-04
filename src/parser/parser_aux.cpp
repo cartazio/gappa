@@ -32,12 +32,6 @@ void find_unknown_reals(real_set &, ast_real const *);
 extern bool warning_unbound_variable;
 extern bool goal_reduction;
 
-static void register_approx(ast_real const *r1, ast_real const *r2)
-{
-  accurates[r1].insert(r2);
-  approximates[r2].insert(r1);
-}
-
 void check_approx(ast_real const *real)
 {
   real_op const *o = boost::get< real_op const >(real);

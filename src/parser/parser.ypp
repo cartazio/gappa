@@ -329,6 +329,7 @@ HINTS:
     }
     check_approx(r1);
     register_user_rewrite(r1, r2, hc);
+    register_approx(r1, r2);
     delete hc;
   }
 | HINTS REALS '$' DVARS ';'
@@ -346,8 +347,6 @@ HINTS:
   }
 | HINTS REAL '~' REAL ';'
   {
-    if (accurates[$2].insert($4).second)
-      approximates[$4].insert($2);
-    else
+    if (!register_approx($2, $4))
       warning("relation already known");
   }

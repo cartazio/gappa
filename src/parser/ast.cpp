@@ -23,6 +23,14 @@ extern std::string get_real_split(number const &f, int &exp, bool &zero);
 extern bool parameter_rfma;
 link_map accurates, approximates;
 
+bool register_approx(ast_real const *r1, ast_real const *r2)
+{
+  if (r1 == r2) return false;
+  if (!accurates[r1].insert(r2).second) return false;
+  approximates[r2].insert(r1);
+  return true;
+}
+
 template< class T >
 class cache {
   struct less_t {
@@ -126,8 +134,7 @@ ast_real *normalize(ast_real const &v)
   real_op *o = boost::get< real_op >(p);
   if (!o || !o->fun || o->fun->type == ROP_UNK) return p;
   ast_real const *a = unround(o->fun->type, o->ops);
-  accurates[p].insert(a);
-  approximates[a].insert(p);
+  register_approx(p, a);
   return p;
 }
 
