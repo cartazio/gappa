@@ -230,6 +230,10 @@ static void generate_all_proxy_rewrite(ast_real const *src,
     pr(free, dst, PRED_REL), "rel_rewrite_2", e);
 }
 
+RUN_ONCE(approximate_rewrite) {
+  generate_all_proxy_rewrite(pattern(1), pattern(0), NULL);
+}
+
 void register_user_rewrite(ast_real const *r1, ast_real const *r2, hint_cond_vect *hc)
 {
   pattern_cond_vect pc;
