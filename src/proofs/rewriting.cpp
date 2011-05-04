@@ -178,21 +178,21 @@ struct proxy_rewriting_factory: scheme_factory
   predicated_real dst;
   ast_real const *rsrc, *rdst;
   std::string name;
-  rewriting_rule const *rule;
+  pattern_excl_vect const *excl;
   virtual proof_scheme *operator()(predicated_real const &, ast_real_vect const &) const;
   proxy_rewriting_factory(ast_real const *r1, ast_real const *r2,
     predicated_real const &p1, predicated_real const &p2, std::string const &n,
-    rewriting_rule const *rr)
-  : scheme_factory(p1), dst(p2), rsrc(r1), rdst(r2), name(n), rule(rr) {}
+    pattern_excl_vect const *e)
+  : scheme_factory(p1), dst(p2), rsrc(r1), rdst(r2), name(n), excl(e) {}
 };
 
 proof_scheme *proxy_rewriting_factory::operator()(predicated_real const &src,
   ast_real_vect const &holders) const
 {
-  if (rule)
+  if (excl)
   {
-    for (pattern_excl_vect::const_iterator i = rule->excl.begin(),
-         i_end = rule->excl.end(); i != i_end; ++i)
+    for (pattern_excl_vect::const_iterator i = excl->begin(),
+         i_end = excl->end(); i != i_end; ++i)
     {
       if (rewrite(i->first, holders) == rewrite(i->second, holders))
         return NULL;
@@ -210,10 +210,9 @@ proof_scheme *proxy_rewriting_factory::operator()(predicated_real const &src,
 }
 
 // REWRITING GENERATION
-static void generate_all_rewrite(ast_real const *src, ast_real const *dst,
-  std::string const &n, rewriting_rule const *r, pattern_cond_vect const &c)
+static void generate_all_proxy_rewrite(ast_real const *src,
+  ast_real const *dst, pattern_excl_vect const *e)
 {
-  new rewriting_factory(src, dst, n, r, c);
   typedef predicated_real pr;
   static struct { predicate_type t; char const *n; } const ths[] = {
     { PRED_BND, "bnd_rewrite" },
@@ -223,12 +222,12 @@ static void generate_all_rewrite(ast_real const *src, ast_real const *dst,
     { PRED_NZR, "nzr_rewrite" },
   };
   for (unsigned i = 0; i != sizeof(ths) / sizeof(ths[0]); ++i)
-    new proxy_rewriting_factory(src, dst, pr(src, ths[i].t), pr(dst, ths[i].t), ths[i].n, r);
+    new proxy_rewriting_factory(src, dst, pr(src, ths[i].t), pr(dst, ths[i].t), ths[i].n, e);
   pattern free(count_missing(src));
   new proxy_rewriting_factory(src, dst, pr(src, free, PRED_REL),
-    pr(dst, free, PRED_REL), "rel_rewrite_1", r);
+    pr(dst, free, PRED_REL), "rel_rewrite_1", e);
   new proxy_rewriting_factory(src, dst, pr(free, src, PRED_REL),
-    pr(free, dst, PRED_REL), "rel_rewrite_2", r);
+    pr(free, dst, PRED_REL), "rel_rewrite_2", e);
 }
 
 void register_user_rewrite(ast_real const *r1, ast_real const *r2, hint_cond_vect *hc)
@@ -249,7 +248,8 @@ void register_user_rewrite(ast_real const *r1, ast_real const *r2, hint_cond_vec
     }
   }
   std::string name = proof_generator ? proof_generator->rewrite(r1, r2, pc) : "$AXIOM";
-  generate_all_rewrite(r1, r2, name, NULL, pc);
+  new rewriting_factory(r1, r2, name, NULL, pc);
+  generate_all_proxy_rewrite(r1, r2, NULL);
 }
 
 rewriting_vect rewriting_rules;
