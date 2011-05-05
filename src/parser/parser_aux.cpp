@@ -229,11 +229,17 @@ static void check_unbound()
 
 extern context goal;
 
-void generate_graph(ast_prop const *p)
+void parse_property_tree(property_tree &tree, ast_prop const *p)
 {
-  property_tree tree(new property_tree::data(false));
+  tree = new property_tree::data(false);
   generate_tree(tree, p, true);
   delete_prop(p);
+}
+
+void generate_graph(ast_prop const *p)
+{
+  property_tree tree;
+  parse_property_tree(tree, p);
   massage_property_tree(tree, goal);
   if (warning_unbound_variable)
     check_unbound();

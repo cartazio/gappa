@@ -119,7 +119,7 @@ struct property_tree
   { if (ptr != t.ptr) { decr(); ptr = t.ptr; incr(); } return *this; }
   ~property_tree() { decr(); }
   void unique();
-  void restrict(ast_real_vect const &);
+  void fill_undefined(property_tree const &);
   data const *operator->() const { return ptr; }
   data *operator->() { unique(); return ptr; }
   bool empty() const { return !ptr; }

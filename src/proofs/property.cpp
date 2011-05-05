@@ -382,37 +382,57 @@ void property_tree::get_nodes(graph_t *g, node_vect &goals)
   g->replace_known(goals);
 }
 
+/**
+ * Look for a leave in @a from about the same predicated_real than @a p.
+ * Fill @a p with its content.
+ * @return true when successful.
+ */
+static bool lookup(property_tree::leave &p, property_tree const &from)
+{
+  for (std::vector<property_tree::leave>::const_iterator i = from->leaves.begin(),
+       i_end = from->leaves.end(); i != i_end; ++i)
+  {
+    if (p.second == i->second && p.first.real == i->first.real && is_defined(i->first.bnd())) {
+      p.first.bnd() = i->first.bnd();
+      return true;
+    }
+  }
+  for (std::vector<property_tree>::const_iterator i = from->subtrees.begin(),
+       i_end = from->subtrees.end(); i != i_end; ++i)
+  {
+    if (lookup(p, *i)) return true;
+  }
+  return false;
+}
+
 struct remove_pred3
 {
-  ast_real_vect const &dst;
-  remove_pred3(ast_real_vect const &v): dst(v) {}
-  bool operator()(property_tree::leave const &p)
+  property_tree const &base;
+  remove_pred3(property_tree const &t): base(t) {}
+  bool operator()(property_tree::leave &p) const
   {
-    for (ast_real_vect::const_iterator i = dst.begin(),
-         i_end = dst.end(); i != i_end; ++i)
-    {
-      if (p.second && p.first.real.pred() == PRED_BND &&
-          p.first.real.real() == *i && is_defined(p.first.bnd()))
-        return false;
-    }
-    return true;
+    if (!p.first.real.pred_bnd() || is_defined(p.first.bnd())) return false;
+    return !lookup(p, base);
   }
 };
 
-struct remove_pred4 {
-  ast_real_vect const &dst;
-  remove_pred4(ast_real_vect const &v): dst(v) {}
-  bool operator()(property_tree &t) {
-    t.restrict(dst);
+struct remove_pred4
+{
+  property_tree const &base;
+  remove_pred4(property_tree const &t): base(t) {}
+  bool operator()(property_tree &t) const
+  {
+    t.fill_undefined(base);
     return t.empty();
   }
 };
 
-void property_tree::restrict(ast_real_vect const &dst) {
+void property_tree::fill_undefined(property_tree const &base)
+{
   if (!ptr) return;
   unique();
-  remove_pred3 pred1(dst);
-  remove_pred4 pred2(dst);
+  remove_pred3 pred1(base);
+  remove_pred4 pred2(base);
   std::vector< leave >::iterator end1 = ptr->leaves.end(),
     i1 = std::remove_if(ptr->leaves.begin(), end1, pred1);
   std::vector< property_tree >::iterator end2 = ptr->subtrees.end(),

@@ -440,8 +440,8 @@ void graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
   else if (hint.dst.empty())
     gen = new fixed_splitter(hyp2[0].bnd(), 4, iter_max);
   else {
-    targets = goals;
-    targets.restrict(hint.dst);
+    targets = hint.dst;
+    targets.fill_undefined(goals);
     if (targets.empty()) {
       if (warning_dichotomy_failure)
         std::cerr << "Warning: case split on " << dump_real(var.real)

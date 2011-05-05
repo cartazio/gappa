@@ -735,7 +735,7 @@ void graph_t::populate(property_tree const &goals, property_tree const &targets,
       }
       already.insert(sv->first.real());
       dichotomy_var dv = { sv->first.real(), ds };
-      dichotomy_hint dh = { ast_real_vect(), dvar_vect(1, dv) };
+      dichotomy_hint dh = { dvar_vect(1, dv), property_tree() };
       dichotomize(current_goals, dh, iter_max);
       already = save;
       return;

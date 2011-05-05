@@ -38,6 +38,7 @@ int my_yyerror(YYLTYPE &yylloc, char const *errstr) {
 
 extern void register_user_rewrite(ast_real const *, ast_real const *, hint_cond_vect *);
 extern void generate_graph(ast_prop const *p);
+extern void parse_property_tree(property_tree &tree, ast_prop const *p);
 extern void test_ringularity(ast_real const *, ast_real const *, bool);
 extern int test_rewriting(ast_real const *, ast_real const *, std::string &);
 extern void check_approx(ast_real const *);
@@ -340,8 +341,24 @@ HINTS:
 | HINTS REALS '$' DVARS ';'
   {
     dichotomy_hint h;
-    h.dst = *$2; delete $2;
     h.src = *$4; delete $4;
+    ast_prop *p = NULL;
+    for (ast_real_vect::const_iterator i = $2->begin(), i_end = $2->end();
+         i != i_end; ++i)
+    {
+      ast_prop *q = new ast_prop(ast_atom_bnd(*i, NULL, NULL));
+      if (!p) p = q;
+      else p = new ast_prop(p, PROP_AND, q);
+    }
+    delete $2;
+    parse_property_tree(h.dst, p);
+    dichotomies.push_back(h);
+  }
+| HINTS PROP '$' DVARS ';'
+  {
+    dichotomy_hint h;
+    h.src = *$4; delete $4;
+    parse_property_tree(h.dst, $2);
     dichotomies.push_back(h);
   }
 | HINTS '$' DVARS ';'
