@@ -300,14 +300,29 @@ REGISTER_SCHEME_END_PATTERN(sub_of_eql, predicated_real(pattern(0) - pattern(1),
 
 node *sub_of_eql_scheme::generate_proof(property const hyps[]) const
 {
-  property res(real, interval(0, 0));
-  return create_theorem(1, hyps, res, "sub_of_eql");
+  return create_theorem(1, hyps, property(real, zero()), "sub_of_eql", trivial_updater);
 }
 
 proof_scheme *sub_of_eql_scheme::factory(predicated_real const &real, ast_real_vect const &holders)
 {
   if (holders[0] == holders[1] || is_constant(real.real())) return NULL;
   return new sub_of_eql_scheme(real, predicated_real(holders[0], holders[1], PRED_EQL));
+}
+
+// REL_REFL
+REGISTER_SCHEME_BEGIN(rel_refl);
+  rel_refl_scheme(predicated_real const &r)
+    : proof_scheme(r, preal_vect()) {}
+REGISTER_SCHEME_END_PATTERN(rel_refl, predicated_real(pattern(0), pattern(0), PRED_REL));
+
+node *rel_refl_scheme::generate_proof(property const []) const
+{
+  return create_theorem(0, NULL, property(real, zero()), "rel_refl", trivial_updater);
+}
+
+proof_scheme *rel_refl_scheme::factory(predicated_real const &real, ast_real_vect const &)
+{
+  return new rel_refl_scheme(real);
 }
 
 // COMPUTATION
@@ -1093,25 +1108,6 @@ proof_scheme *error_of_rel_scheme::factory(predicated_real const &real,
   hyps.push_back(predicated_real(holders[1], holders[0], PRED_REL));
   hyps.push_back(predicated_real(holders[0], PRED_BND));
   return new error_of_rel_scheme(real, hyps);
-}
-
-// REL_OF_EQUAL
-REGISTER_SCHEME_BEGIN(rel_of_equal);
-  rel_of_equal_scheme(predicated_real const &r, ast_real const *n)
-    : proof_scheme(r, one_needed(n)) {}
-REGISTER_SCHEME_END_PREDICATE(rel_of_equal);
-
-node *rel_of_equal_scheme::generate_proof(property const hyps[]) const
-{
-  if (!is_zero(hyps[0].bnd())) return NULL;
-  return create_theorem(1, hyps, property(real, hyps[0].bnd()), "rel_of_equal", trivial_updater);
-}
-
-proof_scheme *rel_of_equal_scheme::factory(predicated_real const &real)
-{
-  if (real.pred() != PRED_REL) return NULL;
-  ast_real const *r = normalize(real_op(real.real(), BOP_SUB, real.real2()));
-  return new rel_of_equal_scheme(real, r);
 }
 
 // NZR_OF_ABS
