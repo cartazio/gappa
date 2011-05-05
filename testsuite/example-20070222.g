@@ -13,9 +13,9 @@ err = (q1 - a / b) / (a / b);
   @FLT(y0, 11) /\ |eps0| <= 0.00211373
 ->
   err in [0,1] /\ a * err in [0,0.99999] /\
-  rnd(q0) = q0 /\ rnd(e0) = e0 /\ rnd(q1) - q1 in [0,0]
+  rnd(q0) = q0 /\ rnd(e0) = e0 /\ rnd(q1) = q1
 }
 
 err -> -(eps0 * eps0) + (1 + eps0) * 1b-17     { a <> 0, b <> 0 };
 
-rnd(q1) - q1 $ 1 / b;
+rnd(q1) = q1 $ 1 / b;
