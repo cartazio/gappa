@@ -126,11 +126,8 @@ static void generate_tree(property_tree &tree, ast_prop const *p, bool positive)
   }
 }
 
-static void parse_property_tree(ast_prop const *p, context &ctx)
+static void massage_property_tree(property_tree &tree, context &ctx)
 {
-  property_tree tree(new property_tree::data(false));
-  generate_tree(tree, p, true);
-
   std::vector<property_tree::leave> new_leaves;
 
   // for any goal x>=b or x<=b, add the converse inequality as a hypothesis
@@ -234,11 +231,13 @@ extern context goal;
 
 void generate_graph(ast_prop const *p)
 {
-  parse_property_tree(p, goal);
+  property_tree tree(new property_tree::data(false));
+  generate_tree(tree, p, true);
+  delete_prop(p);
+  massage_property_tree(tree, goal);
   if (warning_unbound_variable)
     check_unbound();
   free_variables.clear();
-  delete_prop(p);
 }
 
 // 0: no rule, 1: a rule but a missing relation, 2: a rule
