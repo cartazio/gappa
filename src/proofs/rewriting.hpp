@@ -26,8 +26,6 @@ struct rewriting_rule
   predicated_real src, dst;
   pattern_cond_vect cond;
   pattern_excl_vect excl;
-  rewriting_rule(ast_real const *r1, ast_real const *r2, std::string const &n,
-                 pattern_cond_vect const &c, pattern_excl_vect const &e);
   rewriting_rule(predicated_real const &r1, predicated_real const &r2,
     std::string const &n, pattern_cond_vect const &c, pattern_excl_vect const &e);
 };
