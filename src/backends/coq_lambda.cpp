@@ -518,6 +518,28 @@ static std::string display(theorem_node *t)
   return name;
 }
 
+static std::string subset_name(property const &p1, property const &p2)
+{
+  assert(p1.implies(p2));
+  if (p2.implies(p1)) return std::string();
+  char const *prefix = "", *suffix = "";
+  switch (p1.real.pred()) {
+  case PRED_BND:
+    if (lower(p2.bnd()) == number::neg_inf)
+      suffix = "_r";
+    else if (upper(p2.bnd()) == number::pos_inf)
+      suffix = "_l";
+    break;
+  case PRED_ABS: prefix = "abs_"; break;
+  case PRED_REL: prefix = "rel_"; break;
+  case PRED_FIX: prefix = "fix_"; break;
+  case PRED_FLT: prefix = "flt_"; break;
+  case PRED_EQL:
+  case PRED_NZR: assert(false);
+  }
+  return std::string(prefix) + "subset" + suffix;
+}
+
 static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_map const &pmap)
 {
   for (property_vect::const_iterator j = hyp.begin(),
@@ -526,58 +548,11 @@ static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_m
     property_map::const_iterator pki = pmap.find(j->real);
     assert(pki != pmap.end());
     int h = pki->second.first;
-    predicate_type t = j->real.pred();
-    if (j->real.pred_bnd())
-    {
-      interval const &i = pki->second.second->bnd(), &ii = j->bnd();
-      assert(i <= ii);
-      if (ii <= i)
-        plouf << " h" << h;
-      else
-      {
-        char const *prefix = "", *suffix = "";
-        switch (t)
-        {
-          case PRED_ABS: prefix = "abs_"; break;
-          case PRED_REL: prefix = "rel_"; break;
-          case PRED_BND:
-            if (lower(ii) == number::neg_inf)
-              suffix = "_r";
-            else if (upper(ii) == number::pos_inf)
-              suffix = "_l";
-            break;
-          default: assert(false);
-        }
-        plouf << ' ';
-        apply_theorem(plouf, std::string(prefix) + "subset" + suffix,
-                      *j, pki->second.second, &pmap);
-      }
-    }
-    else if (j->real.pred_cst())
-    {
-      long c = pki->second.second->cst(), cc = j->cst();
-      assert((t == PRED_FIX && c >= cc) || (t == PRED_FLT && c <= cc));
-      if (c == cc)
-        plouf << " h" << h;
-      else
-      {
-        char const *prefix = "";
-        switch (t)
-        {
-          case PRED_FIX: prefix = "fix_"; break;
-          case PRED_FLT: prefix = "flt_"; break;
-          default: assert(false);
-        }
-        plouf << ' ';
-        apply_theorem(plouf, std::string(prefix) + "subset",
-                      *j, pki->second.second, &pmap);
-      }
-    }
-    else
-    {
-      assert(t == PRED_NZR || t == PRED_EQL);
+    std::string sn = subset_name(*pki->second.second, *j);
+    if (sn.empty())
       plouf << " h" << h;
-    }
+    else
+      apply_theorem(plouf, sn, *j, pki->second.second, &pmap);
   }
 }
 
@@ -714,24 +689,15 @@ static std::string display(node *n)
 #endif
   case GOAL: {
     node *m = pred[0];
-    interval const &mb = m->get_result().bnd(), &nb = n_res.bnd();
-    if (!(nb <= mb))
-    {
-      property const &res = m->get_result();
+    property const &res = m->get_result();
+    std::string sn = subset_name(res, n_res);
+    if (!sn.empty()) {
       plouf << "  let h" << num_hyp << " : " << display(res) << " := "
         << display(m) << " in ";
       pmap[res.real] = std::make_pair(num_hyp++, &res);
-      char const *prefix = "", *suffix = "";
-      if (m->get_result().real.pred() == PRED_REL) prefix = "rel_";
-      if (lower(nb) == number::neg_inf) suffix = "_r";
-      else if (upper(nb) == number::pos_inf) suffix = "_l";
-      apply_theorem(plouf, prefix + std::string("subset") + suffix,
-                    n_res, &res, &pmap);
-    }
-    else
-    {
+      apply_theorem(plouf, sn, n_res, &res, &pmap);
+    } else
       plouf << "  " << display(m);
-    }
     plouf << " in\n";
     break; }
   default:
