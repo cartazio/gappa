@@ -132,6 +132,7 @@ static char const *theorem_defs[][2] = {
   { "fix_of_float", "$gfloat.$t _ _ _ _ $c $" },
   { "flt_of_float", "$gfloat.$t _ _ _ $c _ $" },
   { "float_of_fix_flt", "$gfloat.$t _ $1x $1c _ $2c _ $" },
+  { "fix_float_of_fix", "$gfloat.$t _ _ _ $1c $c $1x $" },
 
   { "float_round_dn", "$gfloat.$t _ _ $1x $1i $i $" },
   { "float_round_up", "$gfloat.$t _ _ $1x $1i $i $" },
@@ -157,6 +158,15 @@ static char const *theorem_defs[][2] = {
   { "fixed_round_ne", "$gfixed.$t _ $1x $1i $i $" },
   { "fixed_error_dn", "$gfixed.$t _ _ $i $" },
   { "fixed_error_ne", "$gfixed.$t _ _ $i $" },
+
+  { "bnd_rewrite", "$grewriting.$t $1x $1y $i $1p $2p" },
+  { "abs_rewrite", "$grewriting.$t $1x $1y $i $1p $2p" },
+  { "fix_rewrite", "$grewriting.$t $1x $1y $c $1p $2p" },
+  { "flt_rewrite", "$grewriting.$t $1x $1y $c $1p $2p" },
+  { "nzr_rewrite", "$grewriting.$t $1x $1y $1p $2p" },
+  { "rel_rewrite_1", "$grewriting.$t $1x $1y $y $i $1p $2p" },
+  { "rel_rewrite_2", "$grewriting.$t $1x $1y $x $i $1p $2p" },
+  { "eql_trans", "$grewriting.$t $x $1y $y $1p $2p" },
 
   { "opp_mibs", "$grewriting.$t _ _ $i $1p" },
   { "add_xals", "$grewriting.$t _ _ _ $i $1p" },
@@ -205,6 +215,16 @@ static char const *theorem_defs[][2] = {
   { "addf_6", "$grewriting.$t _ _ $i $1p $2p" },
   { "addf_7", "$grewriting.$t _ $1x $i $1p $2p $3p" },
   { "addf_8", "$grewriting.$t _ _ $i $1p $2p" },
+
+  { "opp_fibe", "$grewriting.$t $1x $1y $1p" },
+  { "add_file", "$grewriting.$t _ $1x $1y $1p" },
+  { "add_fire", "$grewriting.$t $1x _ $1y $1p" },
+  { "sub_file", "$grewriting.$t _ $1x $1y $1p" },
+  { "sub_fire", "$grewriting.$t $1x _ $1y $1p" },
+  { "mul_file", "$grewriting.$t _ $1x $1y $1p" },
+  { "mul_fire", "$grewriting.$t $1x _ $1y $1p" },
+  { "div_file", "$grewriting.$t _ $1x $1y $1p" },
+  { "div_fire", "$grewriting.$t $1x _ $1y $1p" },
 
   { NULL, NULL }
 };
