@@ -325,6 +325,40 @@ proof_scheme *rel_refl_scheme::factory(predicated_real const &real, ast_real_vec
   return new rel_refl_scheme(real);
 }
 
+// EQL_TRANS
+REGISTER_SCHEME_BEGIN(eql_trans);
+  eql_trans_scheme(predicated_real const &r, preal_vect const &v)
+    : proof_scheme(r, v) {}
+ public:
+  static proof_scheme *factory2(predicated_real const &, ast_real_vect const &);
+REGISTER_SCHEME_END_PATTERN(eql_trans, predicated_real(pattern(1), pattern(2), PRED_EQL));
+
+node *eql_trans_scheme::generate_proof(property const hyps[]) const
+{
+  return create_theorem(2, hyps, property(real), "eql_trans");
+}
+
+proof_scheme *eql_trans_scheme::factory(predicated_real const &real, ast_real_vect const &holders)
+{
+  if (holders[0] == holders[2]) return NULL;
+  preal_vect hyps;
+  hyps.push_back(predicated_real(holders[1], holders[0], PRED_EQL));
+  hyps.push_back(predicated_real(holders[0], holders[2], PRED_EQL));
+  return new eql_trans_scheme(real, hyps);
+}
+
+proof_scheme *eql_trans_scheme::factory2(predicated_real const &real, ast_real_vect const &holders)
+{
+  if (holders[1] == holders[2]) return NULL;
+  preal_vect hyps;
+  hyps.push_back(predicated_real(holders[2], holders[1], PRED_EQL));
+  hyps.push_back(predicated_real(holders[1], holders[0], PRED_EQL));
+  return new eql_trans_scheme(real, hyps);
+}
+
+static factory_creator eql_trans_scheme_register2(&eql_trans_scheme::factory2,
+  predicated_real(pattern(2), pattern(0), PRED_EQL));
+
 // COMPUTATION
 REGISTER_SCHEME_BEGIN(computation);
   real_op const *naked_real;
