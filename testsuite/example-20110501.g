@@ -8,6 +8,6 @@ t1 float<ieee_64,ne>= x - kd*Log2h;
 
 # prove that t1 is actually equal to T1
 T1 = x - kd*Log2h;
-{ x in [0.7, 800] -> t1 - T1 in [0,0] }
+{ x in [0.7, 800] -> t1 = T1 }
 
 Log2h ~ 1/InvLog2;
