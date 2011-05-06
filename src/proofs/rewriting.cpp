@@ -628,3 +628,43 @@ REWRITe(div_firq,
   static rewriting_rule REWRITING_NAME \
     (predicated_real(lhs1, rhs1, PRED_EQL), predicated_real(lhs2, rhs2, PRED_EQL),\
      #name, pattern_cond_vect() && cond, pattern_excl_vect() && excl)
+
+REWRITe(add_file,
+	a + b, a + c,
+	b, c,
+	b ^ c);
+
+REWRITe(add_fire,
+	a + b, c + b,
+	a, c,
+	a ^ c);
+
+REWRITe(sub_file,
+	a - b, a - c,
+	b, c,
+	b ^ c);
+
+REWRITe(sub_fire,
+	a - b, c - b,
+	a, c,
+	a ^ c);
+
+REWRITe(mul_file,
+	a * b, a * c,
+	b, c,
+	b ^ c);
+
+REWRITe(mul_fire,
+	a * b, c * b,
+	a, c,
+	a ^ c);
+
+REWRITe(div_file,
+	a / b, a / c,
+	b, c,
+	b ^ c);
+
+REWRITe(div_fire,
+	a / b, c / b,
+	a, c,
+	a ^ c);
