@@ -605,7 +605,7 @@ static bool reduce_goal(property_tree &current_goals,
   for (std::vector<property_tree::leave>::const_iterator i = old_leaves.begin(),
        i_end = old_leaves.end(); i != i_end; ++i)
   {
-    if (!is_defined(i->first.bnd())) continue;
+    if (i->first.real.pred() != PRED_BND || !is_defined(i->first.bnd())) continue;
     node *m;
     if (!i->second) {
       m = create_theorem(0, NULL, i->first, "$LOGIC");

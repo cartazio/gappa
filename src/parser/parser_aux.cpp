@@ -135,7 +135,8 @@ static void massage_property_tree(property_tree &tree, context &ctx)
        i_end = tree->leaves.end(); i != i_end; ++i)
   {
     property const &p = i->first;
-    if (!i->second || !is_defined(p.bnd()) || is_bounded(p.bnd())) continue;
+    if (!i->second || p.real.pred() != PRED_BND || !is_defined(p.bnd()) ||
+        is_bounded(p.bnd())) continue;
     number l = upper(p.bnd()), u = lower(p.bnd());
     if (l == number::pos_inf) {
       l = number::neg_inf;
