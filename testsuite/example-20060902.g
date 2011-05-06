@@ -1,3 +1,3 @@
 @floor = int<dn>;
-{ floor(x) - floor(y) in [0,0] ->
+{ floor(x) = floor(y) ->
   |x - y| <= 1 }
