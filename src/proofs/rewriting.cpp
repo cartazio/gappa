@@ -629,6 +629,11 @@ REWRITe(div_firq,
     (predicated_real(lhs1, rhs1, PRED_EQL), predicated_real(lhs2, rhs2, PRED_EQL),\
      #name, pattern_cond_vect() && cond, pattern_excl_vect() && excl)
 
+REWRITe(opp_fibe,
+	-a, -b,
+	a, b,
+	a ^ b);
+
 REWRITe(add_file,
 	a + b, a + c,
 	b, c,
