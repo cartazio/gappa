@@ -155,7 +155,7 @@ static void massage_property_tree(property_tree &tree, context &ctx)
   typedef std::map< predicated_real, property > input_set;
   input_set inputs;
 
-  // register approximates, and intersects properties with common reals
+  // intersect hypothesis properties for common reals
   for (std::vector<property_tree::leave>::const_iterator i = tree->leaves.begin(),
        i_end = tree->leaves.end(); i != i_end; ++i)
   {
