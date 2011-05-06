@@ -250,15 +250,18 @@ void generate_graph(ast_prop const *p)
 }
 
 // 0: no rule, 1: a rule but a missing relation, 2: a rule
-int test_rewriting(ast_real const *src, ast_real const *dst, std::string &res) {
+int test_rewriting(ast_real const *src, ast_real const *dst, std::string &res)
+{
   std::ostringstream info;
   for(rewriting_vect::const_iterator i = rewriting_rules.begin(),
-      i_end = rewriting_rules.end(); i != i_end; ++i) {
+      i_end = rewriting_rules.end(); i != i_end; ++i)
+  {
     rewriting_rule const &rw = **i;
+    if (rw.src.pred() != PRED_BND) continue;
     ast_real_vect holders;
-    if (!match(src, rw.src, holders)) continue;
+    if (!match(src, rw.src.real(), holders)) continue;
     bool b = holders.size() >= 2 && (!holders[0] || !holders[1]);
-    if (!match(dst, rw.dst, holders, true)) continue;
+    if (!match(dst, rw.dst.real(), holders, true)) continue;
     for(pattern_excl_vect::const_iterator j = rw.excl.begin(),
         j_end = rw.excl.end(); j != j_end; ++j)
       if (rewrite(j->first, holders) == rewrite(j->second, holders)) goto next_rule;

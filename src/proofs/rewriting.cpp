@@ -88,11 +88,16 @@ node *rewriting_scheme::generate_proof(property const hyps[]) const
   property p(real);
   if (!rewritten.null())
   {
-    // straight rewriting, an interval is actually forwarded
+    // straight rewriting, a property is actually forwarded
     node *n = find_proof(rewritten);
     if (!n) return NULL;
-    p.bnd() = hyps[j++].bnd();
-    tu = identity_updater;
+    if (p.real.pred_bnd()) {
+      p.bnd() = hyps[j].bnd();
+      tu = identity_updater;
+    } else if (p.real.pred_cst()) {
+      p.cst() = hyps[j].cst();
+    }
+    ++j;
   }
   return create_theorem(j, hyps, p, fail ? "$FALSE" : name, tu);
 }
@@ -148,11 +153,7 @@ struct bnd_rewriting_factory: scheme_factory
 proof_scheme *bnd_rewriting_factory::operator()(predicated_real const &src,
   ast_real_vect const &holders) const
 {
-  ast_real const *r = rewrite(dst.real(), holders);
-  predicate_type t = dst.pred();
-  predicated_real d = t == PRED_REL
-    ? predicated_real(r, rewrite(dst.real2(), holders), t)
-    : predicated_real(r, t);
+  predicated_real d(rewrite(dst.real(), holders), dst.real2() ? rewrite(dst.real2(), holders) : NULL, dst.pred());
   return generate_rewriting_scheme(src, d, name, rule, holders);
 }
 
@@ -261,7 +262,7 @@ rewriting_vect rewriting_rules;
 rewriting_rule::rewriting_rule
   (ast_real const *r1, ast_real const *r2, std::string const &n,
    pattern_cond_vect const &c, pattern_excl_vect const &e)
-  : src(r1), dst(r2), cond(c), excl(e)
+  : cond(c), excl(e)
 {
   rewriting_rules.push_back(this);
   predicated_real p1(r1, PRED_BND), p2(r2, PRED_BND);
@@ -270,7 +271,17 @@ rewriting_rule::rewriting_rule
     p1 = predicated_real(h1[1], h1[0], PRED_REL);
     p2 = predicated_real(h2[1], h2[0], PRED_REL);
   }
+  src = p1; dst = p2;
   new bnd_rewriting_factory(p1, p2, n, this);
+}
+
+rewriting_rule::rewriting_rule
+  (predicated_real const &r1, predicated_real const &r2, std::string const &n,
+   pattern_cond_vect const &c, pattern_excl_vect const &e)
+  : src(r1), dst(r2), cond(c), excl(e)
+{
+  rewriting_rules.push_back(this);
+  new bnd_rewriting_factory(r1, r2, n, this);
 }
 
 // PATTERN OPERATIONS
