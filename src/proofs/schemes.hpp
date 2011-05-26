@@ -17,26 +17,63 @@
 
 typedef std::vector< predicated_real > preal_vect;
 
+/**
+ * Abstract interface for a theorem instance.
+ * \li It stores the complete predicates used in the goal and the hypotheses.
+ * \li It checks the validity of the filled hypotheses, it performs
+ *     numerical computations to fill the goal, and it generates the
+ *     corresponding proof node.
+ */
 struct proof_scheme
 {
-  virtual node *generate_proof(property const []) const = 0;
+  /**
+   * Generates a proof node that expresses the goal inferred from the
+   * properties @a hyps corresponding to the hypotheses #needed_reals.
+   * This function is not called if one of the needed reals does not (yet)
+   * have an associated property.
+   * @return NULL if the numerical part of the hypotheses is not satisfied.
+   */
+  virtual node *generate_proof(property const hyps[]) const = 0;
   virtual ~proof_scheme() {}
+  /** Initializes the scheme with the structure of the goal and hypotheses. */
   proof_scheme(predicated_real const &r, preal_vect const &n)
     : real(r), needed_reals(n), visited(0), score(0) {}
-  predicated_real real;
-  preal_vect needed_reals;
+  const predicated_real real; //< Predicate of the goal.
+  const preal_vect needed_reals; //< Predicates of the hypotheses.
   mutable unsigned visited;
   bool can_visit() const;
   mutable int score;
 };
 
-struct scheme_factory {
-  predicated_real target;
+/**
+ * Abstract interface for generating a theorem instance (proof_scheme)
+ * able to produce a property about predicate #target.
+ */
+struct scheme_factory
+{
+  /**
+   * Predicate with holes.
+   * The predicate might be left empty for a very generic factory that
+   * intends to be called for any predicate and does not care about
+   * approximate/accurate pattern resolution.
+   */
+  const predicated_real target;
+  /** Initializes the factory with its target predicate. Registers it globally. */
   scheme_factory(predicated_real const &r);
-  virtual proof_scheme *operator()(predicated_real const &, ast_real_vect const &) const = 0;
+  /**
+   * Generates a theorem instance for target predicate @a r, which is filled
+   * by the values in @a holes.
+   * @return NULL if the theorem is not worth applying to this target,
+   *         e.g. a more precise one exists.
+   */
+  virtual proof_scheme *operator()(predicated_real const &r, ast_real_vect const &holes) const = 0;
   virtual ~scheme_factory() {}
 };
 
+/**
+ * Helper class for creating a theorem generator (scheme_factory) from a
+ * free function (usually a static member of a proof_scheme descendant).
+ */
 struct factory_creator {
   typedef proof_scheme *(*factorx_fun)(predicated_real const &, ast_real_vect const &);
   typedef proof_scheme *(*factory_fun)(ast_real const *);
