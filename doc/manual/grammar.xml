@@ -70,91 +70,96 @@ the highest precedence.</para>
     2 BLOB1: PROG '{' PROP '}'
 
     3 PROP: REAL LE SNUMBER
-    4     | REAL IN '[' SNUMBER ',' SNUMBER ']'
-    5     | REAL IN '?'
-    6     | REAL GE SNUMBER
-    7     | REAL RDIV REAL IN '[' SNUMBER ',' SNUMBER ']'
-    8     | '|' REAL RDIV REAL '|' LE NUMBER
-    9     | REAL RDIV REAL IN '?'
-   10     | PROP AND PROP
-   11     | PROP OR PROP
-   12     | PROP IMPL PROP
-   13     | NOT PROP
-   14     | '(' PROP ')'
+    4     | FIX '(' REAL ',' SINTEGER ')'
+    5     | FLT '(' REAL ',' INTEGER ')'
+    6     | REAL IN '[' SNUMBER ',' SNUMBER ']'
+    7     | REAL IN '?'
+    8     | REAL GE SNUMBER
+    9     | REAL RDIV REAL IN '[' SNUMBER ',' SNUMBER ']'
+   10     | '|' REAL RDIV REAL '|' LE NUMBER
+   11     | REAL RDIV REAL IN '?'
+   12     | REAL '=' REAL
+   13     | PROP AND PROP
+   14     | PROP OR PROP
+   15     | PROP IMPL PROP
+   16     | NOT PROP
+   17     | '(' PROP ')'
 
-   15 SNUMBER: NUMBER
-   16        | '+' NUMBER
-   17        | '-' NUMBER
+   18 SNUMBER: NUMBER
+   19        | '+' NUMBER
+   20        | '-' NUMBER
 
-   18 INTEGER: NUMBER
+   21 INTEGER: NUMBER
 
-   19 SINTEGER: SNUMBER
+   22 SINTEGER: SNUMBER
 
-   20 FUNCTION_PARAM: SINTEGER
-   21               | IDENT
+   23 FUNCTION_PARAM: SINTEGER
+   24               | IDENT
 
-   22 FUNCTION_PARAMS_AUX: FUNCTION_PARAM
-   23                    | FUNCTION_PARAMS_AUX ',' FUNCTION_PARAM
+   25 FUNCTION_PARAMS_AUX: FUNCTION_PARAM
+   26                    | FUNCTION_PARAMS_AUX ',' FUNCTION_PARAM
 
-   24 FUNCTION_PARAMS: /* empty */
-   25                | '<' FUNCTION_PARAMS_AUX '>'
+   27 FUNCTION_PARAMS: /* empty */
+   28                | '<' FUNCTION_PARAMS_AUX '>'
 
-   26 FUNCTION: FUNID FUNCTION_PARAMS
+   29 FUNCTION: FUNID FUNCTION_PARAMS
 
-   27 EQUAL: '='
-   28      | FUNCTION '='
+   30 EQUAL: '='
+   31      | FUNCTION '='
 
-   29 PROG: /* empty */
-   30     | PROG IDENT EQUAL REAL ';'
-   31     | PROG '@' IDENT '=' FUNCTION ';'
-   32     | PROG VARID
-   33     | PROG FUNID
-   34     | PROG '@' VARID
-   35     | PROG '@' FUNID
+   32 PROG: /* empty */
+   33     | PROG IDENT EQUAL REAL ';'
+   34     | PROG '@' IDENT '=' FUNCTION ';'
+   35     | PROG VARID
+   36     | PROG FUNID
+   37     | PROG '@' VARID
+   38     | PROG '@' FUNID
 
-   36 REAL: SNUMBER
-   37     | VARID
-   38     | IDENT
-   39     | FUNCTION '(' REALS ')'
-   40     | REAL '+' REAL
-   41     | REAL '-' REAL
-   42     | REAL '*' REAL
-   43     | REAL '/' REAL
-   44     | '|' REAL '|'
-   45     | SQRT '(' REAL ')'
-   46     | FMA '(' REAL ',' REAL ',' REAL ')'
-   47     | '(' REAL ')'
-   48     | '+' REAL
-   49     | '-' REAL
+   39 REAL: SNUMBER
+   40     | VARID
+   41     | IDENT
+   42     | FUNCTION '(' REALS ')'
+   43     | REAL '+' REAL
+   44     | REAL '-' REAL
+   45     | REAL '*' REAL
+   46     | REAL '/' REAL
+   47     | '|' REAL '|'
+   48     | SQRT '(' REAL ')'
+   49     | FMA '(' REAL ',' REAL ',' REAL ')'
+   50     | '(' REAL ')'
+   51     | '+' REAL
+   52     | '-' REAL
 
-   50 REALS: REAL
-   51      | REALS ',' REAL
+   53 REALS: REAL
+   54      | REALS ',' REAL
 
-   52 DPOINTS: SNUMBER
-   53        | DPOINTS ',' SNUMBER
+   55 DPOINTS: SNUMBER
+   56        | DPOINTS ',' SNUMBER
 
-   54 DVAR: REAL
-   55     | REAL IN INTEGER
-   56     | REAL IN '(' DPOINTS ')'
+   57 DVAR: REAL
+   58     | REAL IN INTEGER
+   59     | REAL IN '(' DPOINTS ')'
 
-   57 DVARS: DVAR
-   58      | DVARS ',' DVAR
+   60 DVARS: DVAR
+   61      | DVARS ',' DVAR
 
-   59 PRECOND: REAL NE SINTEGER
-   60        | REAL LE SINTEGER
-   61        | REAL GE SINTEGER
-   62        | REAL '<' SINTEGER
-   63        | REAL '>' SINTEGER
+   62 PRECOND: REAL NE SINTEGER
+   63        | REAL LE SINTEGER
+   64        | REAL GE SINTEGER
+   65        | REAL '<' SINTEGER
+   66        | REAL '>' SINTEGER
 
-   64 PRECONDS_AUX: PRECOND
-   65             | PRECONDS_AUX ',' PRECOND
+   67 PRECONDS_AUX: PRECOND
+   68             | PRECONDS_AUX ',' PRECOND
 
-   66 PRECONDS: /* empty */
-   67         | '{' PRECONDS_AUX '}'
+   69 PRECONDS: /* empty */
+   70         | '{' PRECONDS_AUX '}'
 
-   68 HINTS: /* empty */
-   69      | HINTS REAL IMPL REAL PRECONDS ';'
-   70      | HINTS REALS '$' DVARS ';'
-   71      | HINTS '$' DVARS ';'
-   72      | HINTS REAL '~' REAL ';']]></programlisting>
+   71 HINTS: /* empty */
+   72      | HINTS REAL IMPL REAL PRECONDS ';'
+   73      | HINTS REALS '$' DVARS ';'
+   74      | HINTS PROP '$' DVARS ';'
+   75      | HINTS '$' DVARS ';'
+   76      | HINTS REAL '~' REAL ';']]></programlisting>
+
 </section>
