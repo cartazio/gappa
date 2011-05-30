@@ -29,4 +29,12 @@ std::ostream &operator<<(std::ostream &, number const &);
 std::ostream &operator<<(std::ostream &, interval const &);
 int sign(interval const &);
 
+enum io_format { IO_APPROX, IO_EXACT, IO_FULL };
+struct change_io_format {
+  static io_format current;
+  io_format old;
+  change_io_format(io_format f): old(current) { current = f; }
+  ~change_io_format() { current = old; }
+};
+
 #endif // NUMBERS_INTERVAL_UTILITY_HPP

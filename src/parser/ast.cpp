@@ -267,16 +267,6 @@ std::string dump_prop_tree(property_tree const &pt)
   return s.str();
 }
 
-static std::string dump_number(number const &f)
-{
-  std::ostringstream s;
-  bool zero;
-  int exp;
-  s << get_real_split(f, exp, zero);
-  if (!zero && exp) s << 'b' << exp;
-  return s.str();
-}
-
 std::string dump_property_nice(property const &p)
 {
   if (p.real.pred() == PRED_EQL)
@@ -292,12 +282,11 @@ std::string dump_property_nice(property const &p)
   if (!is_defined(bnd)) {
     s << r << " in ?";
   } else if (lower(bnd) == number::neg_inf) {
-    s << r << " <= " << dump_number(upper(bnd));
+    s << r << " <= " << upper(bnd);
   } else if (upper(bnd) == number::pos_inf) {
-    s << r << " >= " << dump_number(lower(bnd));
+    s << r << " >= " << lower(bnd);
   } else {
-    s << r << " in [" << dump_number(lower(bnd)) << ','
-      << dump_number(upper(bnd)) << ']';
+    s << r << " in " << bnd;
   }
   return s.str();
 }

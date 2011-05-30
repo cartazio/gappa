@@ -38,6 +38,7 @@ void display_context(context const &ctx)
   property_vect const &hyp = ctx.hyp;
   if (parameter_sequent)
   {
+    change_io_format dummy(IO_EXACT);
     std::cerr << "\nScript:\n";
     for(unsigned i = 0, nb_hyp = hyp.size(); i < nb_hyp; ++i) {
       std::cerr << "  " << dump_property_nice(hyp[i])
@@ -123,10 +124,9 @@ int main(int argc, char **argv)
       {
         node *n = j->second;
         property const &res = n->get_result();
-        detailed_io = true;
-        std::cerr << dump_property_nice(res) << '\n';
-        detailed_io = false;
         if (proof_generator) proof_generator->theorem(n);
+        change_io_format dummy(IO_FULL);
+        std::cerr << dump_property_nice(res) << '\n';
       }
       if (!pt.empty()) {
         std::cerr << "Warning: some enclosures were not satisfied.\n"
