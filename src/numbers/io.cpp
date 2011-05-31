@@ -70,7 +70,7 @@ std::string get_real_split(number const &f, int &exp, bool &zero) {
   return get_real_split(f.data->val, exp, zero);
 }
 
-bool detailed_io = false;
+io_format change_io_format::current = IO_APPROX;
 
 static std::string mpfr_approx(mpfr_t const &f)
 {
@@ -81,7 +81,7 @@ static std::string mpfr_approx(mpfr_t const &f)
 
 std::ostream &operator<<(std::ostream &stream, number const &value) {
   mpfr_t const &f = value.data->val;
-  if (!detailed_io || mpfr_inf_p(f)) {
+  if (change_io_format::current == IO_APPROX || mpfr_inf_p(f)) {
     stream << mpfr_approx(f);
     return stream;
   }
@@ -91,6 +91,7 @@ std::ostream &operator<<(std::ostream &stream, number const &value) {
   stream << s;
   if (!zero && exp != 0) stream << 'b' << exp;
   else if (s.size() < 5U + neg) return stream;
+  if (change_io_format::current == IO_EXACT) return stream;
   stream << " {" << mpfr_approx(f) << ", ";
   if (neg) stream << '-';
   mpfr_t g;

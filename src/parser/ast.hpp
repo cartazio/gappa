@@ -15,23 +15,41 @@
 #include <string>
 #include <vector>
 #include "parser/ast_real.hpp"
+#include "proofs/property.hpp"
 
-struct ast_atom_bound {
+struct ast_atom
+{
+  predicate_type type;
   ast_real const *real, *real2;
   ast_number const *lower, *upper;
-  ast_atom_bound(ast_real const *r, ast_number const *l, ast_number const *u)
-    : real(r), real2(NULL), lower(l), upper(u) {}
-  ast_atom_bound(ast_real const *r1, ast_real const *r2, ast_number const *l, ast_number const *u)
-    : real(r1), real2(r2), lower(l), upper(u) {}
+  long cst;
+  ast_atom(predicate_type t, ast_real const *r1, ast_real const *r2,
+    ast_number const *l, ast_number const *u, long c)
+  : type(t), real(r1), real2(r2), lower(l), upper(u), cst(c) {}
 };
+
+inline ast_atom *ast_atom_bnd(ast_real const *r, ast_number const *l, ast_number const *u)
+{ return new ast_atom(PRED_BND, r, NULL, l, u, 0); }
+
+inline ast_atom *ast_atom_rel(ast_real const *r1, ast_real const *r2, ast_number const *l, ast_number const *u)
+{ return new ast_atom(PRED_REL, r1, r2, l, u, 0); }
+
+inline ast_atom *ast_atom_fix(ast_real const *r, long c)
+{ return new ast_atom(PRED_FIX, r, NULL, NULL, NULL, c); }
+
+inline ast_atom *ast_atom_flt(ast_real const *r, long c)
+{ return new ast_atom(PRED_FLT, r, NULL, NULL, NULL, c); }
+
+inline ast_atom *ast_atom_eql(ast_real const *r1, ast_real const *r2)
+{ return new ast_atom(PRED_EQL, r1, r2, NULL, NULL, 0); }
 
 enum ast_prop_type { PROP_ATOM, PROP_NOT, PROP_AND, PROP_OR, PROP_IMPL };
 
 struct ast_prop {
   ast_prop_type type;
   ast_prop const *lhs, *rhs;
-  ast_atom_bound const *atom;
-  ast_prop(ast_atom_bound const *a): type(PROP_ATOM), atom(a) {}
+  ast_atom const *atom;
+  ast_prop(ast_atom const *a): type(PROP_ATOM), atom(a) {}
   ast_prop(ast_prop const *p): type(PROP_NOT), lhs(p) {}
   ast_prop(ast_prop const *l, ast_prop_type t, ast_prop const *r): type(t), lhs(l), rhs(r) {}
 };

@@ -1,3 +1,17 @@
+Version 0.15.0:
+ * fact database:
+   - added EQL predicate: e1 = e2
+   - changed user rewriting to use the EQL predicate
+   - improved rewriting rules to handle ABS, FIX, FLT, NZR, REL in addition to BND predicate
+ * syntax:
+   - added "@FLT(e,k)" and "@FIX(e,k)" for inputting FLT and FIX properties
+   - added "e1 = e2" for inputting EQL properties
+   - allowed arbitrary logical propositions as termination condition for bisection
+
+Version 0.14.1:
+ * build system
+   - fixed some platform-specific issues
+
 Version 0.14.0:
  * Coq back-end
    - added support for Coq support library 0.14

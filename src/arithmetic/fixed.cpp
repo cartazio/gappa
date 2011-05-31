@@ -118,15 +118,12 @@ static int_rounding_generator dummy2;
 REGISTER_SCHEME_BEGIN(fix_of_fixed);
   fixed_rounding_class const *rnd;
   fix_of_fixed_scheme(predicated_real const &r, fixed_rounding_class const *f)
-    : proof_scheme(r), rnd(f) {}
+    : proof_scheme(r, preal_vect()), rnd(f) {}
 REGISTER_SCHEME_END_PREDICATE(fix_of_fixed);
 
-node *fix_of_fixed_scheme::generate_proof() const {
+node *fix_of_fixed_scheme::generate_proof(property const []) const
+{
   return create_theorem(0, NULL, property(real, rnd->format.min_exp), "fix_of_fixed");
-}
-
-preal_vect fix_of_fixed_scheme::needed_reals() const {
-  return preal_vect();
 }
 
 proof_scheme *fix_of_fixed_scheme::factory(predicated_real const &real) {
@@ -140,16 +137,14 @@ proof_scheme *fix_of_fixed_scheme::factory(predicated_real const &real) {
 
 // FIXED_OF_FIX
 REGISTER_SCHEME_BEGIN(fixed_of_fix);
-  predicated_real fixval;
   fixed_rounding_class const *rnd;
   fixed_of_fix_scheme(ast_real const *r, predicated_real const &v, fixed_rounding_class const *f)
-    : proof_scheme(r), fixval(v), rnd(f) {}
+    : proof_scheme(predicated_real(r, PRED_BND), preal_vect(1, v)), rnd(f) {}
 REGISTER_SCHEME_END(fixed_of_fix);
 
-node *fixed_of_fix_scheme::generate_proof() const {
-  node *n = find_proof(fixval);
-  if (!n) return NULL;
-  property const &hyp = n->get_result();
+node *fixed_of_fix_scheme::generate_proof(property const hyps[]) const
+{
+  property const &hyp = hyps[0];
   long weight = hyp.cst();
   if (weight < rnd->format.min_exp)
   {
@@ -165,10 +160,6 @@ node *fixed_of_fix_scheme::generate_proof() const {
   return create_theorem(1, &hyp, property(real, zero()), "fixed_of_fix");
 }
 
-preal_vect fixed_of_fix_scheme::needed_reals() const {
-  return preal_vect(1, fixval);
-}
-
 proof_scheme *fixed_of_fix_scheme::factory(ast_real const *real) {
   ast_real const *holders[2];
   fixed_rounding_class const *f = dynamic_cast< fixed_rounding_class const * >(absolute_rounding_error(real, holders));
@@ -178,24 +169,17 @@ proof_scheme *fixed_of_fix_scheme::factory(ast_real const *real) {
 
 // BND_OF_BND_FIX
 REGISTER_SCHEME_BEGIN(bnd_of_bnd_fix);
-  preal_vect needed;
-  bnd_of_bnd_fix_scheme(preal_vect const &v)
-    : proof_scheme(v[0]), needed(v) {}
+  bnd_of_bnd_fix_scheme(preal_vect const &v): proof_scheme(v[0], v) {}
 REGISTER_SCHEME_END(bnd_of_bnd_fix);
 
-node *bnd_of_bnd_fix_scheme::generate_proof() const {
-  property hyps[2];
-  if (!fill_hypotheses(hyps, needed)) return NULL;
+node *bnd_of_bnd_fix_scheme::generate_proof(property const hyps[]) const
+{
   fixed_format format(hyps[1].cst());
   interval const &i = hyps[0].bnd();
   number a = round_number(lower(i), &format, &fixed_format::roundUP);
   number b = round_number(upper(i), &format, &fixed_format::roundDN);
   property res(real, interval(a, (a <= b) ? b : a));
   return create_theorem(2, hyps, res, "bnd_of_bnd_fix");
-}
-
-preal_vect bnd_of_bnd_fix_scheme::needed_reals() const {
-  return needed;
 }
 
 extern bool is_hidden(ast_real const *);
@@ -214,20 +198,13 @@ proof_scheme *bnd_of_bnd_fix_scheme::factory(ast_real const *real)
 // FIX_FIXED_OF_FIX
 
 REGISTER_SCHEME_BEGIN(fix_fixed_of_fix);
-  predicated_real needed;
   fix_fixed_of_fix_scheme(predicated_real const &r, predicated_real const &n)
-    : proof_scheme(r), needed(n) {}
+    : proof_scheme(r, preal_vect(1, n)) {}
 REGISTER_SCHEME_END_PREDICATE(fix_fixed_of_fix);
 
-node *fix_fixed_of_fix_scheme::generate_proof() const {
-  node *n = find_proof(needed);
-  if (!n) return NULL;
-  property const &res = n->get_result();
-  return create_theorem(1, &res, property(real, res.cst()), "fix_fixed_of_fix");
-}
-
-preal_vect fix_fixed_of_fix_scheme::needed_reals() const {
-  return preal_vect(1, needed);
+node *fix_fixed_of_fix_scheme::generate_proof(property const hyps[]) const
+{
+  return create_theorem(1, hyps, property(real, hyps[0].cst()), "fix_fixed_of_fix");
 }
 
 proof_scheme *fix_fixed_of_fix_scheme::factory(predicated_real const &real) {
@@ -242,20 +219,13 @@ proof_scheme *fix_fixed_of_fix_scheme::factory(predicated_real const &real) {
 // FLT_FIXED_OF_FLT
 
 REGISTER_SCHEME_BEGIN(flt_fixed_of_flt);
-  predicated_real needed;
   flt_fixed_of_flt_scheme(predicated_real const &r, predicated_real const &n)
-    : proof_scheme(r), needed(n) {}
+    : proof_scheme(r, preal_vect(1, n)) {}
 REGISTER_SCHEME_END_PREDICATE(flt_fixed_of_flt);
 
-node *flt_fixed_of_flt_scheme::generate_proof() const {
-  node *n = find_proof(needed);
-  if (!n) return NULL;
-  property const &res = n->get_result();
-  return create_theorem(1, &res, property(real, res.cst()), "flt_fixed_of_flt");
-}
-
-preal_vect flt_fixed_of_flt_scheme::needed_reals() const {
-  return preal_vect(1, needed);
+node *flt_fixed_of_flt_scheme::generate_proof(property const hyps[]) const
+{
+  return create_theorem(1, hyps, property(real, hyps[0].cst()), "flt_fixed_of_flt");
 }
 
 proof_scheme *flt_fixed_of_flt_scheme::factory(predicated_real const &real) {

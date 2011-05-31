@@ -32,12 +32,6 @@ void find_unknown_reals(real_set &, ast_real const *);
 extern bool warning_unbound_variable;
 extern bool goal_reduction;
 
-static void register_approx(ast_real const *r1, ast_real const *r2)
-{
-  accurates[r1].insert(r2);
-  approximates[r2].insert(r1);
-}
-
 void check_approx(ast_real const *real)
 {
   real_op const *o = boost::get< real_op const >(real);
@@ -55,22 +49,35 @@ void check_approx(ast_real const *real)
     register_approx(o->ops[0], o->ops[1]);
 }
 
-static property generate_property(ast_atom_bound const &p, bool goal)
+static property generate_property(ast_atom const &p, bool goal)
 {
-  predicated_real pr;
-  if (p.real2)
-    pr = predicated_real(p.real, p.real2, PRED_REL);
-  else
-    pr = predicated_real(p.real, PRED_BND);
+  predicated_real pr(p.real, p.real2, p.type);
   output_reals.insert(pr);
+  switch (p.type) {
+  case PRED_FIX:
+  case PRED_FLT:
+    input_reals.insert(pr);
+    return property(pr, p.cst);
+  case PRED_EQL:
+    register_approx(p.real, p.real2);
+    // no break
+  case PRED_NZR:
+    input_reals.insert(pr);
+    return property(pr);
+  case PRED_BND:
+  case PRED_ABS:
+  case PRED_REL:
+    break;
+  }
+
   property r(pr);
   if (p.lower || p.upper)
   {
     input_reals.insert(pr);
-    if (pr.real2())
-      register_approx(pr.real(), pr.real2());
+    if (p.real2)
+      register_approx(p.real, p.real2);
     else
-      check_approx(pr.real());
+      check_approx(p.real);
 
     interval &bnd = r.bnd();
     bnd = create_interval(p.lower, p.upper, !goal);
@@ -121,11 +128,8 @@ static void generate_tree(property_tree &tree, ast_prop const *p, bool positive)
   }
 }
 
-static void parse_property_tree(ast_prop const *p, context &ctx)
+static void massage_property_tree(property_tree &tree, context &ctx)
 {
-  property_tree tree(new property_tree::data(false));
-  generate_tree(tree, p, true);
-
   std::vector<property_tree::leave> new_leaves;
 
   // for any goal x>=b or x<=b, add the converse inequality as a hypothesis
@@ -133,7 +137,8 @@ static void parse_property_tree(ast_prop const *p, context &ctx)
        i_end = tree->leaves.end(); i != i_end; ++i)
   {
     property const &p = i->first;
-    if (!i->second || !is_defined(p.bnd()) || is_bounded(p.bnd())) continue;
+    if (!i->second || p.real.pred() != PRED_BND || !is_defined(p.bnd()) ||
+        is_bounded(p.bnd())) continue;
     number l = upper(p.bnd()), u = lower(p.bnd());
     if (l == number::pos_inf) {
       l = number::neg_inf;
@@ -152,7 +157,7 @@ static void parse_property_tree(ast_prop const *p, context &ctx)
   typedef std::map< predicated_real, property > input_set;
   input_set inputs;
 
-  // register approximates, and intersects properties with common reals
+  // intersect hypothesis properties for common reals
   for (std::vector<property_tree::leave>::const_iterator i = tree->leaves.begin(),
        i_end = tree->leaves.end(); i != i_end; ++i)
   {
@@ -169,6 +174,8 @@ static void parse_property_tree(ast_prop const *p, context &ctx)
   for (input_set::const_iterator i = inputs.begin(),
        i_end = inputs.end(); i != i_end; ++i)
   {
+    ctx.hyp.push_back(i->second);
+    if (!i->second.real.pred_bnd()) continue;
     interval const &bnd = i->second.bnd();
     // bail out early if there is an empty set on an input
     if (is_empty(bnd))
@@ -177,7 +184,6 @@ static void parse_property_tree(ast_prop const *p, context &ctx)
                 << " are trivially contradictory, skipping.\n";
       exit(0);
     }
-    ctx.hyp.push_back(i->second);
   }
 
   tree->leaves = new_leaves;
@@ -185,16 +191,16 @@ static void parse_property_tree(ast_prop const *p, context &ctx)
     ctx.goals = tree;
 }
 
-static void delete_prop(ast_prop const *p) {
+static void delete_prop(ast_prop const *p)
+{
   switch (p->type) {
-  case PROP_NOT:
-    delete_prop(p->lhs);
-    break;
   case PROP_AND:
   case PROP_OR:
   case PROP_IMPL:
-    delete_prop(p->lhs);
     delete_prop(p->rhs);
+    // no break
+  case PROP_NOT:
+    delete_prop(p->lhs);
     break;
   case PROP_ATOM:
     delete p->atom;
@@ -226,25 +232,36 @@ static void check_unbound()
 
 extern context goal;
 
-void generate_graph(ast_prop const *p)
+void parse_property_tree(property_tree &tree, ast_prop const *p)
 {
-  parse_property_tree(p, goal);
-  if (warning_unbound_variable)
-    check_unbound();
-  free_variables.clear();
+  tree = new property_tree::data(false);
+  generate_tree(tree, p, true);
   delete_prop(p);
 }
 
+void generate_graph(ast_prop const *p)
+{
+  property_tree tree;
+  parse_property_tree(tree, p);
+  massage_property_tree(tree, goal);
+  if (warning_unbound_variable)
+    check_unbound();
+  free_variables.clear();
+}
+
 // 0: no rule, 1: a rule but a missing relation, 2: a rule
-int test_rewriting(ast_real const *src, ast_real const *dst, std::string &res) {
+int test_rewriting(ast_real const *src, ast_real const *dst, std::string &res)
+{
   std::ostringstream info;
   for(rewriting_vect::const_iterator i = rewriting_rules.begin(),
-      i_end = rewriting_rules.end(); i != i_end; ++i) {
+      i_end = rewriting_rules.end(); i != i_end; ++i)
+  {
     rewriting_rule const &rw = **i;
+    if (rw.src.pred() != PRED_BND) continue;
     ast_real_vect holders;
-    if (!match(src, rw.src, holders)) continue;
+    if (!match(src, rw.src.real(), holders)) continue;
     bool b = holders.size() >= 2 && (!holders[0] || !holders[1]);
-    if (!match(dst, rw.dst, holders, true)) continue;
+    if (!match(dst, rw.dst.real(), holders, true)) continue;
     for(pattern_excl_vect::const_iterator j = rw.excl.begin(),
         j_end = rw.excl.end(); j != j_end; ++j)
       if (rewrite(j->first, holders) == rewrite(j->second, holders)) goto next_rule;

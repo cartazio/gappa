@@ -17,7 +17,12 @@
 #include "numbers/interval.hpp"
 #include "parser/ast_real.hpp"
 
-enum predicate_type { PRED_BND = 0, PRED_ABS, PRED_REL, PRED_FIX = 4, PRED_FLT, PRED_NZR = 8 };
+enum predicate_type
+{
+  PRED_BND = 0, PRED_ABS, PRED_REL,
+  PRED_FIX = 4, PRED_FLT,
+  PRED_EQL = 8, PRED_NZR
+};
 
 class predicated_real {
   long d1, d2;
@@ -114,7 +119,7 @@ struct property_tree
   { if (ptr != t.ptr) { decr(); ptr = t.ptr; incr(); } return *this; }
   ~property_tree() { decr(); }
   void unique();
-  void restrict(ast_real_vect const &);
+  void fill_undefined(property_tree const &);
   data const *operator->() const { return ptr; }
   data *operator->() { unique(); return ptr; }
   bool empty() const { return !ptr; }

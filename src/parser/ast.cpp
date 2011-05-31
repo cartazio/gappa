@@ -13,7 +13,6 @@
 #include <cassert>
 #include <set>
 #include <sstream>
-#include "utils.hpp"
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
 #include "numbers/round.hpp"
@@ -23,6 +22,14 @@
 extern std::string get_real_split(number const &f, int &exp, bool &zero);
 extern bool parameter_rfma;
 link_map accurates, approximates;
+
+bool register_approx(ast_real const *r1, ast_real const *r2)
+{
+  if (r1 == r2) return false;
+  if (!accurates[r1].insert(r2).second) return false;
+  approximates[r2].insert(r1);
+  return true;
+}
 
 template< class T >
 class cache {
@@ -102,34 +109,33 @@ ast_real const *unround(real_op_type type, ast_real_vect const &v) {
   }  
 }
 
-static cache< ast_ident > ast_ident_cache;
-ast_ident *ast_ident::find(std::string const &s) { return ast_ident_cache.find(ast_ident(s)); }
-static cache< ast_number > ast_number_cache;
-ast_number *normalize(ast_number const &v) { return ast_number_cache.find(v); }
-static cache< ast_real > ast_real_cache;
-ast_real *normalize(ast_real const &v) {
+static cache<ast_ident> *ast_ident_cache;
+ast_ident *ast_ident::find(std::string const &s)
+{
+  if (!ast_ident_cache) ast_ident_cache = new cache<ast_ident>;
+  return ast_ident_cache->find(ast_ident(s));
+}
+
+static cache<ast_number> *ast_number_cache;
+ast_number *normalize(ast_number const &v)
+{
+  if (!ast_number_cache) ast_number_cache = new cache<ast_number>;
+  return ast_number_cache->find(v);
+}
+
+static cache<ast_real> *ast_real_cache;
+
+ast_real *normalize(ast_real const &v)
+{
+  if (!ast_real_cache) ast_real_cache = new cache<ast_real>;
   bool b;
-  ast_real *p = ast_real_cache.find(v, &b);
-  if (!b) return p;
+  ast_real *p = ast_real_cache->find(v, &b);
+  if (!b || p->has_placeholder) return p;
   real_op *o = boost::get< real_op >(p);
   if (!o || !o->fun || o->fun->type == ROP_UNK) return p;
   ast_real const *a = unround(o->fun->type, o->ops);
-  accurates[p].insert(a);
-  approximates[a].insert(p);
+  register_approx(p, a);
   return p;
-}
-
-ast_number const *token_zero, *token_one;
-
-RUN_ONCE(load_numbers) {
-  ast_number num;
-  num.base = 0;
-  num.exponent = 0;
-  token_zero = normalize(num);
-  num.base = 1;
-  num.exponent = 0;
-  num.mantissa = "+1";
-  token_one = normalize(num);
 }
 
 std::string dump_real(ast_real const *r, unsigned prio)
@@ -197,8 +203,8 @@ std::string dump_real(predicated_real const &r)
   case PRED_REL: s << "REL(" << v << ", " << dump_real(r.real2()) << ')'; break;
   case PRED_FIX: s << "FIX(" << v << ')'; break;
   case PRED_FLT: s << "FLT(" << v << ')'; break;
+  case PRED_EQL: s << "EQL(" << v << ", " << dump_real(r.real2()) << ')'; break;
   case PRED_NZR: s << "NZR(" << v << ')'; break;
-  default: assert(false);
   }
   return s.str();
 }
@@ -232,8 +238,8 @@ std::string dump_property(property const &p)
   case PRED_REL: s << "REL(" << r << ", " << dump_real(p.real.real2()) << ", " << p.bnd() << ')'; break;
   case PRED_FIX: s << "FIX(" << r << ", " << p.cst() << ')'; break;
   case PRED_FLT: s << "FLT(" << r << ", " << p.cst() << ')'; break;
+  case PRED_EQL: s << "EQL(" << r << ", " << dump_real(p.real.real2()) << ')'; break;
   case PRED_NZR: s << "NZR(" << r << ')'; break;
-  default: assert(false);
   }
   return s.str();
 }
@@ -249,7 +255,7 @@ std::string dump_prop_tree(property_tree const &pt)
     if (first) first = false;
     else s << (pt->conjunction ? " /\\ " : " \\/ ");
     if (!i->second) s << "not ";
-    s << dump_real_short(i->first.real);
+    s << dump_real(i->first.real);
   }
   for (std::vector<property_tree>::const_iterator i = pt->subtrees.begin(),
        i_end = pt->subtrees.end(); i != i_end; ++i)
@@ -261,30 +267,26 @@ std::string dump_prop_tree(property_tree const &pt)
   return s.str();
 }
 
-static std::string dump_number(number const &f)
-{
-  std::ostringstream s;
-  bool zero;
-  int exp;
-  s << get_real_split(f, exp, zero);
-  if (!zero && exp) s << 'b' << exp;
-  return s.str();
-}
-
 std::string dump_property_nice(property const &p)
 {
+  if (p.real.pred() == PRED_EQL)
+  {
+    std::ostringstream s;
+    s << dump_real(p.real.real()) << " = " << dump_real(p.real.real2());
+    return s.str();
+  }
+  if (!p.real.pred_bnd()) return "@" + dump_property(p);
   std::ostringstream s;
   std::string r = dump_real_short(p.real);
   interval const &bnd = p.bnd();
   if (!is_defined(bnd)) {
     s << r << " in ?";
   } else if (lower(bnd) == number::neg_inf) {
-    s << r << " <= " << dump_number(upper(bnd));
+    s << r << " <= " << upper(bnd);
   } else if (upper(bnd) == number::pos_inf) {
-    s << r << " >= " << dump_number(lower(bnd));
+    s << r << " >= " << lower(bnd);
   } else {
-    s << r << " in [" << dump_number(lower(bnd)) << ','
-      << dump_number(upper(bnd)) << ']';
+    s << r << " in " << bnd;
   }
   return s.str();
 }

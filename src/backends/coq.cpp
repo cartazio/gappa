@@ -179,6 +179,7 @@ static std::string display(property const &p) {
     switch (t) {
     case PRED_FIX: s << "FIX " << display(real) << " (" << p.cst() << ')'; break;
     case PRED_FLT: s << "FLT " << display(real) << " (" << p.cst() << ')'; break;
+    case PRED_EQL: s << display(real) << " = " << display(p.real.real2()); break;
     case PRED_NZR: s << "NZR " << display(real); break;
     default: assert(false);
     }
@@ -218,6 +219,28 @@ static std::string display(theorem_node *t) {
 
 typedef std::map< predicated_real, std::pair< int, property const * > > property_map;
 
+static std::string subset_name(property const &p1, property const &p2)
+{
+  assert(p1.implies(p2));
+  if (p2.implies(p1)) return std::string();
+  char const *prefix = "", *suffix = "";
+  switch (p1.real.pred()) {
+  case PRED_BND:
+    if (lower(p2.bnd()) == number::neg_inf)
+      suffix = "_r";
+    else if (upper(p2.bnd()) == number::pos_inf)
+      suffix = "_l";
+    break;
+  case PRED_ABS: prefix = "abs_"; break;
+  case PRED_REL: prefix = "rel_"; break;
+  case PRED_FIX: prefix = "fix_"; break;
+  case PRED_FLT: prefix = "flt_"; break;
+  case PRED_EQL:
+  case PRED_NZR: assert(false);
+  }
+  return std::string(prefix) + "subset" + suffix;
+}
+
 static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_map const &pmap)
 {
   for(property_vect::const_iterator j = hyp.begin(), j_end = hyp.end(); j != j_end; ++j)
@@ -225,55 +248,11 @@ static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_m
     property_map::const_iterator pki = pmap.find(j->real);
     assert(pki != pmap.end());
     int h = pki->second.first;
-    predicate_type t = j->real.pred();
-    if (j->real.pred_bnd())
-    {
-      interval const &i = pki->second.second->bnd(), &ii = j->bnd();
-      assert(i <= ii);
-      if (ii <= i)
-        plouf << " exact h" << h << '.';
-      else
-      {
-        char const *prefix = "", *suffix = "";
-        switch (t)
-        {
-          case PRED_ABS: prefix = "abs_"; break;
-          case PRED_REL: prefix = "rel_"; break;
-          case PRED_BND:
-            if (lower(ii) == number::neg_inf)
-              suffix = "_r";
-            else if (upper(ii) == number::pos_inf)
-              suffix = "_l";
-            break;
-          default: assert(false);
-        }
-        plouf << " apply " << prefix << "subset" << suffix
-              << " with (1 := h" << h << "). finalize.";
-      }
-    }
-    else if (j->real.pred_cst())
-    {
-      long c = pki->second.second->cst(), cc = j->cst();
-      assert((t == PRED_FIX && c >= cc) || (t == PRED_FLT && c <= cc));
-      if (c == cc)
-        plouf << " exact h" << h << '.';
-      else
-      {
-        char const *prefix = "";
-        switch (t)
-        {
-          case PRED_FIX: prefix = "fix_"; break;
-          case PRED_FLT: prefix = "flt_"; break;
-          default: assert(false);
-        }
-        plouf << " apply " << prefix << "subset with (1 := h" << h << "). finalize.";
-      }
-    }
-    else
-    {
-      assert(t == PRED_NZR);
+    std::string sn = subset_name(*pki->second.second, *j);
+    if (sn.empty())
       plouf << " exact h" << h << '.';
-    }
+    else
+      plouf << " apply " << sn << " with (1 := h" << h << "). finalize.";
   }
   plouf << '\n';
 }
@@ -287,6 +266,19 @@ static void invoke_lemma(auto_flush &plouf, node *n, property_map const &pmap) {
     hyp.push_back(n->get_result());
     invoke_lemma(plouf, hyp, pmap);
   }
+}
+
+static void invoke_subset(auto_flush &plouf, property const p1, property const &p2)
+{
+  std::string sn = subset_name(p1, p2);
+  if (sn.empty()) return;
+  plouf << " apply " << sn << " with ";
+  switch (p1.real.pred()) {
+  case PRED_FIX: plouf << p1.cst() << "%Z"; break;
+  case PRED_FLT: plouf << p1.cst() << "%positive"; break;
+  default: plouf << display(p1.bnd());
+  }
+  plouf << ". 2: finalize.\n";
 }
 
 static id_cache< node * > displayed_nodes;
@@ -388,16 +380,8 @@ static std::string display(node *n) {
       plouf << " assert (u : " << display(m_hyp[0]) << " -> " << p_res << ")."
                " intro h" << hcase.first << ". (* " << m_hyp[0].bnd() << " *)\n";
       property const &res = m->get_result();
-      interval const &mb = res.bnd(), &nb = n_res.bnd();
-      if (!res.null()) { // not a contradictory result
-        assert(mb <= nb);
-        if (!(nb <= mb)) {
-          char const *prefix = "";
-          if (m->get_result().real.pred() == PRED_REL) prefix = "rel_";
-          plouf << " apply " << prefix << "subset with " << display(mb)
-                << ". 2: finalize.\n";
-        }
-      }
+      if (!res.null()) // not a contradictory result
+        invoke_subset(plouf, res, n_res);
       invoke_lemma(plouf, m, pmap);
       if (i + 1 != i_end)
         plouf << " next_interval (union) u.\n";
@@ -408,16 +392,7 @@ static std::string display(node *n) {
     break; }
   case GOAL: {
     node *m = pred[0];
-    interval const &mb = m->get_result().bnd(), &nb = n_res.bnd();
-    if (!(nb <= mb))
-    {
-      char const *prefix = "", *suffix = "";
-      if (m->get_result().real.pred() == PRED_REL) prefix = "rel_";
-      if (lower(nb) == number::neg_inf) suffix = "_r";
-      else if (upper(nb) == number::pos_inf) suffix = "_l";
-      plouf << " apply " << prefix << "subset" << suffix
-            << " with " << display(mb) << ". 2: finalize.\n";
-    }
+    invoke_subset(plouf, m->get_result(), n_res);
     invoke_lemma(plouf, m, pmap);
     plouf << "Qed.\n";
     break; }
@@ -533,11 +508,10 @@ std::string coq_backend::rewrite(ast_real const *src, ast_real const *dst,
   plouf << display(src) << " = " << display(dst) << ".\n";
   if (first_bool) s_bool << "true";
   std::string name = composite('b', a_id);
-  plouf << "Lemma " << name << " : " << s_hyps.str() << " forall zi : FF, BND "
-        << display(dst) << " zi -> " << s_bool.str() << " = true -> BND "
-        << display(src) << " zi.\n intros" << s_intros.str()
-        << " zi hz hb.\n" << s_dec.str() << " rewrite a" << a_id
-        << ".\n exact hz.\n" << s_proof.str() << "Qed.\n";
+  plouf << "Lemma " << name << " : " << s_hyps.str() << s_bool.str()
+        << " = true -> " << display(src) << " = " << display(dst)
+        << ".\n intros" << s_intros.str() << " hb.\n" << s_dec.str()
+        << " apply a" << a_id << ".\n" << s_proof.str() << "Qed.\n";
   return name;
 }
 

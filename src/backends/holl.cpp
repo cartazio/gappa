@@ -170,6 +170,7 @@ static std::string display(property const &p) {
     switch (t) {
     case PRED_FIX: s << "FIX (" << display(real) << ":real) (" << p.cst() << ')'; break;
     case PRED_FLT: s << "FLT (" << display(real) << ":real) (" << p.cst() << ')'; break;
+    case PRED_EQL: s << "EQL (" << display(real) << ":real) (" << display(p.real.real2()) << ":real)"; break;
     case PRED_NZR: s << "NZR (" << display(real) << ":real)"; break;
     default: assert(false);
     }
@@ -211,30 +212,38 @@ static std::string display(theorem_node *t) {
 
 typedef std::map< predicated_real, std::pair< int, property const * > > property_map;
 
+static std::string subset_name(property const &p1, property const &p2)
+{
+  assert(p1.implies(p2));
+  if (p2.implies(p1)) return std::string();
+  char const *prefix = "", *suffix = "";
+  switch (p1.real.pred()) {
+  case PRED_BND:
+    if (lower(p2.bnd()) == number::neg_inf)
+      suffix = "_r";
+    else if (upper(p2.bnd()) == number::pos_inf)
+      suffix = "_l";
+    break;
+  case PRED_ABS: prefix = "abs_"; break;
+  case PRED_REL: prefix = "rel_"; break;
+  case PRED_FIX: prefix = "fix_"; break;
+  case PRED_FLT: prefix = "flt_"; break;
+  case PRED_EQL:
+  case PRED_NZR: assert(false);
+  }
+  return std::string(prefix) + "subset" + suffix;
+}
+
 static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_map const &pmap) {
   for(property_vect::const_iterator j = hyp.begin(), j_end = hyp.end(); j != j_end; ++j) {
     property_map::const_iterator pki = pmap.find(j->real);
     assert(pki != pmap.end());
     int h = pki->second.first;
-    predicate_type t = j->real.pred();
-    if (j->real.pred_bnd()) {
-      interval const &i = pki->second.second->bnd(), &ii = j->bnd();
-      assert(i <= ii);
-      if (ii <= i)
-        plouf << " EXACT \"h" << h << "\";;";
-      else
-        plouf << " APPLY " << (t == PRED_ABS ? "abs_" : "") << "subset [\"h" << h << "\"] THEN FINALIZE ();;";
-    } else if (j->real.pred_cst()) {
-      long c = pki->second.second->cst(), cc = j->cst();
-      assert((t == PRED_FIX && c >= cc) || (t == PRED_FLT && c <= cc));
-      if (c == c)
-        plouf << " EXACT \"h" << h << "\";;";
-      else
-        plouf << " APPLY " << (t == PRED_FIX ? "fix" : "flt") << "_subset [\"h" << h << "\"] THEN FINALIZE ();;";
-    } else {
-      assert(t == PRED_NZR);
+    std::string sn = subset_name(*pki->second.second, *j);
+    if (sn.empty())
       plouf << " EXACT \"h" << h << "\";;";
-    }
+    else
+      plouf << " APPLY \"" << sn << "\" [\"h" << h << "\"] THEN FINALIZE ();;";
   }
   plouf << '\n';
 }
@@ -248,6 +257,19 @@ static void invoke_lemma(auto_flush &plouf, node *n, property_map const &pmap) {
     hyp.push_back(n->get_result());
     invoke_lemma(plouf, hyp, pmap);
   }
+}
+
+static void invoke_subset(auto_flush &plouf, property const p1, property const &p2)
+{
+  std::string sn = subset_name(p1, p2);
+  if (sn.empty()) return;
+  plouf << " APPLY \"" << sn << "\" [";
+  switch (p1.real.pred()) {
+  case PRED_FIX:
+  case PRED_FLT: plouf << p1.cst(); break;
+  default: plouf << "\"" << display(p1.bnd()) << "\"";
+  }
+  plouf << "] THEN FINALIZE ();;\n";
 }
 
 static id_cache< node * > displayed_nodes;
@@ -333,6 +355,7 @@ static std::string display(node *n) {
              " FINALIZE ();;\nQED ();;\n";
     break; }
   case UNION: {
+    if (false) {
     assert(pred.size() >= 2);
     node *mcase = pred[0];
     property const &pcase = mcase->get_result();
@@ -350,32 +373,20 @@ static std::string display(node *n) {
       plouf << " assert (u : " << display(m_hyp[0]) << " -> " << p_res << ")."
                " intro h" << hcase.first << ". (* " << m_hyp[0].bnd() << " *)\n";
       property const &res = m->get_result();
-      interval const &mb = res.bnd(), &nb = n_res.bnd();
-      if (!res.null()) { // not a contradictory result
-        assert(mb <= nb);
-        if (!(nb <= mb))
-          plouf << " apply subset with " << display(mb) << ". 2: finalize.\n";
-      }
+      if (!res.null()) // not a contradictory result
+        invoke_subset(plouf, res, n_res);
       invoke_lemma(plouf, m, pmap);
       if (i + 1 != i_end)
         plouf << " next_interval (" << prefix << "union) u.\n";
       else
         plouf << " exact u.\n";
     }
-    plouf << "Qed.\n";
+    }
+    plouf << "QED ();;\n";
     break; }
   case GOAL: {
     node *m = pred[0];
-    interval const &mb = m->get_result().bnd(), &nb = n_res.bnd();
-    if (!(nb <= mb))
-    {
-      char const *prefix = "", *suffix = "";
-      if (m->get_result().real.pred() == PRED_REL) prefix = "rel_";
-      if (lower(nb) == number::neg_inf) suffix = "_r";
-      else if (upper(nb) == number::pos_inf) suffix = "_l";
-      plouf << " APPLY " << prefix << "subset" << suffix
-            << " [\"" << display(mb) << "\"];;\n";
-    }
+    invoke_subset(plouf, m->get_result(), n_res);
     invoke_lemma(plouf, m, pmap);
     plouf << " FINALIZE ();;\nQED ();;\n";
     break; }

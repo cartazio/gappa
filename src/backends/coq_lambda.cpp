@@ -81,7 +81,9 @@ static char const *theorem_defs[][2] = {
 
   { "sub_refl", "$gpred_bnd.$t _ $i $" },
   { "div_refl", "$gpred_bnd.$t $1x $i $" },
+  { "sub_of_eql", "$gpred_bnd.$t $1x $1y $i $" },
 
+  { "neg_a", "$gpred_abs.$t $1x $i $1p" },
   { "add_aa_p", "$gpred_abs.$t $1x $2x $1i $2i $i $" },
   { "add_aa_o", "$gpred_abs.$t $1x $2x $1i $2i $i $" },
   { "add_aa_n", "$gpred_abs.$t $1x $2x $1i $2i $i $" },
@@ -94,11 +96,14 @@ static char const *theorem_defs[][2] = {
   { "mul_rr", "$gpred_rel.$t $1x $1y $2x $2y $1i $2i $i $" },
   { "div_rr", "$gpred_rel.$t $1x $1y $2x $3x $1i $2i $i $" },
   { "compose", "$gpred_rel.$t $1x $1y $2y $1i $2i $i $" },
+  { "compose_swap", "$gpred_rel.$t $1x $y $2x $3x $1i $2i $i $" },
 
   { "add_fix", "$gpred_fixflt.$t $1x $2x $1c $2c $c $" },
   { "sub_fix", "$gpred_fixflt.$t $1x $2x $1c $2c $c $" },
   { "mul_fix", "$gpred_fixflt.$t $1x $2x $1c $2c $c $" },
   { "mul_flt", "$gpred_fixflt.$t $1x $2x $1c $2c $c $" },
+  { "sub_flt", "$gpred_fixflt.$t $1x $2x $1c $2c $3i $c $" },
+  { "sub_flt_rev", "$gpred_fixflt.$t $1x $2x $1c $2c $3i $c $" },
 
   { "nzr_of_abs", "$gpred_nzr.$t $x $1i $" },
   { "nzr_of_bnd_p", "$gpred_nzr.$t $x $1i $" },
@@ -106,9 +111,9 @@ static char const *theorem_defs[][2] = {
   { "nzr_of_nzr_rel", "$gpred_nzr.$t $x $1x $2i $" },
   { "nzr_of_nzr_rel_rev", "$gpred_nzr.$t $1x $x $2i $" },
 
+  { "rel_refl", "$gpred_rel.$t $1x $i $" },
   { "bnd_of_nzr_rel", "$gpred_rel.$t $2x $1x $i $1p $2p" },
   { "rel_of_nzr_bnd", "$gpred_rel.$t $x $1x $2i $1p $2p" },
-  { "rel_of_equal", "$gpred_rel.$t $x $y $1i $i $" },
   { "error_of_rel_pp", "$gpred_rel.$t $1x $2x $1i $2i $i $" },
   { "error_of_rel_po", "$gpred_rel.$t $1x $2x $1i $2i $i $" },
   { "error_of_rel_pn", "$gpred_rel.$t $1x $2x $1i $2i $i $" },
@@ -126,21 +131,42 @@ static char const *theorem_defs[][2] = {
 
   { "fix_of_float", "$gfloat.$t _ _ _ _ $c $" },
   { "flt_of_float", "$gfloat.$t _ _ _ $c _ $" },
-  { "float_of_fix_flt", "$gfloat.$t _ $1x $i $1c _ $2c _ $" },
+  { "float_of_fix_flt", "$gfloat.$t _ $1x $1c _ $2c _ $" },
+  { "fix_float_of_fix", "$gfloat.$t _ _ _ $1c $c $1x $" },
 
-  { "float_round", "$gfloat.$t _ _ _ $1x $1i $i $" },
+  { "float_round_dn", "$gfloat.$t _ _ $1x $1i $i $" },
+  { "float_round_up", "$gfloat.$t _ _ $1x $1i $i $" },
+  { "float_round_zr", "$gfloat.$t _ _ $1x $1i $i $" },
+  { "float_round_ne", "$gfloat.$t _ _ $1x $1i $i $" },
+  { "float_round_na", "$gfloat.$t _ _ $1x $1i $i $" },
   { "float_enforce", "$gfloat.$t _ _ _ _ $1i $i $" },
   { "float_absolute_ne", "$gfloat.$t _ _ $1x $1i $i $" },
+  { "float_absolute_na", "$gfloat.$t _ _ $1x $1i $i $" },
   { "float_absolute_wide_ne", "$gfloat.$t _ _ $1x $1i $i $" },
   { "float_relative_ne", "$gfloat.$t _ _ $1x $1i $i $" },
+  { "float_relative_na", "$gfloat.$t _ _ $1x $1i $i $" },
   { "rel_of_fix_float_ne", "$gfloat.$t _ _ $1c $1x $i $" },
+  { "rel_of_fix_float_na", "$gfloat.$t _ _ $1c $1x $i $" },
 
   { "fix_of_fixed", "$gfixed.$t _ _ _ $c $" },
   { "fixed_of_fix", "$gfixed.$t _ $1x $1c _ $i $" },
   { "bnd_of_bnd_fix", "$gfixed.$t $1x $2c $1i $i $" },
 
-  { "fixed_round", "$gfixed.$t _ _ $1x $1i $i $" },
+  { "fixed_round_dn", "$gfixed.$t _ $1x $1i $i $" },
+  { "fixed_round_up", "$gfixed.$t _ $1x $1i $i $" },
+  { "fixed_round_zr", "$gfixed.$t _ $1x $1i $i $" },
+  { "fixed_round_ne", "$gfixed.$t _ $1x $1i $i $" },
   { "fixed_error_dn", "$gfixed.$t _ _ $i $" },
+  { "fixed_error_ne", "$gfixed.$t _ _ $i $" },
+
+  { "bnd_rewrite", "$grewriting.$t $1x $1y $i $1p $2p" },
+  { "abs_rewrite", "$grewriting.$t $1x $1y $i $1p $2p" },
+  { "fix_rewrite", "$grewriting.$t $1x $1y $c $1p $2p" },
+  { "flt_rewrite", "$grewriting.$t $1x $1y $c $1p $2p" },
+  { "nzr_rewrite", "$grewriting.$t $1x $1y $1p $2p" },
+  { "rel_rewrite_1", "$grewriting.$t $1x $1y $y $i $1p $2p" },
+  { "rel_rewrite_2", "$grewriting.$t $1x $1y $x $i $1p $2p" },
+  { "eql_trans", "$grewriting.$t $x $1y $y $1p $2p" },
 
   { "opp_mibs", "$grewriting.$t _ _ $i $1p" },
   { "add_xals", "$grewriting.$t _ _ _ $i $1p" },
@@ -189,6 +215,16 @@ static char const *theorem_defs[][2] = {
   { "addf_6", "$grewriting.$t _ _ $i $1p $2p" },
   { "addf_7", "$grewriting.$t _ $1x $i $1p $2p $3p" },
   { "addf_8", "$grewriting.$t _ _ $i $1p $2p" },
+
+  { "opp_fibe", "$grewriting.$t $1x $1y $1p" },
+  { "add_file", "$grewriting.$t _ $1x $1y $1p" },
+  { "add_fire", "$grewriting.$t $1x _ $1y $1p" },
+  { "sub_file", "$grewriting.$t _ $1x $1y $1p" },
+  { "sub_fire", "$grewriting.$t $1x _ $1y $1p" },
+  { "mul_file", "$grewriting.$t _ $1x $1y $1p" },
+  { "mul_fire", "$grewriting.$t $1x _ $1y $1p" },
+  { "div_file", "$grewriting.$t _ $1x $1y $1p" },
+  { "div_fire", "$grewriting.$t $1x _ $1y $1p" },
 
   { NULL, NULL }
 };
@@ -396,6 +432,9 @@ static std::string display(property const &p)
     case PRED_FLT:
       s << GAPPADEF "FLT " << display(real) << " (" << p.cst() << ')';
       break;
+    case PRED_EQL:
+      s << display(real) << " = " << display(p.real.real2());
+      break;
     case PRED_NZR:
       s << GAPPADEF "NZR " << display(real);
       break;
@@ -499,6 +538,28 @@ static std::string display(theorem_node *t)
   return name;
 }
 
+static std::string subset_name(property const &p1, property const &p2)
+{
+  assert(p1.implies(p2));
+  if (p2.implies(p1)) return std::string();
+  char const *prefix = "", *suffix = "";
+  switch (p1.real.pred()) {
+  case PRED_BND:
+    if (lower(p2.bnd()) == number::neg_inf)
+      suffix = "_r";
+    else if (upper(p2.bnd()) == number::pos_inf)
+      suffix = "_l";
+    break;
+  case PRED_ABS: prefix = "abs_"; break;
+  case PRED_REL: prefix = "rel_"; break;
+  case PRED_FIX: prefix = "fix_"; break;
+  case PRED_FLT: prefix = "flt_"; break;
+  case PRED_EQL:
+  case PRED_NZR: assert(false);
+  }
+  return std::string(prefix) + "subset" + suffix;
+}
+
 static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_map const &pmap)
 {
   for (property_vect::const_iterator j = hyp.begin(),
@@ -507,58 +568,11 @@ static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_m
     property_map::const_iterator pki = pmap.find(j->real);
     assert(pki != pmap.end());
     int h = pki->second.first;
-    predicate_type t = j->real.pred();
-    if (j->real.pred_bnd())
-    {
-      interval const &i = pki->second.second->bnd(), &ii = j->bnd();
-      assert(i <= ii);
-      if (ii <= i)
-        plouf << " h" << h;
-      else
-      {
-        char const *prefix = "", *suffix = "";
-        switch (t)
-        {
-          case PRED_ABS: prefix = "abs_"; break;
-          case PRED_REL: prefix = "rel_"; break;
-          case PRED_BND:
-            if (lower(ii) == number::neg_inf)
-              suffix = "_r";
-            else if (upper(ii) == number::pos_inf)
-              suffix = "_l";
-            break;
-          default: assert(false);
-        }
-        plouf << ' ';
-        apply_theorem(plouf, std::string(prefix) + "subset" + suffix,
-                      *j, pki->second.second, &pmap);
-      }
-    }
-    else if (j->real.pred_cst())
-    {
-      long c = pki->second.second->cst(), cc = j->cst();
-      assert((t == PRED_FIX && c >= cc) || (t == PRED_FLT && c <= cc));
-      if (c == cc)
-        plouf << " h" << h;
-      else
-      {
-        char const *prefix = "";
-        switch (t)
-        {
-          case PRED_FIX: prefix = "fix_"; break;
-          case PRED_FLT: prefix = "flt_"; break;
-          default: assert(false);
-        }
-        plouf << ' ';
-        apply_theorem(plouf, std::string(prefix) + "subset",
-                      *j, pki->second.second, &pmap);
-      }
-    }
-    else
-    {
-      assert(t == PRED_NZR);
+    std::string sn = subset_name(*pki->second.second, *j);
+    if (sn.empty())
       plouf << " h" << h;
-    }
+    else
+      apply_theorem(plouf, sn, *j, pki->second.second, &pmap);
   }
 }
 
@@ -695,24 +709,15 @@ static std::string display(node *n)
 #endif
   case GOAL: {
     node *m = pred[0];
-    interval const &mb = m->get_result().bnd(), &nb = n_res.bnd();
-    if (!(nb <= mb))
-    {
-      property const &res = m->get_result();
+    property const &res = m->get_result();
+    std::string sn = subset_name(res, n_res);
+    if (!sn.empty()) {
       plouf << "  let h" << num_hyp << " : " << display(res) << " := "
         << display(m) << " in ";
       pmap[res.real] = std::make_pair(num_hyp++, &res);
-      char const *prefix = "", *suffix = "";
-      if (m->get_result().real.pred() == PRED_REL) prefix = "rel_";
-      if (lower(nb) == number::neg_inf) suffix = "_r";
-      else if (upper(nb) == number::pos_inf) suffix = "_l";
-      apply_theorem(plouf, prefix + std::string("subset") + suffix,
-                    n_res, &res, &pmap);
-    }
-    else
-    {
+      apply_theorem(plouf, sn, n_res, &res, &pmap);
+    } else
       plouf << "  " << display(m);
-    }
     plouf << " in\n";
     break; }
   default:

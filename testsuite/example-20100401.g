@@ -54,11 +54,10 @@ S1 = yh + (yl + yhts);               # remove last round on $s$
 
 $ My in (0);
 
-yh ~ Yhl;
 (yh - Yhl) / Yhl -> 1 / (1 + yl / yh) - 1;
 
 S1 ~ PolySinY;
-S1 - (Yhl + yhts) -> 0;
+S1 -> (Yhl + yhts);
 
 (yl + yhts) / yh -> yl / yh + yhts / yh { yh <> 0 };
 

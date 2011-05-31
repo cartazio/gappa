@@ -440,8 +440,8 @@ void graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
   else if (hint.dst.empty())
     gen = new fixed_splitter(hyp2[0].bnd(), 4, iter_max);
   else {
-    targets = goals;
-    targets.restrict(hint.dst);
+    targets = hint.dst;
+    targets.fill_undefined(goals);
     if (targets.empty()) {
       if (warning_dichotomy_failure)
         std::cerr << "Warning: case split on " << dump_real(var.real)
@@ -456,7 +456,7 @@ void graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
   } catch (dichotomy_failure const &e) {
     if (warning_dichotomy_failure) {
       property const &h = e.hyp;
-      detailed_io = true;
+      change_io_format dummy(IO_FULL);
       std::cerr << "Warning: when " << dump_real_short(h.real) << " is in "
                 << h.bnd() << ", ";
       predicated_real const &dst = e.expected.real;
@@ -467,7 +467,6 @@ void graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
                   << " potentially outside of " << e.expected.bnd() << ".\n";
       else
         std::cerr << dump_real_short(dst) << " is not computable.\n";
-      detailed_io = false;
     }
     delete h;
     return;

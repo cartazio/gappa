@@ -90,7 +90,7 @@ static void read_options(YYLTYPE &yylloc) {
 
 %}
 
-%option noyywrap
+%option noyywrap nounput
 %option bison-locations
 
 alpha	[a-zA-Z]
@@ -124,6 +124,8 @@ zero		((((0+(\.0*)?)|(\.0+))([eE][-+]?{integer})?)|0x(((0+(\.0*)?)|(\.0+))([pP][
 "sqrt"		return SQRT;
 "fma"		return FMA;
 "-/"		return RDIV;
+"@FIX"		return FIX;
+"@FLT"		return FLT;
 {zero}		{ yylval->number = token_zero; return NUMBER; }
 {number}	{ read_number(yylval); return NUMBER; }
 {ident}		{ return read_ident(yylval); }

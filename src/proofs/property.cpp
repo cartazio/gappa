@@ -37,6 +37,7 @@ property::property(predicated_real const &r): real(r) {
   case PRED_BND: new(&store) interval; break;
   case PRED_FIX: store._int = INT_MIN; break;
   case PRED_FLT: store._int = INT_MAX; break;
+  case PRED_EQL:
   case PRED_NZR: break;
   }
 }
@@ -82,6 +83,7 @@ bool property::implies(property const &p) const {
   case PRED_BND: return _bnd() <= p._bnd();
   case PRED_FIX: return store._int >= p.store._int;
   case PRED_FLT: return store._int <= p.store._int;
+  case PRED_EQL:
   case PRED_NZR: return true;
   }
   assert(false);
@@ -96,6 +98,7 @@ bool property::strict_implies(property const &p) const {
   case PRED_BND: return _bnd() < p._bnd();
   case PRED_FIX: return store._int > p.store._int;
   case PRED_FLT: return store._int < p.store._int;
+  case PRED_EQL:
   case PRED_NZR: return false;
   }
   assert(false);
@@ -110,6 +113,7 @@ void property::intersect(property const &p) {
   case PRED_BND: _bnd() = ::intersect(_bnd(), p._bnd()); break;
   case PRED_FIX: store._int = std::max(store._int, p.store._int); break;
   case PRED_FLT: store._int = std::min(store._int, p.store._int); break;
+  case PRED_EQL:
   case PRED_NZR: break;
   }
 }
@@ -123,6 +127,7 @@ void property::hull(property const &p) {
   case PRED_BND: _bnd() = ::hull(_bnd(), p._bnd()); break;
   case PRED_FIX: store._int = std::min(store._int, p.store._int); break;
   case PRED_FLT: store._int = std::max(store._int, p.store._int); break;
+  case PRED_EQL:
   case PRED_NZR: break;
   }
 }
@@ -205,6 +210,7 @@ static int check_imply(bool positive, property const &p, property const &q)
   if (positive)
   {
     if (p.implies(q)) return 1;
+    if (!p.real.pred_bnd()) return 0;
     property t = p;
     t.intersect(q);
     if (is_empty(t.bnd())) return -1;
@@ -225,7 +231,7 @@ int property_tree::simplify(property const &p, bool positive, bool force)
     ptr = NULL;
     return res;
   }
-  assert(ptr && (p.real.pred() == PRED_BND || p.real.pred() == PRED_REL));
+  assert(ptr);
   unique();
 
   // Filter out satisfied leaves.
@@ -236,7 +242,7 @@ int property_tree::simplify(property const &p, bool positive, bool force)
   {
     if (i->first.real != p.real)
       ;
-    else if (!is_defined(i->first.bnd()))
+    else if (i->first.real.pred_bnd() && !is_defined(i->first.bnd()))
     {
       // True by choice.
       if (force || !i->second) {
@@ -326,7 +332,9 @@ bool property_tree::get_nodes_aux(goal_vect &goals) const
        i_end = ptr->leaves.end(); i != i_end; ++i)
   {
     if (node *n = find_proof(i->first, i->second)) {
-      interval b = i->second ? i->first.bnd() : n->get_result().bnd();
+      interval b;
+      if (i->first.real.pred_bnd())
+        b = i->second ? i->first.bnd() : n->get_result().bnd();
       goals.push_back(std::make_pair(n, b));
       if (!ptr->conjunction) return true;
     } else all = false;
@@ -374,37 +382,57 @@ void property_tree::get_nodes(graph_t *g, node_vect &goals)
   g->replace_known(goals);
 }
 
+/**
+ * Look for a leave in @a from about the same predicated_real than @a p.
+ * Fill @a p with its content.
+ * @return true when successful.
+ */
+static bool lookup(property_tree::leave &p, property_tree const &from)
+{
+  for (std::vector<property_tree::leave>::const_iterator i = from->leaves.begin(),
+       i_end = from->leaves.end(); i != i_end; ++i)
+  {
+    if (p.second == i->second && p.first.real == i->first.real && is_defined(i->first.bnd())) {
+      p.first.bnd() = i->first.bnd();
+      return true;
+    }
+  }
+  for (std::vector<property_tree>::const_iterator i = from->subtrees.begin(),
+       i_end = from->subtrees.end(); i != i_end; ++i)
+  {
+    if (lookup(p, *i)) return true;
+  }
+  return false;
+}
+
 struct remove_pred3
 {
-  ast_real_vect const &dst;
-  remove_pred3(ast_real_vect const &v): dst(v) {}
-  bool operator()(property_tree::leave const &p)
+  property_tree const &base;
+  remove_pred3(property_tree const &t): base(t) {}
+  bool operator()(property_tree::leave &p) const
   {
-    for (ast_real_vect::const_iterator i = dst.begin(),
-         i_end = dst.end(); i != i_end; ++i)
-    {
-      if (p.second && p.first.real.pred() == PRED_BND &&
-          p.first.real.real() == *i && is_defined(p.first.bnd()))
-        return false;
-    }
-    return true;
+    if (!p.first.real.pred_bnd() || is_defined(p.first.bnd())) return false;
+    return !lookup(p, base);
   }
 };
 
-struct remove_pred4 {
-  ast_real_vect const &dst;
-  remove_pred4(ast_real_vect const &v): dst(v) {}
-  bool operator()(property_tree &t) {
-    t.restrict(dst);
+struct remove_pred4
+{
+  property_tree const &base;
+  remove_pred4(property_tree const &t): base(t) {}
+  bool operator()(property_tree &t) const
+  {
+    t.fill_undefined(base);
     return t.empty();
   }
 };
 
-void property_tree::restrict(ast_real_vect const &dst) {
+void property_tree::fill_undefined(property_tree const &base)
+{
   if (!ptr) return;
   unique();
-  remove_pred3 pred1(dst);
-  remove_pred4 pred2(dst);
+  remove_pred3 pred1(base);
+  remove_pred4 pred2(base);
   std::vector< leave >::iterator end1 = ptr->leaves.end(),
     i1 = std::remove_if(ptr->leaves.begin(), end1, pred1);
   std::vector< property_tree >::iterator end2 = ptr->subtrees.end(),
@@ -422,6 +450,7 @@ void property_tree::get_splitting(splitting &res) const
   for (std::vector< leave >::const_iterator i = ptr->leaves.begin(),
        i_end = ptr->leaves.end(); i != i_end; ++i)
   {
+    if (!i->first.real.pred_bnd()) continue;
     interval const &b = i->first.bnd();
     if (!is_defined(b)) continue;
     split_point_mset &nums = res[i->first.real];

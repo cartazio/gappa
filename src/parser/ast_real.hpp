@@ -138,5 +138,6 @@ ast_real const *unround(real_op_type, ast_real_vect const &);
 
 typedef std::map< ast_real const *, ast_real_set > link_map;
 extern link_map accurates, approximates;
+bool register_approx(ast_real const *r1, ast_real const *r2);
 
 #endif // PARSER_AST_REAL_HPP

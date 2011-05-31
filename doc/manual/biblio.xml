@@ -237,11 +237,14 @@
       <author><firstname>Guillaume</firstname><surname>Melquiond</surname></author>
     </authorgroup>
     <title>Certifying the floating-point implementation of an elementary function using Gappa</title>
+    <pagenums>242-253</pagenums>
     <biblioid class="doi">10.1109/TC.2010.128</biblioid>
   </biblioset>
   <biblioset relation='journal'>
     <title>IEEE Transactions on Computers</title>
-    <pubdate>2010</pubdate>
+    <volumenum>60</volumenum>
+    <issuenum>2</issuenum>
+    <pubdate>2011</pubdate>
   </biblioset>
 </biblioentry>
 

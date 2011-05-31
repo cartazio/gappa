@@ -24,6 +24,14 @@ number::number(int v) {
   data = d;
 }
 
+number::number(double v)
+{
+  number_base *d = new number_base;
+  int r = mpfr_set_d(d->val, v, GMP_RNDN);
+  assert(r == 0); (void)r;
+  data = d;
+}
+
 number &number::operator=(number const &v) {
   if (this != &v) {
     data->destroy();
