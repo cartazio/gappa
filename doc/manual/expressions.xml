@@ -142,11 +142,13 @@ z rnd= x * (1 - x);
 <section>
 <title>Hints</title>
 
-<para>Hints for Gappa's engine can be added in this last section, if the tool
-is not able to prove the logical formula. These hints are either rewriting
-rules or bisection directives. Approximate and accurate expressions can also
-be provided in this section in order to generate lots of safe rewriting
-rules. Hints will be described in depth later.</para>
+<para>Hints for Gappa's engine can be added in this last section, if the
+tool is not able to prove the logical formula. These hints are either
+<link linkend="hint-rewriting">rewriting rules</link> or <link
+linkend="hint-dichotomy">bisection directives</link>. <link
+linkend="hint-approx">Approximate and accurate</link> expressions can
+also be provided in this section in order to generate implicit rewriting
+rules.</para>
 </section>
 
 </section>

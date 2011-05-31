@@ -1,7 +1,7 @@
 <section>
 <title>Providing hints</title>
 
-<section>
+<section id="hint-rewriting">
 <title>Rewriting rules</title>
 
 <para>Internally, Gappa tries to compute the range of mathematical terms. For
@@ -34,7 +34,7 @@ be added to the rule:</para>
 <programlisting language="gappa"><![CDATA[sqrt(x * x) -> -x { x <= 0 };]]></programlisting>
 </section>
 
-<section>
+<section id="hint-approx">
 <title>Approximated expressions</title>
 
 <para>As mentioned before, Gappa has an internal database of rewriting rules.
