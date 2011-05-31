@@ -105,9 +105,48 @@ proposition: <texinline>\exists \epsilon \in [-2^{-53},2^{-53}],\ x = y
 written as <code>|x -/ y| &lt;= ...</code> instead.</para>
 </section>
 
+<section>
+<title>Equalities</title>
+
+<para>While equalities could be encoded with enclosures,</para>
+<programlisting language="gappa"><![CDATA[{ ... -> x - y in [0,0] -> ...]]></programlisting>
+
+<para>Gappa also understands the following notation:</para>
+<programlisting language="gappa"><![CDATA[{ ... -> x = y -> ... }]]></programlisting>
+
+<para>Note that equalities are implicitly directed from left to right.
+For instance, when looking for a property on <code>a + x</code>, Gappa
+will consider <code>a + y</code> (assuming that property <code>x =
+y</code> holds), but not the other way around. This is similar to the
+handling of <link linkend="hint-rewriting">rewriting rules</link>.</para>
+
+<para>Whenever possible, equalities should be expressed as <link
+linkend="definitions">definitions</link> rather than inside the logical
+formulas, as it offers more chances for Gappa to apply its
+theorems.</para>
 </section>
 
 <section>
+<title>Expression precision</title>
+
+<para>In addition to equalities and inequalities, Gappa also supports
+properties about the precision needed to represent expressions. These
+are expressed by using the predicates <code>@FIX(x,k)</code> and
+<code>@FLT(x,k)</code> where <code>x</code> is an expression and
+<code>k</code> an integer. Both properties state that <code>x</code>
+can be decomposed as a generic binary floating-point number:
+<texinline>\exists m,e \in Z,~x = m \cdot 2^e</texinline>. For
+<code>@FIX</code> this decomposition satisfies <texinline>e \ge
+k</texinline>, while for <code>@FLT</code> it satisfies <texinline>|m|
+&lt; 2^k</texinline>. For instance, the following Gappa formula
+holds</para>
+<programlisting language="gappa"><![CDATA[x = float<ieee_32,ne>(x_);
+{ @FIX(x,-149) /\ @FLT(x,24) }]]></programlisting>
+</section>
+
+</section>
+
+<section id="definitions">
 <title>Definitions</title>
 
 <para>Typing the whole expressions in the logical formula can soon become
@@ -214,42 +253,14 @@ c ~ d; # c is an approximation of d]]></programlisting>
 </section>
 
 <section>
-<title>Subsets of real numbers</title>
+<title>Discrete values</title>
 
-<para>Checking in the logical formula that an expression is in a
-specific subset can be achieved by verifying that a rounding operator
-toward this subset is the identity for this expression. For example, to
-check that <code>e</code> is an integer multiple of <texinline>2^{-17}
-</texinline>, this property can be used: <code>fixed&lt;-17, dn&gt;(e) -
-e in [0,0]</code>. Similarly, to test that only 17 bits are needed to
-represent this expression (assuming it is either zero or no closer to
-zero than <texinline>2^{-2001}</texinline>): <code>float&lt;17, -2001,
-ne&gt;(e) - e in [0,0]</code>.</para>
-
-<para>When some terms are known to be in a particular subset, Gappa can
-be made aware of it by defining these terms as rounded values of some
-other terms. For instance, if <code>x</code> is an integer between 5 and
-15 by hypothesis, the formula can be written by introducing a dummy
-variable <code>x_</code>:</para>
-<programlisting language="gappa"><![CDATA[x = int<dn>(x_); # the rounding direction does not matter
-{ x in [5,15] -> ... }]]></programlisting>
-
-<para>Note that Gappa is able to deduce from <code>x in [7.1,8.6]</code>
-that <code>x</code> (which is only a name for the expression
-<code>int&lt;dn&gt;(x_)</code>) is actually equal to 7. In particular,
-asking Gappa to perform a <link linkend="hint-dichotomy">dichotomy</link>
-on <code>x</code> will cause the tool to consider each integer value
-separately, if needed for the proof.</para>
-
-<para>Finally, an expression may be known to take a few separate values,
-but not equally distributed. In some particular cases, it may possible to
-use a complicated expression instead of a plain disjunction. This
-prevents Gappa from separately considering all the branches. For
-instance, if <code>x</code> can take only the three values 0, 2, and 17,
-one can write:</para>
-<programlisting language="gappa"><![CDATA[i = int<dn>(i_);
-x = i * (19b-1 * i - 15b-1);
-{ i in [-1,1] -> ... }
+<para>When an expression is known to take a few separate values that are
+not equally distributed, a disjunction is the simplest solution but it
+can be avoided if needed. For instance, if <code>x</code> can only be 0,
+2, or 17, one can write:</para>
+<programlisting language="gappa"><![CDATA[x = i * (19b-1 * i - 15b-1);
+{ @FIX(i, 0) /\ i in [-1,1] -> ... }
 $ i in 3; # this dichotomy hint helps Gappa to understand that i is either -1, 0, or 1]]></programlisting>
 </section>
 
