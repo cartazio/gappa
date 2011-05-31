@@ -128,6 +128,16 @@ example of a complex bisection: it asks Gappa to find a set of sub-ranges on
 on <code>v</code> is split into three sub-intervals.</para>
 
 <programlisting language="gappa"><![CDATA[b $ u, v in 3]]></programlisting>
+
+<para>Rather than mentioning simple terms on the left-hand side of hints,
+one can also write a logical formula. As a consequence, Gappa no longer
+infers the termination condition from the goal but instead performs a
+bisection until the formula is satisfied. This is especially useful if
+no enclosures of the terms appear in the goal, or if the termination
+criteria is not even an expression enclosure.</para>
+
+<programlisting language="gappa"><![CDATA[rnd(a) = a $ u]]></programlisting>
+
 </section>
 
 </section>
