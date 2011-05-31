@@ -70,6 +70,13 @@ hypothesis on <code>f</code>:</para>
 differently. They are assumed to be full enclosures with a lower bound equal
 to zero. In other words, <code>|x| &lt;= 1</code> is syntactic sugar for
 <code>|x| in [0,1]</code>.</para>
+
+<para>Gappa does not know much about inequalities, as they never appear
+as hypotheses of its theorems. They can only be used to refine a
+previously computed enclosure. For instance, Gappa cannot deduce a
+contradiction from <code>x * x &lt;= -1</code> alone. It needs to know
+either an enclosure of <code>x</code> or a positive enclosure of <code>x
+* x</code>.</para>
 </section>
 
 <section>
@@ -147,7 +154,7 @@ rules. Hints will be described in depth later.</para>
 <!-- ###### -->
 
 <section>
-<title>Preferred expressions and other tricks</title>
+<title>Preferred expressions and other peculiarities</title>
 
 <para>Gappa rewrites expressions by matching them with well-known patterns. The
 enclosure of an unmatchable expression will necessarily have to be computed
@@ -247,12 +254,15 @@ $ i in 3; # this dichotomy hint helps Gappa to understand that i is either -1, 0
 <section>
 <title>Disjunction</title>
 
-<para>When a formula contains a disjunction in its, one of the sides of
-this disjunction has to always hold with respect to the set of
+<para>When the goal of a formula contains a disjunction, one of the sides
+of this disjunction has to always hold with respect to the set of
 hypotheses. This is especially important when performing dichotomies.
 Even if Gappa is able to prove the formula in each particular branch of a
 dichotomy, if a different property of the disjunction is used each time,
-the tool will fail to prove the formula in the general case.</para>
+the tool will fail to prove the formula in the general case. Note that,
+whenever a contradiction is found for a specific set of hypotheses,
+whichever side of the disjunction holds no longer matter, since Gappa can
+infer any of them.</para>
 </section>
 
 </section>
