@@ -599,7 +599,7 @@ REWRITe(mul_filq,
 
 REWRITe(mul_firq,
 	a * b, c * b,
-	b, c,
+	a, c,
 	a ^ c);
 
 REWRITe(div_firq,
