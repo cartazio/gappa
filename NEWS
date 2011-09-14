@@ -1,3 +1,7 @@
+Version 0.15.1:
+ * fact database:
+   - fixed broken simplification of a*b -/ c*b
+
 Version 0.15.0:
  * fact database:
    - added EQL predicate: e1 = e2
