@@ -338,7 +338,7 @@ static std::string display(ast_real const *r)
   if (r_id < 0)
     return name;
   if (boost::get< undefined_real const >(r)) {
-    *out_vars << '(' << name << " : " COQRDEF "R) ";
+    *out_vars << " (" << name << " : " COQRDEF "R)";
     return name;
   }
   auto_flush plouf;
@@ -750,24 +750,27 @@ std::string coq_lambda_backend::theorem(node *n)
   if (n->type == GOAL && n->get_subproofs()[0]->type == HYPOTHESIS) nb_hyps = 1;
   *out << "(* " << nb_hyps;
   if (n->get_result().null()) *out << ",contradiction";
-  *out << " *)\n(fun ";
-  std::ostringstream buf1, buf2, buf3;
-  out_vars = out;
-  out = &buf1;
+  *out << " *)\n(";
+  std::ostringstream buf_var, buf_lem, buf_hyp, buf_prf;
+  std::ostream *old_out;
+  old_out = out;
+  out_vars = &buf_var;
+  out = &buf_lem;
   property_vect const &n_hyp = n->graph->get_hypotheses();
   int num_hyp = 0;
   for (property_vect::const_iterator i = n_hyp.begin(),
        i_end = n_hyp.end(); i != i_end; ++i)
   {
-    buf3 << " (h" << num_hyp << " : " << display(*i) << ")";
+    buf_hyp << " (h" << num_hyp << " : " << display(*i) << ')';
     ++num_hyp;
   }
-  out = &buf2;
+  out = &buf_prf;
   std::string s = display(n);
-  out = out_vars;
-  *out << "=>\n" << buf1.str();
-  if (num_hyp) *out << "fun" << buf3.str() << " =>\n";
-  *out << buf2.str() << s << ")\n";
+  out = old_out;
+  if (!buf_var.str().empty()) *out << "fun" << buf_var.str() << " =>\n";
+  *out << buf_lem.str();
+  if (num_hyp) *out << "fun" << buf_hyp.str() << " =>\n";
+  *out << buf_prf.str() << s << ")\n";
   return s;
 }
 
