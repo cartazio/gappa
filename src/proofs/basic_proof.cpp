@@ -309,6 +309,29 @@ proof_scheme *sub_of_eql_scheme::factory(predicated_real const &real, ast_real_v
   return new sub_of_eql_scheme(real, predicated_real(holders[0], holders[1], PRED_EQL));
 }
 
+// EQL_OF_CST
+REGISTER_SCHEME_BEGIN(eql_of_cst);
+  eql_of_cst_scheme(predicated_real const &r, preal_vect const &v)
+    : proof_scheme(r, v) {}
+REGISTER_SCHEME_END_PREDICATE(eql_of_cst);
+
+node *eql_of_cst_scheme::generate_proof(property const hyps[]) const
+{
+  if (!is_singleton(hyps[1].bnd()) || !(hyps[0].bnd() <= hyps[1].bnd()))
+    return NULL;
+  return create_theorem(2, hyps, property(real), "eql_of_cst");
+}
+
+proof_scheme *eql_of_cst_scheme::factory(predicated_real const &real)
+{
+  if (real.pred() != PRED_EQL ||
+      !is_constant(real.real()) || !is_constant(real.real2())) return NULL;
+  preal_vect hyps;
+  hyps.push_back(predicated_real(real.real(), PRED_BND));
+  hyps.push_back(predicated_real(real.real2(), PRED_BND));
+  return new eql_of_cst_scheme(real, hyps);
+}
+
 // REL_REFL
 REGISTER_SCHEME_BEGIN(rel_refl);
   rel_refl_scheme(predicated_real const &r)

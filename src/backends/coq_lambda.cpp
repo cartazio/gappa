@@ -82,6 +82,7 @@ static char const *theorem_defs[][2] = {
   { "sub_refl", "$gpred_bnd.$t _ $i $" },
   { "div_refl", "$gpred_bnd.$t $1x $i $" },
   { "sub_of_eql", "$gpred_bnd.$t $1x $1y $i $" },
+  { "eql_of_cst", "$gpred_bnd.$t $1x $2x $1i $2i $" },
 
   { "neg_a", "$gpred_abs.$t $1x $i $1p" },
   { "add_aa_p", "$gpred_abs.$t $1x $2x $1i $2i $i $" },
