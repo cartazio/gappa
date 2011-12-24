@@ -134,6 +134,7 @@ static char const *theorem_defs[][2] = {
   { "flt_of_float", "$gfloat.$t _ _ _ $c _ $" },
   { "float_of_fix_flt", "$gfloat.$t _ $1x $1c _ $2c _ $" },
   { "fix_float_of_fix", "$gfloat.$t _ _ _ $1c $c $1x $" },
+  { "flt_float_of_flt", "$gfloat.$t _ _ _ $1c $c $1x $" },
 
   { "float_round_dn", "$gfloat.$t _ _ $1x $1i $i $" },
   { "float_round_up", "$gfloat.$t _ _ $1x $1i $i $" },
@@ -151,6 +152,8 @@ static char const *theorem_defs[][2] = {
 
   { "fix_of_fixed", "$gfixed.$t _ _ _ $c $" },
   { "fixed_of_fix", "$gfixed.$t _ $1x $1c _ $i $" },
+  { "fix_fixed_of_fix", "$gfixed.$t _ _ $1c $c $1x $" },
+  { "flt_fixed_of_flt", "$gfixed.$t _ _ $1c $c $1x $" },
   { "bnd_of_bnd_fix", "$gfixed.$t $1x $2c $1i $i $" },
 
   { "fixed_round_dn", "$gfixed.$t _ $1x $1i $i $" },
