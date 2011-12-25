@@ -124,7 +124,8 @@ static std::string display(ast_real const *r)
     std::string m = (n.mantissa.size() > 0 && n.mantissa[0] == '+') ? n.mantissa.substr(1) : n.mantissa;
     if (n.base == 0) plouf << "Float1 0";
     else if (n.exponent == 0) plouf << "Float1 (" << m << ')';
-    else plouf << "Float" << n.base << " (" << m << ") (" << n.exponent << ')';
+    else plouf << "float" << n.base << "R (Float" << n.base
+               << " (" << m << ") (" << n.exponent << "))";
   } else if (real_op const *o = boost::get< real_op const >(r)) {
     static char const op[] = "X-XX+-*/XX";
     if (o->type == ROP_FUN)
