@@ -26,93 +26,7 @@
 
 using namespace coq;
 
-typedef std::map< predicated_real, std::pair< int, property const * > > property_map;
-
-static void apply_theorem(auto_flush &plouf, std::string const &th,
-                          property const &res, property const *hyp,
-                          property_map const *pmap = NULL, int *num = NULL)
-{
-  theorem_map::const_iterator it = theorems.find(th);
-  if (it == theorems.end()) {
-    std::cerr << "Theorem '" << th
-              << "' is missing from the coq-lambda back-end. Aborting.\n";
-    exit(1);
-  }
-  std::ostringstream s;
-  char const *p = it->second;
-  bool has_comp = false;
-  int max = 0;
-  std::string buf;
-  for (; *p; ++p)
-  {
-    if (*p != '$') { s << *p; continue; }
-    ++p;
-    property const *h = &res;
-    if (*p >= '1' && *p <= '9')
-    {
-      int n = *(p++) - '1';
-      h = &hyp[n];
-      for (; max <= n; ++max) {
-        char t[] = { ' ', '$', '1' + max, 'p', '\0' };
-        buf += t;
-      }
-    }
-    switch (*p) {
-      case 'g': s << "Gappa.Gappa_"; break;
-      case 't': s << th; break;
-      case 'i': s << display(h->bnd()); break;
-      case 'l': s << display(lower(h->bnd())); break;
-      case 'u': s << display(upper(h->bnd())); break;
-      case 'c': s << '(' << h->cst() << ')'; break;
-      case 'x': s << display(h->real.real()); break;
-      case 'y': s << display(h->real.real2()); break;
-      case '\0':
-        has_comp = true;
-        p = buf.c_str();
-        break;
-      case 'p':
-        s << 'h';
-        if (pmap) {
-          property_map::const_iterator pki = pmap->find(h->real);
-          assert(pki != pmap->end());
-          s << pki->second.first;
-        } else if (num)
-          s << num[h - hyp];
-        else
-           s << h - hyp;
-        break;
-      case 'b':
-        has_comp = true;
-        break;
-      default:
-        s << '$';
-    }
-  }
-  if (!has_comp)
-    plouf << s.str();
-  else
-    plouf << '(' << s.str() << " _)";
-}
-
 static std::string display(node *n);
-
-static std::string display(theorem_node *t)
-{
-  static int t_id = 0;
-  std::string name = composite('t', ++t_id);
-  auto_flush plouf;
-  plouf << "let " << name;
-  int num_hyp = 0;
-  for (property_vect::const_iterator i = t->hyp.begin(),
-       i_end = t->hyp.end(); i != i_end; ++i)
-  {
-    plouf << " (h" << num_hyp++ << " : " << display(*i) << ')';
-  }
-  plouf << " : " <<  display(t->res) << " := ";
-  apply_theorem(plouf, convert_name(t->name), t->res, &*t->hyp.begin());
-  plouf << " in\n";
-  return name;
-}
 
 static std::string subset_name(property const &p1, property const &p2)
 {
@@ -147,8 +61,11 @@ static void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_m
     std::string sn = subset_name(*pki->second.second, *j);
     if (sn.empty())
       plouf << " h" << h;
-    else
+    else {
+      plouf << " (";
       apply_theorem(plouf, sn, *j, pki->second.second, &pmap);
+      plouf << ')';
+    }
   }
 }
 

@@ -16,11 +16,15 @@
 class ast_real;
 class interval;
 class number;
+class predicated_real;
 class property;
+class theorem_node;
 
 namespace coq {
 
-typedef std::map<std::string, char const *> theorem_map;
+typedef std::map<std::string, std::string> theorem_map;
+typedef std::map< predicated_real, std::pair< int, property const * > > property_map;
+
 extern theorem_map theorems;
 
 /** Use fully-qualified names for Coq identifiers. */
@@ -37,4 +41,10 @@ std::string display(number const &f);
 std::string display(interval const &i);
 std::string display(ast_real const *r);
 std::string display(property const &p);
+std::string display(theorem_node *t);
+
+void apply_theorem(auto_flush &plouf, std::string const &th,
+                   property const &res, property const *hyp,
+                   property_map const *pmap = NULL, int *num = NULL);
+
 }

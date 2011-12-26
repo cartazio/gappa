@@ -27,31 +27,6 @@ using namespace coq;
 
 static std::string display(node *n);
 
-static std::string display(theorem_node *t) {
-  static int t_id = 0;
-  std::string name = composite('t', ++t_id);
-  auto_flush plouf;
-  plouf << "Lemma " << name << " : ";
-  for(property_vect::const_iterator i = t->hyp.begin(), end = t->hyp.end(); i != end; ++i)
-    plouf << display(*i) << " -> ";
-  plouf << display(t->res) << ".\n";
-  int nb_hyps = t->hyp.size();
-  if (nb_hyps) {
-    plouf << " intros";
-    for(int i = 0; i < nb_hyps; ++i) plouf << " h" << i;
-    plouf << ".\n";
-  }
-  plouf << " apply " << convert_name(t->name);
-  if (nb_hyps) {
-    plouf << " with";
-    for(int i = 0; i < nb_hyps; ++i) plouf << " (" << i + 1 << " := h" << i << ')';
-  }
-  plouf << " ; finalize.\nQed.\n";
-  return name;
-}
-
-typedef std::map< predicated_real, std::pair< int, property const * > > property_map;
-
 static std::string subset_name(property const &p1, property const &p2)
 {
   assert(p1.implies(p2));
@@ -256,7 +231,7 @@ std::string coq_backend::rewrite(ast_real const *src, ast_real const *dst,
   static int a_id = 0;
   ++a_id;
   int nb_hyps = 0;
-  std::ostringstream s_hyps, s_intros, s_bool, s_proof, s_dec;
+  std::ostringstream s_hyps, s_intros, s_bool, s_proof, s_dec, s_th;
   bool first_bool = true;
   auto_flush plouf;
   plouf << "Hypothesis a" << a_id << " : ";
@@ -285,12 +260,14 @@ std::string coq_backend::rewrite(ast_real const *src, ast_real const *dst,
     if (i->type == COND_NZ)
     {
       s_hyps << "NZR " << var << " -> ";
+      s_th << " $" << nb_hyps + 1 << 'p';
       s_intros << " h" << nb_hyps;
       s_proof << " exact h" << nb_hyps << ".\n";
     }
     else
     {
       s_hyps << "forall i" << nb_hyps << " : FF, BND " << var << " i" << nb_hyps << " -> ";
+      s_th << " $" << nb_hyps + 1 << "i $" << nb_hyps + 1 << 'p';
       s_intros << " i" << nb_hyps << " h" << nb_hyps;
       std::string s_dec_ = s_dec.str();
       s_dec.str(std::string());
@@ -340,12 +317,18 @@ std::string coq_backend::rewrite(ast_real const *src, ast_real const *dst,
     ++nb_hyps;
   }
   plouf << display(src) << " = " << display(dst) << ".\n";
-  if (first_bool) s_bool << "true";
   std::string name = composite('b', a_id);
-  plouf << "Lemma " << name << " : " << s_hyps.str() << s_bool.str()
-        << " = true -> " << display(src) << " = " << display(dst)
-        << ".\n intros" << s_intros.str() << " hb.\n" << s_dec.str()
-        << " apply a" << a_id << ".\n" << s_proof.str() << "Qed.\n";
+  plouf << "Lemma " << name << " : " << s_hyps.str();
+  if (!first_bool)
+  {
+    plouf << s_bool.str() << " = true -> ";
+    s_intros << " hb";
+    s_th << " $b";
+  }
+  plouf << display(src) << " = " << display(dst) << ".\n";
+  if (!s_intros.str().empty()) plouf << " intros" << s_intros.str() << ".\n";
+  plouf << s_dec.str() << " apply a" << a_id << ".\n" << s_proof.str() << "Qed.\n";
+  theorems.insert(std::make_pair(name, name + s_th.str()));
   return name;
 }
 

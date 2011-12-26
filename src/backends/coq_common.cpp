@@ -10,12 +10,15 @@
 */
 
 #include <cassert>
+#include <cstring>
+#include <iostream>
 #include <sstream>
 #include "backends/backend.hpp"
 #include "backends/coq_common.hpp"
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
 #include "parser/ast.hpp"
+#include "proofs/proof_graph.hpp"
 #include "utils.hpp"
 
 #define GAPPADEF "Gappa.Gappa_definitions."
@@ -487,6 +490,108 @@ std::string display(property const &p)
   if (p_id >= 0)
     *out << (vernac ? "Notation " : "let ") << name << (vernac ? " := (" : " := ")
          << s_ << (vernac ? "). (* " : " in (* ") << dump_property(p) << " *)\n";
+  return name;
+}
+
+void apply_theorem(auto_flush &plouf, std::string const &th,
+  property const &res, property const *hyp, property_map const *pmap, int *num)
+{
+  theorem_map::const_iterator it = theorems.find(th);
+  if (it == theorems.end())
+  {
+    plouf << "UNKNOWN_" << th;
+    return;
+  }
+  char const *p = it->second.c_str();
+  bool has_comp = false;
+  int max = 0;
+  std::string buf;
+  for (; *p; ++p)
+  {
+    if (*p != '$') { plouf << *p; continue; }
+    ++p;
+    property const *h = &res;
+    if (*p >= '1' && *p <= '9')
+    {
+      int n = *(p++) - '1';
+      h = &hyp[n];
+      for (; max <= n; ++max) {
+        char t[] = { ' ', '$', '1' + max, 'p', '\0' };
+        buf += t;
+      }
+    }
+    switch (*p) {
+      case 'g': {
+        char const *q = strchr(p + 1, '.');
+        assert(q);
+        plouf << qualify("Gappa.Gappa_" + std::string(p + 1, q + 1));
+        p = q;
+        break; }
+      case 't': plouf << th; break;
+      case 'i': plouf << display(h->bnd()); break;
+      case 'l': plouf << display(lower(h->bnd())); break;
+      case 'u': plouf << display(upper(h->bnd())); break;
+      case 'c': plouf << '(' << h->cst() << ')'; break;
+      case 'x': plouf << display(h->real.real()); break;
+      case 'y': plouf << display(h->real.real2()); break;
+      case '\0':
+        has_comp = true;
+        p = buf.c_str();
+        break;
+      case 'p':
+        plouf << 'h';
+        if (pmap) {
+          property_map::const_iterator pki = pmap->find(h->real);
+          assert(pki != pmap->end());
+          plouf << pki->second.first;
+        } else if (num)
+          plouf << num[h - hyp];
+        else
+          plouf << h - hyp;
+        break;
+      case 'b':
+        has_comp = true;
+        break;
+      default:
+        plouf << '$';
+    }
+  }
+  if (has_comp) plouf << " _";
+}
+
+std::string display(theorem_node *t)
+{
+  static int t_id = 0;
+  std::string name = composite('t', ++t_id);
+  auto_flush plouf;
+  if (vernac)
+  {
+    plouf << "Lemma " << name << " : ";
+    for (property_vect::const_iterator i = t->hyp.begin(),
+         end = t->hyp.end(); i != end; ++i)
+      plouf << display(*i) << " -> ";
+    plouf << display(t->res) << ".\n";
+    int nb_hyps = t->hyp.size();
+    if (nb_hyps)
+    {
+      plouf << " intros";
+      for (int i = 0; i < nb_hyps; ++i) plouf << " h" << i;
+      plouf << ".\n";
+    }
+    plouf << " refine (";
+  }
+  else
+  {
+    plouf << "let " << name;
+    int num_hyp = 0;
+    for (property_vect::const_iterator i = t->hyp.begin(),
+         i_end = t->hyp.end(); i != i_end; ++i)
+      plouf << " (h" << num_hyp++ << " : " << display(*i) << ')';
+    plouf << " : " <<  display(t->res) << " := ";
+  }
+
+  apply_theorem(plouf, convert_name(t->name), t->res, &*t->hyp.begin());
+  plouf << (vernac ? ") ; finalize.\nQed.\n" : " in\n");
   return name;
 }
 
