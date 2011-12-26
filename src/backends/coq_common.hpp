@@ -12,10 +12,21 @@
 #include <map>
 #include <string>
 
+class number;
+class interval;
+
+namespace coq {
+
 typedef std::map<std::string, char const *> theorem_map;
 extern theorem_map theorems;
 
 /** Use fully-qualified names for Coq identifiers. */
 extern bool fqn;
 
+/** Use vernacular for definitions. */
+extern bool vernac;
+
 std::string convert_name(std::string const &name);
+std::string display(number const &f);
+std::string display(interval const &i);
+}

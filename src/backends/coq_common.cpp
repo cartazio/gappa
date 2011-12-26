@@ -11,12 +11,18 @@
 
 #include <cassert>
 #include <sstream>
+#include "backends/backend.hpp"
 #include "backends/coq_common.hpp"
+#include "numbers/interval_utility.hpp"
 #include "utils.hpp"
 
 #define GAPPADEF "Gappa.Gappa_definitions."
 #define COQRDEF "Reals.Rdefinitions."
 #define FLOCQDEF "Flocq.Core.Fcore_"
+
+extern std::string get_real_split(number const &f, int &exp, bool &zero);
+
+namespace coq {
 
 static char const *theorem_defs[][2] = {
   { "subset", "$gpred_bnd.$t $x $1i $i $" },
@@ -238,6 +244,7 @@ RUN_ONCE(fill_theorem_map)
 };
 
 bool fqn = false;
+bool vernac = true;
 
 static std::string qualify(std::string const &path, std::string const &name)
 {
@@ -292,4 +299,41 @@ std::string convert_name(std::string const &name)
   } while (p0 != std::string::npos);
   if (!fragile) return res.str();
   return '(' + res.str() + ')';
+}
+
+static id_cache< std::string > displayed_floats;
+
+std::string display(number const &f)
+{
+  std::ostringstream s;
+  bool zero;
+  int exp;
+  s << '(' << get_real_split(f, exp, zero);
+  s << ") (" << (zero ? 0 : exp) << ')';
+  std::string const &s_ = s.str();
+  int f_id = displayed_floats.find(s_);
+  std::string name = composite('f', f_id);
+  if (f_id < 0) return name;
+  *out << (vernac ? "Definition " : "let ") << name << " := "
+       << qualify(GAPPADEF, "Float2") << ' ' << s_
+       << (vernac ? ".\n" : " in\n");
+  return name;
+}
+
+static id_cache< std::string > displayed_intervals;
+
+std::string display(interval const &i)
+{
+  std::ostringstream s;
+  s << display(lower(i)) << ' ' << display(upper(i));
+  std::string const &s_ = s.str();
+  int i_id = displayed_intervals.find(s_);
+  std::string name = composite('i', i_id);
+  if (i_id < 0) return name;
+  *out << (vernac ? "Definition " : "let ") << name << " := "
+       << qualify(GAPPADEF, "makepairF") << ' ' << s_
+       << (vernac ? ".\n" : " in\n");
+  return name;
+}
+
 }

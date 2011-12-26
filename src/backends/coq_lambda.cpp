@@ -24,40 +24,9 @@
 #define COQRDEF "Reals.Rdefinitions."
 #define FLOCQDEF "Flocq.Core.Fcore_"
 
+using namespace coq;
+
 std::ostream *out_vars;
-
-extern std::string get_real_split(number const &f, int &exp, bool &zero);
-
-static id_cache< std::string > displayed_floats;
-
-static std::string display(number const &f)
-{
-  std::ostringstream s;
-  bool zero;
-  int exp;
-  s << '(' << get_real_split(f, exp, zero);
-  s << ") (" << (zero ? 0 : exp) << ')';
-  std::string const &s_ = s.str();
-  int f_id = displayed_floats.find(s_);
-  std::string name = composite('f', f_id);
-  if (f_id >= 0)
-    *out << "let " << name << " := " GAPPADEF "Float2 " << s_ << " in\n";
-  return name;
-}
-
-static id_cache< std::string > displayed_intervals;
-
-static std::string display(interval const &i)
-{
-  std::ostringstream s;
-  s << display(lower(i)) << ' ' << display(upper(i));
-  std::string const &s_ = s.str();
-  int i_id = displayed_intervals.find(s_);
-  std::string name = composite('i', i_id);
-  if (i_id >= 0)
-    *out << "let " << name << " := " GAPPADEF "makepairF " << s_ << " in\n";
-  return name;
-}
 
 static id_cache< ast_real const * > displayed_reals;
 
@@ -463,7 +432,7 @@ static std::string display(node *n)
 struct coq_lambda_backend: backend
 {
   coq_lambda_backend(): backend("coq-lambda") {}
-  void initialize(std::ostream &o) { out = &o; fqn = true; }
+  void initialize(std::ostream &o) { out = &o; fqn = true; vernac = false; }
   void finalize() {}
   void reset() { displayed_nodes.clear(); }
   virtual std::string rewrite(ast_real const *, ast_real const *, pattern_cond_vect const &);
