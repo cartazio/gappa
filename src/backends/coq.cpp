@@ -25,45 +25,6 @@
 
 using namespace coq;
 
-static id_cache< std::string > displayed_properties;
-
-static std::string display(property const &p) {
-  std::ostringstream s;
-  predicate_type t = p.real.pred();
-  ast_real const *real = p.real.real();
-  if (p.real.pred_bnd()) {
-    interval const &bnd = p.bnd();
-    if (lower(bnd) == number::neg_inf) {
-      assert(t == PRED_BND);
-      s << '(' << display(real) << " <= " << display(upper(bnd)) << ")%R";
-    } else if (upper(bnd) == number::pos_inf) {
-      assert(t == PRED_BND);
-      s << '(' << display(lower(bnd)) << " <= " << display(real) << ")%R";
-    } else {
-      switch (t) {
-      case PRED_BND: s << "BND " << display(real) << ' ' << display(bnd); break;
-      case PRED_ABS: s << "ABS " << display(real) << ' ' << display(bnd); break;
-      case PRED_REL: s << "REL " << display(real) << ' ' << display(p.real.real2()) << ' ' << display(bnd); break;
-      default: assert(false);
-      }
-    }
-  } else {
-    switch (t) {
-    case PRED_FIX: s << "FIX " << display(real) << " (" << p.cst() << ')'; break;
-    case PRED_FLT: s << "FLT " << display(real) << " (" << p.cst() << ')'; break;
-    case PRED_EQL: s << display(real) << " = " << display(p.real.real2()); break;
-    case PRED_NZR: s << "NZR " << display(real); break;
-    default: assert(false);
-    }
-  }
-  std::string s_ = s.str();
-  int p_id = displayed_properties.find(s_);
-  std::string name = composite('p', p_id);
-  if (p_id >= 0)
-    *out << "Notation " << name << " := (" << s_ << "). (* " << dump_property(p) << " *)\n";
-  return name;
-}
-
 static std::string display(node *n);
 
 static std::string display(theorem_node *t) {

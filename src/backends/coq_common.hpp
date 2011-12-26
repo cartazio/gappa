@@ -16,6 +16,7 @@
 class ast_real;
 class interval;
 class number;
+class property;
 
 namespace coq {
 
@@ -35,4 +36,5 @@ std::string convert_name(std::string const &name);
 std::string display(number const &f);
 std::string display(interval const &i);
 std::string display(ast_real const *r);
+std::string display(property const &p);
 }

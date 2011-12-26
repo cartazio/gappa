@@ -14,6 +14,7 @@
 #include "backends/backend.hpp"
 #include "backends/coq_common.hpp"
 #include "numbers/interval_utility.hpp"
+#include "numbers/real.hpp"
 #include "parser/ast.hpp"
 #include "utils.hpp"
 
@@ -413,6 +414,79 @@ std::string display(ast_real const *r)
   else
     assert(false);
   plouf << (vernac ? ").\n" : " in\n");
+  return name;
+}
+
+static id_cache< std::string > displayed_properties;
+
+std::string display(property const &p)
+{
+  std::ostringstream s;
+  predicate_type t = p.real.pred();
+  ast_real const *real = p.real.real();
+  if (p.null())
+  {
+    return qualify(GAPPADEF) + "contradiction";
+  }
+  else if (p.real.pred_bnd())
+  {
+    interval const &bnd = p.bnd();
+    if (lower(bnd) == number::neg_inf) {
+      assert(t == PRED_BND);
+      if (fqn)
+        s << COQRDEF "Rle " << display(real) << ' ' << display(upper(bnd));
+      else
+        s << '(' << display(real) << " <= " << display(upper(bnd)) << ")%R";
+    } else if (upper(bnd) == number::pos_inf) {
+      assert(t == PRED_BND);
+      if (fqn)
+        s << COQRDEF "Rle " << display(lower(bnd)) << ' ' << display(real);
+      else
+        s << '(' << display(lower(bnd)) << " <= " << display(real) << ")%R";
+    }
+    else
+    {
+      switch (t) {
+      case PRED_BND:
+        s << qualify(GAPPADEF) << "BND " << display(real) << ' ' << display(bnd);
+        break;
+      case PRED_ABS:
+        s << qualify(GAPPADEF) << "ABS " << display(real) << ' ' << display(bnd);
+        break;
+      case PRED_REL:
+        s << qualify(GAPPADEF) << "REL " << display(real) << ' '
+          << display(p.real.real2()) << ' ' << display(bnd);
+        break;
+      default:
+        assert(false);
+      }
+    }
+  }
+  else
+  {
+    switch (t) {
+    case PRED_FIX:
+      s << qualify(GAPPADEF) << "FIX " << display(real) << " (" << p.cst() << ')';
+      break;
+    case PRED_FLT:
+      s << qualify(GAPPADEF) << "FLT " << display(real) << " (" << p.cst() << ')';
+      break;
+    case PRED_EQL:
+      s << display(real) << " = " << display(p.real.real2());
+      break;
+    case PRED_NZR:
+      s << qualify(GAPPADEF) << "NZR " << display(real);
+      break;
+    default:
+      assert(false);
+    }
+  }
+  std::string s_ = s.str();
+  int p_id = displayed_properties.find(s_);
+  std::string name = composite('p', p_id);
+  if (p_id >= 0)
+    *out << (vernac ? "Notation " : "let ") << name << (vernac ? " := (" : " := ")
+         << s_ << (vernac ? "). (* " : " in (* ") << dump_property(p) << " *)\n";
   return name;
 }
 
