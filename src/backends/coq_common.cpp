@@ -595,4 +595,47 @@ std::string display(theorem_node *t)
   return name;
 }
 
+std::string subset_name(property const &p1, property const &p2)
+{
+  assert(p1.implies(p2));
+  if (p2.implies(p1)) return std::string();
+  char const *prefix = "", *suffix = "";
+  switch (p1.real.pred()) {
+  case PRED_BND:
+    if (lower(p2.bnd()) == number::neg_inf)
+      suffix = "_r";
+    else if (upper(p2.bnd()) == number::pos_inf)
+      suffix = "_l";
+    break;
+  case PRED_ABS: prefix = "abs_"; break;
+  case PRED_REL: prefix = "rel_"; break;
+  case PRED_FIX: prefix = "fix_"; break;
+  case PRED_FLT: prefix = "flt_"; break;
+  case PRED_EQL:
+  case PRED_NZR: assert(false);
+  }
+  return std::string(prefix) + "subset" + suffix;
+}
+
+void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_map const &pmap)
+{
+  for (property_vect::const_iterator j = hyp.begin(),
+       j_end = hyp.end(); j != j_end; ++j)
+  {
+    property_map::const_iterator pki = pmap.find(j->real);
+    assert(pki != pmap.end());
+    int h = pki->second.first;
+    std::string sn = subset_name(*pki->second.second, *j);
+    if (sn.empty()) {
+      if (vernac) plouf << " exact h" << h << '.';
+      else plouf << " h" << h;
+    } else {
+      plouf << (vernac ? " refine (" : " (");
+      apply_theorem(plouf, sn, *j, pki->second.second, &pmap);
+      plouf << (vernac ? ") ; finalize." : ")");
+    }
+  }
+  if (vernac) plouf << '\n';
+}
+
 }

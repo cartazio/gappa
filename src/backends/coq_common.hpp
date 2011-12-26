@@ -18,6 +18,7 @@ class interval;
 class number;
 class predicated_real;
 class property;
+class property_vect;
 class theorem_node;
 
 namespace coq {
@@ -46,5 +47,8 @@ std::string display(theorem_node *t);
 void apply_theorem(auto_flush &plouf, std::string const &th,
                    property const &res, property const *hyp,
                    property_map const *pmap = NULL, int *num = NULL);
+
+std::string subset_name(property const &p1, property const &p2);
+void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_map const &pmap);
 
 }
