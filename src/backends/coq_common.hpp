@@ -15,3 +15,7 @@
 typedef std::map<std::string, char const *> theorem_map;
 extern theorem_map theorems;
 
+/** Use fully-qualified names for Coq identifiers. */
+extern bool fqn;
+
+std::string convert_name(std::string const &name);

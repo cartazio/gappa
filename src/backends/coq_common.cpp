@@ -9,8 +9,14 @@
    See the COPYING and COPYING.GPL files for more details.
 */
 
+#include <cassert>
+#include <sstream>
 #include "backends/coq_common.hpp"
 #include "utils.hpp"
+
+#define GAPPADEF "Gappa.Gappa_definitions."
+#define COQRDEF "Reals.Rdefinitions."
+#define FLOCQDEF "Flocq.Core.Fcore_"
 
 static char const *theorem_defs[][2] = {
   { "subset", "$gpred_bnd.$t $x $1i $i $" },
@@ -231,3 +237,59 @@ RUN_ONCE(fill_theorem_map)
   }
 };
 
+bool fqn = false;
+
+static std::string qualify(std::string const &path, std::string const &name)
+{
+  if (!fqn) return name;
+  return path + name;
+}
+
+std::string convert_name(std::string const &name)
+{
+  if (!fqn && name == "sqrt") return "sqrtG";
+  std::string::size_type p0 = name.find(',');
+  if (p0 == std::string::npos) return name;
+  std::string prefix = name.substr(0, p0);
+  std::string::size_type p1 = name.find(',', p0 + 1);
+  std::ostringstream res;
+  if (prefix == "rounding_fixed")
+  {
+    assert(p1 != std::string::npos);
+    res << '(' << qualify(FLOCQDEF "generic_fmt.", "round") << ' '
+        << qualify(GAPPADEF, "radix2") << " ("
+        << qualify(FLOCQDEF "FIX.", "FIX_exp") << " ("
+        << name.substr(p1 + 1) << ")) ";
+    round_mode:
+    assert(p1 == p0 + 3);
+    std::string mode = name.substr(p0 + 1, 2);
+    if (mode == "ne") res << qualify(FLOCQDEF "rnd_ne.", "rndNE");
+    else res << qualify(FLOCQDEF "generic_fmt.", "rnd")
+             << (char)std::toupper(mode[0]) << (char)std::toupper(mode[1]);
+    res << ") ";
+    return res.str();
+  }
+  if (prefix == "rounding_float")
+  {
+    std::string::size_type p2 = name.find(',', p1 + 1);
+    assert(p2 != std::string::npos);
+    res << '(' << qualify(FLOCQDEF "generic_fmt.", "round") << ' '
+        << qualify(GAPPADEF, "radix2") << " ("
+        << qualify(FLOCQDEF "FLT.", "FLT_exp") << " ("
+        << name.substr(p2 + 1) << ") (" << name.substr(p1 + 1, p2 - p1 - 1) << ")) ";
+    goto round_mode;
+  }
+  bool fragile = false;
+  res << prefix;
+  do {
+    std::string::size_type p1 = p0 + 1;
+    p0 = name.find(',', p1);
+    std::string s(name, p1, p0 == std::string::npos ? p0 : p0 - p1);
+    if (!std::isalpha(s[0])) {
+      res << " (" << s << ')';
+      fragile = true;
+    } else res << '_' << s;
+  } while (p0 != std::string::npos);
+  if (!fragile) return res.str();
+  return '(' + res.str() + ')';
+}
