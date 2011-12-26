@@ -25,58 +25,6 @@
 
 using namespace coq;
 
-static id_cache< ast_real const * > displayed_reals;
-
-static std::string display(ast_real const *r)
-{
-  if (hidden_real const *h = boost::get< hidden_real const >(r))
-    r = h->real;
-  int r_id = displayed_reals.find(r);
-  std::string name = r->name ? '_' + r->name->name : composite('r', r_id);
-  if (r_id < 0)
-    return name;
-  if (boost::get< undefined_real const >(r)) {
-    *out << "Variable " << name << " : R.\n";
-    return name;
-  }
-  auto_flush plouf;
-  plouf << "Notation " << name << " := (";
-  if (ast_number const *const *nn = boost::get< ast_number const *const >(r))
-  {
-    ast_number const &n = **nn;
-    std::string m = (n.mantissa.size() > 0 && n.mantissa[0] == '+') ? n.mantissa.substr(1) : n.mantissa;
-    if (n.base == 0) plouf << "Float1 0";
-    else if (n.exponent == 0) plouf << "Float1 (" << m << ')';
-    else plouf << "float" << n.base << "R (Float" << n.base
-               << " (" << m << ") (" << n.exponent << "))";
-  } else if (real_op const *o = boost::get< real_op const >(r)) {
-    static char const op[] = "X-XX+-*/XX";
-    if (o->type == ROP_FUN)
-    {
-      std::string description = o->fun->description();
-      plouf << convert_name(description) << " (" << display(o->ops[0]) << ')';
-      for (ast_real_vect::const_iterator i = ++(o->ops.begin()),
-           end = o->ops.end(); i != end; ++i)
-        plouf << " (" << display(*i) << ')';
-    }
-    else if (o->ops.size() == 1)
-    {
-      std::string s(1, op[o->type]);
-      if (o->type == UOP_ABS) s = "Rabs";
-      else if (o->type == UOP_SQRT) s = "sqrt";
-      plouf << '(' << s << ' ' << display(o->ops[0]) << ")%R";
-    }
-    else
-    {
-      plouf << '(' << display(o->ops[0]) << ' ' << op[o->type] << ' '
-            << display(o->ops[1]) << ")%R";
-    }
-  }
-  else assert(false);
-  plouf << ").\n";
-  return name;
-}
-
 static id_cache< std::string > displayed_properties;
 
 static std::string display(property const &p) {
@@ -330,6 +278,7 @@ struct coq_backend: backend {
   coq_backend(): backend("coq") {}
   void initialize(std::ostream &o) {
     out = &o;
+    out_vars = &o;
     o << "Require Import Fcore.\n"
          "Require Import Gappa_library.\n"
          "Section Generated_by_Gappa.\n";

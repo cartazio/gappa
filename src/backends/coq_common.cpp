@@ -14,6 +14,7 @@
 #include "backends/backend.hpp"
 #include "backends/coq_common.hpp"
 #include "numbers/interval_utility.hpp"
+#include "parser/ast.hpp"
 #include "utils.hpp"
 
 #define GAPPADEF "Gappa.Gappa_definitions."
@@ -246,10 +247,10 @@ RUN_ONCE(fill_theorem_map)
 bool fqn = false;
 bool vernac = true;
 
-static std::string qualify(std::string const &path, std::string const &name)
+static std::string qualify(std::string const &path)
 {
-  if (!fqn) return name;
-  return path + name;
+  if (fqn) return path;
+  else return std::string();
 }
 
 std::string convert_name(std::string const &name)
@@ -263,15 +264,15 @@ std::string convert_name(std::string const &name)
   if (prefix == "rounding_fixed")
   {
     assert(p1 != std::string::npos);
-    res << '(' << qualify(FLOCQDEF "generic_fmt.", "round") << ' '
-        << qualify(GAPPADEF, "radix2") << " ("
-        << qualify(FLOCQDEF "FIX.", "FIX_exp") << " ("
+    res << '(' << qualify(FLOCQDEF "generic_fmt.") << "round "
+        << qualify(GAPPADEF) << "radix2 ("
+        << qualify(FLOCQDEF "FIX.") << "FIX_exp ("
         << name.substr(p1 + 1) << ")) ";
     round_mode:
     assert(p1 == p0 + 3);
     std::string mode = name.substr(p0 + 1, 2);
-    if (mode == "ne") res << qualify(FLOCQDEF "rnd_ne.", "rndNE");
-    else res << qualify(FLOCQDEF "generic_fmt.", "rnd")
+    if (mode == "ne") res << qualify(FLOCQDEF "rnd_ne.") << "rndNE";
+    else res << qualify(FLOCQDEF "generic_fmt.") << "rnd"
              << (char)std::toupper(mode[0]) << (char)std::toupper(mode[1]);
     res << ") ";
     return res.str();
@@ -280,9 +281,9 @@ std::string convert_name(std::string const &name)
   {
     std::string::size_type p2 = name.find(',', p1 + 1);
     assert(p2 != std::string::npos);
-    res << '(' << qualify(FLOCQDEF "generic_fmt.", "round") << ' '
-        << qualify(GAPPADEF, "radix2") << " ("
-        << qualify(FLOCQDEF "FLT.", "FLT_exp") << " ("
+    res << '(' << qualify(FLOCQDEF "generic_fmt.") << "round "
+        << qualify(GAPPADEF) << "radix2 ("
+        << qualify(FLOCQDEF "FLT.") << "FLT_exp ("
         << name.substr(p2 + 1) << ") (" << name.substr(p1 + 1, p2 - p1 - 1) << ")) ";
     goto round_mode;
   }
@@ -315,7 +316,7 @@ std::string display(number const &f)
   std::string name = composite('f', f_id);
   if (f_id < 0) return name;
   *out << (vernac ? "Definition " : "let ") << name << " := "
-       << qualify(GAPPADEF, "Float2") << ' ' << s_
+       << qualify(GAPPADEF) << "Float2 " << s_
        << (vernac ? ".\n" : " in\n");
   return name;
 }
@@ -331,8 +332,87 @@ std::string display(interval const &i)
   std::string name = composite('i', i_id);
   if (i_id < 0) return name;
   *out << (vernac ? "Definition " : "let ") << name << " := "
-       << qualify(GAPPADEF, "makepairF") << ' ' << s_
+       << qualify(GAPPADEF) << "makepairF " << s_
        << (vernac ? ".\n" : " in\n");
+  return name;
+}
+
+static id_cache< ast_real const * > displayed_reals;
+
+std::ostream *out_vars;
+
+std::string display(ast_real const *r)
+{
+  if (hidden_real const *h = boost::get< hidden_real const >(r))
+    r = h->real;
+  int r_id = displayed_reals.find(r);
+  std::string name = r->name ? '_' + r->name->name : composite('r', r_id);
+  if (r_id < 0)
+    return name;
+  if (boost::get< undefined_real const >(r)) {
+    *out_vars << (vernac ? "Variable " : " (") << name << " : "
+              << qualify(COQRDEF) << 'R' << (vernac ? ".\n" : ")");
+    return name;
+  }
+  auto_flush plouf;
+  plouf << (vernac ? "Notation " : "let ") << name << " := ";
+  if (vernac) plouf << '(';
+  if (ast_number const *const *nn = boost::get< ast_number const *const >(r))
+  {
+    ast_number const &n = **nn;
+    std::string m = (n.mantissa.size() > 0 && n.mantissa[0] == '+') ? n.mantissa.substr(1) : n.mantissa;
+    if (n.base == 0)
+      plouf << qualify("Gappa.Gappa_pred_bnd.") << "Float1 0";
+    else if (n.exponent == 0)
+      plouf << qualify("Gappa.Gappa_pred_bnd.") << "Float1 (" << m << ')';
+    else
+      plouf << qualify(GAPPADEF) << "float" << n.base << "R ("
+            << qualify(GAPPADEF) << "Float" << n.base
+            << " (" << m << ") (" << n.exponent << "))";
+  }
+  else if (real_op const *o = boost::get< real_op const >(r))
+  {
+    static char const op[] = "X-XX+-*/XX";
+    if (o->type == ROP_FUN)
+    {
+      std::string description = o->fun->description();
+      plouf << convert_name(description) << ' ' << display(o->ops[0]);
+      for (ast_real_vect::const_iterator i = ++(o->ops.begin()),
+           end = o->ops.end(); i != end; ++i)
+        plouf << ' ' << display(*i);
+    }
+    else if (fqn)
+    {
+      char const *s;
+      switch (o->type) {
+      case BOP_ADD: s = COQRDEF "Rplus"; break;
+      case BOP_SUB: s = COQRDEF "Rminus"; break;
+      case BOP_MUL: s = COQRDEF "Rmult"; break;
+      case BOP_DIV: s = COQRDEF "Rdiv"; break;
+      case UOP_ABS: s = "Reals.Rbasic_fun.Rabs"; break;
+      case UOP_SQRT: s = "Reals.R_sqrt.sqrt"; break;
+      case UOP_NEG: s = COQRDEF "Ropp"; break;
+      default: assert(false);
+      }
+      plouf << s << ' ' << display(o->ops[0]);
+      if (o->ops.size() == 2) plouf << ' ' << display(o->ops[1]);
+    }
+    else if (o->ops.size() == 1)
+    {
+      std::string s(1, op[o->type]);
+      if (o->type == UOP_ABS) s = "Rabs";
+      else if (o->type == UOP_SQRT) s = "sqrt";
+      plouf << '(' << s << ' ' << display(o->ops[0]) << ")%R";
+    }
+    else
+    {
+      plouf << '(' << display(o->ops[0]) << ' ' << op[o->type] << ' '
+            << display(o->ops[1]) << ")%R";
+    }
+  }
+  else
+    assert(false);
+  plouf << (vernac ? ").\n" : " in\n");
   return name;
 }
 

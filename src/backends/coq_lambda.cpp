@@ -26,67 +26,6 @@
 
 using namespace coq;
 
-std::ostream *out_vars;
-
-static id_cache< ast_real const * > displayed_reals;
-
-static std::string display(ast_real const *r)
-{
-  if (hidden_real const *h = boost::get< hidden_real const >(r))
-    r = h->real;
-  int r_id = displayed_reals.find(r);
-  std::string name = r->name ? '_' + r->name->name : composite('r', r_id);
-  if (r_id < 0)
-    return name;
-  if (boost::get< undefined_real const >(r)) {
-    *out_vars << " (" << name << " : " COQRDEF "R)";
-    return name;
-  }
-  auto_flush plouf;
-  plouf << "let " << name << " := ";
-  if (ast_number const *const *nn = boost::get< ast_number const *const >(r))
-  {
-    ast_number const &n = **nn;
-    std::string m = (n.mantissa.size() > 0 && n.mantissa[0] == '+') ? n.mantissa.substr(1) : n.mantissa;
-    if (n.base == 0) plouf << "Gappa.Gappa_pred_bnd.Float1 0";
-    else if (n.exponent == 0) plouf << "Gappa.Gappa_pred_bnd.Float1 (" << m << ')';
-    else
-      plouf << GAPPADEF "float" << n.base << "R (" GAPPADEF "Float" << n.base
-            << " (" << m << ") (" << n.exponent << "))";
-  }
-  else if (real_op const *o = boost::get< real_op const >(r))
-  {
-    if (o->type == ROP_FUN)
-    {
-      std::string description = o->fun->description();
-      plouf << convert_name(description) << ' ' << display(o->ops[0]);
-      for (ast_real_vect::const_iterator i = ++(o->ops.begin()),
-           end = o->ops.end(); i != end; ++i)
-        plouf << ' ' << display(*i);
-    }
-    else
-    {
-      char const *s;
-      switch (o->type) {
-      case BOP_ADD: s = COQRDEF "Rplus"; break;
-      case BOP_SUB: s = COQRDEF "Rminus"; break;
-      case BOP_MUL: s = COQRDEF "Rmult"; break;
-      case BOP_DIV: s = COQRDEF "Rdiv"; break;
-      case UOP_ABS: s = "Reals.Rbasic_fun.Rabs"; break;
-      case UOP_SQRT: s = "Reals.R_sqrt.sqrt"; break;
-      case UOP_NEG: s = COQRDEF "Ropp"; break;
-      default: assert(false);
-      }
-      plouf << s << ' ' << display(o->ops[0]);
-      if (o->ops.size() == 2) plouf << ' ' << display(o->ops[1]);
-    }
-  }
-  else
-    assert(false);
-  plouf << " in\n";
-  return name;
-}
-
 static id_cache< std::string > displayed_properties;
 
 static std::string display(property const &p)

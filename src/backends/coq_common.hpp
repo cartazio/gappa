@@ -9,11 +9,13 @@
    See the COPYING and COPYING.GPL files for more details.
 */
 
+#include <iosfwd>
 #include <map>
 #include <string>
 
-class number;
+class ast_real;
 class interval;
+class number;
 
 namespace coq {
 
@@ -26,7 +28,11 @@ extern bool fqn;
 /** Use vernacular for definitions. */
 extern bool vernac;
 
+/** Output stream for global variables. */
+extern std::ostream *out_vars;
+
 std::string convert_name(std::string const &name);
 std::string display(number const &f);
 std::string display(interval const &i);
+std::string display(ast_real const *r);
 }
