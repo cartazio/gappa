@@ -43,6 +43,7 @@ std::string display(interval const &i);
 std::string display(ast_real const *r);
 std::string display(property const &p);
 std::string display(theorem_node *t);
+std::string display(node *n);
 
 void apply_theorem(auto_flush &plouf, std::string const &th,
                    property const &res, property const *hyp,
@@ -50,5 +51,7 @@ void apply_theorem(auto_flush &plouf, std::string const &th,
 
 std::string subset_name(property const &p1, property const &p2);
 void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_map const &pmap);
+void invoke_lemma(auto_flush &plouf, node *n, property_map const &pmap);
+void reset();
 
 }

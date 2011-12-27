@@ -638,4 +638,187 @@ void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_map cons
   if (vernac) plouf << '\n';
 }
 
+void invoke_lemma(auto_flush &plouf, node *n, property_map const &pmap)
+{
+  if (n->type != HYPOTHESIS) {
+    if (vernac) plouf << " apply " << display(n) << '.';
+    else plouf << display(n);
+    invoke_lemma(plouf, n->graph->get_hypotheses(), pmap);
+  } else {
+    property_vect hyp;
+    hyp.push_back(n->get_result());
+    invoke_lemma(plouf, hyp, pmap);
+  }
+}
+
+static void invoke_subset(auto_flush &plouf, property const p1, property const &p2)
+{
+  std::string sn = subset_name(p1, p2);
+  if (sn.empty()) return;
+  plouf << " apply " << sn << " with ";
+  switch (p1.real.pred()) {
+  case PRED_FIX: plouf << p1.cst() << "%Z"; break;
+  case PRED_FLT: plouf << p1.cst() << "%positive"; break;
+  default: plouf << display(p1.bnd());
+  }
+  plouf << ". 2: finalize.\n";
+}
+
+static id_cache< node * > displayed_nodes;
+
+std::string display(node *n)
+{
+  assert(n);
+  int n_id = displayed_nodes.find(n);
+  std::string name = composite('l', n_id);
+  if (n_id < 0) return name;
+  auto_flush plouf;
+  if (vernac) plouf << "Lemma " << name << " : ";
+  else plouf << "let "<< name;
+  property_vect const &n_hyp = n->graph->get_hypotheses();
+  property_map pmap;
+  int num_hyp = 0;
+  for (property_vect::const_iterator i = n_hyp.begin(),
+       i_end = n_hyp.end(); i != i_end; ++i)
+  {
+    property const &p = *i;
+    if (vernac) plouf << display(p) << " -> ";
+    pmap[p.real] = std::make_pair(num_hyp++, &p);
+  }
+  node_vect const &pred = n->get_subproofs();
+  property const &n_res = n->get_result();
+  std::string p_res, prefix;
+  if (n_res.null()) {
+    p_res = qualify(GAPPADEF) + "contradiction";
+    prefix = "absurd_";
+  } else
+    p_res = display(n_res);
+  plouf << (vernac ? "" : " : ") << p_res << (vernac ? ". (* " : " := (* ")
+        << (!n_res.null() ? dump_property(n_res) : "contradiction") << " *)\n";
+  if (vernac && num_hyp) {
+    plouf << " intros";
+    for(int i = 0; i < num_hyp; ++i) plouf << " h" << i;
+    plouf << ".\n";
+  }
+  switch (n->type) {
+  case MODUS: {
+    for (node_vect::const_iterator i = pred.begin(),
+         i_end = pred.end(); i != i_end; ++i)
+    {
+      node *m = *i;
+      property const &res = m->get_result();
+      plouf << (vernac ? " assert (h" : "  let h") << num_hyp << " : "
+            << display(res) << (vernac ? ")." : " := ");
+      if (vernac) invoke_lemma(plouf, m, pmap);
+      else plouf << display(m) << " in\n";
+      pmap[res.real] = std::make_pair(num_hyp++, &res);
+    }
+    modus_node *mn = dynamic_cast< modus_node * >(n);
+    assert(mn && mn->target);
+    plouf << (vernac ? " apply " : "  ") << display(mn->target);
+    if (vernac) plouf << '.';
+    invoke_lemma(plouf, mn->target->hyp, pmap);
+    break; }
+  case INTERSECTION: {
+    property hyps[2];
+    int num[2];
+    char const *suffix = "";
+    for (int i = 0; i < 2; ++i)
+    {
+      node *m = pred[i];
+      property const &res = m->get_result();
+      hyps[i] = res;
+      switch (res.real.pred()) {
+        case PRED_BND:
+          if (!is_bounded(res.bnd())) suffix = (i == 0) ? "_hb" : "_bh";
+          break;
+        case PRED_ABS:
+          suffix = "_aa";
+          break;
+        case PRED_REL:
+          suffix = res.real == n_res.real ? "_rr" : "_rr0";
+          break;
+        default:
+          assert(false);
+      }
+      if (m->type == HYPOTHESIS) {
+        property_map::iterator pki = pmap.find(res.real);
+        assert(pki != pmap.end());
+        num[i] = pki->second.first;
+        continue;
+      }
+      plouf << (vernac ? " assert (h" : "  let h") << num_hyp << " : "
+            << display(res) << (vernac ? ")." : " := ");
+      invoke_lemma(plouf, m, pmap);
+      if (!vernac) plouf << " in\n";
+      num[i] = num_hyp++;
+    }
+    if (vernac) {
+      plouf << " apply " << prefix << "intersect" << suffix << " with"
+               " (1 := h" << num[0] << ") (2 := h" << num[1] << ")."
+               " finalize.\n";
+    } else {
+      plouf << "  ";
+      apply_theorem(plouf, std::string(prefix) + "intersect" + suffix,
+                    n_res, hyps, NULL, num);
+    }
+    break; }
+  case UNION: {
+    assert(vernac);
+    assert(pred.size() >= 2);
+    node *mcase = pred[0];
+    property const &pcase = mcase->get_result();
+    assert(pcase.real.pred() == PRED_BND);
+    property_map::mapped_type &hcase = pmap[pcase.real];
+    if (mcase->type != HYPOTHESIS) {
+      plouf << " assert (h" << num_hyp << " : " << display(pcase) << ").";
+      invoke_lemma(plouf, mcase, pmap);
+      hcase = std::make_pair(num_hyp, &pcase);
+    }
+    plouf << " generalize h" << hcase.first << ". clear h" << hcase.first << ".\n";
+    for(node_vect::const_iterator i = pred.begin() + 1, i_end = pred.end(); i != i_end; ++i) {
+      node *m = *i;
+      property_vect const &m_hyp = m->graph->get_hypotheses();
+      hcase.second = &m_hyp[0];
+      plouf << " assert (u : " << display(m_hyp[0]) << " -> " << p_res << ")."
+               " intro h" << hcase.first << ". (* " << m_hyp[0].bnd() << " *)\n";
+      property const &res = m->get_result();
+      if (!res.null()) // not a contradictory result
+        invoke_subset(plouf, res, n_res);
+      invoke_lemma(plouf, m, pmap);
+      if (i + 1 != i_end)
+        plouf << " next_interval (union) u.\n";
+      else
+        plouf << " exact u.\n";
+    }
+    break; }
+  case GOAL: {
+    node *m = pred[0];
+    if (vernac) {
+      invoke_subset(plouf, m->get_result(), n_res);
+      invoke_lemma(plouf, m, pmap);
+    } else {
+      property const &res = m->get_result();
+      std::string sn = subset_name(res, n_res);
+      if (!sn.empty()) {
+        plouf << "  let h" << num_hyp << " : " << display(res) << " := "
+              << display(m) << " in ";
+        pmap[res.real] = std::make_pair(num_hyp++, &res);
+        apply_theorem(plouf, sn, n_res, &res, &pmap);
+      } else
+        plouf << "  " << display(m);
+    }
+    break; }
+  default:
+    assert(false);
+  }
+  plouf << (vernac ? "Qed.\n" : " in\n");
+  return name;
+}
+
+void reset()
+{
+  displayed_nodes.clear();
+}
+
 }
