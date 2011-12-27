@@ -153,6 +153,8 @@ static char const *theorem_defs[][2] = {
   { "float_absolute_wide_ne", "$gfloat.$t _ _ $1x $1i $i $" },
   { "float_relative_ne", "$gfloat.$t _ _ $1x $1i $i $" },
   { "float_relative_na", "$gfloat.$t _ _ $1x $1i $i $" },
+  { "float_relative_inv_ne", "$gfloat.$t _ _ $y $1i $i $" },
+  { "float_relative_inv_na", "$gfloat.$t _ _ $y $1i $i $" },
   { "rel_of_fix_float_ne", "$gfloat.$t _ _ $1c $1x $i $" },
   { "rel_of_fix_float_na", "$gfloat.$t _ _ $1c $1x $i $" },
 
