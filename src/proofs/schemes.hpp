@@ -112,4 +112,7 @@ bool fill_hypotheses(property *, preal_vect const &);
 
 preal_vect generate_proof_paths();
 
+/** Returns true if the theorem is unknown by the current back-end. */
+bool is_unknown_theorem(const char *);
+
 #endif // PROOFS_SCHEMES_HPP

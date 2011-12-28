@@ -183,6 +183,7 @@ node *fixed_of_fix_reduced_scheme::generate_proof(property const hyps[]) const
 
 proof_scheme *fixed_of_fix_reduced_scheme::factory(ast_real const *real)
 {
+  if (is_unknown_theorem("fixed_of_fix_reduced")) return NULL;
   ast_real const *holders[2];
   fixed_rounding_class const *f = dynamic_cast< fixed_rounding_class const * >(absolute_rounding_error(real, holders));
   if (!f) return NULL;

@@ -17,6 +17,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include "backends/backend.hpp"
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
 #include "parser/ast.hpp"
@@ -24,6 +25,12 @@
 #include "proofs/schemes.hpp"
 
 extern std::string parameter_schemes;
+extern backend *proof_generator;
+
+bool is_unknown_theorem(char const *th)
+{
+  return proof_generator && !proof_generator->is_known(th);
+}
 
 typedef std::set< predicated_real > preal_set;
 extern preal_set input_reals, output_reals;

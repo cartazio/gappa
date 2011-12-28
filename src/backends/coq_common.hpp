@@ -53,5 +53,6 @@ std::string subset_name(property const &p1, property const &p2);
 void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_map const &pmap);
 void invoke_lemma(auto_flush &plouf, node *n, property_map const &pmap);
 void reset();
+bool known_theorem(std::string const &);
 
 }

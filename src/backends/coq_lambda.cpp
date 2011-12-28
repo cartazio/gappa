@@ -32,8 +32,9 @@ struct coq_lambda_backend: backend
   void initialize(std::ostream &o) { out = &o; fqn = true; vernac = false; }
   void finalize() {}
   void reset() { coq::reset(); }
-  virtual std::string rewrite(ast_real const *, ast_real const *, pattern_cond_vect const &);
-  virtual std::string theorem(node *n);
+  std::string rewrite(ast_real const *, ast_real const *, pattern_cond_vect const &);
+  std::string theorem(node *n);
+  bool is_known(std::string const &s) { return theorems.count(s); }
 };
 
 std::string coq_lambda_backend::rewrite

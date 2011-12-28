@@ -36,8 +36,9 @@ struct coq_backend: backend {
   }
   void finalize() { *out << "End Generated_by_Gappa.\n"; }
   void reset() { coq::reset(); }
-  virtual std::string rewrite(ast_real const *, ast_real const *, pattern_cond_vect const &);
-  virtual std::string theorem(node *n) { return display(n); }
+  std::string rewrite(ast_real const *, ast_real const *, pattern_cond_vect const &);
+  std::string theorem(node *n) { return display(n); }
+  bool is_known(std::string const &s) { return theorems.count(s); }
 };
 
 std::string coq_backend::rewrite(ast_real const *src, ast_real const *dst,
