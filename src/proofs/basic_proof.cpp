@@ -1249,7 +1249,7 @@ REGISTER_SCHEME_END_PATTERN(bnd_div_of_rel_bnd_div, predicated_real((pattern(1) 
 node *bnd_div_of_rel_bnd_div_scheme::generate_proof(property const hyps[]) const
 {
   property res(real, hyps[0].bnd() * hyps[1].bnd());
-  return create_theorem(2, hyps, res, "bnd_div_of_rel_bnd_div", &mul_updater);
+  return create_theorem(3, hyps, res, "bnd_div_of_rel_bnd_div", &mul_updater);
 }
 
 proof_scheme *bnd_div_of_rel_bnd_div_scheme::factory(predicated_real const &real, ast_real_vect const &holders)
@@ -1258,5 +1258,6 @@ proof_scheme *bnd_div_of_rel_bnd_div_scheme::factory(predicated_real const &real
   if (holders[0] == holders[2]) return NULL;
   hyps.push_back(predicated_real(holders[1], holders[0], PRED_REL));
   hyps.push_back(predicated_real(normalize(real_op(holders[0], BOP_DIV, holders[2])), PRED_BND));
+  hyps.push_back(predicated_real(holders[2], PRED_NZR));
   return new bnd_div_of_rel_bnd_div_scheme(real, hyps);
 }
