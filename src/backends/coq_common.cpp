@@ -161,7 +161,7 @@ static char const *theorem_defs[][2] = {
   { "rel_of_fix_float_na", "$gfloat.$t _ _ $1c $1x $i $" },
 
   { "fix_of_fixed", "$gfixed.$t _ _ _ $c $" },
-  { "fixed_of_fix", "$gfixed.$t _ $1x $1c _ $i $" },
+  { "fixed_of_fix", "$gfixed.$t _ $1x $1c _ $" },
   { "fix_fixed_of_fix", "$gfixed.$t _ _ $1c $c $1x $" },
   { "flt_fixed_of_flt", "$gfixed.$t _ _ $1c $c $1x $" },
   { "bnd_of_bnd_fix", "$gfixed.$t $1x $2c $1i $i $" },
