@@ -189,7 +189,7 @@ interval float_rounding_class::absolute_error_from_approx_bnd(interval const &i,
   // directed rounding only
   int e1 = exponent(lower(i), format), e2 = exponent(upper(i), format);
   int e_err = std::max(e1, e2);
-  name = "float_absolute_inv" + ident;
+  name = "float_absolute_inv" + std::string(1, ',') + direction_names[type];
   if (rnd_to_nearest(type)) return from_exponent(e_err - 1, 0);
   return from_exponent(e_err, rnd_global_direction_abs(type, i));
 }
@@ -198,7 +198,7 @@ interval float_rounding_class::absolute_error_from_approx_abs(interval const &i,
 {
   // symmetric rounding only
   int e_err = exponent(upper(i), format);
-  name = "float_absolute_inv" + ident;
+  name = "float_absolute_inv" + std::string(1, ',') + direction_names[type];
   if (rnd_to_nearest(type)) return from_exponent(e_err - 1, 0);
   return from_exponent(e_err, 0);
 }

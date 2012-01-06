@@ -23,7 +23,8 @@ struct ast_real;
 struct pattern_cond;
 typedef std::vector< pattern_cond > pattern_cond_vect;
 
-struct backend {
+struct backend
+{
   backend(std::string const &);
   virtual void initialize(std::ostream &) = 0;
   virtual std::string rewrite(ast_real const *, ast_real const *, pattern_cond_vect const &) = 0;
@@ -31,6 +32,7 @@ struct backend {
   virtual std::string theorem(node *) = 0;
   virtual void finalize() = 0;
   virtual ~backend() {}
+  virtual bool is_known(std::string const &) { return true; }
   static backend *find(std::string const &);
 };
 

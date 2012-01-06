@@ -137,34 +137,57 @@ proof_scheme *fix_of_fixed_scheme::factory(predicated_real const &real) {
 
 // FIXED_OF_FIX
 REGISTER_SCHEME_BEGIN(fixed_of_fix);
-  fixed_rounding_class const *rnd;
-  fixed_of_fix_scheme(ast_real const *r, predicated_real const &v, fixed_rounding_class const *f)
-    : proof_scheme(predicated_real(r, PRED_BND), preal_vect(1, v)), rnd(f) {}
-REGISTER_SCHEME_END(fixed_of_fix);
+  long min_exp;
+  fixed_of_fix_scheme(predicated_real const &r, predicated_real const &v, long e)
+    : proof_scheme(r, preal_vect(1, v)), min_exp(e) {}
+REGISTER_SCHEME_END_PATTERN(fixed_of_fix, predicated_real(pattern(0), pattern(1), PRED_EQL));
 
 node *fixed_of_fix_scheme::generate_proof(property const hyps[]) const
 {
-  property const &hyp = hyps[0];
-  long weight = hyp.cst();
-  if (weight < rnd->format.min_exp)
-  {
-    if (rnd_to_nearest(rnd->type)) return NULL;
-    int dir = rnd_global_direction_abs(rnd->type);
-    interval error = from_exponent(rnd->format.min_exp, dir);
-    number adj = upper(from_exponent(weight, 1));
-    interval adjust(adj, adj);
-    if (dir <= 0) error = intersect(error, error + adjust);
-    if (dir >= 0) error = intersect(error, error - adjust);
-    return create_theorem(1, &hyp, property(real, error), "fixed_of_fix_reduced");
-  }
-  return create_theorem(1, &hyp, property(real, zero()), "fixed_of_fix");
+  if (hyps[0].cst() < min_exp) return NULL;
+  return create_theorem(1, hyps, property(real), "fixed_of_fix");
 }
 
-proof_scheme *fixed_of_fix_scheme::factory(ast_real const *real) {
+proof_scheme *fixed_of_fix_scheme::factory(predicated_real const &real, ast_real_vect const &holders)
+{
+  ast_real const *r = holders[1];
+  real_op const *o = boost::get<real_op const>(holders[0]);
+  if (!o || !o->fun || o->fun->type != UOP_ID || r != o->ops[0])
+    return NULL;
+  fixed_rounding_class const *f = dynamic_cast<fixed_rounding_class const *>(o->fun);
+  if (!f) return NULL;
+  return new fixed_of_fix_scheme(real, predicated_real(r, PRED_FIX), f->format.min_exp);
+}
+
+// FIXED_OF_FIX_REDUCED
+REGISTER_SCHEME_BEGIN(fixed_of_fix_reduced);
+  fixed_rounding_class const *rnd;
+  fixed_of_fix_reduced_scheme(ast_real const *r, predicated_real const &v, fixed_rounding_class const *f)
+    : proof_scheme(predicated_real(r, PRED_BND), preal_vect(1, v)), rnd(f) {}
+REGISTER_SCHEME_END(fixed_of_fix_reduced);
+
+node *fixed_of_fix_reduced_scheme::generate_proof(property const hyps[]) const
+{
+  property const &hyp = hyps[0];
+  long weight = hyp.cst();
+  if (weight >= rnd->format.min_exp) return NULL;
+  if (rnd_to_nearest(rnd->type)) return NULL;
+  int dir = rnd_global_direction_abs(rnd->type);
+  interval error = from_exponent(rnd->format.min_exp, dir);
+  number adj = upper(from_exponent(weight, 1));
+  interval adjust(adj, adj);
+  if (dir <= 0) error = intersect(error, error + adjust);
+  if (dir >= 0) error = intersect(error, error - adjust);
+  return create_theorem(1, &hyp, property(real, error), "fixed_of_fix_reduced");
+}
+
+proof_scheme *fixed_of_fix_reduced_scheme::factory(ast_real const *real)
+{
+  if (is_unknown_theorem("fixed_of_fix_reduced")) return NULL;
   ast_real const *holders[2];
   fixed_rounding_class const *f = dynamic_cast< fixed_rounding_class const * >(absolute_rounding_error(real, holders));
   if (!f) return NULL;
-  return new fixed_of_fix_scheme(real, predicated_real(holders[0], PRED_FIX), f);
+  return new fixed_of_fix_reduced_scheme(real, predicated_real(holders[0], PRED_FIX), f);
 }
 
 // BND_OF_BND_FIX

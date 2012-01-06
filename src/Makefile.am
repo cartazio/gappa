@@ -12,6 +12,8 @@ gappa_SOURCES = \
 	backends/backend.cpp \
 	backends/backend.hpp \
 	backends/coq.cpp \
+	backends/coq_common.cpp \
+	backends/coq_common.hpp \
 	backends/coq_lambda.cpp \
 	backends/holl.cpp \
 	numbers/interval.cpp \
