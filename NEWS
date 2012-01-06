@@ -1,3 +1,15 @@
+Version 0.16.0:
+ * Coq lambda back-end
+   - fixed syntax of proofs containing no variables
+   - fixed typing of some floating-point constants
+   - fixed signature of theorems rel_refl, div_fil, div_fir
+ * Coq script back-end
+   - fixed typing of some floating-point constants
+   - fixed syntax for Coq support library 0.17
+ * fact database
+   - added support for proving equalities between constants
+   - changed fixed_of_fix so that it produces an EQL property
+
 Version 0.15.1:
  * fact database:
    - fixed broken simplification of a*b -/ c*b
