@@ -1,3 +1,9 @@
+gappa (0.16.0-1~ppa+maverick1) maverick; urgency=low
+
+  * New upstream release
+
+ -- Guillaume Melquiond <guillaume.melquiond@gmail.com>  Fri, 06 Jan 2012 18:04:28 +0100
+
 gappa (0.15.1-1~ppa+maverick1) maverick; urgency=low
 
   * New upstream release
