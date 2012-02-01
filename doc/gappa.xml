@@ -11,6 +11,7 @@
   <!ENTITY gappa-invoking    SYSTEM "manual/invoking.xml">
   <!ENTITY gappa-logic       SYSTEM "manual/logic.xml">
   <!ENTITY gappa-roundings   SYSTEM "manual/roundings.xml">
+  <!ENTITY gappa-theorems    SYSTEM "manual/theorems.xml">
   <!ENTITY gappa-warnings    SYSTEM "manual/warnings.xml">
   <!ENTITY gappa-why         SYSTEM "manual/why.xml">
   <!ENTITY gappa-newton      SYSTEM "examples/newton.xml">
@@ -115,6 +116,11 @@ url="http://www.lri.fr/~melquion/">Guillaume Melquiond</ulink>.</para>
 <appendix>
 <title>Warning and error messages</title>
 &gappa-warnings;
+</appendix>
+
+<appendix>
+<title>Theorems of Gappa</title>
+&gappa-theorems;
 </appendix>
 
 <appendix>

@@ -24,7 +24,7 @@ html/index.html: gappa-preprocessed.xml gappa-html.xsl
 	cp "$(srcdir)/images"/*.png html/images/
 	mkdir tmp
 	mv tex-math-equations.tex tmp/
-	sed -e 's/dvi2bitmap outputfile/dvi2bitmap mark outputfile/' tmp/tex-math-equations.tex > tmp/tex-math-equations.tex.2
+	sed -e 's/dvi2bitmap outputfile/dvi2bitmap mark outputfile/' -e '2i\\\\usepackage\{amsfonts\}' tmp/tex-math-equations.tex > tmp/tex-math-equations.tex.2
 	mv tmp/tex-math-equations.tex.2 tmp/tex-math-equations.tex
 	cd tmp ; latex tex-math-equations.tex
 	cd tmp ; $(DVI2BITMAP) --magnification=4 --scaledown=4 --verbose=quiet --query=bitmaps tex-math-equations.dvi |\

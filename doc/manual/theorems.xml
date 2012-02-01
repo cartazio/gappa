@@ -1,0 +1,79 @@
+<section>
+<title>Predicates</title>
+
+<para>Gappa works on sets of facts about real-valued expressions. The
+following predicates are handled internally:</para>
+
+<variablelist>
+<varlistentry><term><code>BND(x,I)</code></term>
+  <listitem><para>The value of expression <code>x</code> is included in
+  interval <code>I</code>.</para></listitem></varlistentry>
+<varlistentry><term><code>ABS(x,I)</code></term>
+  <listitem><para>The absolute value of expression <code>x</code> is
+  included in interval <code>I</code>.</para></listitem></varlistentry>
+<varlistentry><term><code>REL(x,y,I)</code></term>
+  <listitem><para>The values of expressions <code>x</code> and <code>y</code>
+  satisfy <texinline>x = y \times (1 + \varepsilon)</texinline> with
+  <texinline>\varepsilon\in I</texinline>.</para></listitem></varlistentry>
+<varlistentry><term><code>FIX(x,k)</code></term>
+  <listitem><para>The value of expression <code>x</code> is such that
+  <texinline>\exists m \in \mathbb{Z},~x = m\cdot 2^k</texinline>.</para>
+  </listitem></varlistentry>
+<varlistentry><term><code>FLT(x,k)</code></term>
+  <listitem><para>The value of expression <code>x</code> is such that
+  <texinline>\exists m,e \in \mathbb{Z},~x = m\cdot 2^e \land |m| &lt; 2^k</texinline>.</para>
+  </listitem></varlistentry>
+<varlistentry><term><code>NZR(x)</code></term>
+  <listitem><para>The value of expression <code>x</code> is not
+  zero.</para></listitem></varlistentry>
+<varlistentry><term><code>EQL(x,y)</code></term>
+  <listitem><para>Expressions <code>x</code> and <code>y</code> have
+  equal values.</para></listitem></varlistentry>
+</variablelist>
+
+<para>In the definitions above, <code>I</code> denotes an interval whose
+bounds have known numerical values, while <code>k</code> is a known
+integer. In the description of the theorems, these parameters will
+usually be ignored. For instance, <code>BND(x)</code> just means that an
+enclosure of <code>x</code> is known. Except for <code>NZR</code>, all
+these predicates can appear in the logical formula the user wants to
+check. In addition, <code>EQL</code> properties are also used to express
+rewriting hints.</para>
+
+</section>
+
+<section>
+<title>Theorems</title>
+
+<para>There are three categories of theorems in Gappa: theorems about
+real arithmetic, theorems about rounding operators, and rewriting
+rules.</para>
+
+<para>In the following, variables <code>a</code>, <code>a'</code>,
+<code>b</code>, <code>c</code>, and <code>d</code>, represent arbitrary
+expressions. Gappa is susing backward reasoning, so they are filled by
+matching the goal of a theorem against the property Gappa wants to
+compute. If a theorem mentions both <code>a</code> and <code>a'</code>
+but only one of them appears on the right-hand side, then Gappa infers
+the other one so that <code>a'</code> is an approximate value of
+<code>a</code>.See <xref linkend="hint-approx"/> for more details.</para>
+
+<section>
+<title>Theorems about real arithmetic</title>
+
+<para></para>
+</section>
+
+<section>
+<title>Theorems about rounding operators</title>
+
+<para></para>
+</section>
+
+<section>
+<title>Rewriting rules</title>
+
+<para></para>
+</section>
+
+</section>
