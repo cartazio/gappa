@@ -417,9 +417,9 @@ REWRITe(mul_fils,
 	b ^ c);
 
 REWRITe(mul_firs,
-	a * c - b * c,
-	hide((a - b) * c),
-	a ^ b);
+	a * b - c * b,
+	hide((a - c) * b),
+	a ^ c);
 
 REWRITe(mul_mars,
 	a * b - c * d,
@@ -543,7 +543,7 @@ REWRIT9(addf_3,
 REWRIT9(addf_4,
 	a / (a - b),
 	hide(one + b / (a - b)),
-	~a && ~(a - b),
+	~(a - b),
 	a ^ b);
 
 REWRIT9(addf_5,
@@ -567,7 +567,7 @@ REWRIT9(addf_7,
 REWRIT9(addf_8,
 	b / (a - b),
 	hide(a / (a - b) - one),
-	~a && ~(a - b),
+	~(a - b),
 	a ^ b);
 
 #undef REWRITE
