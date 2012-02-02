@@ -488,7 +488,7 @@ proof_scheme *computation_scheme::factory(ast_real const *real)
     switch (p->type) {
     case BOP_SUB: break;
     case BOP_DIV: needed.push_back(predicated_real(ops[0], PRED_NZR)); break;
-    case BOP_MUL: needed.push_back(predicated_real(ops[0], PRED_BND)); break;
+    case BOP_MUL: needed.push_back(predicated_real(ops[0], PRED_BND)); break; //FIXME: use ABS
     default: goto generic;
     }
   }
@@ -970,6 +970,7 @@ proof_scheme *rel_of_nzr_bnd_scheme::factory(predicated_real const &real) {
 }
 
 // COMPUTATION_REL_UOP
+//FIXME: move to rewriting
 REGISTER_SCHEME_BEGIN(computation_rel_uop);
   computation_rel_uop_scheme(predicated_real const &r, predicated_real const &n)
     : proof_scheme(r, preal_vect(1, n)) {}
