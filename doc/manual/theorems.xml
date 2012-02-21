@@ -107,9 +107,9 @@ variable (denoted <code>a~</code>).</para>
   <entry><code>BND(a / a)</code></entry>
   <entry><code>NZR(a)</code></entry>
   <entry></entry></row>
-<row><entry><code>square_{nop}</code></entry>
+<row><entry><code>square</code></entry>
   <entry><code>BND(a * a)</code></entry>
-  <entry><code>BND(a)</code></entry>
+  <entry><code>ABS(a)</code></entry>
   <entry></entry></row>
 <row><entry><code>neg_a</code></entry>
   <entry><code>ABS(-a)</code></entry>

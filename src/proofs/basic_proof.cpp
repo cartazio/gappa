@@ -432,8 +432,7 @@ node *computation_scheme::generate_proof(property const hyps[]) const
     std::string s;
     interval const &i1 = hyps[0].bnd();
     if (same_ops && r->type == BOP_MUL) {
-      s = "square_";
-      s += 'o' + sign(i1);
+      s = "square";
       return create_theorem(1, hyps, property(real, square(i1)), s, &square_updater);
     }
     interval const &i2 = hyps[1].bnd();
@@ -488,7 +487,7 @@ proof_scheme *computation_scheme::factory(ast_real const *real)
     switch (p->type) {
     case BOP_SUB: break;
     case BOP_DIV: needed.push_back(predicated_real(ops[0], PRED_NZR)); break;
-    case BOP_MUL: needed.push_back(predicated_real(ops[0], PRED_BND)); break; //FIXME: use ABS
+    case BOP_MUL: needed.push_back(predicated_real(ops[0], PRED_ABS)); break;
     default: goto generic;
     }
   }

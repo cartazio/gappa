@@ -80,9 +80,7 @@ static char const *theorem_defs[][2] = {
   { "div_on", "$gpred_bnd.$t $1x $2x $1i $2i $i $" },
   { "div_np", "$gpred_bnd.$t $1x $2x $1i $2i $i $" },
   { "div_nn", "$gpred_bnd.$t $1x $2x $1i $2i $i $" },
-  { "square_p", "$gpred_bnd.$t $1x $1i $i $" },
-  { "square_o", "$gpred_bnd.$t $1x $1i $i $" },
-  { "square_n", "$gpred_bnd.$t $1x $1i $i $" },
+  { "square", "$gpred_bnd.$t $1x $1i $i $" },
   { "sqrt", "$gpred_bnd.sqrtG $1x $1i $i $" },
 
   { "sub_refl", "$gpred_bnd.$t _ $i $" },
