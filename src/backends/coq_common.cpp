@@ -207,8 +207,6 @@ static char const *theorem_defs[][2] = {
   { "mul_mabs", "$grewriting.$t _ _ _ _ $i $1p" },
   { "mul_mibs", "$grewriting.$t _ _ _ _ $i $1p" },
   { "err_xalq", "$grewriting.$t _ $2x $3x $i $1p $2p $3p" },
-  { "mul_filq", "$grewriting.$t _ $1x $1y $i $1p" },
-  { "mul_firq", "$grewriting.$t $1x _ $1y $i $1p" },
   { "sqrt_mibs", "$grewriting.$t $1x $2x $1i $2i $3i $" },
   { "sqrt_mibq", "$grewriting.$t $1x $2x $1i $2i $3i $" },
   { "val_xebs", "$grewriting.$t $x _ $i $1p" },
@@ -217,7 +215,6 @@ static char const *theorem_defs[][2] = {
   { "val_xabq", "$grewriting.$t $1x $x $i $1p $2p" },
   { "div_mibq", "$grewriting.$t _ $1x $2x $3x $i $1p $2p $3p $4p" },
   { "div_xals", "$grewriting.$t _ _ $1x $i $1p $2p" },
-  { "div_firq", "$grewriting.$t $1x _ $1y $i $1p" },
   { "div_fil", "$grewriting.$t $1x $2x $i $1p $2p" },
   { "div_fir", "$grewriting.$t $2x $1x $i $1p $2p" },
   { "err_xabq", "$grewriting.$t _ $1x $i $1p $2p" },
@@ -230,6 +227,11 @@ static char const *theorem_defs[][2] = {
   { "addf_6", "$grewriting.$t _ _ $i $1p $2p" },
   { "addf_7", "$grewriting.$t _ $1x $i $1p $2p $3p" },
   { "addf_8", "$grewriting.$t _ _ $i $1p $2p" },
+
+  { "opp_fibq", "$grewriting.$t $1x $1y $i $1p" },
+  { "mul_filq", "$grewriting.$t _ $1x $1y $i $1p" },
+  { "mul_firq", "$grewriting.$t $1x _ $1y $i $1p" },
+  { "div_firq", "$grewriting.$t $1x _ $1y $i $1p" },
 
   { "opp_fibe", "$grewriting.$t $1x $1y $1p" },
   { "add_file", "$grewriting.$t _ $1x $1y $1p" },

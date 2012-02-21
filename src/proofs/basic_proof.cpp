@@ -968,37 +968,6 @@ proof_scheme *rel_of_nzr_bnd_scheme::factory(predicated_real const &real) {
   return new rel_of_nzr_bnd_scheme(real, hyps);
 }
 
-// COMPUTATION_REL_UOP
-//FIXME: move to rewriting
-REGISTER_SCHEME_BEGIN(computation_rel_uop);
-  computation_rel_uop_scheme(predicated_real const &r, predicated_real const &n)
-    : proof_scheme(r, preal_vect(1, n)) {}
-REGISTER_SCHEME_END_PREDICATE(computation_rel_uop);
-
-node *computation_rel_uop_scheme::generate_proof(property const hyps[]) const
-{
-  real_op const *r = boost::get< real_op const >(real.real());
-  assert(r);
-  switch (r->type) {
-  case UOP_NEG:
-    return create_theorem(1, hyps, hyps[0], "neg_r", identity_updater);
-  case UOP_ABS:
-    return create_theorem(1, hyps, hyps[0], "abs_r", identity_updater);
-  default:
-    assert(false);
-  }
-  return NULL;
-}
-
-proof_scheme *computation_rel_uop_scheme::factory(predicated_real const &real) {
-  if (real.pred() != PRED_REL) return NULL;
-  real_op const *p = boost::get< real_op const >(real.real());
-  if (!p || (p->type != UOP_ABS && p->type != UOP_NEG)) return NULL;
-  real_op const *p2 = boost::get< real_op const >(real.real2());
-  if (!p2 || p->type != p2->type) return NULL;
-  return new computation_rel_uop_scheme(real, predicated_real(p->ops[0], p2->ops[0], PRED_REL));
-}
-
 // COMPUTATION_REL_ADD
 REGISTER_SCHEME_BEGIN(computation_rel_add);
   computation_rel_add_scheme(predicated_real const &r, preal_vect const &v)

@@ -239,14 +239,6 @@ variable (denoted <code>a~</code>).</para>
   <entry><code>REL(a, b)</code></entry>
   <entry><code>NZR(b)</code>, <code>BND((a - b) / b)</code></entry>
   <entry><code>a &ne; b</code></entry></row>
-<row><entry><code>neg_r</code></entry>
-  <entry><code>REL(-a, -b)</code></entry>
-  <entry><code>REL(a, b)</code></entry>
-  <entry></entry></row>
-<row><entry><code>abs_r</code></entry>
-  <entry><code>REL(|a|, |b|)</code></entry>
-  <entry><code>REL(a, b)</code></entry>
-  <entry></entry></row>
 <row><entry><code>add_rr</code></entry>
   <entry><code>REL(a + b, c + d)</code></entry>
   <entry><code>REL(a, c)</code>, <code>REL(b, d)</code>, <code>BND(c / (c + d))</code>, <code>NZR(c + d)</code></entry>
@@ -537,6 +529,10 @@ predicates.</para>
 <row><entry>Theorem name</entry><entry>Target</entry><entry>Source</entry><entry>Constraints</entry></row>
 </thead>
 <tbody>
+<row><entry><code>opp_fibq</code></entry>
+  <entry><code>REL(-a, -b)</code></entry>
+  <entry><code>REL(a, b)</code></entry>
+  <entry></entry></row>
 <row><entry><code>mul_filq</code></entry>
   <entry><code>REL(a * b, a * c)</code></entry>
   <entry><code>REL(b, c)</code></entry>

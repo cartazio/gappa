@@ -592,6 +592,11 @@ REWRIT9(addf_8,
     (predicated_real(lhs1, rhs1, PRED_REL), predicated_real(lhs2, rhs2, PRED_REL),\
      #name, pattern_cond_vect() && cond, pattern_excl_vect() && excl)
 
+REWRITe(opp_fibq,
+	-a, -b,
+	a, b,
+	a ^ b);
+
 REWRITe(mul_filq,
 	a * b, a * c,
 	b, c,
