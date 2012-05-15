@@ -430,6 +430,12 @@ struct remove_pred4
 void property_tree::fill_undefined(property_tree const &base)
 {
   if (!ptr) return;
+  if (base.empty()) {
+    kill_tree:
+    decr();
+    ptr = NULL;
+    return;
+  }
   unique();
   remove_pred3 pred1(base);
   remove_pred4 pred2(base);
@@ -439,10 +445,8 @@ void property_tree::fill_undefined(property_tree const &base)
     i2 = std::remove_if(ptr->subtrees.begin(), end2, pred2);
   ptr->leaves.erase(i1, end1);
   ptr->subtrees.erase(i2, end2);
-  if (ptr->leaves.empty() && ptr->subtrees.empty()) {
-    delete ptr;
-    ptr = NULL;
-  } else flatten();
+  if (ptr->leaves.empty() && ptr->subtrees.empty()) goto kill_tree;
+  flatten();
 }
 
 void property_tree::get_splitting(splitting &res) const

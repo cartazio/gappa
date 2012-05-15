@@ -119,12 +119,18 @@ struct property_tree
   { if (ptr != t.ptr) { decr(); ptr = t.ptr; incr(); } return *this; }
   ~property_tree() { decr(); }
   void unique();
-  void fill_undefined(property_tree const &);
   data const *operator->() const { return ptr; }
   data *operator->() { unique(); return ptr; }
   bool empty() const { return !ptr; }
 
-  /** Simplifies the tree according to property @a p.
+  /**
+   * Fills leaves that have an undefined interval with a corresponding
+   * interval from @a p. Removes leaves for which no interval can be found.
+   */
+  void fill_undefined(property_tree const &p);
+
+  /**
+   * Simplifies the tree according to property @a p.
    * @param force If true, the function removes undefined yet matching leaves.
    * @return zero if the tree is not empty yet, a positive value if it is
    *         true, a negative value if it is false.
