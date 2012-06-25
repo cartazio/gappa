@@ -1,3 +1,10 @@
+Version 0.16.1:
+ * proof graph
+   - fixed segfault when splitting cases on a degenerate goal
+   - reenabled logic reasoning for ABS and REL predicates
+ * Coq lambda back-end
+   - fixed signature of theorem mul_firs
+
 Version 0.16.0:
  * Coq lambda back-end
    - fixed syntax of proofs containing no variables
