@@ -1,0 +1,73 @@
+local list/append exec
+set list/append (lambda (l1 l2)
+  (if (empty $l1) $l2 (cons (car $l1) (self (cdr $l1) $l2))))
+set exec (macro (name . args)
+  (evalup (list/append (evalup $name) $args)))
+
+local cxx_compile
+set cxx_compile (lambda (name) (
+  redo-rule "$name.o" {&&
+    redo-ifchange ../config.set ../config.h "$name.cpp"
+    . ../config.set
+    exec $CXX $CPPFLAGS $CXXFLAGS -MMD -MT dummy -MF "$name.o.d" -I . -c -o "$name.o" "$name.cpp"
+    redo-ifchange (sed -e "s/dummy: //g;s/ [\\]\$//g;s/^[ ]*//g;s/ [ ]*/\\n/g" "$name.o.d" | read/lines)
+    rm "$name.o.d"
+  }))
+
+redo-rule "%.cpp" {
+  redo-ifchange ../config.set
+  . ../config.set
+  if (test -e "$%.ypp") {
+    redo-ifchange "$%.ypp"
+    exec $YACC -o "$%.cpp" "$%.ypp"
+  } {
+    redo-ifchange "$%.lpp"
+    exec $LEX -o "$%.cpp" "$%.lpp"
+  }
+}
+
+local cxx_sources
+set cxx_sources [
+	arithmetic/fixed
+	arithmetic/float
+	arithmetic/homogen
+	arithmetic/relative
+	backends/backend
+	backends/coq
+	backends/coq_common
+	backends/coq_lambda
+	backends/holl
+	numbers/interval
+	numbers/io
+	numbers/real
+	numbers/round
+	parser/ast
+	parser/lexer
+	parser/parser_aux
+	parser/parser
+	parser/pattern
+	parser/ring
+	proofs/basic_proof
+	proofs/dichotomy
+	proofs/proof_graph
+	proofs/property
+	proofs/rewriting
+	proofs/schemes
+	proofs/updater
+	main
+	parameters
+]
+list/iter $cxx_compile $cxx_sources
+
+redo-rule gappa {
+  local objects
+  set objects (addsuffix .o $cxx_sources)
+  redo-ifchange ../config.set $objects
+  . ../config.set
+  exec $CXX -o gappa $objects -lmpfr -lgmp
+}
+
+redo-rule clean {
+  rm -f gappa (addsuffix .o $cxx_sources)
+  rm -f parser/lexer.cpp parser/parser.cpp
+}

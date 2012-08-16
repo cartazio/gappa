@@ -1,0 +1,45 @@
+local list/iter list/map
+set list/iter (lambda (f l)
+  (if (empty $l) [] { f (car $l); self $f (cdr $l) }))
+set list/map (lambda (f l)
+  (if (empty $l) [] (cons (f (car $l)) (self $f (cdr $l)))))
+
+local addprefix
+set addprefix (lambda (pref l)
+  (list/map (lambda (name) "$(get pref)$name") $l))
+local addsuffix
+set addsuffix (lambda (suff l)
+  (list/map (lambda (name) "$(get name)$suff") $l))
+
+redo-rule config.status {&&
+  redo-ifchange configure.in
+  autoreconf -s -i
+  ./config.status --recheck
+}
+
+redo-rule config.set {
+  redo-ifchange config.status config.set.in
+  ./config.status config.set
+}
+
+redo-rule config.h {
+  redo-ifchange config.status config.h.in
+  ./config.status config.h
+}
+
+context { cd src; . aux.redo }
+
+#redo-rule "config.h" (lambda _ {&&
+#  cp config.h.in config.h
+#  echo "#define PACKAGE_STRING \"Gappa 0.16.1\"" >> config.h
+#})
+
+redo-rule clean {
+  redo-ifchange src/clean
+}
+
+redo-rule distclean {
+  redo-ifchange clean
+  rm -f configure config.status config.log config.set config.h
+  rm -rf autom4te.cache
+}

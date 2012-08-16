@@ -1,0 +1,12 @@
+evalup `{
+local CC CXX YACC LEX
+local CFLAGS CXXFLAGS CPPFLAGS
+
+set CC [ @CC@ ]
+set CXX [ @CXX@ ]
+set YACC [ @YACC@ ]
+set LEX [ @LEX@ ]
+set CFLAGS [ @CFLAGS@ ]
+set CXXFLAGS [ @CXXFLAGS@ ]
+set CPPFLAGS [ @CPPFLAGS@ ]
+}
