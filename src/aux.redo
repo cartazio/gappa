@@ -1,9 +1,3 @@
-local list/append exec
-set list/append (lambda (l1 l2)
-  (if (empty $l1) $l2 (cons (car $l1) (self (cdr $l1) $l2))))
-set exec (macro (name . args)
-  (evalup (list/append (evalup $name) $args)))
-
 local cxx_compile
 set cxx_compile (lambda (name) (
   redo-rule "$name.o" {&&
