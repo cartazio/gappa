@@ -1,17 +1,20 @@
 %.o: %.cpp config.h
+	if [ $1 = src/parser/parser.o -o $1 = src/parser/lexer.o ]; then
+		remake src/parser/parser.hpp
+	fi
+	if [ $1 = src/parameters.o -o $1 = src/parser/ring.o ]; then
+		remake config.h
+	fi
 	@CXX@ @CPPFLAGS@ @CXXFLAGS@ -MMD -MT dummy -MF $1.d -I src -c -o $1 ${1%.o}.cpp
 	read DEPS < $1.d
 	remake ${DEPS#*:}
 	rm $1.d
 
-%.cpp:
-	if [ -e ${1%.cpp}.ypp ]; then
-		remake ${1%.cpp}.ypp
-		@YACC@ -o $1 ${1%.cpp}.ypp
-	else
-		remake ${1%.cpp}.lpp
-		@LEX@ -o $1 ${1%.cpp}.lpp
-	fi
+src/parser/parser.cpp src/parser/parser.hpp: src/parser/parser.ypp
+	@YACC@ -d -o src/parser/parser.cpp src/parser/parser.ypp
+
+src/parser/lexer.cpp: src/parser/lexer.lpp
+	@LEX@ -o src/parser/lexer.cpp src/parser/lexer.lpp
 
 Remakefile: Remakefile.in config.status
 	./config.status Remakefile
@@ -24,41 +27,40 @@ config.status: configure.in
 	autoreconf -s -i
 	./config.status --recheck
 
-src/gappa:
-	OBJS="\
-		src/arithmetic/fixed.o \
-		src/arithmetic/float.o \
-		src/arithmetic/homogen.o \
-		src/arithmetic/relative.o \
-		src/backends/backend.o \
-		src/backends/coq.o \
-		src/backends/coq_common.o \
-		src/backends/coq_lambda.o \
-		src/backends/holl.o \
-		src/numbers/interval.o \
-		src/numbers/io.o \
-		src/numbers/real.o \
-		src/numbers/round.o \
-		src/parser/ast.o \
-		src/parser/lexer.o \
-		src/parser/parser_aux.o \
-		src/parser/parser.o \
-		src/parser/pattern.o \
-		src/parser/ring.o \
-		src/proofs/basic_proof.o \
-		src/proofs/dichotomy.o \
-		src/proofs/proof_graph.o \
-		src/proofs/property.o \
-		src/proofs/rewriting.o \
-		src/proofs/schemes.o \
-		src/proofs/updater.o \
-		src/main.o \
-		src/parameters.o"
-	remake $OBJS
-	@CXX@ -o src/gappa $OBJS -lmpfr -lgmp
+OBJS = \
+	src/arithmetic/fixed.o \
+	src/arithmetic/float.o \
+	src/arithmetic/homogen.o \
+	src/arithmetic/relative.o \
+	src/backends/backend.o \
+	src/backends/coq.o \
+	src/backends/coq_common.o \
+	src/backends/coq_lambda.o \
+	src/backends/holl.o \
+	src/numbers/interval.o \
+	src/numbers/io.o \
+	src/numbers/real.o \
+	src/numbers/round.o \
+	src/parser/ast.o \
+	src/parser/lexer.o \
+	src/parser/parser_aux.o \
+	src/parser/parser.o \
+	src/parser/pattern.o \
+	src/parser/ring.o \
+	src/proofs/basic_proof.o \
+	src/proofs/dichotomy.o \
+	src/proofs/proof_graph.o \
+	src/proofs/property.o \
+	src/proofs/rewriting.o \
+	src/proofs/schemes.o \
+	src/proofs/updater.o \
+	src/main.o \
+	src/parameters.o
+
+src/gappa: $(OBJS)
+	@CXX@ @CXXFLAGS@ -o src/gappa $OBJS -lmpfr -lgmp
 
 clean: src/clean
 
 src/clean:
-	find src/ -name "*.o" | xargs rm -f
-	rm -f src/gappa src/parser/parser.cpp src/parser/lexer.cpp
+	rm -f $OBJS src/gappa src/parser/parser.h src/parser/parser.cpp src/parser/lexer.cpp

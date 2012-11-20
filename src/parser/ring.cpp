@@ -15,7 +15,7 @@
 #include <map>
 #include <sstream>
 
-#include <../config.h>
+#include "../config.h"
 #ifdef HAVE_UMAP
 #include <tr1/unordered_map>
 #else
