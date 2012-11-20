@@ -60,7 +60,46 @@ OBJS = \
 src/gappa: $(OBJS)
 	@CXX@ @CXXFLAGS@ -o src/gappa $OBJS -lmpfr -lgmp
 
-clean: src/clean
+doc/gappa-news.xml: NEWS
+	cd doc ; ./changelog.pl > ./gappa-news.xml
+
+doc/gappa-preprocessed.xml: doc/gappa-news.xml
+	cd doc
+	@XSLTPROC@ --load-trace -o gappa-preprocessed.xml gappa-preprocess.xsl gappa.xml 2> xml.deps
+	cd ..
+	remake $(sed -n -e "\\,//,! s,^.*URL=\"\\([^\"]*\\).*\$,doc/\\1,p" doc/xml.deps)
+	rm doc/xml.deps
+
+doc/html/index.html: doc/gappa-preprocessed.xml doc/gappa-html.xsl
+	cd doc
+	rm -rf tmp/ html/
+	mkdir html
+	@XSLTPROC@ gappa-html.xsl gappa-preprocessed.xml
+	cp -r gappa.css images html/
+	mkdir tmp
+	mv tex-math-equations.tex tmp/
+	sed -i -e "s/dvi2bitmap outputfile/dvi2bitmap mark outputfile/" -e "2i\\\\\\usepackage\\{amsfonts\\}" tmp/tex-math-equations.tex
+	cd tmp
+	latex tex-math-equations.tex
+	@DVI2BITMAP@ --magnification=4 --scaledown=4 --verbose=quiet --query=bitmaps tex-math-equations.dvi | \
+	awk "\$6 > -10 {printf \"s/img src=\\\"%s\\\"/img style=\\\"margin-bottom: %dpx\\\" src=\\\"%s\\\"/g\\n\", \$2, (\$6 - \$4 + 14.25), \$2}" > margin.sed
+	cd ..
+	find html -name "*.html" -exec sed -i -f tmp/margin.sed "{}" ";"
+	find tmp -name "*.png" | xargs mv -t html/
+	rm -rf tmp/
+
+doc/gappa.pdf: doc/gappa-preprocessed.xml doc/gappa-pdf.xsl doc/gappa.sty
+	cd doc
+	@DBLATEX@ -p gappa-pdf.xsl -s gappa.sty -o gappa.pdf gappa-preprocessed.xml
+
+clean: src/clean doc/clean
 
 src/clean:
-	rm -f $OBJS src/gappa src/parser/parser.h src/parser/parser.cpp src/parser/lexer.cpp
+	rm -f $OBJS
+	cd src
+	rm -f gappa parser/parser.h parser/parser.cpp parser/lexer.cpp
+
+doc/clean:
+	cd doc
+	rm -rf gappa-preprocessed.xml gappa-news.xml gappa.pdf html/
+
