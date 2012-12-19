@@ -756,8 +756,8 @@ std::string display(node *n)
       }
       plouf << (vernac ? " assert (h" : "  let h") << num_hyp << " : "
             << display(res) << (vernac ? ")." : " := ");
-      invoke_lemma(plouf, m, pmap);
-      if (!vernac) plouf << " in\n";
+      if (vernac) invoke_lemma(plouf, m, pmap);
+      else plouf << display(m) << " in\n";
       num[i] = num_hyp++;
     }
     if (vernac) {
