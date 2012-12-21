@@ -1,3 +1,7 @@
+Version 0.16.2:
+ * Coq lambda back-end
+   - fixed incorrect certificate for intersection lemmas
+
 Version 0.16.1:
  * proof graph
    - fixed segfault when splitting cases on a degenerate goal
