@@ -1,3 +1,9 @@
+all: src/gappa
+
+clean: src/clean doc/clean testsuite/clean
+
+check: testsuite/check-null testsuite/check-coq testsuite/check-holl
+
 %.o: %.cpp config.h
 	if [ $1 = src/parser/parser.o -o $1 = src/parser/lexer.o ]; then
 		remake src/parser/parser.hpp
@@ -60,6 +66,11 @@ OBJS = \
 src/gappa: $(OBJS)
 	@CXX@ @CXXFLAGS@ -o src/gappa $OBJS -lmpfr -lgmp
 
+src/clean:
+	rm -f $OBJS
+	cd src
+	rm -f gappa parser/parser.h parser/parser.cpp parser/lexer.cpp
+
 doc/gappa-news.xml: NEWS
 	cd doc ; ./changelog.pl > ./gappa-news.xml
 
@@ -92,14 +103,45 @@ doc/gappa.pdf: doc/gappa-preprocessed.xml doc/gappa-pdf.xsl doc/gappa.sty
 	cd doc
 	@DBLATEX@ -p gappa-pdf.xsl -s gappa.sty -o gappa.pdf gappa-preprocessed.xml
 
-clean: src/clean doc/clean
-
-src/clean:
-	rm -f $OBJS
-	cd src
-	rm -f gappa parser/parser.h parser/parser.cpp parser/lexer.cpp
-
 doc/clean:
 	cd doc
 	rm -rf gappa-preprocessed.xml gappa-news.xml gappa.pdf html/
 
+testsuite/check-%: src/gappa
+	set +e
+	BACKEND=${1#*-}
+	cd testsuite
+	logfile="failures-$BACKEND-$(date '+%Y-%m-%d').log"
+	logtmp="log-$BACKEND.tmp"
+	outputtmp="output-$BACKEND.tmp"
+	cat /dev/null > "$logtmp"
+	cat /dev/null > "$logfile"
+	for f in *.g; do
+	  execute=0
+	  if grep -e '^# back-end:' "$f" > /dev/null; then
+	    grep -e '^# back-end:.*'$BACKEND "$f" > /dev/null
+	    execute=$?
+	  fi
+	  if [ $execute -eq 0 ]; then
+	    timeout 5 ../src/gappa -B$BACKEND "$f" > /dev/null 2> "$outputtmp"
+	    return_code=$?
+	    if [ ${return_code} -ne 0 ]; then
+	      (echo "*** $f exited with error code ${return_code}"; cat "$outputtmp"; echo) >> "$logfile"
+	      echo "$f exited with error code ${return_code}" >> "$logtmp"
+	    fi
+	    rm "$outputtmp"
+	  fi
+	done
+	return_code=0
+	if [ -s $logtmp ]; then
+	  echo "*** Failures for $BACKEND backend:"
+	  cat "$logtmp"
+	  return_code=1
+	else
+	  rm "$logfile"
+	fi
+	rm "$logtmp"
+	exit ${return_code}
+
+testsuite/clean:
+	rm -f testsuite/failures-*.log
