@@ -1,12 +1,10 @@
 AC_INIT([Gappa], [0.16.2],
         [Guillaume Melquiond <guillaume.melquiond@inria.fr>],
         [gappa])
-AM_INIT_AUTOMAKE
+
 AC_PROG_CXX
 AC_PROG_LEX
 AC_PROG_YACC
-AC_PROG_INSTALL
-
 
 XSLTPROC=xsltproc
 AC_ARG_WITH([xsltproc], AS_HELP_STRING([--with-xsltproc=PATH], [location of the xsltproc binary (documentation)]),
@@ -44,5 +42,5 @@ std::tr1::unordered_map<int, double> toto],
 AC_DEFINE([HAVE_UMAP], [1], [Define to 1 if your Standard Library supports tr1/unordered_map.])], [AC_MSG_RESULT([no])])
 
 AC_CONFIG_HEADERS(config.h)
-AC_CONFIG_FILES([Makefile doc/Makefile src/Makefile testsuite/Makefile])
+AC_CONFIG_FILES([Remakefile])
 AC_OUTPUT
