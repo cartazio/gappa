@@ -7,26 +7,24 @@ check: testsuite/check-null testsuite/check-coq testsuite/check-holl
 Remakefile: Remakefile.in config.status
 	./config.status Remakefile
 
-config.h: config.h.in config.status
+config.h stamp-config_h: config.h.in config.status
 	./config.status config.h
-	touch config.h
+	touch stamp-config_h
 
-configure config.status config.h.in: configure.in
+configure config.status config.h.in stamp-config_h_in: configure.in
 	autoreconf -s -i
 	./config.status --recheck
-	touch config.h.in
+	touch stamp-config_h_in
 
-%.o: %.cpp config.h
-	if [ $1 = src/parser/parser.o -o $1 = src/parser/lexer.o ]; then
-		remake src/parser/parser.hpp
-	fi
-	if [ $1 = src/parameters.o -o $1 = src/parser/ring.o ]; then
-		remake config.h
-	fi
+%.o: %.cpp
 	@CXX@ @CPPFLAGS@ @CXXFLAGS@ -MMD -MT dummy -MF $1.d -I src -c -o $1 ${1%.o}.cpp
 	read DEPS < $1.d
 	remake ${DEPS#*:}
 	rm $1.d
+
+src/parser/parser.o src/parser/lexer.o: src/parser/parser.hpp
+
+src/parameters.o src/parser/ring.o: config.h
 
 src/parser/parser.cpp src/parser/parser.hpp: src/parser/parser.ypp
 	@YACC@ -d -o src/parser/parser.cpp src/parser/parser.ypp
@@ -70,7 +68,7 @@ src/gappa: $(OBJS)
 src/clean:
 	rm -f $OBJS
 	cd src
-	rm -f gappa parser/parser.h parser/parser.cpp parser/lexer.cpp
+	rm -f gappa parser/parser.hpp parser/parser.cpp parser/lexer.cpp
 
 doc/gappa-news.xml: NEWS
 	cd doc ; ./changelog.pl > ./gappa-news.xml
