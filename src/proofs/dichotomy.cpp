@@ -430,7 +430,7 @@ void graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
   hyp2.push_back(varn->get_result());
   property_vect const &hyp = top_graph->get_hypotheses();
   for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
-    if (i->real.real() != var.real) hyp2.push_back(*i);
+    if (i->real != predicated_real(var.real, PRED_BND)) hyp2.push_back(*i);
   splitter *gen;
   property_tree targets;
   if (var.splitter & 1)
