@@ -1,3 +1,7 @@
+Version 0.16.3:
+ * proof graph
+   - fixed crash when performing dichotomy while there are properties other than BND
+
 Version 0.16.2:
  * Coq lambda back-end
    - fixed incorrect certificate for intersection lemmas
