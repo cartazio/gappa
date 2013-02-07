@@ -1,3 +1,7 @@
+Version 0.16.4:
+ * proof graph
+   - fixed crash when dichotomy fails to prove properties other than BND
+
 Version 0.16.3:
  * proof graph
    - fixed crash when performing dichotomy while there are properties other than BND
