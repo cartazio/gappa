@@ -164,7 +164,7 @@ interval float_rounding_class::absolute_error_from_exact_bnd(interval const &i, 
     --e_err;
   }
   name += std::string(1, ',') + direction_names[type];
-  return from_exponent(e_err, rnd_global_direction_abs(type, i));
+  return from_exponent(e_err, rnd_global_direction_abs(type, i, false));
 }
 
 interval float_rounding_class::absolute_error_from_exact_abs(interval const &i, std::string &name) const
@@ -181,7 +181,7 @@ interval float_rounding_class::absolute_error_from_exact_abs(interval const &i, 
     --e_err;
   }
   name += std::string(1, ',') + direction_names[type];
-  return from_exponent(e_err, rnd_global_direction_abs(type, i));
+  return from_exponent(e_err, rnd_global_direction_abs(type, i, false));
 }
 
 interval float_rounding_class::absolute_error_from_approx_bnd(interval const &i, std::string &name) const
@@ -191,7 +191,7 @@ interval float_rounding_class::absolute_error_from_approx_bnd(interval const &i,
   int e_err = std::max(e1, e2);
   name = "float_absolute_inv" + std::string(1, ',') + direction_names[type];
   if (rnd_to_nearest(type)) return from_exponent(e_err - 1, 0);
-  return from_exponent(e_err, rnd_global_direction_abs(type, i));
+  return from_exponent(e_err, rnd_global_direction_abs(type, i, true));
 }
 
 interval float_rounding_class::absolute_error_from_approx_abs(interval const &i, std::string &name) const
