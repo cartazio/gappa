@@ -1,3 +1,7 @@
+Version 0.16.5;
+ * arithmetic
+   - fixed incorrect round-off error for values close to zero
+
 Version 0.16.4:
  * proof graph
    - fixed crash when dichotomy fails to prove properties other than BND
