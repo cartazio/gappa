@@ -58,12 +58,12 @@ interval fixed_rounding_class::absolute_error(std::string &name) const {
 
 interval fixed_rounding_class::absolute_error_from_exact_bnd(interval const &i, std::string &name) const {
   name = "fixed_error_dir";
-  return from_exponent(format.min_exp, rnd_global_direction_abs(type, i));
+  return from_exponent(format.min_exp, rnd_global_direction_abs(type, i, false));
 }
 
 interval fixed_rounding_class::absolute_error_from_approx_bnd(interval const &i, std::string &name) const {
   name = "fixed_error_inv";
-  return from_exponent(format.min_exp, rnd_global_direction_abs(type, i));
+  return from_exponent(format.min_exp, rnd_global_direction_abs(type, i, true));
 }
 
 std::string fixed_rounding_class::pretty_name() const

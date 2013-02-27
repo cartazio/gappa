@@ -28,6 +28,7 @@ number const &upper(interval const &);
 std::ostream &operator<<(std::ostream &, number const &);
 std::ostream &operator<<(std::ostream &, interval const &);
 int sign(interval const &);
+int sign_strict(interval const &);
 
 enum io_format { IO_APPROX, IO_EXACT, IO_FULL };
 struct change_io_format {

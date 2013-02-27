@@ -154,15 +154,17 @@ int rnd_global_direction_rel(direction_type type) {
   return 0;
 }
 
-int rnd_global_direction_abs(direction_type type, interval const &i) {
-  int sgn = sign(i);
+int rnd_global_direction_abs(direction_type type, interval const &i, bool inv)
+{
+  int sgn = inv ? sign_strict(i) : sign(i);
   if (type == ROUND_DN || (type == ROUND_ZR && sgn > 0) || (type == ROUND_AW && sgn < 0)) return -1;
   if (type == ROUND_UP || (type == ROUND_ZR && sgn < 0) || (type == ROUND_AW && sgn > 0)) return +1;
   return 0;
 }
 
-int rnd_global_direction_rel(direction_type type, interval const &i) {
-  int sgn = sign(i);
+int rnd_global_direction_rel(direction_type type, interval const &i, bool inv)
+{
+  int sgn = inv ? sign_strict(i) : sign(i);
   if (type == ROUND_ZR || (type == ROUND_DN && sgn > 0) || (type == ROUND_UP && sgn < 0)) return -1;
   if (type == ROUND_AW || (type == ROUND_DN && sgn < 0) || (type == ROUND_UP && sgn > 0)) return +1;
   return 0;

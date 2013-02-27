@@ -816,8 +816,10 @@ std::string display(node *n)
         plouf << "  " << display(m);
     }
     break; }
-  default:
-    assert(false);
+  case HYPOTHESIS: {
+    assert(!vernac);
+    invoke_lemma(plouf, n, pmap);
+    break; }
   }
   plouf << (vernac ? "Qed.\n" : " in\n");
   return name;

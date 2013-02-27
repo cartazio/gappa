@@ -255,6 +255,12 @@ int sign(interval const &u) {
   return !is_neg(plup.lower()) ? 1 : !is_pos(plup.upper()) ? -1 : 0;
 }
 
+int sign_strict(interval const &u) {
+  assert(u.base);
+  using namespace boost::numeric::interval_lib::user;
+  return is_pos(plup.lower()) ? 1 : is_neg(plup.upper()) ? -1 : 0;
+}
+
 // compute u + v + u * v
 interval compose_relative(interval const &u, interval const &v) {
   assert(u.base && v.base);

@@ -209,7 +209,7 @@ class dichotomy_node;
 struct dichotomy_failure {
   property hyp;
   property expected;
-  interval found;
+  property found;
 };
 
 struct dichotomy_helper
@@ -304,7 +304,7 @@ dicho_graph dichotomy_helper::try_hypothesis(dichotomy_failure *exn,
   if (exn && !exn->expected.null()) {
     graph_loader loader(g);
     if (node *n = find_proof(exn->expected.real))
-      exn->found = n->get_result().bnd();
+      exn->found = n->get_result();
     exn->hyp = find_proof(tmp_hyp[0].real)->get_result();
   }
   delete g;
@@ -430,7 +430,7 @@ void graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
   hyp2.push_back(varn->get_result());
   property_vect const &hyp = top_graph->get_hypotheses();
   for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
-    if (i->real.real() != var.real) hyp2.push_back(*i);
+    if (i->real != predicated_real(var.real, PRED_BND)) hyp2.push_back(*i);
   splitter *gen;
   property_tree targets;
   if (var.splitter & 1)
@@ -462,11 +462,19 @@ void graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
       predicated_real const &dst = e.expected.real;
       if (dst.null())
         std::cerr << "nothing is satisfied.\n";
-      else if (is_defined(e.found))
-        std::cerr << dump_real_short(dst) << " is in " << e.found
-                  << " potentially outside of " << e.expected.bnd() << ".\n";
       else
-        std::cerr << dump_real_short(dst) << " is not computable.\n";
+      {
+        std::cerr << dump_property(e.expected) << " cannot be proved";
+        if (!e.found.real.null())
+        {
+          assert(e.expected.real == e.found.real);
+          if (e.found.real.pred_bnd())
+            std::cerr << " (best: " << e.found.bnd() << ')';
+          else if (e.found.real.pred_cst())
+            std::cerr << " (best: " << e.found.cst() << ')';
+        }
+        std::cerr << ".\n";
+      }
     }
     delete h;
     return;
