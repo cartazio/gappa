@@ -5,6 +5,7 @@ AC_INIT([Gappa], [0.16.2],
 AC_PROG_CXX
 AC_PROG_LEX
 AC_PROG_YACC
+AC_CANONICAL_BUILD
 
 XSLTPROC=xsltproc
 AC_ARG_WITH([xsltproc], AS_HELP_STRING([--with-xsltproc=PATH], [location of the xsltproc binary (documentation)]),
@@ -40,6 +41,20 @@ AC_TRY_COMPILE([#include <tr1/unordered_map>], [
 std::tr1::unordered_map<int, double> toto],
 [AC_MSG_RESULT([yes])
 AC_DEFINE([HAVE_UMAP], [1], [Define to 1 if your Standard Library supports tr1/unordered_map.])], [AC_MSG_RESULT([no])])
+
+AC_MSG_NOTICE([building remake...])
+case "$build_os" in
+mingw*)
+	$CXX -Wall -O2 -o remake.exe remake.cpp -lws2_32
+	if test $? != 0; then AC_MSG_FAILURE([failed]); fi
+	AC_SUBST([REMAKE], [./remake.exe])
+	;;
+*)
+	$CXX -Wall -O2 -o remake remake.cpp
+	if test $? != 0; then AC_MSG_FAILURE([failed]); fi
+	AC_SUBST([REMAKE], [./remake])
+	;;
+esac
 
 AC_CONFIG_HEADERS(config.h)
 AC_CONFIG_FILES([Remakefile])
