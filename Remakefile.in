@@ -146,6 +146,8 @@ testsuite/clean:
 	rm -f testsuite/failures-*.log
 
 install:
+	prefix=@prefix@
+	exec_prefix=@exec_prefix@
 	cp src/gappa @bindir@
 
 EXTRA_DIST = \
