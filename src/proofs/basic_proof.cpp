@@ -1111,6 +1111,29 @@ proof_scheme *compose_rel_swap_scheme::factory(predicated_real const &real, ast_
   return new compose_rel_swap_scheme(real, hyps);
 }
 
+// REL_ADD_ZERO
+REGISTER_SCHEME_BEGIN(rel_add_zero);
+  rel_add_zero_scheme(predicated_real const &r, preal_vect const &v)
+    : proof_scheme(r, v) {}
+REGISTER_SCHEME_END_PATTERN(rel_add_zero,
+  predicated_real(pattern(0) + pattern(2), pattern(1) + pattern(2), PRED_REL));
+
+node *rel_add_zero_scheme::generate_proof(property const hyps[]) const
+{
+  if (!is_zero(hyps[1].bnd())) return NULL;
+  property res(real, hyps[0].bnd());
+  return create_theorem(2, hyps, res, "rel_add_zero", identity_updater);
+}
+
+proof_scheme *rel_add_zero_scheme::factory(predicated_real const &real, ast_real_vect const &holders)
+{
+  if (holders[0] == holders[1]) return NULL;
+  preal_vect hyps;
+  hyps.push_back(predicated_real(holders[0], holders[1], PRED_REL));
+  hyps.push_back(predicated_real(holders[2], PRED_BND));
+  return new rel_add_zero_scheme(real, hyps);
+}
+
 // ERROR_OF_REL
 REGISTER_SCHEME_BEGIN(error_of_rel);
   error_of_rel_scheme(predicated_real const &r, preal_vect const &v)
