@@ -1136,6 +1136,60 @@ proof_scheme *error_of_rel_scheme::factory(predicated_real const &real,
   return new error_of_rel_scheme(real, hyps);
 }
 
+BINARY_INTERVAL(bnd_of_bnd_rel_updater) { r = h[0] * (interval(1, 1) + h[1]); }
+
+// BND_OF_BND_REL
+REGISTER_SCHEME_BEGIN(bnd_of_bnd_rel);
+  bnd_of_bnd_rel_scheme(predicated_real const &r, preal_vect const &v)
+    : proof_scheme(r, v) {}
+REGISTER_SCHEME_END_PATTERN(bnd_of_bnd_rel, predicated_real(pattern(1), PRED_BND));
+
+node *bnd_of_bnd_rel_scheme::generate_proof(property const hyps[]) const
+{
+  interval const &i1 = hyps[0].bnd(), &i2 = hyps[1].bnd();
+  property res(real, i1 * (interval(1, 1) + i2));
+  std::string s = "bnd_of_bnd_rel_";
+  s += 'o' + sign(i1);
+  return create_theorem(2, hyps, res, s, &bnd_of_bnd_rel_updater);
+}
+
+proof_scheme *bnd_of_bnd_rel_scheme::factory(predicated_real const &real,
+  ast_real_vect const &holders)
+{
+  if (holders[0] == holders[1]) return NULL;
+  preal_vect hyps;
+  hyps.push_back(predicated_real(holders[0], PRED_BND));
+  hyps.push_back(predicated_real(holders[1], holders[0], PRED_REL));
+  return new bnd_of_bnd_rel_scheme(real, hyps);
+}
+
+BINARY_INTERVAL(bnd_of_rel_bnd_updater) { r = h[0] / (interval(1, 1) + h[1]); }
+
+// BND_OF_REL_BND
+REGISTER_SCHEME_BEGIN(bnd_of_rel_bnd);
+  bnd_of_rel_bnd_scheme(predicated_real const &r, preal_vect const &v)
+    : proof_scheme(r, v) {}
+REGISTER_SCHEME_END_PATTERN(bnd_of_rel_bnd, predicated_real(pattern(-1), PRED_BND));
+
+node *bnd_of_rel_bnd_scheme::generate_proof(property const hyps[]) const
+{
+  interval const &i1 = hyps[0].bnd(), &i2 = hyps[1].bnd();
+  property res(real, i1 / (interval(1, 1) + i2));
+  std::string s = "bnd_of_rel_bnd_";
+  s += 'o' + sign(i1);
+  return create_theorem(2, hyps, res, s, &bnd_of_rel_bnd_updater);
+}
+
+proof_scheme *bnd_of_rel_bnd_scheme::factory(predicated_real const &real,
+  ast_real_vect const &holders)
+{
+  if (holders[0] == holders[1]) return NULL;
+  preal_vect hyps;
+  hyps.push_back(predicated_real(holders[1], PRED_BND));
+  hyps.push_back(predicated_real(holders[1], holders[0], PRED_REL));
+  return new bnd_of_rel_bnd_scheme(real, hyps);
+}
+
 // NZR_OF_ABS
 REGISTER_SCHEME_BEGIN(nzr_of_abs);
   nzr_of_abs_scheme(predicated_real const &r, predicated_real const &n)

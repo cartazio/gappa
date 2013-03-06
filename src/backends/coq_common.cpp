@@ -131,6 +131,12 @@ static char const *theorem_defs[][2] = {
   { "error_of_rel_np", "$gpred_rel.$t $1x $2x $1i $2i $i $" },
   { "error_of_rel_no", "$gpred_rel.$t $1x $2x $1i $2i $i $" },
   { "error_of_rel_nn", "$gpred_rel.$t $1x $2x $1i $2i $i $" },
+  { "bnd_of_bnd_rel_p", "$gpred_rel.$t $2x $2y $1i $2i $i $" },
+  { "bnd_of_bnd_rel_o", "$gpred_rel.$t $2x $2y $1i $2i $i $" },
+  { "bnd_of_bnd_rel_n", "$gpred_rel.$t $2x $2y $1i $2i $i $" },
+  { "bnd_of_rel_bnd_p", "$gpred_rel.$t $2x $2y $1i $2i $i $" },
+  { "bnd_of_rel_bnd_o", "$gpred_rel.$t $2x $2y $1i $2i $i $" },
+  { "bnd_of_rel_bnd_n", "$gpred_rel.$t $2x $2y $1i $2i $i $" },
 
   { "fix_of_singleton_bnd", "$gpred_fixflt.$t $x $1i $c $" },
   { "flt_of_singleton_bnd", "$gpred_fixflt.$t $x $1i $c $" },
