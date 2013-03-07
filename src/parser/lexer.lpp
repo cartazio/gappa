@@ -20,7 +20,7 @@
 #include "proofs/dichotomy.hpp"
 #include "parameters.hpp"
 
-#include "parser/parser.h"
+#include "parser/parser.hpp"
 
 static void read_number(YYSTYPE *yylval) {
   int dec = -1;

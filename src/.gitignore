@@ -1,4 +1,3 @@
-gappa
 *.o
-.deps
-.dirstamp
+gappa
+parser.hpp

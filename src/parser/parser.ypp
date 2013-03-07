@@ -15,7 +15,7 @@
 
 #include "parser/ast.hpp"
 #include "proofs/dichotomy.hpp"
-#include "parser/parser.h"
+#include "parser/parser.hpp"
 
 #define yyerror(msg) my_yyerror(yylloc, msg)
 
