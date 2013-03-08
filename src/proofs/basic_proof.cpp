@@ -1186,7 +1186,12 @@ proof_scheme *bnd_of_bnd_rel_scheme::factory(predicated_real const &real,
   return new bnd_of_bnd_rel_scheme(real, hyps);
 }
 
-BINARY_INTERVAL(bnd_of_rel_bnd_updater) { r = h[0] / (interval(1, 1) + h[1]); }
+BINARY_INTERVAL(bnd_of_rel_bnd_updater)
+{
+  r = interval(1, 1) + h[1];
+  if (contains_zero(r)) r = interval();
+  else r = h[0] / r;
+}
 
 // BND_OF_REL_BND
 REGISTER_SCHEME_BEGIN(bnd_of_rel_bnd);
