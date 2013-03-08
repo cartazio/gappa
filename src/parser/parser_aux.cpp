@@ -30,7 +30,6 @@ interval create_interval(ast_number const *, ast_number const *, bool);
 void find_unknown_reals(real_set &, ast_real const *);
 
 extern bool warning_unbound_variable;
-extern bool goal_reduction;
 
 void check_approx(ast_real const *real)
 {
@@ -99,7 +98,6 @@ static property generate_property(ast_atom const &p, bool goal)
     std::cerr << "Error: undefined intervals are restricted to conclusions.\n";
     exit(1);
   }
-  else goal_reduction = false;
   return r;
 }
 
