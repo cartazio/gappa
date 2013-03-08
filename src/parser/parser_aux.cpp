@@ -107,7 +107,7 @@ static void generate_tree(property_tree &tree, ast_prop const *p, bool positive)
 {
   switch (p->type) {
   case PROP_ATOM:
-    tree->leaves.push_back(property_tree::leave
+    tree->leaves.push_back(property_tree::leaf
       (generate_property(*p->atom, positive), positive));
     break;
   case PROP_IMPL:
@@ -130,10 +130,10 @@ static void generate_tree(property_tree &tree, ast_prop const *p, bool positive)
 
 static void massage_property_tree(property_tree &tree, context &ctx)
 {
-  std::vector<property_tree::leave> new_leaves;
+  std::vector<property_tree::leaf> new_leaves;
 
   // for any goal x>=b or x<=b, add the converse inequality as a hypothesis
-  for (std::vector<property_tree::leave>::const_iterator i = tree->leaves.begin(),
+  for (std::vector<property_tree::leaf>::const_iterator i = tree->leaves.begin(),
        i_end = tree->leaves.end(); i != i_end; ++i)
   {
     property const &p = i->first;
@@ -149,7 +149,7 @@ static void massage_property_tree(property_tree &tree, context &ctx)
     } else {
       u = number::pos_inf;
     }
-    new_leaves.push_back(property_tree::leave(property(p.real, interval(l, u)), false));
+    new_leaves.push_back(property_tree::leaf(property(p.real, interval(l, u)), false));
   }
 
   tree->leaves.insert(tree->leaves.end(), new_leaves.begin(), new_leaves.end());
@@ -158,7 +158,7 @@ static void massage_property_tree(property_tree &tree, context &ctx)
   input_set inputs;
 
   // intersect hypothesis properties for common reals
-  for (std::vector<property_tree::leave>::const_iterator i = tree->leaves.begin(),
+  for (std::vector<property_tree::leaf>::const_iterator i = tree->leaves.begin(),
        i_end = tree->leaves.end(); i != i_end; ++i)
   {
     if (i->second) {

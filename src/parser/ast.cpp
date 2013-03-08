@@ -249,7 +249,7 @@ std::string dump_prop_tree(property_tree const &pt)
   std::ostringstream s;
   if (pt.empty()) return "???";
   bool first = true;
-  for (std::vector<property_tree::leave>::const_iterator i = pt->leaves.begin(),
+  for (std::vector<property_tree::leaf>::const_iterator i = pt->leaves.begin(),
        i_end = pt->leaves.end(); i != i_end; ++i)
   {
     if (first) first = false;
@@ -296,7 +296,7 @@ std::string dump_prop_tree_nice(property_tree const &pt)
   std::ostringstream s;
   if (pt.empty()) return "1 <= 0";
   bool first = true;
-  for (std::vector<property_tree::leave>::const_iterator i = pt->leaves.begin(),
+  for (std::vector<property_tree::leaf>::const_iterator i = pt->leaves.begin(),
        i_end = pt->leaves.end(); i != i_end; ++i)
   {
     if (first) first = false;

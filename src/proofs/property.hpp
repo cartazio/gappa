@@ -95,10 +95,10 @@ typedef std::map<predicated_real, split_point_mset> splitting;
 struct property_tree
 {
   //* Second member is true if the property is in the goal.
-  typedef std::pair< property, bool > leave;
+  typedef std::pair< property, bool > leaf;
   struct data {
-    std::vector< leave > leaves;
-    std::vector< property_tree > subtrees;
+    std::vector<leaf> leaves;
+    std::vector<property_tree> subtrees;
     unsigned ref;
     bool conjunction;
     data(bool b): ref(0), conjunction(b) {}

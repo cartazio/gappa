@@ -608,8 +608,8 @@ static bool reduce_goal(property_tree &current_goals,
        current_goals->leaves.size() + current_goals->subtrees.size() > 1))
     return false;
 
-  std::vector<property_tree::leave> old_leaves = current_goals->leaves;
-  for (std::vector<property_tree::leave>::const_iterator i = old_leaves.begin(),
+  std::vector<property_tree::leaf> old_leaves = current_goals->leaves;
+  for (std::vector<property_tree::leaf>::const_iterator i = old_leaves.begin(),
        i_end = old_leaves.end(); i != i_end; ++i)
   {
     if (!i->first.real.pred_bnd() || !is_defined(i->first.bnd())) continue;

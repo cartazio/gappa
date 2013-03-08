@@ -235,9 +235,9 @@ int property_tree::simplify(property const &p, bool positive, bool force)
   unique();
 
   // Filter out satisfied leaves.
-  std::vector<leave> leaves;
+  std::vector<leaf> leaves;
   leaves.swap(ptr->leaves);
-  for (std::vector<leave>::const_iterator i = leaves.begin(),
+  for (std::vector<leaf>::const_iterator i = leaves.begin(),
        i_end = leaves.end(); i != i_end; ++i)
   {
     if (i->first.real != p.real)
@@ -283,7 +283,7 @@ bool property_tree::verify(graph_t *g, property *p) const
   if (!ptr) return false;
   graph_loader loader(g);
   bool b = ptr->conjunction || (ptr->leaves.size() + ptr->subtrees.size() <= 1);
-  for (std::vector< leave >::const_iterator i = ptr->leaves.begin(),
+  for (std::vector<leaf>::const_iterator i = ptr->leaves.begin(),
        i_end = ptr->leaves.end(); i != i_end; ++i)
   {
     if (b == !!find_proof(i->first, i->second)) continue;
@@ -328,7 +328,7 @@ typedef std::vector< std::pair< node *, interval > > goal_vect;
 bool property_tree::get_nodes_aux(goal_vect &goals) const
 {
   bool all = true;
-  for (std::vector< leave >::const_iterator i = ptr->leaves.begin(),
+  for (std::vector<leaf>::const_iterator i = ptr->leaves.begin(),
        i_end = ptr->leaves.end(); i != i_end; ++i)
   {
     if (node *n = find_proof(i->first, i->second)) {
@@ -383,13 +383,13 @@ void property_tree::get_nodes(graph_t *g, node_vect &goals)
 }
 
 /**
- * Look for a leave in @a from about the same predicated_real than @a p.
+ * Look for a leaf in @a about the same predicated_real than @a p.
  * Fill @a p with its content.
  * @return true when successful.
  */
-static bool lookup(property_tree::leave &p, property_tree const &from)
+static bool lookup(property_tree::leaf &p, property_tree const &from)
 {
-  for (std::vector<property_tree::leave>::const_iterator i = from->leaves.begin(),
+  for (std::vector<property_tree::leaf>::const_iterator i = from->leaves.begin(),
        i_end = from->leaves.end(); i != i_end; ++i)
   {
     if (p.second == i->second && p.first.real == i->first.real && is_defined(i->first.bnd())) {
@@ -409,7 +409,7 @@ struct remove_pred3
 {
   property_tree const &base;
   remove_pred3(property_tree const &t): base(t) {}
-  bool operator()(property_tree::leave &p) const
+  bool operator()(property_tree::leaf &p) const
   {
     if (!p.first.real.pred_bnd() || is_defined(p.first.bnd())) return false;
     return !lookup(p, base);
@@ -439,7 +439,7 @@ void property_tree::fill_undefined(property_tree const &base)
   unique();
   remove_pred3 pred1(base);
   remove_pred4 pred2(base);
-  std::vector< leave >::iterator end1 = ptr->leaves.end(),
+  std::vector<leaf>::iterator end1 = ptr->leaves.end(),
     i1 = std::remove_if(ptr->leaves.begin(), end1, pred1);
   std::vector< property_tree >::iterator end2 = ptr->subtrees.end(),
     i2 = std::remove_if(ptr->subtrees.begin(), end2, pred2);
@@ -451,7 +451,7 @@ void property_tree::fill_undefined(property_tree const &base)
 
 void property_tree::get_splitting(splitting &res) const
 {
-  for (std::vector< leave >::const_iterator i = ptr->leaves.begin(),
+  for (std::vector<leaf>::const_iterator i = ptr->leaves.begin(),
        i_end = ptr->leaves.end(); i != i_end; ++i)
   {
     if (!i->first.real.pred_bnd()) continue;
