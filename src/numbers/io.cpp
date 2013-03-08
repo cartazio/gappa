@@ -105,7 +105,7 @@ std::ostream &operator<<(std::ostream &stream, number const &value) {
 
 std::ostream &operator<<(std::ostream &stream, interval const &u)
 {
-  assert(u.base);
-  stream << '[' << lower(u) << ", " << upper(u) << ']';
+  if (is_defined(u)) stream << '[' << lower(u) << ", " << upper(u) << ']';
+  else stream << '?';
   return stream;
 }
