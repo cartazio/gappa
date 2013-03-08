@@ -98,7 +98,7 @@ node::node(node_id t, graph_t *g)
 }
 
 /**
- * Destroys the node and removes from its graph #graph.
+ * Destroys the node and removes it from its graph #graph.
  * @pre The graph should have no successors nor be referenced by any graph_t::known_reals.
  */
 node::~node()
@@ -119,7 +119,7 @@ void node::remove_known()
 }
 
 /**
- * Removes the node @a n from the successors of this node.
+ * Removes node @a n from the successors of this node.
  * Automatically destroys this node if possible
  */
 void node::remove_succ(node const *n)
@@ -129,7 +129,7 @@ void node::remove_succ(node const *n)
 }
 
 /**
- * Tells if the graph @a g is a super-set of this graph.
+ * Tells if graph @a g is a super-set of this graph.
  * @note It means that @a g has weaker hypotheses than this graph.
  */
 bool graph_t::dominates(graph_t const *g) const
@@ -160,7 +160,7 @@ property node::maximal() const
 }
 
 /**
- * Tells if the node @a n1 is owned by a graph dominating the graph of the node @a n2.
+ * Tells if node @a n1 is owned by a graph dominating the graph of node @a n2.
  * @note It means that @a n2 can rely on the result proven by @a n1.
  * @see graph_t::dominates
  */
@@ -177,8 +177,8 @@ theorem_node::theorem_node(int nb, property const h[], property const &p, std::s
 }
 
 /**
- * Adds the node @a n as an immediate ancestor to this node.
- * @pre If this node is not an ::UNION node, then the node @a n shall dominate it.
+ * Adds node @a n as an immediate ancestor to this node.
+ * @pre If this node is not a ::UNION node, then node @a n shall dominate it.
  */
 void dependent_node::insert_pred(node *n) {
   assert(dominates(n, this) || type == UNION);
@@ -188,7 +188,7 @@ void dependent_node::insert_pred(node *n) {
 
 /**
  * Removes all the dependencies of this node.
- * @note As the node is no longer a successor of the nodes it immediatly relies on, this may cause these nodes to be collected.
+ * @note As the node is no longer a successor of the nodes it directly relies on, this may cause these nodes to be collected.
  */
 void dependent_node::clean_dependencies()
 {
