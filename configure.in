@@ -5,7 +5,6 @@ AC_INIT([Gappa], [0.16.6],
 AC_PROG_CXX
 AC_PROG_LEX
 AC_PROG_YACC
-AC_CANONICAL_BUILD
 
 XSLTPROC=xsltproc
 AC_ARG_WITH([xsltproc], AS_HELP_STRING([--with-xsltproc=PATH], [location of the xsltproc binary (documentation)]),
@@ -43,8 +42,8 @@ std::tr1::unordered_map<int, double> toto],
 AC_DEFINE([HAVE_UMAP], [1], [Define to 1 if your Standard Library supports tr1/unordered_map.])], [AC_MSG_RESULT([no])])
 
 AC_MSG_NOTICE([building remake...])
-case "$build_os" in
-mingw*)
+case `uname -s` in
+MINGW*)
 	$CXX -Wall -O2 -o remake.exe remake.cpp -lws2_32
 	if test $? != 0; then AC_MSG_FAILURE([failed]); fi
 	AC_SUBST([REMAKE], [./remake.exe])
@@ -57,5 +56,5 @@ mingw*)
 esac
 
 AC_CONFIG_HEADERS(config.h)
-AC_CONFIG_FILES([Remakefile])
+AC_CONFIG_FILES(Remakefile)
 AC_OUTPUT
