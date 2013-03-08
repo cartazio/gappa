@@ -241,21 +241,22 @@ int property_tree::simplify(property const &p, bool positive, bool force)
        i_end = leaves.end(); i != i_end; ++i)
   {
     if (i->first.real != p.real)
-      ;
-    else if (i->first.real.pred_bnd() && !is_defined(i->first.bnd()))
+      goto keep;
+    if (i->first.real.pred_bnd() && !is_defined(i->first.bnd()))
     {
       // True by choice.
-      if (force || !i->second) {
-        if (!ptr->conjunction) goto kill_tree;
-        continue;
-      }
+      assert(i->second);
+      if (!force) goto keep;
+      if (!ptr->conjunction) goto kill_tree;
+      continue;
     }
-    else if (int valid = check_imply(positive, p, i->first))
+    if (int valid = check_imply(positive, p, i->first))
     {
       // From (not) p, one can deduce either i->first or not i->first.
       if ((valid < 0) ^ i->second ^ ptr->conjunction) goto kill_tree;
       continue;
     }
+    keep:
     ptr->leaves.push_back(*i);
   }
 
