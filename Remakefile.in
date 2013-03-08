@@ -152,8 +152,6 @@ install:
 
 EXTRA_DIST = \
 	configure \
-	config.guess \
-	config.sub \
 	config.h.in \
 	src/parser/parser.cpp \
 	src/parser/parser.hpp \
