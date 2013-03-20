@@ -1,3 +1,14 @@
+Version 0.17.0:
+ * build system
+   - switched to remake
+ * fact database
+   - added theorems relating the ranges of two expressions, given the relative error between them
+   - simplified squaring
+ * proof graph
+   - allowed logic simplifications, even in case of indeterminate intervals
+ * documentation
+   - added list of theorems
+
 Version 0.16.6:
  * Coq lambda back-end
    - fixed crash on goals that are trivial implications
