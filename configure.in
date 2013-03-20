@@ -56,5 +56,6 @@ MINGW*)
 esac
 
 AC_CONFIG_HEADERS(config.h)
+AC_CONFIG_FILES(stamp-config_h, [touch stamp-config_h])
 AC_CONFIG_FILES(Remakefile)
 AC_OUTPUT

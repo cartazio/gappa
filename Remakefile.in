@@ -11,10 +11,10 @@ config.h stamp-config_h: config.h.in config.status
 	./config.status config.h
 	touch stamp-config_h
 
-configure config.status config.h.in stamp-config_h_in: configure.in
-	autoreconf -s -i
+configure config.status config.h.in stamp-config_h.in: configure.in
+	autoheader
+	touch stamp-config_h.in
 	./config.status --recheck
-	touch stamp-config_h_in
 
 %.o: %.cpp
 	@CXX@ @CPPFLAGS@ @CXXFLAGS@ -MMD -MT dummy -MF $1.d -I src -c -o $1 ${1%.o}.cpp
@@ -153,6 +153,7 @@ install:
 EXTRA_DIST = \
 	configure \
 	config.h.in \
+	stamp-config_h.in \
 	src/parser/parser.cpp \
 	src/parser/parser.hpp \
 	src/parser/lexer.cpp
