@@ -276,8 +276,8 @@ https://github.com/apenwarr/redo for an implementation and some comprehensive do
 \section sec-licensing Licensing
 
 @author Guillaume Melquiond
-@version 0.1
-@date 2012
+@version 0.2
+@date 2012-2013
 @copyright
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -1381,8 +1381,6 @@ static void complete_job(int job_id, bool success)
  */
 static bool run_script(int job_id, rule_t const &rule)
 {
-	std::cerr << "Building " << rule.targets.front() << std::endl;
-
 	ref_ptr<dependency_t> dep;
 	dep->targets = rule.targets;
 	dep->deps.insert(rule.deps.begin(), rule.deps.end());
@@ -1903,7 +1901,7 @@ void server_mode(string_list const &targets)
 	load_dependencies();
 	load_rules();
 	create_server();
-	if (get_status("Remakefile").status == Todo)
+	if (get_status("Remakefile").status != Uptodate)
 	{
 		clients.push_back(client_t());
 		clients.back().pending.push_back("Remakefile");
