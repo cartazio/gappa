@@ -63,7 +63,7 @@ OBJS = \
 	src/parameters.o
 
 src/gappa: $(OBJS)
-	@CXX@ @CXXFLAGS@ -o src/gappa $OBJS -lmpfr -lgmp
+	@CXX@ @LDFLAGS@ -o src/gappa $OBJS @LIBS@
 
 src/clean:
 	rm -f $OBJS
