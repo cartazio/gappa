@@ -1,3 +1,3 @@
 #!/bin/sh
-touch ChangeLog
+touch ChangeLog stamp-config_h.in
 autoreconf -i -s
