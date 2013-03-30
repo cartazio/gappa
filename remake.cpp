@@ -49,13 +49,17 @@ lies in the fact that they can be computed on the fly:
 @verbatim
 %.o : %.c
 	gcc -MMD -MF $1.d -o $1 -c ${1%.o}.c
-	read DEPS < $1.d
-	remake ${DEPS#*:}
+	cat $1.d | remake -r
 	rm $1.d
 
 %.cmo : %.ml
-	remake $(ocamldep ${1%.cmo}.ml | sed -n -e "\\,^.*: *\$, b; \\,$1:, { b feed2; :feed1 N; :feed2 s/[\\]\$//; t feed1; s/.*://; s/[ \\t\\r\\n]*\\([ \\t\\r\\n]\\+\\)/\\1\n/g; s/\\n\$//; p; q}")
+	ocamldep ${1%.cmo}.ml | remake -r $1
 	ocamlc -c ${1%.cmo}.ml
+
+after.xml: before.xml rules.xsl
+	xsltproc --load-trace -o after.xml rules.xsl before.xml 2> deps
+	remake $(sed -n -e "\\,//,! s,^.*URL=\"\\([^\"]*\\).*\$,\\1,p" deps)
+	rm deps
 @endverbatim
 
 Note that the first rule fails if any of the header files included by
@@ -70,9 +74,12 @@ Usage: <tt>remake <i>options</i> <i>targets</i></tt>
 
 Options:
 
+- <tt>-d</tt>: Echo script commands.
 - <tt>-j[N]</tt>, <tt>--jobs=[N]</tt>: Allow N jobs at once; infinite jobs
   with no argument.
 - <tt>-k</tt>, <tt>--keep-going</tt>: Keep going when some targets cannot be made.
+- <tt>-r</tt>: Look up targets from the dependencies on standard input.
+- <tt>-s</tt>, <tt>--silent</tt>, <tt>--quiet</tt>: Do not echo targets.
 
 \section sec-syntax Syntax
 
@@ -210,7 +217,7 @@ The set of rules from <b>Remakefile</b> is ill-formed:
 
 \section sec-compilation Compilation
 
-- On Linux: <tt>g++ -o remake remake.cpp</tt>
+- On Linux, MacOSX, and BSD: <tt>g++ -o remake remake.cpp</tt>
 - On Windows: <tt>g++ -o remake.exe remake.cpp -lws2_32</tt>
 
 Installing <b>remake</b> is needed only if <b>Remakefile</b> does not
@@ -276,7 +283,7 @@ https://github.com/apenwarr/redo for an implementation and some comprehensive do
 \section sec-licensing Licensing
 
 @author Guillaume Melquiond
-@version 0.2
+@version 0.3
 @date 2012-2013
 @copyright
 This program is free software: you can redistribute it and/or modify
@@ -308,8 +315,18 @@ GNU General Public License for more details.
 #include <ctime>
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+
+#ifdef __APPLE__
+#define MACOSX
+#endif
+
+#ifdef __linux__
+#define LINUX
+#endif
 
 #ifdef WINDOWS
 #include <windows.h>
@@ -317,13 +334,16 @@ GNU General Public License for more details.
 #include <winsock2.h>
 #define pid_t HANDLE
 typedef SOCKET socket_t;
-enum { MSG_NOSIGNAL = 0 };
 #else
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/wait.h>
 typedef int socket_t;
 enum { INVALID_SOCKET = -1 };
+#endif
+
+#if defined(WINDOWS) || defined(MACOSX)
+enum { MSG_NOSIGNAL = 0 };
 #endif
 
 typedef std::list<std::string> string_list;
@@ -333,7 +353,7 @@ typedef std::set<std::string> string_set;
 /**
  * Reference-counted shared object.
  * @note The default constructor delays the creation of the object until it
- *       is first deferenced.
+ *       is first dereferenced.
  */
 template<class T>
 struct ref_ptr
@@ -549,7 +569,19 @@ static char *socket_name;
  */
 static std::string first_target;
 
+/**
+ * Whether a short message should be displayed for each target.
+ */
+static bool show_targets = true;
+
+/**
+ * Whether script commands are echoed.
+ */
+static bool echo_scripts = false;
+
 static time_t now = time(NULL);
+
+static std::string working_dir;
 
 #ifndef WINDOWS
 static volatile sig_atomic_t got_SIGCHLD = 0;
@@ -634,6 +666,41 @@ static std::string escape_string(std::string const &s)
 }
 
 /**
+ * Initialize #working_dir.
+ */
+void init_working_dir()
+{
+	char buf[1024];
+	char *res = getcwd(buf, sizeof(buf));
+	if (!res)
+	{
+		perror("Failed to get working directory");
+		exit(EXIT_FAILURE);
+	}
+	working_dir = buf;
+}
+
+/**
+ * Normalize an absolute path with respect to the working directory.
+ * Paths outside the working subtree are left unchanged.
+ */
+static std::string normalize_abs(std::string const &s)
+{
+	size_t l = working_dir.length();
+	if (s.compare(0, l, working_dir)) return s;
+	size_t ll = s.length();
+	if (ll == l) return ".";
+	if (s[l] != '/')
+	{
+		size_t pos = s.rfind('/', l);
+		assert(pos != std::string::npos);
+		return s.substr(pos + 1);
+	}
+	if (ll == l + 1) return ".";
+	return s.substr(l + 1);
+}
+
+/**
  * Normalize a target name.
  */
 static std::string normalize(std::string const &s)
@@ -646,6 +713,7 @@ static std::string normalize(std::string const &s)
 	size_t prev = 0, len = s.length();
 	size_t pos = s.find_first_of(delim);
 	if (pos == std::string::npos) return s;
+	bool absolute = pos == 0;
 	string_list l;
 	for (;;)
 	{
@@ -655,6 +723,8 @@ static std::string normalize(std::string const &s)
 			if (n == "..")
 			{
 				if (!l.empty()) l.pop_back();
+				else if (!absolute)
+					return normalize(working_dir + '/' + s);
 			}
 			else if (n != ".")
 				l.push_back(n);
@@ -666,13 +736,16 @@ static std::string normalize(std::string const &s)
 		if (pos == std::string::npos) pos = len;
 	}
 	string_list::const_iterator i = l.begin(), i_end = l.end();
-	if (i == i_end) return ".";
-	std::string n(*i);
+	if (i == i_end) return absolute ? "/" : ".";
+	std::string n;
+	if (absolute) n.push_back('/');
+	n.append(*i);
 	for (++i; i != i_end; ++i)
 	{
 		n.push_back('/');
 		n.append(*i);
 	}
+	if (absolute) return normalize_abs(n);
 	return n;
 }
 
@@ -801,21 +874,32 @@ static void execute_function(std::istream &in, std::string const &name, string_l
 	{
 		error:
 		std::cerr << "Failed to load rules: syntax error" << std::endl;
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	skip_spaces(in);
-	std::string s = read_word(in);
+	string_list fix = read_words(in);
 	if (next_token(in) != Comma) goto error;
 	in.ignore(1);
 	string_list names = read_words(in);
 	if (next_token(in) != Rightpar) goto error;
 	in.ignore(1);
+	size_t fixl = fix.size();
 	if (name == "addprefix")
 	{
 		for (string_list::const_iterator i = names.begin(),
 		     i_end = names.end(); i != i_end; ++i)
 		{
-			dest.push_back(s + *i);
+			if (!fixl)
+			{
+				dest.push_back(*i);
+				continue;
+			}
+			string_list::const_iterator k = fix.begin();
+			for (size_t j = 1; j != fixl; ++j)
+			{
+				dest.push_back(*k++);
+			}
+			dest.push_back(*k++ + *i);
 		}
 	}
 	else if (name == "addsuffix")
@@ -823,7 +907,17 @@ static void execute_function(std::istream &in, std::string const &name, string_l
 		for (string_list::const_iterator i = names.begin(),
 		     i_end = names.end(); i != i_end; ++i)
 		{
-			dest.push_back(*i + s);
+			if (!fixl)
+			{
+				dest.push_back(*i);
+				continue;
+			}
+			string_list::const_iterator k = fix.begin();
+			dest.push_back(*i + *k++);
+			for (size_t j = 1; j != fixl; ++j)
+			{
+				dest.push_back(*k++);
+			}
 		}
 	}
 	else goto error;
@@ -838,7 +932,7 @@ static string_list read_words(std::istream &in)
 	{
 		error:
 		std::cerr << "Failed to load rules: syntax error" << std::endl;
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	string_list res;
 	while (true)
@@ -871,17 +965,10 @@ static string_list read_words(std::istream &in)
 }
 
 /**
- * Load known dependencies from file <tt>.remake</tt>.
+ * Load dependencies from @a in.
  */
-static void load_dependencies()
+static void load_dependencies(std::istream &in)
 {
-	DEBUG_open << "Loading database... ";
-	std::ifstream in(".remake");
-	if (!in.good())
-	{
-		DEBUG_close << "not found\n";
-		return;
-	}
 	while (!in.eof())
 	{
 		string_list targets = read_words(in);
@@ -890,7 +977,7 @@ static void load_dependencies()
 		if (in.get() != ':')
 		{
 			std::cerr << "Failed to load database" << std::endl;
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		ref_ptr<dependency_t> dep;
 		dep->targets = targets;
@@ -906,6 +993,21 @@ static void load_dependencies()
 }
 
 /**
+ * Load known dependencies from file <tt>.remake</tt>.
+ */
+static void load_dependencies()
+{
+	DEBUG_open << "Loading database... ";
+	std::ifstream in(".remake");
+	if (!in.good())
+	{
+		DEBUG_close << "not found\n";
+		return;
+	}
+	load_dependencies(in);
+}
+
+/**
  * Read a rule starting with target @a first, if nonempty.
  * Store into #generic_rules or #specific_rules depending on its genericity.
  */
@@ -917,7 +1019,7 @@ static void load_rule(std::istream &in, std::string const &first)
 		error:
 		DEBUG_close << "failed\n";
 		std::cerr << "Failed to load rules: syntax error" << std::endl;
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	rule_t rule;
 
@@ -1017,7 +1119,7 @@ static void load_rule(std::istream &in, std::string const &first)
 		if (j.second) continue;
 		std::cerr << "Failed to load rules: " << *i
 			<< " cannot be the target of several rules" << std::endl;
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 }
 
@@ -1059,13 +1161,13 @@ static void load_rules()
 	{
 		error:
 		std::cerr << "Failed to load rules: syntax error" << std::endl;
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	std::ifstream in("Remakefile");
 	if (!in.good())
 	{
 		std::cerr << "Failed to load rules: no Remakefile found" << std::endl;
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	skip_eol(in);
 
@@ -1381,6 +1483,17 @@ static void complete_job(int job_id, bool success)
  */
 static bool run_script(int job_id, rule_t const &rule)
 {
+	if (show_targets)
+	{
+		std::cout << "Building";
+		for (string_list::const_iterator i = rule.targets.begin(),
+		     i_end = rule.targets.end(); i != i_end; ++i)
+		{
+			std::cout << ' ' << *i;
+		}
+		std::cout << std::endl;
+	}
+
 	ref_ptr<dependency_t> dep;
 	dep->targets = rule.targets;
 	dep->deps.insert(rule.deps.begin(), rule.deps.end());
@@ -1422,6 +1535,7 @@ static bool run_script(int job_id, rule_t const &rule)
 		goto error2;
 	std::ostringstream argv;
 	argv << "SH.EXE -e -s";
+	if (echo_scripts) argv << " -v";
 	for (string_list::const_iterator i = rule.targets.begin(),
 	     i_end = rule.targets.end(); i != i_end; ++i)
 	{
@@ -1473,12 +1587,13 @@ static bool run_script(int job_id, rule_t const &rule)
 	std::ostringstream buf;
 	buf << job_id;
 	if (setenv("REMAKE_JOB_ID", buf.str().c_str(), 1))
-		_exit(1);
-	char const **argv = new char const *[4 + rule.targets.size()];
+		_exit(EXIT_FAILURE);
+	int num = echo_scripts ? 4 : 3;
+	char const **argv = new char const *[num + rule.targets.size() + 1];
 	argv[0] = "sh";
 	argv[1] = "-e";
 	argv[2] = "-s";
-	int num = 3;
+	if (echo_scripts) argv[3] = "-v";
 	for (string_list::const_iterator i = rule.targets.begin(),
 	     i_end = rule.targets.end(); i != i_end; ++i, ++num)
 	{
@@ -1492,7 +1607,7 @@ static bool run_script(int job_id, rule_t const &rule)
 	}
 	close(pfd[1]);
 	execv("/bin/sh", (char **)argv);
-	_exit(1);
+	_exit(EXIT_FAILURE);
 #endif
 }
 
@@ -1677,8 +1792,10 @@ static void create_server()
 	{
 		error:
 		perror("Failed to create server");
+#ifndef WINDOWS
 		error2:
-		exit(1);
+#endif
+		exit(EXIT_FAILURE);
 	}
 	DEBUG_open << "Creating server... ";
 
@@ -1728,8 +1845,14 @@ static void create_server()
 	if (setenv("REMAKE_SOCKET", socket_name, 1)) goto error;
 
 	// Create and listen to the socket.
+#ifdef LINUX
 	socket_fd = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
 	if (socket_fd < 0) goto error;
+#else
+	socket_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+	if (socket_fd < 0) goto error;
+	if (fcntl(socket_fd, F_SETFD, FD_CLOEXEC) < 0) goto error;
+#endif
 	if (bind(socket_fd, (struct sockaddr *)&socket_addr, len))
 		goto error;
 	if (listen(socket_fd, 1000)) goto error;
@@ -1758,9 +1881,13 @@ void accept_client()
 	// WSAEventSelect puts sockets into nonblocking mode, so disable it here.
 	u_long nbio = 0;
 	if (ioctlsocket(fd, FIONBIO, &nbio)) goto error2;
-#else
+#elif defined(LINUX)
 	int fd = accept4(socket_fd, NULL, NULL, SOCK_CLOEXEC);
 	if (fd < 0) return;
+#else
+	int fd = accept(socket_fd, NULL, NULL);
+	if (fd < 0) return;
+	if (fcntl(fd, F_SETFD, FD_CLOEXEC) < 0) return;
 #endif
 	clients.push_front(client_t());
 	client_list::iterator proc = clients.begin();
@@ -1922,7 +2049,7 @@ void server_mode(string_list const &targets)
 	close(socket_fd);
 	remove(socket_name);
 	save_dependencies();
-	exit(build_failure ? 1 : 0);
+	exit(build_failure ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
 /**
@@ -1935,9 +2062,9 @@ void client_mode(char *socket_name, string_list const &targets)
 	{
 		error:
 		perror("Failed to send targets to server");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
-	if (targets.empty()) exit(0);
+	if (targets.empty()) exit(EXIT_SUCCESS);
 	DEBUG_open << "Connecting to server... ";
 
 	// Connect to server.
@@ -1953,13 +2080,18 @@ void client_mode(char *socket_name, string_list const &targets)
 #else
 	struct sockaddr_un socket_addr;
 	size_t len = strlen(socket_name);
-	if (len >= sizeof(socket_addr.sun_path) - 1) exit(1);
+	if (len >= sizeof(socket_addr.sun_path) - 1) exit(EXIT_FAILURE);
 	socket_fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (socket_fd < 0) goto error;
 	socket_addr.sun_family = AF_UNIX;
 	strcpy(socket_addr.sun_path, socket_name);
 	if (connect(socket_fd, (struct sockaddr *)&socket_addr, sizeof(socket_addr.sun_family) + len))
 		goto error;
+#ifdef MACOSX
+	int set_option = 1;
+	if (setsockopt(socket_fd, SOL_SOCKET, SO_NOSIGPIPE, &set_option, sizeof(set_option)))
+		goto error;
+#endif
 #endif
 
 	// Send current job id.
@@ -1981,8 +2113,8 @@ void client_mode(char *socket_name, string_list const &targets)
 	// Send terminating nul and wait for reply.
 	char result = 0;
 	if (send(socket_fd, &result, 1, MSG_NOSIGNAL) != 1) goto error;
-	if (recv(socket_fd, &result, 1, 0) != 1) exit(1);
-	exit(result ? 0 : 1);
+	if (recv(socket_fd, &result, 1, 0) != 1) exit(EXIT_FAILURE);
+	exit(result ? EXIT_SUCCESS : EXIT_FAILURE);
 }
 
 /**
@@ -1992,10 +2124,13 @@ void usage(int exit_status)
 {
 	std::cerr << "Usage: remake [options] [target] ...\n"
 		"Options\n"
-		"  -d                 Print lots of debugging information.\n"
-		"  -h, --help         Print this message and exit.\n"
-		"  -j[N], --jobs=[N]  Allow N jobs at once; infinite jobs with no arg.\n"
-		"  -k                 Keep going when some targets cannot be made.\n";
+		"  -d                     Echo script commands.\n"
+		"  -d -d                  Print lots of debugging information.\n"
+		"  -h, --help             Print this message and exit.\n"
+		"  -j[N], --jobs=[N]      Allow N jobs at once; infinite jobs with no arg.\n"
+		"  -k                     Keep going when some targets cannot be made.\n"
+		"  -r                     Look up targets from the dependencies on standard input.\n"
+		"  -s, --silent, --quiet  Do not echo targets.\n";
 	exit(exit_status);
 }
 
@@ -2012,18 +2147,26 @@ void usage(int exit_status)
  */
 int main(int argc, char *argv[])
 {
+	init_working_dir();
+
 	string_list targets;
+	bool indirect_targets = false;
 
 	// Parse command-line arguments.
 	for (int i = 1; i < argc; ++i)
 	{
 		std::string arg = argv[i];
-		if (arg.empty()) usage(1);
-		if (arg == "-h" || arg == "--help") usage(0);
+		if (arg.empty()) usage(EXIT_FAILURE);
+		if (arg == "-h" || arg == "--help") usage(EXIT_SUCCESS);
 		if (arg == "-d")
-			debug.active = true;
+			if (echo_scripts) debug.active = true;
+			else echo_scripts = true;
 		else if (arg == "-k" || arg =="--keep-going")
 			keep_going = true;
+		else if (arg == "-s" || arg == "--silent" || arg == "--quiet")
+			show_targets = false;
+		else if (arg == "-r")
+			indirect_targets = true;
 		else if (arg.compare(0, 2, "-j") == 0)
 			max_active_jobs = atoi(arg.c_str() + 2);
 		else if (arg.compare(0, 7, "--jobs=") == 0)
@@ -2034,6 +2177,30 @@ int main(int argc, char *argv[])
 			targets.push_back(normalize(arg));
 			DEBUG << "New target: " << arg << '\n';
 		}
+	}
+
+	if (indirect_targets)
+	{
+		load_dependencies(std::cin);
+		string_list l;
+		targets.swap(l);
+		if (l.empty() && !dependencies.empty())
+		{
+			l.push_back(dependencies.begin()->second->targets.front());
+		}
+		for (string_list::const_iterator i = l.begin(),
+		     i_end = l.end(); i != i_end; ++i)
+		{
+			dependency_map::const_iterator j = dependencies.find(*i);
+			if (j == dependencies.end()) continue;
+			dependency_t const &dep = *j->second;
+			for (string_set::const_iterator k = dep.deps.begin(),
+			     k_end = dep.deps.end(); k != k_end; ++k)
+			{
+				targets.push_back(normalize(*k));
+			}
+		}
+		dependencies.clear();
 	}
 
 #ifdef WINDOWS
