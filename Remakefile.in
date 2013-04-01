@@ -13,6 +13,7 @@ config.h stamp-config_h: config.h.in config.status
 
 configure config.status config.h.in stamp-config_h.in: configure.in
 	autoheader
+	autoconf
 	touch stamp-config_h.in
 	./config.status --recheck
 
