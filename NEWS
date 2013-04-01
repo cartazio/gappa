@@ -1,3 +1,7 @@
+Version 0.17.1:
+ * build system
+   - fixed issues with MacOSX, BSD, and compilation flags
+
 Version 0.17.0:
  * build system
    - switched to remake
