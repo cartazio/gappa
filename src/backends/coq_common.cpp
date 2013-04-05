@@ -272,7 +272,6 @@ static std::string qualify(std::string const &path)
 
 std::string convert_name(std::string const &name)
 {
-  if (!fqn && name == "sqrt") return "sqrtG";
   std::string::size_type p0 = name.find(',');
   if (p0 == std::string::npos) return name;
   std::string prefix = name.substr(0, p0);
