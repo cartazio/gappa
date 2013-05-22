@@ -82,6 +82,23 @@
 <biblioentry>
   <biblioset relation='article'>
     <authorgroup>
+      <author><firstname>Christoph</firstname><surname>Lauter</surname></author>
+      <author><firstname>Florent</firstname><surname>de Dinechin</surname></author>
+    </authorgroup>
+    <title>Optimizing polynomials for floating-point implementation</title>
+    <pagenums>7-16</pagenums>
+    <biblioid class="uri">http://hal.archives-ouvertes.fr/ensl-00260563/</biblioid>
+  </biblioset>
+  <biblioset relation='proceedings'>
+    <title>Proceedings of the 8th Conference on Real Numbers and Computers</title>
+    <address>Santiago de Compostella</address>
+    <pubdate>2008</pubdate>
+  </biblioset>
+</biblioentry>
+
+<biblioentry>
+  <biblioset relation='article'>
+    <authorgroup>
       <author><firstname>Sylvie</firstname><surname>Boldo</surname></author>
       <author><firstname>Marc</firstname><surname>Daumas</surname></author>
       <author><firstname>Pascal</firstname><surname>Giorgi</surname></author>
@@ -232,6 +249,26 @@
 <biblioentry>
   <biblioset relation='article'>
     <authorgroup>
+      <author><firstname>Claude-Pierre</firstname><surname>Jeannerod</surname></author>
+      <author><firstname>Hervé</firstname><surname>Knochel</surname></author>
+      <author><firstname>Christophe</firstname><surname>Monat</surname></author>
+      <author><firstname>Guillaume</firstname><surname>Revy</surname></author>
+    </authorgroup>
+    <title>Computing floating-point square roots via bivariate polynomial evaluation</title>
+    <pagenums>214-227</pagenums>
+    <biblioid class="doi">10.1109/TC.2010.152</biblioid>
+  </biblioset>
+  <biblioset relation='journal'>
+    <title>IEEE Transactions on Computers</title>
+    <volumenum>60</volumenum>
+    <issuenum>2</issuenum>
+    <pubdate>2011</pubdate>
+  </biblioset>
+</biblioentry>
+
+<biblioentry>
+  <biblioset relation='article'>
+    <authorgroup>
       <author><firstname>Florent</firstname><surname>de Dinechin</surname></author>
       <author><firstname>Christoph</firstname><surname>Lauter</surname></author>
       <author><firstname>Guillaume</firstname><surname>Melquiond</surname></author>
@@ -245,6 +282,23 @@
     <volumenum>60</volumenum>
     <issuenum>2</issuenum>
     <pubdate>2011</pubdate>
+  </biblioset>
+</biblioentry>
+
+<biblioentry>
+  <biblioset relation='article'>
+    <authorgroup>
+      <author><firstname>Claude-Pierre</firstname><surname>Jeannerod</surname></author>
+      <author><firstname>Jingyan</firstname><surname>Jourdan-Lu</surname></author>
+    </authorgroup>
+    <title>Simultaneous floating-point sine and cosine for VLIW integer processors</title>
+    <pagenums>69-76</pagenums>
+    <biblioid class="doi">10.1109/ASAP.2012.12</biblioid>
+  </biblioset>
+  <biblioset relation='proceedings'>
+    <title>Proceedings of the 23rd International Conference on Application-Specific Systems, Architectures and Processors</title>
+    <address>Delft, The Netherlands</address>
+    <pubdate>2012</pubdate>
   </biblioset>
 </biblioentry>
 
