@@ -148,6 +148,7 @@ testsuite/clean:
 install:
 	prefix=@prefix@
 	exec_prefix=@exec_prefix@
+	mkdir -p @bindir@
 	cp src/gappa @bindir@
 
 EXTRA_DIST = \
