@@ -288,6 +288,23 @@
 <biblioentry>
   <biblioset relation='article'>
     <authorgroup>
+      <author><firstname>Christophe</firstname><surname>Mouilleron</surname></author>
+      <author><firstname>Guillaume</firstname><surname>Revy</surname></author>
+    </authorgroup>
+    <title>Automatic generation of fast and certified code for polynomial evaluation</title>
+    <pagenums>233-242</pagenums>
+    <biblioid class="doi">10.1109/ARITH.2011.39</biblioid>
+  </biblioset>
+  <biblioset relation='proceedings'>
+    <title>Proceedings of the 20th Symposium on Computer Arithmetic</title>
+    <address>Tübingen, Germany</address>
+    <pubdate>2011</pubdate>
+  </biblioset>
+</biblioentry>
+
+<biblioentry>
+  <biblioset relation='article'>
+    <authorgroup>
       <author><firstname>Claude-Pierre</firstname><surname>Jeannerod</surname></author>
       <author><firstname>Jingyan</firstname><surname>Jourdan-Lu</surname></author>
     </authorgroup>
