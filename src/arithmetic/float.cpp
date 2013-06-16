@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004 - 2010 by Guillaume Melquiond <guillaume.melquiond@inria.fr>
+   Copyright (C) 2004 - 2013 by Guillaume Melquiond <guillaume.melquiond@inria.fr>
    Part of the Gappa tool http://gappa.gforge.inria.fr/
 
    This program is free software; you can redistribute it and/or modify
@@ -235,12 +235,12 @@ std::string float_rounding_class::pretty_name() const
 REGISTER_SCHEME_BEGIN(fix_of_float);
   long min_exp;
   fix_of_float_scheme(predicated_real const &r, long e)
-    : proof_scheme(r, preal_vect()), min_exp(e) {}
+    : proof_scheme(r, preal_vect(), "fix_of_float"), min_exp(e) {}
 REGISTER_SCHEME_END_PREDICATE(fix_of_float);
 
-node *fix_of_float_scheme::generate_proof(property const []) const
+void fix_of_float_scheme::compute(property const [], property &res, std::string &) const
 {
-  return create_theorem(0, NULL, property(real, min_exp), "fix_of_float");
+  res.cst() = min_exp;
 }
 
 proof_scheme *fix_of_float_scheme::factory(predicated_real const &real) {
@@ -257,12 +257,12 @@ proof_scheme *fix_of_float_scheme::factory(predicated_real const &real) {
 REGISTER_SCHEME_BEGIN(flt_of_float);
   long prec;
   flt_of_float_scheme(predicated_real const &r, long p)
-    : proof_scheme(r, preal_vect()), prec(p) {}
+    : proof_scheme(r, preal_vect(), "flt_of_float"), prec(p) {}
 REGISTER_SCHEME_END_PREDICATE(flt_of_float);
 
-node *flt_of_float_scheme::generate_proof(property const []) const
+void flt_of_float_scheme::compute(property const [], property &res, std::string &) const
 {
-  return create_theorem(0, NULL, property(real, prec), "flt_of_float");
+  res.cst() = prec;
 }
 
 proof_scheme *flt_of_float_scheme::factory(predicated_real const &real) {
@@ -280,13 +280,12 @@ REGISTER_SCHEME_BEGIN(float_of_fix_flt);
   preal_vect needed;
   long min_exp, prec;
   float_of_fix_flt_scheme(predicated_real const &r, preal_vect const &v, long e, long p)
-    : proof_scheme(r, v), min_exp(e), prec(p) {}
+    : proof_scheme(r, v, "float_of_fix_flt"), min_exp(e), prec(p) {}
 REGISTER_SCHEME_END_PATTERN(float_of_fix_flt, predicated_real(pattern(0), pattern(1), PRED_EQL));
 
-node *float_of_fix_flt_scheme::generate_proof(property const hyps[]) const
+void float_of_fix_flt_scheme::compute(property const hyps[], property &res, std::string &) const
 {
-  if (hyps[0].cst() < min_exp || hyps[1].cst() > prec) return NULL;
-  return create_theorem(2, hyps, property(real), "float_of_fix_flt");
+  if (hyps[0].cst() < min_exp || hyps[1].cst() > prec) res.clear();
 }
 
 proof_scheme *float_of_fix_flt_scheme::factory(predicated_real const &real, ast_real_vect const &holders)
@@ -308,37 +307,36 @@ proof_scheme *float_of_fix_flt_scheme::factory(predicated_real const &real, ast_
 REGISTER_SCHEME_BEGIN(rel_of_fix_float);
   long min_exp, prec;
   direction_type type;
-  rel_of_fix_float_scheme(predicated_real const &r, long e, long p, direction_type t)
-    : proof_scheme(r, preal_vect(1, predicated_real(r.real2(), PRED_FIX))),
+  rel_of_fix_float_scheme(predicated_real const &r, long e, long p, direction_type t, char const *n)
+    : proof_scheme(r, preal_vect(1, predicated_real(r.real2(), PRED_FIX)), n),
       min_exp(e), prec(p), type(t) {}
 REGISTER_SCHEME_END_PREDICATE(rel_of_fix_float);
 
-node *rel_of_fix_float_scheme::generate_proof(property const hyps[]) const
+void rel_of_fix_float_scheme::compute(property const hyps[], property &res, std::string &name) const
 {
-  if (hyps[0].cst() < min_exp) return NULL;
-  interval bnd = rnd_to_nearest(type) ? from_exponent(-prec, 0)
-                                      : from_exponent(1 - prec, rnd_global_direction_rel(type));
-  return create_theorem(1, hyps, property(real, bnd),
-                        "rel_of_fix_float" + std::string(1, ',') + direction_names[type]);
+  if (hyps[0].cst() < min_exp) return;
+  res.bnd() = rnd_to_nearest(type) ? from_exponent(-prec, 0)
+    : from_exponent(1 - prec, rnd_global_direction_rel(type));
 }
 
 proof_scheme *rel_of_fix_float_scheme::factory(predicated_real const &real)
 {
   float_rounding_class const *f = dynamic_cast< float_rounding_class const * >(relative_rounding_error(real));
   if (!f) return NULL;
-  return new rel_of_fix_float_scheme(real, f->format.min_exp, f->format.prec, f->type);
+  return new rel_of_fix_float_scheme(real, f->format.min_exp, f->format.prec, f->type,
+    ("rel_of_fix_float" + std::string(1, ',') + direction_names[f->type]).c_str());
 }
 
 // FIX_FLOAT_OF_FIX
 
 REGISTER_SCHEME_BEGIN(fix_float_of_fix);
   fix_float_of_fix_scheme(predicated_real const &r, predicated_real const &n)
-    : proof_scheme(r, preal_vect(1, n)) {}
+    : proof_scheme(r, preal_vect(1, n), "fix_float_of_fix") {}
 REGISTER_SCHEME_END_PREDICATE(fix_float_of_fix);
 
-node *fix_float_of_fix_scheme::generate_proof(property const hyps[]) const
+void fix_float_of_fix_scheme::compute(property const hyps[], property &res, std::string &) const
 {
-  return create_theorem(1, hyps, property(real, hyps[0].cst()), "fix_float_of_fix");
+  res.cst() = hyps[0].cst();
 }
 
 proof_scheme *fix_float_of_fix_scheme::factory(predicated_real const &real) {
@@ -354,12 +352,12 @@ proof_scheme *fix_float_of_fix_scheme::factory(predicated_real const &real) {
 
 REGISTER_SCHEME_BEGIN(flt_float_of_flt);
   flt_float_of_flt_scheme(predicated_real const &r, predicated_real const &n)
-    : proof_scheme(r, preal_vect(1, n)) {}
+    : proof_scheme(r, preal_vect(1, n), "flt_float_of_flt") {}
 REGISTER_SCHEME_END_PREDICATE(flt_float_of_flt);
 
-node *flt_float_of_flt_scheme::generate_proof(property const hyps[]) const
+void flt_float_of_flt_scheme::compute(property const hyps[], property &res, std::string &) const
 {
-  return create_theorem(1, hyps, property(real, hyps[0].cst()), "flt_float_of_flt");
+  res.cst() = hyps[0].cst();
 }
 
 proof_scheme *flt_float_of_flt_scheme::factory(predicated_real const &real) {

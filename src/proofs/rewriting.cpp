@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004 - 2010 by Guillaume Melquiond <guillaume.melquiond@inria.fr>
+   Copyright (C) 2004 - 2013 by Guillaume Melquiond <guillaume.melquiond@inria.fr>
    Part of the Gappa tool http://gappa.gforge.inria.fr/
 
    This program is free software; you can redistribute it and/or modify
@@ -40,13 +40,11 @@ RUN_ONCE(load_numbers) {
 struct rewriting_scheme: proof_scheme
 {
   predicated_real rewritten;
-  std::string name;
   pattern_cond_vect conditions;
   preal_vect needed_reals(predicated_real const &, pattern_cond_vect const &) const;
-  rewriting_scheme(predicated_real const &src, predicated_real const &dst,
-                   std::string const &n, pattern_cond_vect const &c)
-    : proof_scheme(src, needed_reals(dst, c)), rewritten(dst), name(n), conditions(c) {}
-  virtual node *generate_proof(property const hyps[]) const;
+  rewriting_scheme(predicated_real const &src, predicated_real const &dst, char const *n, pattern_cond_vect const &c)
+    : proof_scheme(src, needed_reals(dst, c), n), rewritten(dst), conditions(c) {}
+  virtual void compute(property const[], property &, std::string &) const;
 };
 
 preal_vect rewriting_scheme::needed_reals(predicated_real const &d,
@@ -60,7 +58,7 @@ preal_vect rewriting_scheme::needed_reals(predicated_real const &d,
   return res;
 }
 
-node *rewriting_scheme::generate_proof(property const hyps[]) const
+void rewriting_scheme::compute(property const hyps[], property &res, std::string &name) const
 {
   int j = 0;
   bool fail = false;
@@ -81,25 +79,22 @@ node *rewriting_scheme::generate_proof(property const hyps[]) const
       case COND_NZ: break;
     }
     if (good) continue;
-    if (parameter_constrained) return NULL;
+    if (parameter_constrained) { res.clear(); return; }
     fail = true;
   }
-  theorem_updater *tu = NULL;
-  property p(real);
   if (!rewritten.null())
   {
     // straight rewriting, a property is actually forwarded
     node *n = find_proof(rewritten);
-    if (!n) return NULL;
-    if (p.real.pred_bnd()) {
-      p.bnd() = hyps[j].bnd();
-      tu = identity_updater;
-    } else if (p.real.pred_cst()) {
-      p.cst() = hyps[j].cst();
+    if (!n) { res.clear(); return; }
+    if (res.real.pred_bnd()) {
+      res.bnd() = hyps[j].bnd();
+    } else if (res.real.pred_cst()) {
+      res.cst() = hyps[j].cst();
     }
     ++j;
   }
-  return create_theorem(j, hyps, p, fail ? "$FALSE" : name, tu);
+  if (fail) name = "$FALSE";
 }
 
 static rewriting_scheme *generate_rewriting_scheme(predicated_real const &src,
@@ -116,7 +111,7 @@ static rewriting_scheme *generate_rewriting_scheme(predicated_real const &src,
   pattern_cond_vect c(rule->cond);
   for (pattern_cond_vect::iterator i = c.begin(), end = c.end(); i != end; ++i)
     i->real = rewrite(i->real, holders);
-  return new rewriting_scheme(src, dst, name, c);
+  return new rewriting_scheme(src, dst, name.c_str(), c);
 }
 
 struct rewriting_factory: scheme_factory
@@ -136,7 +131,7 @@ proof_scheme *rewriting_factory::operator()(predicated_real const &src,
   if (rule)
     return generate_rewriting_scheme(src, predicated_real(), name, rule, holders);
   // user-defined rule, no exclusions, nor placeholders in conditions
-  return new rewriting_scheme(src, predicated_real(), name, cond);
+  return new rewriting_scheme(src, predicated_real(), name.c_str(), cond);
 }
 
 struct bnd_rewriting_factory: scheme_factory
@@ -160,18 +155,15 @@ proof_scheme *bnd_rewriting_factory::operator()(predicated_real const &src,
 // PROXY REWRITING
 struct proxy_rewriting_scheme: proof_scheme
 {
-  std::string name;
-  virtual node *generate_proof(property const hyps[]) const;
-  proxy_rewriting_scheme(predicated_real const &r, preal_vect const &p,
-    std::string const &n)
-  : proof_scheme(r, p), name(n) {}
+  virtual void compute(property const[], property &, std::string &) const;
+  proxy_rewriting_scheme(predicated_real const &r, preal_vect const &p, char const *n)
+    : proof_scheme(r, p, n) {}
 };
 
-node *proxy_rewriting_scheme::generate_proof(property const hyps[]) const
+void proxy_rewriting_scheme::compute(property const hyps[], property &res, std::string &) const
 {
-  property res = hyps[1];
+  res = hyps[1];
   res.real = real;
-  return create_theorem(2, hyps, res, name, identity_updater);
 }
 
 struct proxy_rewriting_factory: scheme_factory
@@ -207,7 +199,7 @@ proof_scheme *proxy_rewriting_factory::operator()(predicated_real const &src,
   needed.push_back(t == PRED_REL
     ? predicated_real(r, rewrite(dst.real2(), holders), t)
     : predicated_real(r, t));
-  return new proxy_rewriting_scheme(src, needed, name);
+  return new proxy_rewriting_scheme(src, needed, name.c_str());
 }
 
 // REWRITING GENERATION

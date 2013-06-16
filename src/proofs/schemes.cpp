@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004 - 2010 by Guillaume Melquiond <guillaume.melquiond@inria.fr>
+   Copyright (C) 2004 - 2013 by Guillaume Melquiond <guillaume.melquiond@inria.fr>
    Part of the Gappa tool http://gappa.gforge.inria.fr/
 
    This program is free software; you can redistribute it and/or modify
@@ -684,7 +684,12 @@ void graph_t::populate(property_tree const &goals, property_tree const &targets,
         // The scheme is missing some hypotheses.
         continue;
       }
-      node *n = s->generate_proof(hyps);
+      property res(s->real);
+      std::string name = s->default_name;
+      s->compute(hyps, res, name);
+      node *n = NULL;
+      if (!res.null() && (!res.real.pred_bnd() ||is_defined(res.bnd())))
+        n = create_theorem(s->needed_reals.size(), hyps, res, name);
       if (!n || !try_real(n)) {
         // The scheme failed or did not find anything new.
         continue;

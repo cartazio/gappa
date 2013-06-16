@@ -62,6 +62,13 @@ property::~property() {
   if (real.pred_bnd()) _bnd().~interval();
 }
 
+void property::clear()
+{
+  if (real.pred_bnd()) _bnd().~interval();
+  real = predicated_real();
+  store._int = 0;
+}
+
 property &property::operator=(property const &p) {
   if (p.real.pred_bnd()) {
     interval const &pb = p._bnd();

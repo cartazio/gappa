@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004 - 2010 by Guillaume Melquiond <guillaume.melquiond@inria.fr>
+   Copyright (C) 2004 - 2013 by Guillaume Melquiond <guillaume.melquiond@inria.fr>
    Part of the Gappa tool http://gappa.gforge.inria.fr/
 
    This program is free software; you can redistribute it and/or modify
@@ -118,12 +118,12 @@ static int_rounding_generator dummy2;
 REGISTER_SCHEME_BEGIN(fix_of_fixed);
   fixed_rounding_class const *rnd;
   fix_of_fixed_scheme(predicated_real const &r, fixed_rounding_class const *f)
-    : proof_scheme(r, preal_vect()), rnd(f) {}
+    : proof_scheme(r, preal_vect(), "fix_of_fixed"), rnd(f) {}
 REGISTER_SCHEME_END_PREDICATE(fix_of_fixed);
 
-node *fix_of_fixed_scheme::generate_proof(property const []) const
+void fix_of_fixed_scheme::compute(property const [], property &res, std::string &) const
 {
-  return create_theorem(0, NULL, property(real, rnd->format.min_exp), "fix_of_fixed");
+  res.cst() = rnd->format.min_exp;
 }
 
 proof_scheme *fix_of_fixed_scheme::factory(predicated_real const &real) {
@@ -139,13 +139,12 @@ proof_scheme *fix_of_fixed_scheme::factory(predicated_real const &real) {
 REGISTER_SCHEME_BEGIN(fixed_of_fix);
   long min_exp;
   fixed_of_fix_scheme(predicated_real const &r, predicated_real const &v, long e)
-    : proof_scheme(r, preal_vect(1, v)), min_exp(e) {}
+    : proof_scheme(r, preal_vect(1, v), "fixed_of_fix"), min_exp(e) {}
 REGISTER_SCHEME_END_PATTERN(fixed_of_fix, predicated_real(pattern(0), pattern(1), PRED_EQL));
 
-node *fixed_of_fix_scheme::generate_proof(property const hyps[]) const
+void fixed_of_fix_scheme::compute(property const hyps[], property &res, std::string &) const
 {
-  if (hyps[0].cst() < min_exp) return NULL;
-  return create_theorem(1, hyps, property(real), "fixed_of_fix");
+  if (hyps[0].cst() < min_exp) res.clear();
 }
 
 proof_scheme *fixed_of_fix_scheme::factory(predicated_real const &real, ast_real_vect const &holders)
@@ -163,22 +162,24 @@ proof_scheme *fixed_of_fix_scheme::factory(predicated_real const &real, ast_real
 REGISTER_SCHEME_BEGIN(fixed_of_fix_reduced);
   fixed_rounding_class const *rnd;
   fixed_of_fix_reduced_scheme(ast_real const *r, predicated_real const &v, fixed_rounding_class const *f)
-    : proof_scheme(predicated_real(r, PRED_BND), preal_vect(1, v)), rnd(f) {}
+    : proof_scheme(predicated_real(r, PRED_BND), preal_vect(1, v), "fixed_of_fix_reduced"), rnd(f) {}
 REGISTER_SCHEME_END(fixed_of_fix_reduced);
 
-node *fixed_of_fix_reduced_scheme::generate_proof(property const hyps[]) const
+void fixed_of_fix_reduced_scheme::compute(property const hyps[], property &res, std::string &) const
 {
   property const &hyp = hyps[0];
   long weight = hyp.cst();
-  if (weight >= rnd->format.min_exp) return NULL;
-  if (rnd_to_nearest(rnd->type)) return NULL;
+  if (weight >= rnd->format.min_exp || rnd_to_nearest(rnd->type)) {
+    res = property();
+    return;
+  }
   int dir = rnd_global_direction_abs(rnd->type);
-  interval error = from_exponent(rnd->format.min_exp, dir);
+  interval &error = res.bnd();
+  error = from_exponent(rnd->format.min_exp, dir);
   number adj = upper(from_exponent(weight, 1));
   interval adjust(adj, adj);
   if (dir <= 0) error = intersect(error, error + adjust);
   if (dir >= 0) error = intersect(error, error - adjust);
-  return create_theorem(1, &hyp, property(real, error), "fixed_of_fix_reduced");
 }
 
 proof_scheme *fixed_of_fix_reduced_scheme::factory(ast_real const *real)
@@ -192,17 +193,16 @@ proof_scheme *fixed_of_fix_reduced_scheme::factory(ast_real const *real)
 
 // BND_OF_BND_FIX
 REGISTER_SCHEME_BEGIN(bnd_of_bnd_fix);
-  bnd_of_bnd_fix_scheme(preal_vect const &v): proof_scheme(v[0], v) {}
+  bnd_of_bnd_fix_scheme(preal_vect const &v): proof_scheme(v[0], v, "bnd_of_bnd_fix") {}
 REGISTER_SCHEME_END(bnd_of_bnd_fix);
 
-node *bnd_of_bnd_fix_scheme::generate_proof(property const hyps[]) const
+void bnd_of_bnd_fix_scheme::compute(property const hyps[], property &res, std::string &) const
 {
   fixed_format format(hyps[1].cst());
   interval const &i = hyps[0].bnd();
   number a = round_number(lower(i), &format, &fixed_format::roundUP);
   number b = round_number(upper(i), &format, &fixed_format::roundDN);
-  property res(real, interval(a, (a <= b) ? b : a));
-  return create_theorem(2, hyps, res, "bnd_of_bnd_fix");
+  res.bnd() = interval(a, (a <= b) ? b : a);
 }
 
 extern bool is_hidden(ast_real const *);
@@ -222,12 +222,12 @@ proof_scheme *bnd_of_bnd_fix_scheme::factory(ast_real const *real)
 
 REGISTER_SCHEME_BEGIN(fix_fixed_of_fix);
   fix_fixed_of_fix_scheme(predicated_real const &r, predicated_real const &n)
-    : proof_scheme(r, preal_vect(1, n)) {}
+    : proof_scheme(r, preal_vect(1, n), "fix_fixed_of_fix") {}
 REGISTER_SCHEME_END_PREDICATE(fix_fixed_of_fix);
 
-node *fix_fixed_of_fix_scheme::generate_proof(property const hyps[]) const
+void fix_fixed_of_fix_scheme::compute(property const hyps[], property &res, std::string &) const
 {
-  return create_theorem(1, hyps, property(real, hyps[0].cst()), "fix_fixed_of_fix");
+  res.cst() = hyps[0].cst();
 }
 
 proof_scheme *fix_fixed_of_fix_scheme::factory(predicated_real const &real) {
@@ -243,12 +243,12 @@ proof_scheme *fix_fixed_of_fix_scheme::factory(predicated_real const &real) {
 
 REGISTER_SCHEME_BEGIN(flt_fixed_of_flt);
   flt_fixed_of_flt_scheme(predicated_real const &r, predicated_real const &n)
-    : proof_scheme(r, preal_vect(1, n)) {}
+    : proof_scheme(r, preal_vect(1, n), "flt_fixed_of_flt") {}
 REGISTER_SCHEME_END_PREDICATE(flt_fixed_of_flt);
 
-node *flt_fixed_of_flt_scheme::generate_proof(property const hyps[]) const
+void flt_fixed_of_flt_scheme::compute(property const hyps[], property &res, std::string &) const
 {
-  return create_theorem(1, hyps, property(real, hyps[0].cst()), "flt_fixed_of_flt");
+  res.cst() = hyps[0].cst();
 }
 
 proof_scheme *flt_fixed_of_flt_scheme::factory(predicated_real const &real) {

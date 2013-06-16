@@ -77,6 +77,7 @@ class property {
   void intersect(property const &);
   void hull(property const &);
   bool null() const { return real.null(); }
+  void clear();
 };
 
 struct property_vect: std::vector< property > {

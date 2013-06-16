@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004 - 2010 by Guillaume Melquiond <guillaume.melquiond@inria.fr>
+   Copyright (C) 2004 - 2013 by Guillaume Melquiond <guillaume.melquiond@inria.fr>
    Part of the Gappa tool http://gappa.gforge.inria.fr/
 
    This program is free software; you can redistribute it and/or modify
@@ -27,19 +27,19 @@ typedef std::vector< predicated_real > preal_vect;
 struct proof_scheme
 {
   /**
-   * Generates a proof node that expresses the goal inferred from the
-   * properties @a hyps corresponding to the hypotheses #needed_reals.
-   * This function is not called if one of the needed reals does not (yet)
-   * have an associated property.
-   * @return NULL if the numerical part of the hypotheses is not satisfied.
+   * Fills @a res with the property deduced from @a hyps, and sets @a name with
+   * the corresponding theorem.
+   * @note @a res should be initialized with #real, @a hyps should match
+   *       #needed_reals, and @a name should be initialized with #default_name.
    */
-  virtual node *generate_proof(property const hyps[]) const = 0;
+  virtual void compute(property const hyps[], property &res, std::string &name) const = 0;
   virtual ~proof_scheme() {}
   /** Initializes the scheme with the structure of the goal and hypotheses. */
-  proof_scheme(predicated_real const &r, preal_vect const &n)
-    : real(r), needed_reals(n), visited(0), score(0) {}
+  proof_scheme(predicated_real const &r, preal_vect const &n, char const *d)
+    : real(r), needed_reals(n), default_name(d), visited(0), score(0) {}
   const predicated_real real; //< Predicate of the goal.
   const preal_vect needed_reals; //< Predicates of the hypotheses.
+  std::string default_name; //< Default name of the generator.
   mutable unsigned visited;
   bool can_visit() const;
   mutable int score;
@@ -85,7 +85,7 @@ struct factory_creator {
 
 #define REGISTER_SCHEME_BEGIN(name) \
   class name##_scheme: proof_scheme { \
-    virtual node *generate_proof(property const []) const
+    virtual void compute(property const [], property &, std::string &) const
 
 #define REGISTER_SCHEME_END(name) \
    public: \
