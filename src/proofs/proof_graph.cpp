@@ -584,12 +584,7 @@ void enlarger(node_vect const &nodes)
     node *n = pending.front();
     pending.pop_front();
     n->visited = 0;
-    property old_res = n->get_result();
-    if (old_res.null()) continue;
-    property max_res = n->maximal();
-    if (!old_res.strict_implies(max_res)) continue;
-    n->enlarge(max_res);
-    if (!old_res.strict_implies(n->get_result())) continue;
+    n->enlarge(n->maximal());
     node_vect const &v = n->get_subproofs();
     for (node_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i)
       if ((*i)->can_visit()) pending.push_back(*i);

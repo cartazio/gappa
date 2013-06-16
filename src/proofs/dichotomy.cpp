@@ -243,7 +243,7 @@ class dichotomy_node: public dependent_node {
   ~dichotomy_node();
   virtual property const &get_result() const { return res; }
   using dependent_node::insert_pred;
-  virtual void enlarge(property const &p) { res = boundify(p, res); }
+  virtual void enlarge(property const &p) { if (!res.null()) res = boundify(p, res); }
   virtual property maximal_for(node const *) const;
 };
 

@@ -21,6 +21,7 @@
  */
 property boundify(property const &opt, property const &cur)
 {
+  if (cur.null() || !cur.real.pred_bnd()) return cur;
   property res = opt;
   interval const &bopt = opt.bnd(), &bcur = cur.bnd();
   if (is_bounded(bopt)) return res;
@@ -38,6 +39,7 @@ property boundify(property const &opt, property const &cur)
  */
 static property boundify_full(property const &opt, property const &cur)
 {
+  if (cur.null() || !cur.real.pred_bnd()) return cur;
   property res = opt;
   interval const &bopt = opt.bnd(), &bcur = cur.bnd();
   if (is_bounded(bopt)) return res;
@@ -52,14 +54,15 @@ void expand(theorem_node *n, property const &p)
   if (!n->sch) return;
   switch (n->sch->update_kind) {
   case UPD_TRIV:
-    if (!n->res.real.pred_bnd()) return;
     n->res = boundify_full(p, n->res);
     return;
   case UPD_COPY: {
-    if (!n->res.real.pred_bnd()) return;
     n->res = boundify_full(p, n->res);
     unsigned sz = n->hyp.size();
-    if (sz > 0) n->hyp[sz - 1].bnd() = n->res.bnd();
+    if (sz > 0) {
+      if (n->res.real.pred_bnd()) n->hyp[sz - 1].bnd() = n->res.bnd(); else
+      if (n->res.real.pred_cst()) n->hyp[sz - 1].cst() = n->res.cst();
+    }
     return; }
   case UPD_SEEK:
     break;
@@ -88,7 +91,7 @@ void expand(theorem_node *n, property const &p)
           ih = interval(m, upper(ih));
           property res(n->sch->real);
           n->sch->compute(hyps, res, n->name);
-          if (res.null() || !res.implies(n->res)) { ih = old_ih; b &= ~mask; }
+          if (res.null() || !res.implies(p)) { ih = old_ih; b &= ~mask; }
           else { n->res = res; keep_going = true; old_ih = ih; }
         } else b &= ~mask;
       }
@@ -101,11 +104,11 @@ void expand(theorem_node *n, property const &p)
           ih = interval(lower(ih), m);
           property res(n->sch->real);
           n->sch->compute(hyps, res, n->name);
-          if (res.null() || !res.implies(n->res)) { ih = old_ih; b &= ~mask; }
+          if (res.null() || !res.implies(p)) { ih = old_ih; b &= ~mask; }
           else { n->res = res; keep_going = true; }
         } else b &= ~mask;
       }
     }
   } while (keep_going);
-  if (n->res.real.pred_bnd()) n->res = boundify(p, n->res);
+  n->res = boundify(p, n->res);
 }

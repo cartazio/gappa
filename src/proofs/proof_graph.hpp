@@ -89,7 +89,7 @@ class hypothesis_node: public node
   virtual property const &get_result() const { return res; }
   virtual property maximal() const { return res; }
   virtual property maximal_for(node const *) const { assert(false); }
-  virtual void enlarge(property const &) { assert(false); }
+  virtual void enlarge(property const &) { return; }
 };
 
 /** Node refering to other nodes previously proven. */

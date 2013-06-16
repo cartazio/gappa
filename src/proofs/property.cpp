@@ -319,7 +319,7 @@ struct goal_node: node {
   { n->succ.insert(this); }
   virtual property const &get_result() const { return res; }
   virtual node_vect const &get_subproofs() const;
-  virtual void enlarge(property const &) { assert(false); }
+  virtual void enlarge(property const &) { return; }
   virtual property maximal() const { return res; }
   virtual property maximal_for(node const *) const { return res; }
   virtual ~goal_node() { pred->remove_succ(this); }

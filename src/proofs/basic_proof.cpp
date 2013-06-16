@@ -468,28 +468,27 @@ void computation_abs_scheme::compute(property const hyps[], property &res, std::
 {
   real_op const *r = boost::get< real_op const >(real.real());
   assert(r);
+  interval &i = res.bnd();
   switch (r->ops.size()) {
   case 1:
-    res.bnd() = hyps[0].bnd();
+    i = hyps[0].bnd();
     return;
   case 2: {
-    std::string s;
     interval const &i1 = hyps[0].bnd();
     interval const &i2 = hyps[1].bnd();
     switch (r->type) {
     case BOP_ADD:
-    case BOP_SUB: {
-      interval &i = res.bnd();
+    case BOP_SUB:
       i = interval(lower(abs(i1 - i2)), upper(i1 + i2));
       name = r->type == BOP_ADD ? "add_aa_x" : "sub_aa_x";
       name[name.size() - 1] = lower(i) > 0 ? (lower(i1) > upper(i2) ? 'p' : 'n') : 'o';
-      return; }
+      return;
     case BOP_MUL:
-      res.bnd() = i1 * i2;
+      i = i1 * i2;
       return;
     case BOP_DIV:
       if (contains_zero(i2)) return;
-      res.bnd() = i1 / i2;
+      i = i1 / i2;
       return;
     default:
       assert(false);
@@ -1153,8 +1152,9 @@ REGISTER_SCHEME_BEGIN(nzr_of_nzr_rel);
     : proof_scheme(r, v, "nzr_of_nzr_rel") {}
 REGISTER_SCHEME_END_PATTERN(nzr_of_nzr_rel, predicated_real(pattern(1), PRED_NZR));
 
-void nzr_of_nzr_rel_scheme::compute(property const[], property &, std::string &) const
+void nzr_of_nzr_rel_scheme::compute(property const hyps[], property &res, std::string &) const
 {
+  if (lower(hyps[1].bnd()) <= -1) res.clear();
 }
 
 proof_scheme *nzr_of_nzr_rel_scheme::factory(predicated_real const &real, ast_real_vect const &holders)
@@ -1171,8 +1171,9 @@ REGISTER_SCHEME_BEGIN(nzr_of_nzr_rel_rev);
     : proof_scheme(r, v, "nzr_of_nzr_rel_rev") {}
 REGISTER_SCHEME_END_PATTERN(nzr_of_nzr_rel_rev, predicated_real(pattern(-1), PRED_NZR));
 
-void nzr_of_nzr_rel_rev_scheme::compute(property const[], property &, std::string &) const
+void nzr_of_nzr_rel_rev_scheme::compute(property const hyps[], property &res, std::string &) const
 {
+  if (lower(hyps[1].bnd()) <= -1) res.clear();
 }
 
 proof_scheme *nzr_of_nzr_rel_rev_scheme::factory(predicated_real const &real, ast_real_vect const &holders)

@@ -687,11 +687,13 @@ void graph_t::populate(property_tree const &goals, property_tree const &targets,
       property res(s->real);
       std::string name = s->default_name;
       s->compute(hyps, res, name);
-      node *n = NULL;
-      if (!res.null() && (!res.real.pred_bnd() ||is_defined(res.bnd())))
-        n = create_theorem(s->needed_reals.size(), hyps, res, name, s);
-      if (!n || !try_real(n)) {
-        // The scheme failed or did not find anything new.
+      if (res.null() || (res.real.pred_bnd() && !is_defined(res.bnd()))) {
+        // The scheme failed.
+        continue;
+      }
+      node *n = create_theorem(s->needed_reals.size(), hyps, res, name, s);
+      if (!try_real(n)) {
+        // The scheme did not find anything new.
         continue;
       }
       s->score += scheme_queue::success_score;
