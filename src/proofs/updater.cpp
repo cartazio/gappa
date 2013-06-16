@@ -81,18 +81,19 @@ void expand(theorem_node *n, property const &p)
     {
       if (!n->hyp[i].real.pred_bnd()) continue;
       interval &ih = n->hyp[i].bnd();
-      interval old_ih = ih;
       unsigned mask = 1u << (2 * i);
       if (b & mask)
       {
         number const &old = lower(ih);
         number m = simplify(old, -1);
         if (m != old) {
+          interval old_ih = ih;
           ih = interval(m, upper(ih));
           property res(n->sch->real);
-          n->sch->compute(hyps, res, n->name);
+          std::string name = n->name;
+          n->sch->compute(hyps, res, name);
           if (res.null() || !res.implies(p)) { ih = old_ih; b &= ~mask; }
-          else { n->res = res; keep_going = true; old_ih = ih; }
+          else { n->res = res; n->name = name; keep_going = true; }
         } else b &= ~mask;
       }
       mask = 1u << (2 * i + 1);
@@ -101,11 +102,13 @@ void expand(theorem_node *n, property const &p)
         number const &old = upper(ih);
         number m = simplify(old, 1);
         if (m != old) {
+          interval old_ih = ih;
           ih = interval(lower(ih), m);
           property res(n->sch->real);
-          n->sch->compute(hyps, res, n->name);
+          std::string name = n->name;
+          n->sch->compute(hyps, res, name);
           if (res.null() || !res.implies(p)) { ih = old_ih; b &= ~mask; }
-          else { n->res = res; keep_going = true; }
+          else { n->res = res; n->name = name; keep_going = true; }
         } else b &= ~mask;
       }
     }
