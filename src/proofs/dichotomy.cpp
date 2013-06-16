@@ -281,7 +281,7 @@ dicho_graph dichotomy_helper::try_hypothesis(dichotomy_failure *exn,
     property p = tmp_hyp[0];
     if (current_goals.simplify(p) > 0) {
       found_it:
-      node *n = create_theorem(0, NULL, p, "$LOGIC");
+      node *n = create_theorem(0, NULL, p, "$LOGIC", NULL);
       g->set_contradiction(n);
       return dicho_graph(g, iter_max);
     }

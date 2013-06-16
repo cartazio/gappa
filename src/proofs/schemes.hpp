@@ -17,6 +17,13 @@
 
 typedef std::vector< predicated_real > preal_vect;
 
+enum update
+{
+  UPD_TRIV, //< Result is enlarged, hypotheses are unchanged.
+  UPD_COPY, //< Result is enlarged and copied to the last hypothesis.
+  UPD_SEEK, //< Result and hypotheses are enlarged.
+};
+
 /**
  * Abstract interface for a theorem instance.
  * \li It stores the complete predicates used in the goal and the hypotheses.
@@ -35,11 +42,12 @@ struct proof_scheme
   virtual void compute(property const hyps[], property &res, std::string &name) const = 0;
   virtual ~proof_scheme() {}
   /** Initializes the scheme with the structure of the goal and hypotheses. */
-  proof_scheme(predicated_real const &r, preal_vect const &n, char const *d)
-    : real(r), needed_reals(n), default_name(d), visited(0), score(0) {}
+  proof_scheme(predicated_real const &r, preal_vect const &n, char const *d, update u = UPD_SEEK)
+    : real(r), needed_reals(n), default_name(d), visited(0), score(0), update_kind(u) {}
   const predicated_real real; //< Predicate of the goal.
   const preal_vect needed_reals; //< Predicates of the hypotheses.
   std::string default_name; //< Default name of the generator.
+  update update_kind;
   mutable unsigned visited;
   bool can_visit() const;
   mutable int score;

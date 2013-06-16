@@ -30,11 +30,10 @@ enum node_id
 
 struct node;
 struct graph_t;
+struct proof_scheme;
 
 /** Current graph, to which new nodes are added. */
 extern graph_t *top_graph;
-
-struct theorem_updater;
 
 /** Specific instanciation of a theorem. */
 struct theorem_node
@@ -42,14 +41,8 @@ struct theorem_node
   property res;             /**< Proven result. */
   property_vect hyp;        /**< Properties needed as hypotheses for proving the result. */
   std::string name;         /**< Unmangled name of the theorem. */
-  theorem_updater *updater; /**< Function for simplifying the hypotheses in case the goal can be weakened. */
-  theorem_node(int, property const [], property const &, std::string const &, theorem_updater *);
-};
-
-struct theorem_updater
-{
-  virtual void expand(theorem_node *, property const &) = 0;
-  virtual ~theorem_updater() {}
+  proof_scheme const *sch;  /**< Scheme used to produce the theorem. */
+  theorem_node(int, property const [], property const &, std::string const &, proof_scheme const *);
 };
 
 typedef std::vector< node * > node_vect;
@@ -112,7 +105,7 @@ class dependent_node: public node
   virtual ~dependent_node() { clean_dependencies(); }
 };
 
-node *create_theorem(int, property const [], property const &, std::string const &, theorem_updater * = NULL);
+node *create_theorem(int, property const [], property const &, std::string const &, proof_scheme const *);
 
 /** Node of type ::MODUS */
 class modus_node: public dependent_node

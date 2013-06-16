@@ -270,7 +270,7 @@ proof_scheme *enforce_bound_scheme::factory(ast_real const *real)
 // SUB_OF_EQL
 REGISTER_SCHEME_BEGIN(sub_of_eql);
   sub_of_eql_scheme(predicated_real const &r, predicated_real const &n)
-    : proof_scheme(r, preal_vect(1, n), "sub_of_eql") {}
+    : proof_scheme(r, preal_vect(1, n), "sub_of_eql", UPD_TRIV) {}
 REGISTER_SCHEME_END_PATTERN(sub_of_eql, predicated_real(pattern(0) - pattern(1), PRED_BND));
 
 void sub_of_eql_scheme::compute(property const hyps[], property &res, std::string &) const
@@ -308,7 +308,7 @@ proof_scheme *eql_of_cst_scheme::factory(predicated_real const &real)
 // REL_REFL
 REGISTER_SCHEME_BEGIN(rel_refl);
   rel_refl_scheme(predicated_real const &r)
-    : proof_scheme(r, preal_vect(), "rel_refl") {}
+    : proof_scheme(r, preal_vect(), "rel_refl", UPD_TRIV) {}
 REGISTER_SCHEME_END_PATTERN(rel_refl, predicated_real(pattern(0), pattern(0), PRED_REL));
 
 void rel_refl_scheme::compute(property const hyps[], property &res, std::string &name) const
@@ -399,7 +399,6 @@ void computation_scheme::compute(property const hyps[], property &res, std::stri
       return;
     }
     interval const &i2 = hyps[1].bnd();
-    theorem_updater *u = NULL;
     switch (r->type) {
     case BOP_ADD: res.bnd() = i1 + i2; return;
     case BOP_SUB: res.bnd() = i1 - i2; return;
@@ -461,8 +460,8 @@ proof_scheme *computation_scheme::factory(ast_real const *real)
 
 // COMPUTATION_ABS
 REGISTER_SCHEME_BEGIN(computation_abs);
-  computation_abs_scheme(predicated_real const &r, preal_vect const &v, char const *n)
-    : proof_scheme(r, v, n) {}
+  computation_abs_scheme(predicated_real const &r, preal_vect const &v, char const *n, update u)
+    : proof_scheme(r, v, n, u) {}
 REGISTER_SCHEME_END_PREDICATE(computation_abs);
 
 void computation_abs_scheme::compute(property const hyps[], property &res, std::string &name) const
@@ -512,14 +511,15 @@ proof_scheme *computation_abs_scheme::factory(predicated_real const &real)
        i != i_end; ++i)
     needed.push_back(predicated_real(*i, PRED_ABS));
   char const *name = "";
+  update upd = UPD_SEEK;
   switch (p->type) {
-  case UOP_NEG: name = "neg_a"; break;
-  case UOP_ABS: name = "abs_a"; break;
+  case UOP_NEG: name = "neg_a"; upd = UPD_COPY; break;
+  case UOP_ABS: name = "abs_a"; upd = UPD_COPY; break;
   case BOP_MUL: name = "mul_aa"; break;
   case BOP_DIV: name = "div_aa"; break;
   default: break;
   }
-  return new computation_abs_scheme(real, needed, name);
+  return new computation_abs_scheme(real, needed, name, upd);
 }
 
 // BND_OF_ABS
@@ -593,7 +593,7 @@ proof_scheme *bnd_of_bnd_abs_scheme::factory(ast_real const *real)
 // UABS_OF_ABS
 REGISTER_SCHEME_BEGIN(uabs_of_abs);
   uabs_of_abs_scheme(ast_real const *r, predicated_real const &v)
-    : proof_scheme(predicated_real(r, PRED_BND), preal_vect(1, v), "uabs_of_abs") {}
+    : proof_scheme(predicated_real(r, PRED_BND), preal_vect(1, v), "uabs_of_abs", UPD_COPY) {}
 REGISTER_SCHEME_END(uabs_of_abs);
 
 void uabs_of_abs_scheme::compute(property const hyps[], property &res, std::string &) const
@@ -611,7 +611,7 @@ proof_scheme *uabs_of_abs_scheme::factory(ast_real const *real)
 // ABS_OF_UABS
 REGISTER_SCHEME_BEGIN(abs_of_uabs);
   abs_of_uabs_scheme(predicated_real const &r, predicated_real const &v)
-    : proof_scheme(r, preal_vect(1, v), "abs_of_uabs") {}
+    : proof_scheme(r, preal_vect(1, v), "abs_of_uabs", UPD_COPY) {}
 REGISTER_SCHEME_END_PREDICATE(abs_of_uabs);
 
 void abs_of_uabs_scheme::compute(property const hyps[], property &res, std::string &) const
@@ -634,7 +634,7 @@ proof_scheme *abs_of_uabs_scheme::factory(predicated_real const &real)
 // NUMBER
 REGISTER_SCHEME_BEGIN(number);
   number_scheme(ast_real const *r, char const *n)
-    : proof_scheme(predicated_real(r, PRED_BND), preal_vect(), n) {}
+    : proof_scheme(predicated_real(r, PRED_BND), preal_vect(), n, UPD_TRIV) {}
 REGISTER_SCHEME_END(number);
 
 interval create_interval(ast_number const *, ast_number const *, bool widen = true);
@@ -871,7 +871,7 @@ proof_scheme *flt_of_singleton_bnd_scheme::factory(predicated_real const &real)
 // BND_OF_NZR_REL
 REGISTER_SCHEME_BEGIN(bnd_of_nzr_rel);
   bnd_of_nzr_rel_scheme(predicated_real const &r, preal_vect const &v)
-    : proof_scheme(r, v, "bnd_of_nzr_rel") {}
+    : proof_scheme(r, v, "bnd_of_nzr_rel", UPD_COPY) {}
 REGISTER_SCHEME_END_PATTERN(bnd_of_nzr_rel,
   predicated_real((pattern(1) - pattern(0)) / pattern(0), PRED_BND));
 
@@ -892,7 +892,7 @@ proof_scheme *bnd_of_nzr_rel_scheme::factory(predicated_real const &real, ast_re
 // REL_OF_NZR_BND
 REGISTER_SCHEME_BEGIN(rel_of_nzr_bnd);
   rel_of_nzr_bnd_scheme(predicated_real const &r, preal_vect const &v)
-    : proof_scheme(r, v, "rel_of_nzr_bnd") {}
+    : proof_scheme(r, v, "rel_of_nzr_bnd", UPD_COPY) {}
 REGISTER_SCHEME_END_PREDICATE(rel_of_nzr_bnd);
 
 void rel_of_nzr_bnd_scheme::compute(property const hyps[], property &res, std::string &) const
@@ -938,8 +938,6 @@ proof_scheme *computation_rel_add_scheme::factory(predicated_real const &real) {
   hyps.push_back(predicated_real(r2, PRED_NZR));
   return new computation_rel_add_scheme(real, hyps, p->type == BOP_SUB ? "sub_rr" : "add_rr");
 }
-
-BINARY_INTERVAL(compose_updater) { r = compose_relative(h[0], h[1]); }
 
 // COMPUTATION_REL_MUL
 REGISTER_SCHEME_BEGIN(computation_rel_mul);

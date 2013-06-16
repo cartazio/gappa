@@ -12,6 +12,7 @@
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
 #include "numbers/round.hpp"
+#include "proofs/schemes.hpp"
 #include "proofs/updater.hpp"
 
 /**
@@ -46,110 +47,65 @@ static property boundify_full(property const &opt, property const &cur)
   return res;
 }
 
-struct trivial_updater1: theorem_updater
+void expand(theorem_node *n, property const &p)
 {
-  virtual void expand(theorem_node *n, property const &p)
-  { n->res = boundify_full(p, n->res); }
-};
-static trivial_updater1 trivial_updater2;
-/** Updater for setting the result to the passed argument. */
-theorem_updater *trivial_updater = &trivial_updater2; 
-
-struct identity_updater1: theorem_updater
-{
-  virtual void expand(theorem_node *n, property const &p)
-  {
+  if (!n->sch) return;
+  switch (n->sch->update_kind) {
+  case UPD_TRIV:
+    if (!n->res.real.pred_bnd()) return;
+    n->res = boundify_full(p, n->res);
+    return;
+  case UPD_COPY: {
+    if (!n->res.real.pred_bnd()) return;
     n->res = boundify_full(p, n->res);
     unsigned sz = n->hyp.size();
     if (sz > 0) n->hyp[sz - 1].bnd() = n->res.bnd();
+    return; }
+  case UPD_SEEK:
+    break;
+  default:
+    assert(false);
   }
-};
-static identity_updater1 identity_updater2;
-/** Updater for setting the result and the last hypothesis to the passed argument. */
-theorem_updater *identity_updater = &identity_updater2;
-
-void unary_interval_updater::expand(theorem_node *n, property const &p)
-{
-  int b = 3;
-  property res = p;
-  interval const &bnd = p.bnd();
-  interval &ih = n->hyp[0].bnd(), &ir = res.bnd();
-  interval hyp = ih;
-  while (b != 0) {
-    if (b & 1) {
-      number const &old = lower(ih);
-      number m = simplify(old, -1);
-      if (m != old) {
-        hyp = interval(m, upper(ih));
-        (*compute)(hyp, ir);
-        if (!(ir <= bnd)) { hyp = ih; b &= ~1; }
-        else ih = hyp;
-      } else b &= ~1;
+  unsigned b = ~0u;
+  property *hyps = &n->hyp[0];
+  int l = n->hyp.size();
+  if (l > 16) l = 16;
+  bool keep_going;
+  do
+  {
+    keep_going = false;
+    for (int i = 0; i != l; ++i)
+    {
+      if (!n->hyp[i].real.pred_bnd()) continue;
+      interval &ih = n->hyp[i].bnd();
+      interval old_ih = ih;
+      unsigned mask = 1u << (2 * i);
+      if (b & mask)
+      {
+        number const &old = lower(ih);
+        number m = simplify(old, -1);
+        if (m != old) {
+          ih = interval(m, upper(ih));
+          property res(n->sch->real);
+          n->sch->compute(hyps, res, n->name);
+          if (res.null() || !res.implies(n->res)) { ih = old_ih; b &= ~mask; }
+          else { n->res = res; keep_going = true; old_ih = ih; }
+        } else b &= ~mask;
+      }
+      mask = 1u << (2 * i + 1);
+      if (b & mask)
+      {
+        number const &old = upper(ih);
+        number m = simplify(old, 1);
+        if (m != old) {
+          ih = interval(lower(ih), m);
+          property res(n->sch->real);
+          n->sch->compute(hyps, res, n->name);
+          if (res.null() || !res.implies(n->res)) { ih = old_ih; b &= ~mask; }
+          else { n->res = res; keep_going = true; }
+        } else b &= ~mask;
+      }
     }
-    if (b & 2) {
-      number const &old = upper(ih);
-      number m = simplify(old, 1);
-      if (m != old) {
-        hyp = interval(lower(ih), m);
-        (*compute)(hyp, ir);
-        if (!(ir <= bnd)) { hyp = ih; b &= ~2; }
-        else ih = hyp;
-      } else b &= ~2;
-    }
-  }
-  (*compute)(hyp, ir);
-  n->res = boundify(p, res);
-}
-
-void binary_interval_updater::expand(theorem_node *n, property const &p)
-{
-  int b = 15;
-  property res = p;
-  interval const &bnd = p.bnd();
-  interval &i1 = n->hyp[0].bnd(), &i2 = n->hyp[1].bnd(), &ir = res.bnd();
-  interval hyps[] = { i1, i2 };
-  while (b != 0) {
-    if (b & 1) {
-      number const &old = lower(i1);
-      number m = simplify(old, -1);
-      if (m != old) {
-        hyps[0] = interval(m, upper(i1));
-        (*compute)(hyps, ir);
-        if (!(ir <= bnd)) { hyps[0] = i1; b &= ~1; }
-        else i1 = hyps[0];
-      } else b &= ~1;
-    }
-    if (b & 2) {
-      number const &old = upper(i1);
-      number m = simplify(old, 1);
-      if (m != old) {
-        hyps[0] = interval(lower(i1), m);
-        (*compute)(hyps, ir);
-        if (!(ir <= bnd)) { hyps[0] = i1; b &= ~2; }
-        else i1 = hyps[0];
-      } else b &= ~2;
-    }
-    if (b & 4) {
-      number const &old = lower(i2);
-      number m = simplify(old, -1);
-      if (m != old) {
-        hyps[1] = interval(m, upper(i2));
-        (*compute)(hyps, ir);
-        if (!(ir <= bnd)) { hyps[1] = i2; b &= ~4; }
-        else i2 = hyps[1];
-      } else b &= ~4;
-    }
-    if (b & 8) {
-      number const &old = upper(i2);
-      number m = simplify(old, 1);
-      if (m != old) {
-        hyps[1] = interval(lower(i2), m);
-        (*compute)(hyps, ir);
-        if (!(ir <= bnd)) { hyps[1] = i2; b &= ~8; }
-        else i2 = hyps[1];
-      } else b &= ~8;
-    }
-  }
-  (*compute)(hyps, ir);
-  n->res = boundify(p, res);
+  } while (keep_going);
+  if (n->res.real.pred_bnd()) n->res = boundify(p, n->res);
 }

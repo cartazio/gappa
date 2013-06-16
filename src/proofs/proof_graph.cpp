@@ -170,8 +170,8 @@ static bool dominates(node const *n1, node const *n2)
   return n1->graph->dominates(n2->graph);
 }
 
-theorem_node::theorem_node(int nb, property const h[], property const &p, std::string const &n, theorem_updater *u)
-  : res(p), name(n), updater(u)
+theorem_node::theorem_node(int nb, property const h[], property const &p, std::string const &n, proof_scheme const *s)
+  : res(p), name(n), sch(s)
 {
   for(int i = 0; i < nb; ++i) hyp.push_back(h[i]);
 }
@@ -220,7 +220,7 @@ modus_node::modus_node(theorem_node *n)
     if (!m)
     {
       assert(!parameter_constrained);
-      m = create_theorem(0, NULL, *i, "$FALSE");
+      m = create_theorem(0, NULL, *i, "$FALSE", NULL);
     }
     assert(m && dominates(m, this));
     if (m->type != HYPOTHESIS && nodes.insert(m).second)
@@ -245,12 +245,9 @@ modus_node::~modus_node()
 
 /**
  * Returns the intersection of all the hypotheses dealing with the same real than the result proved by @a n.
- * @note If the #target theorem has no updater, the hypotheses have not changed creation time.
- *       So the intersection can be skipped since it will not produce a wider result.
  */
 property modus_node::maximal_for(node const *n) const
 {
-  if (!target->updater) return n->get_result();
   predicated_real r = n->get_result().real;
   property res;
   for (property_vect::const_iterator i = target->hyp.begin(),
@@ -266,14 +263,13 @@ property modus_node::maximal_for(node const *n) const
 
 void modus_node::enlarge(property const &p)
 {
-  if (!target->updater) return;
-  target->updater->expand(target, p);
+  expand(target, p);
 }
 
 /** Helper function for creating both a ::MODUS node and its associated ::theorem_node. */
-node *create_theorem(int nb, property const h[], property const &p, std::string const &n, theorem_updater *u)
+node *create_theorem(int nb, property const h[], property const &p, std::string const &n, proof_scheme const *s)
 {
-  return new modus_node(new theorem_node(nb, h, p, n, u));
+  return new modus_node(new theorem_node(nb, h, p, n, s));
 }
 
 class intersection_node: public dependent_node

@@ -615,7 +615,7 @@ static bool reduce_goal(property_tree &current_goals,
     if (!i->first.real.pred_bnd() || !is_defined(i->first.bnd())) continue;
     node *m;
     if (!i->second) {
-      m = create_theorem(0, NULL, i->first, "$LOGIC");
+      m = create_theorem(0, NULL, i->first, "$LOGIC", NULL);
     } else {
       m = find_proof(i->first.real);
       if (!m) continue;
@@ -624,10 +624,10 @@ static bool reduce_goal(property_tree &current_goals,
       if (is_singleton(g)) continue;
       if (lower(h) >= lower(g)) {
         m = create_theorem(0, NULL, property(p.real,
-          interval(upper(g), upper(h))), "$LOGIC");
+          interval(upper(g), upper(h))), "$LOGIC", NULL);
       } else if (upper(h) <= upper(g)) {
         m = create_theorem(0, NULL, property(p.real,
-          interval(lower(h), lower(g))), "$LOGIC");
+          interval(lower(h), lower(g))), "$LOGIC", NULL);
       } else continue;
     }
     if (!top_graph->try_real(m)) continue;
@@ -689,7 +689,7 @@ void graph_t::populate(property_tree const &goals, property_tree const &targets,
       s->compute(hyps, res, name);
       node *n = NULL;
       if (!res.null() && (!res.real.pred_bnd() ||is_defined(res.bnd())))
-        n = create_theorem(s->needed_reals.size(), hyps, res, name);
+        n = create_theorem(s->needed_reals.size(), hyps, res, name, s);
       if (!n || !try_real(n)) {
         // The scheme failed or did not find anything new.
         continue;

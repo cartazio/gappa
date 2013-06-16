@@ -43,7 +43,7 @@ struct rewriting_scheme: proof_scheme
   pattern_cond_vect conditions;
   preal_vect needed_reals(predicated_real const &, pattern_cond_vect const &) const;
   rewriting_scheme(predicated_real const &src, predicated_real const &dst, char const *n, pattern_cond_vect const &c)
-    : proof_scheme(src, needed_reals(dst, c), n), rewritten(dst), conditions(c) {}
+    : proof_scheme(src, needed_reals(dst, c), n, UPD_COPY), rewritten(dst), conditions(c) {}
   virtual void compute(property const[], property &, std::string &) const;
 };
 
@@ -85,14 +85,11 @@ void rewriting_scheme::compute(property const hyps[], property &res, std::string
   if (!rewritten.null())
   {
     // straight rewriting, a property is actually forwarded
-    node *n = find_proof(rewritten);
-    if (!n) { res.clear(); return; }
     if (res.real.pred_bnd()) {
       res.bnd() = hyps[j].bnd();
     } else if (res.real.pred_cst()) {
       res.cst() = hyps[j].cst();
     }
-    ++j;
   }
   if (fail) name = "$FALSE";
 }
@@ -157,7 +154,7 @@ struct proxy_rewriting_scheme: proof_scheme
 {
   virtual void compute(property const[], property &, std::string &) const;
   proxy_rewriting_scheme(predicated_real const &r, preal_vect const &p, char const *n)
-    : proof_scheme(r, p, n) {}
+    : proof_scheme(r, p, n, UPD_COPY) {}
 };
 
 void proxy_rewriting_scheme::compute(property const hyps[], property &res, std::string &) const
