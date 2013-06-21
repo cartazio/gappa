@@ -587,7 +587,8 @@ node *find_proof(property const &res, bool implies)
   return n;
 }
 
-bool fill_hypotheses(property *hyp, preal_vect const &v) {
+static bool fill_hypotheses(property *hyp, preal_vect const &v)
+{
   for(preal_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i) {
     node *n = find_proof(*i);
     if (!n) return false;

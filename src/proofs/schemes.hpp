@@ -116,7 +116,6 @@ struct factory_creator {
 inline node *find_proof(predicated_real const &real)
 { return top_graph->find_already_known(real); }
 node *find_proof(property const &, bool = true);
-bool fill_hypotheses(property *, preal_vect const &);
 
 preal_vect generate_proof_paths();
 
