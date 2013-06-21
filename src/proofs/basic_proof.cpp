@@ -1173,7 +1173,6 @@ REGISTER_SCHEME_END_PATTERN(nzr_of_nzr_rel_rev, predicated_real(pattern(-1), PRE
 
 void nzr_of_nzr_rel_rev_scheme::compute(property const hyps[], property &res, std::string &) const
 {
-  if (lower(hyps[1].bnd()) <= -1) res.clear();
 }
 
 proof_scheme *nzr_of_nzr_rel_rev_scheme::factory(predicated_real const &real, ast_real_vect const &holders)

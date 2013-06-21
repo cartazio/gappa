@@ -117,7 +117,7 @@ static char const *theorem_defs[][2] = {
   { "nzr_of_bnd_p", "$gpred_nzr.$t $x $1i $" },
   { "nzr_of_bnd_n", "$gpred_nzr.$t $x $1i $" },
   { "nzr_of_nzr_rel", "$gpred_nzr.$t $x $1x $2i $" },
-  { "nzr_of_nzr_rel_rev", "$gpred_nzr.$t $1x $x $2i $" },
+  { "nzr_of_nzr_rel_rev", "$gpred_nzr.$t $1x $x $2i $1p $2p" },
 
   { "rel_refl", "$gpred_rel.$t $x $i $" },
   { "bnd_of_nzr_rel", "$gpred_rel.$t $2x $1x $i $1p $2p" },
