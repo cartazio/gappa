@@ -505,7 +505,7 @@ void graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
   for(preal_set::const_iterator i = reals.begin(), end = reals.end(); i != end; ++i) {
     property p(*i);
     if (node *n = find_already_known(*i)) p = n->get_result();
-    if (node *n = h->generate_node(varn, p)) try_real(n);
+    if (node *n = h->generate_node(varn, p)) try_node(n);
   }
   if (--h->nb_ref == 0) {
     delete h;

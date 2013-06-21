@@ -120,7 +120,7 @@ class modus_node: public dependent_node
 /**
  * Graph of nodes.
  * @invariant All the nodes from #nodes are (indirectly accessible from nodes) stored in #known_reals, #partial_reals, and #contradiction.
- *            This property is temporarily false between node construction and #try_real.
+ *            This property is temporarily false between node construction and #insert_node.
  * @invariant If #contradiction is set, #known_reals and #partial_reals are empty.
  */
 class graph_t
@@ -139,7 +139,9 @@ class graph_t
   graph_t(graph_t *, property_vect const &);
   ~graph_t();
   node *find_already_known(predicated_real const &) const;
-  bool try_real(node *&);
+  bool try_property(property const &) const;
+  void insert_node(node *&);
+  bool try_node(node *&);
   /** Returns the hypotheses #hyp of this graph. */
   property_vect const &get_hypotheses() const { return hyp; }
   bool dominates(graph_t const *) const;

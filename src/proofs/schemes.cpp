@@ -631,7 +631,7 @@ static bool reduce_goal(property_tree &current_goals,
           interval(lower(h), lower(g))), "$LOGIC", NULL);
       } else continue;
     }
-    if (!top_graph->try_real(m)) continue;
+    if (!top_graph->try_node(m)) continue;
     if (top_graph->get_contradiction()) return true;
     if (missing_schemes) insert_dependent(*missing_schemes, i->first.real);
     if (current_goals.empty()) continue;
@@ -692,11 +692,13 @@ void graph_t::populate(property_tree const &goals, property_tree const &targets,
         // The scheme failed.
         continue;
       }
-      node *n = create_theorem(s->needed_reals.size(), hyps, res, name, s);
-      if (!try_real(n)) {
+      if (!try_property(res))
+      {
         // The scheme did not find anything new.
         continue;
       }
+      node *n = create_theorem(s->needed_reals.size(), hyps, res, name, s);
+      insert_node(n);
       s->score += scheme_queue::success_score;
       if (contradiction) {
         // We have got a contradiction, everything is true.

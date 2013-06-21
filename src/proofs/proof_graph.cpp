@@ -341,10 +341,10 @@ graph_t::graph_t(graph_t *f, property_vect const &h)
       if (known_reals.count(i->real) == 0)
         partial_reals.insert(std::make_pair(i->real, new hypothesis_node(*i)));
     }
-    else
+    else if (try_property(*i))
     {
       node *n = new hypothesis_node(*i);
-      try_real(n);
+      insert_node(n);
     }
   }
 }
@@ -376,27 +376,48 @@ void graph_t::set_contradiction(node *n)
 int stat_successful_th = 0, stat_discarded_pred = 0, stat_intersected_pred = 0;
 
 /**
- * Remembers @a n if it is worth it. Deletes it otherwise.
+ * Checks whether property @a p is worth it:
  *
- * A node is worth it, if
  * \li the real of its result is not yet known, or
- * \li its result is not a superset of an already known result, or
- * \li its result is equal to an already known result but it has a smaller weight.
+ * \li its result is not a superset of an already known result.
  *
- * If the result is new, the function tests the node against #partial_reals and creates an ::intersection_node if any real match.
- *
- * If the result is not a strict subset, an ::intersection_node with the alreay known result is created.
- *
- * In both cases, the new node is passed back.
- *
- * @return true if the node is worth it.
+ * @return true if the property is worth it.
  */
-bool graph_t::try_real(node *&n)
+bool graph_t::try_property(property const &p) const
+{
+  assert(top_graph == this && !contradiction);
+  ++stat_successful_th;
+  node_map::const_iterator i = known_reals.find(p.real);
+  if (i != known_reals.end())
+  {
+    property const &res = i->second->get_result();
+    if (!res.implies(p)) {
+      if (p.real.pred() != PRED_REL) return true;
+      property r = res;
+      r.intersect(p);
+      if (!is_empty(r.bnd())) return true;
+      return try_property(property(p.real.real2(), interval(0, 0)));
+    }
+    ++stat_discarded_pred;
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Stores @a n and updates it if an additional node was created.
+ *
+ * An ::intersection_node is created if there was already a node in #known_reals
+ * or #partial_reals.
+ *
+ * @pre the node should be worth it.
+ * @see #try_property.
+ */
+void graph_t::insert_node(node *&n)
 {
   assert(top_graph == this && !contradiction);
   assert(n && n->graph && n->graph->dominates(this));
   property const &res2 = n->get_result();
-  ++stat_successful_th;
   std::pair< node_map::iterator, bool > ib = known_reals.insert(std::make_pair(res2.real, n));
   node *&dst = ib.first->second;
   if (!ib.second)
@@ -404,19 +425,13 @@ bool graph_t::try_real(node *&n)
     // there was already a known range
     node *old = dst;
     property const &res1 = old->get_result();
-    if (res1.implies(res2))
-    {
-      ++stat_discarded_pred;
-      delete n;
-      n = NULL;
-      return false;
-    }
+    assert(!res1.implies(res2));
     if (!res2.strict_implies(res1))
     {
       ++stat_intersected_pred;
       n = new intersection_node(old, n);
-      if (n == contradiction) return true;
-      if (n->get_result().real != res2.real) return try_real(n);
+      if (n == contradiction) return;
+      if (n->get_result().real != res2.real) { insert_node(n); return; }
     }
     dst = n;
     old->remove_known();
@@ -435,16 +450,31 @@ bool graph_t::try_real(node *&n)
         node *old = n;
         ++n->nb_good; // n has just become a known real, this data is needed in case a contradiction is found
         n = new intersection_node(n, m);
-        if (n == contradiction) return true;
+        if (n == contradiction) return;
         --old->nb_good;
-        if (n->get_result().real != res2.real) return try_real(n);
+        if (n->get_result().real != res2.real) { insert_node(n); return; }
         dst = n;
       }
       else delete m;
     }
   }
   ++n->nb_good;
-  return true;
+}
+
+/**
+ * Inserts node @a n if it is worth it.
+ *
+ * @see #try_property and #insert_node.
+ */
+bool graph_t::try_node(node *&n)
+{
+  if (try_property(n->get_result())) {
+    insert_node(n);
+    return true;
+  }
+  delete n;
+  n = NULL;
+  return false;
 }
 
 /**
