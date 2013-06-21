@@ -63,10 +63,7 @@ struct node
   unsigned nb_good;         /**< Number of references by all the graph_t::known_reals. */
   unsigned nb_missing;      /**< Heuristic number of missing facts in unconstrained mode. */
   mutable unsigned visited; /**< Timestamp of the last visit by an algorithm. */
-  unsigned local_weight;    /**< Local weight of the node, usually 1. */
-  unsigned weight;          /**< Total weight of all the ancestors, computed on demand. */
   bool can_visit() const;
-  unsigned get_weight();
   node(node_id, graph_t *);
   /** Returns the property this node proves. */
   virtual property const &get_result() const = 0;

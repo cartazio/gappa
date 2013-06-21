@@ -20,7 +20,6 @@
 
 struct backend;
 extern backend *proof_generator;
-extern bool parameter_expensive;
 extern bool parameter_constrained;
 
 graph_t *top_graph = NULL;
@@ -42,41 +41,6 @@ bool node::can_visit() const
 typedef std::list< node * > node_list;
 
 /**
- * Computes the sum of the #local_weight of all the ancestors of this node.
- * The result is cached in the #weight data member.
- * @note Outside the expensive mode, the weights of the nodes are their #local_weight.
- */
-unsigned node::get_weight()
-{
-  if (weight > 0) return weight;
-  node_vect const &v = get_subproofs();
-  weight = local_weight;
-  switch (v.size())
-  {
-    case 0:
-      break;
-    case 1:
-      weight += v[0]->get_weight();
-      break;
-    default:
-      ++visit_counter;
-      node_list pending;
-      for (node_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i)
-        if ((*i)->can_visit()) pending.push_back(*i);
-      while (!pending.empty())
-      {
-        node *n = pending.front();
-        pending.pop_front();
-        weight += n->local_weight;
-        node_vect const &w = n->get_subproofs();
-        for(node_vect::const_iterator i = w.begin(), end = w.end(); i != end; ++i)
-          if ((*i)->can_visit()) pending.push_back(*i);
-      }
-  }
-  return weight;
-}
-
-/**
  * Returns the immediate ancestors of this node.
  * By default, a node has no ancestors.
  */
@@ -90,8 +54,7 @@ node_vect const &node::get_subproofs() const
  * Creates a node of type @a t. Inserts it in the graph @a g, if any.
  */
 node::node(node_id t, graph_t *g)
-  : type(t), graph(g), nb_good(0), nb_missing(0), visited(0), local_weight(1),
-    weight(parameter_expensive ? 0 : local_weight)
+  : type(t), graph(g), nb_good(0), nb_missing(0), visited(0)
 {
   if (g)
     g->insert(this);
@@ -441,25 +404,14 @@ bool graph_t::try_real(node *&n)
     // there was already a known range
     node *old = dst;
     property const &res1 = old->get_result();
-    if (res1.strict_implies(res2))
+    if (res1.implies(res2))
     {
       ++stat_discarded_pred;
       delete n;
       n = NULL;
       return false;
     }
-    if (res1.implies(res2))
-    {
-      if (n->get_weight() >= old->get_weight() &&
-          n->nb_missing >= old->nb_missing)
-      {
-        ++stat_discarded_pred;
-        delete n;
-        n = NULL;
-        return false;
-      }
-    }
-    else if (!res2.strict_implies(res1))
+    if (!res2.strict_implies(res1))
     {
       ++stat_intersected_pred;
       n = new intersection_node(old, n);
