@@ -61,7 +61,6 @@ struct node
   node_set succ;            /**< All the nodes that immediatly depend on this node. */
   graph_t *graph;           /**< The graph owning this node, if any. */
   unsigned nb_good;         /**< Number of references by all the graph_t::known_reals. */
-  unsigned nb_missing;      /**< Heuristic number of missing facts in unconstrained mode. */
   mutable unsigned visited; /**< Timestamp of the last visit by an algorithm. */
   bool can_visit() const;
   node(node_id, graph_t *);

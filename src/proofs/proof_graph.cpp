@@ -54,7 +54,7 @@ node_vect const &node::get_subproofs() const
  * Creates a node of type @a t. Inserts it in the graph @a g, if any.
  */
 node::node(node_id t, graph_t *g)
-  : type(t), graph(g), nb_good(0), nb_missing(0), visited(0)
+  : type(t), graph(g), nb_good(0), visited(0)
 {
   if (g)
     g->insert(this);
@@ -169,12 +169,6 @@ modus_node::modus_node(theorem_node *n)
 {
   assert(n);
   if (!proof_generator) return;
-  if (n->name == "$FALSE")
-  {
-    assert(!parameter_constrained);
-    nb_missing = 1 + n->hyp.size();
-  }
-  int missing = 0;
   node_set nodes;
   for (property_vect::const_iterator i = n->hyp.begin(),
        i_end = n->hyp.end(); i != i_end; ++i)
@@ -188,15 +182,7 @@ modus_node::modus_node(theorem_node *n)
     assert(m && dominates(m, this));
     if (m->type != HYPOTHESIS && nodes.insert(m).second)
       insert_pred(m);
-    if (m->nb_missing)
-    {
-      assert(!parameter_constrained);
-      ++missing;
-      if (m->nb_missing > nb_missing)
-        nb_missing = m->nb_missing;
-    }
   }
-  nb_missing += missing;
 }
 
 modus_node::~modus_node()
