@@ -18,9 +18,9 @@ configure config.status config.h.in stamp-config_h.in: configure.in
 	./config.status --recheck
 
 %.o: %.cpp
-	@CXX@ @CPPFLAGS@ @CXXFLAGS@ -MMD -MT dummy -MF $1.d -I src -c -o $1 ${1%.o}.cpp
-	@REMAKE@ -r < $1.d
-	rm $1.d
+	@CXX@ @CPPFLAGS@ @CXXFLAGS@ -MMD -MT dummy -MF $@.d -I src -c -o $@ $<
+	@REMAKE@ -r < $@.d
+	rm $@.d
 
 src/parser/parser.o src/parser/lexer.o: src/parser/parser.hpp
 
@@ -63,10 +63,10 @@ OBJS = \
 	src/parameters.o
 
 src/gappa: $(OBJS)
-	@CXX@ @LDFLAGS@ -o src/gappa $OBJS @LIBS@
+	@CXX@ @LDFLAGS@ -o src/gappa $(OBJS) @LIBS@
 
 src/clean:
-	rm -f $OBJS
+	rm -f $(OBJS)
 	cd src
 	rm -f gappa parser/parser.hpp parser/parser.cpp parser/lexer.cpp
 
@@ -77,7 +77,7 @@ doc/gappa-preprocessed.xml: doc/gappa-news.xml
 	cd doc
 	@XSLTPROC@ --load-trace -o gappa-preprocessed.xml gappa-preprocess.xsl gappa.xml 2> xml.deps
 	cd ..
-	@REMAKE@ $(sed -n -e "\\,//,! s,^.*URL=\"\\([^\"]*\\).*\$,doc/\\1,p" doc/xml.deps)
+	@REMAKE@ `sed -n -e "\\,//,! s,^.*URL=\"\\([^\"]*\\).*\$,doc/\\1,p" doc/xml.deps`
 	rm doc/xml.deps
 
 doc/html/index.html: doc/gappa-preprocessed.xml doc/gappa-html.xsl
@@ -108,9 +108,9 @@ doc/clean:
 
 testsuite/check-%: src/gappa
 	set +e
-	BACKEND=${1#*-}
+	BACKEND=$*
 	cd testsuite
-	logfile="failures-$BACKEND-$(date '+%Y-%m-%d').log"
+	logfile="failures-$BACKEND-`date '+%Y-%m-%d'`.log"
 	logtmp="log-$BACKEND.tmp"
 	outputtmp="output-$BACKEND.tmp"
 	cat /dev/null > "$logtmp"
@@ -161,13 +161,13 @@ EXTRA_DIST = \
 
 dist: $(EXTRA_DIST)
 	PACK=@PACKAGE_TARNAME@-@PACKAGE_VERSION@
-	DIRS=$(git ls-tree -d -r --name-only HEAD)
-	FILES=$(git ls-tree -r --name-only HEAD)
+	DIRS=`git ls-tree -d -r --name-only HEAD`
+	FILES=`git ls-tree -r --name-only HEAD`
 	rm -rf $PACK.tar.gz $PACK
 	mkdir $PACK
 	for d in $DIRS; do mkdir $PACK/$d; done
-	for f in $FILES ${EXTRA_DIST}; do cp $f $PACK/$f; done
+	for f in $FILES $(EXTRA_DIST); do cp $f $PACK/$f; done
 	git log --pretty="format:%ad %s" --date=short > $PACK/ChangeLog
-	rm $(find $PACK -name .gitignore)
+	rm `find $PACK -name .gitignore`
 	tar czf $PACK.tar.gz $PACK
 	rm -rf $PACK
