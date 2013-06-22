@@ -207,6 +207,14 @@ static void insert_dependent(scheme_queue &v, predicated_real const &real, proof
   {
     proof_scheme const *s = *i;
     if (s == ss || !s->can_visit()) continue;
+    if (s->hyp_cache) {
+      unsigned l = s->needed_reals.size();
+      for (unsigned j = 0; j != l && j < 32; ++j)
+      {
+        if (s->needed_reals[j] == real) s->hyp_cache &= ~(1u << j);
+      }
+      if (s->hyp_cache) { s->visited = 0; continue; }
+    }
     v.push(s);
   }
 }

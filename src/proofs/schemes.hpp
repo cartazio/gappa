@@ -43,13 +43,15 @@ struct proof_scheme
   virtual ~proof_scheme() {}
   /** Initializes the scheme with the structure of the goal and hypotheses. */
   proof_scheme(predicated_real const &r, preal_vect const &n, char const *d, update u = UPD_SEEK)
-    : real(r), needed_reals(n), default_name(d), visited(0), score(0), update_kind(u) {}
+    : real(r), needed_reals(n), default_name(d), update_kind(u), visited(0),
+      hyp_cache(n.size() < 31 ? (1u << n.size()) - 1 : 0), score(0) {}
   const predicated_real real; //< Predicate of the goal.
   const preal_vect needed_reals; //< Predicates of the hypotheses.
   std::string default_name; //< Default name of the generator.
   update update_kind;
   mutable unsigned visited;
   bool can_visit() const;
+  mutable unsigned hyp_cache;
   mutable int score;
 };
 
