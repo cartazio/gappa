@@ -21,9 +21,12 @@
 #include "proofs/schemes.hpp"
 #include "proofs/updater.hpp"
 
+struct backend;
+
 extern int parameter_dichotomy_depth;
 extern bool warning_dichotomy_failure;
 extern bool detailed_io;
+extern backend *proof_generator;
 
 /**
  * Abstract generator of sub-intervals when performing a dichotomy.
@@ -319,7 +322,7 @@ void dichotomy_helper::try_graph(dicho_graph g2)
     last_graph = g2;
     return;
   }
-  if (gen->merge())
+  if (proof_generator && gen->merge())
   {
     property p(g1.first->get_hypotheses()[0]);
     p.bnd() = interval(lower(p.bnd()), upper(g2.first->get_hypotheses()[0].bnd()));
