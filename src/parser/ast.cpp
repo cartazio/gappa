@@ -13,6 +13,7 @@
 #include <cassert>
 #include <set>
 #include <sstream>
+#include "utils.hpp"
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
 #include "numbers/round.hpp"
@@ -109,25 +110,24 @@ ast_real const *unround(real_op_type type, ast_real_vect const &v) {
   }  
 }
 
-static cache<ast_ident> *ast_ident_cache;
+static static_ptr< cache<ast_ident> > ast_ident_cache;
+
 ast_ident *ast_ident::find(std::string const &s)
 {
-  if (!ast_ident_cache) ast_ident_cache = new cache<ast_ident>;
   return ast_ident_cache->find(ast_ident(s));
 }
 
-static cache<ast_number> *ast_number_cache;
+static static_ptr< cache<ast_number> > ast_number_cache;
+
 ast_number *normalize(ast_number const &v)
 {
-  if (!ast_number_cache) ast_number_cache = new cache<ast_number>;
   return ast_number_cache->find(v);
 }
 
-static cache<ast_real> *ast_real_cache;
+static static_ptr< cache<ast_real> > ast_real_cache;
 
 ast_real *normalize(ast_real const &v)
 {
-  if (!ast_real_cache) ast_real_cache = new cache<ast_real>;
   bool b;
   ast_real *p = ast_real_cache->find(v, &b);
   if (!b || p->has_placeholder) return p;

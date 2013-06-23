@@ -9,16 +9,16 @@
    See the COPYING and COPYING.GPL files for more details.
 */
 
+#include "utils.hpp"
 #include "backends/backend.hpp"
 
 std::ostream *out;
 
 typedef std::map< std::string, backend * > backend_map;
-static backend_map *backends;
+static static_ptr<backend_map> backends;
 
 backend::backend(std::string const &name)
 {
-  if (!backends) backends = new backend_map;
   (*backends)[name] = this;
 }
 

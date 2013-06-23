@@ -17,4 +17,14 @@
   static class_##name dummy_##name; \
   class_##name::class_##name()
 
+template<class T>
+class static_ptr
+{
+  T *ptr;
+ public:
+  ~static_ptr() { delete ptr; }
+  T *operator->() { if (!ptr) ptr = new T; return ptr; }
+  T &operator*() { if (!ptr) ptr = new T; return *ptr; }
+};
+
 #endif // UTILS_HPP

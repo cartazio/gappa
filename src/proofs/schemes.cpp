@@ -17,6 +17,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include "utils.hpp"
 #include "backends/backend.hpp"
 #include "numbers/interval_utility.hpp"
 #include "numbers/real.hpp"
@@ -38,10 +39,10 @@ extern preal_set input_reals, output_reals;
 struct scheme_factories: std::vector< scheme_factory const * > {
   ~scheme_factories() { for(iterator i = begin(), i_end = end(); i != i_end; ++i) delete *i; }
 };
-static scheme_factories *factories;
+
+static static_ptr<scheme_factories> factories;
 
 scheme_factory::scheme_factory(predicated_real const &r): target(r) {
-  if (!factories) factories = new scheme_factories;
   factories->push_back(this);
 }
 
