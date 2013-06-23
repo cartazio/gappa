@@ -663,7 +663,7 @@ void invoke_lemma(auto_flush &plouf, node *n, property_map const &pmap)
   }
 }
 
-static void invoke_subset(auto_flush &plouf, property const p1, property const &p2)
+static void invoke_subset(auto_flush &plouf, property const &p1, property const &p2)
 {
   std::string sn = subset_name(p1, p2);
   if (sn.empty()) return;
@@ -674,6 +674,14 @@ static void invoke_subset(auto_flush &plouf, property const p1, property const &
   default: plouf << display(p1.bnd());
   }
   plouf << ". 2: finalize.\n";
+}
+
+static void pose_hypothesis(auto_flush &plouf, int num_hyp, node *m, property_map const &pmap)
+{
+  plouf << (vernac ? " assert (h" : "  let h") << num_hyp << " : "
+        << display(m->get_result()) << (vernac ? ")." : " := ");
+  if (vernac) invoke_lemma(plouf, m, pmap);
+  else plouf << display(m) << " in\n";
 }
 
 static id_cache< node * > displayed_nodes;
@@ -718,11 +726,8 @@ std::string display(node *n)
          i_end = pred.end(); i != i_end; ++i)
     {
       node *m = *i;
+      pose_hypothesis(plouf, num_hyp, m, pmap);
       property const &res = m->get_result();
-      plouf << (vernac ? " assert (h" : "  let h") << num_hyp << " : "
-            << display(res) << (vernac ? ")." : " := ");
-      if (vernac) invoke_lemma(plouf, m, pmap);
-      else plouf << display(m) << " in\n";
       pmap[res.real] = std::make_pair(num_hyp++, &res);
     }
     modus_node *mn = dynamic_cast< modus_node * >(n);
@@ -759,10 +764,7 @@ std::string display(node *n)
         num[i] = pki->second.first;
         continue;
       }
-      plouf << (vernac ? " assert (h" : "  let h") << num_hyp << " : "
-            << display(res) << (vernac ? ")." : " := ");
-      if (vernac) invoke_lemma(plouf, m, pmap);
-      else plouf << display(m) << " in\n";
+      pose_hypothesis(plouf, num_hyp, m, pmap);
       num[i] = num_hyp++;
     }
     if (vernac) {
@@ -783,8 +785,7 @@ std::string display(node *n)
     assert(pcase.real.pred() == PRED_BND);
     property_map::mapped_type &hcase = pmap[pcase.real];
     if (mcase->type != HYPOTHESIS) {
-      plouf << " assert (h" << num_hyp << " : " << display(pcase) << ").";
-      invoke_lemma(plouf, mcase, pmap);
+      pose_hypothesis(plouf, num_hyp, mcase, pmap);
       hcase = std::make_pair(num_hyp, &pcase);
     }
     plouf << " generalize h" << hcase.first << ". clear h" << hcase.first << ".\n";
