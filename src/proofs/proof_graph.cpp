@@ -305,8 +305,7 @@ property intersection_node::maximal_for(node const *n) const
 /**
  * Creates a new graph with stronger hypotheses @a h than the parent graph @a f.
  * \li Marks all the parent nodes in #known_reals as known in this new graph too.
- * \li Tries to add ::HYPOTHESIS nodes corresponding to bounded interval hypotheses of @a h.
- * \li Adds other hypotheses of @a h in #partial_reals.
+ * \li Tries to add ::HYPOTHESIS nodes for properties of @a h.
  */
 graph_t::graph_t(graph_t *f, property_vect const &h)
   : father(f), hyp(h), contradiction(NULL)
@@ -322,13 +321,7 @@ graph_t::graph_t(graph_t *f, property_vect const &h)
   }
   for (property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
   {
-    if (i->real.pred_bnd() && !is_bounded(i->bnd()))
-    {
-      if (known_reals.count(i->real) == 0)
-        partial_reals.insert(std::make_pair(i->real, new hypothesis_node(*i)));
-    }
-    else if (try_property(*i))
-    {
+    if (try_property(*i)) {
       node *n = new hypothesis_node(*i);
       insert_node(n);
     }
@@ -336,16 +329,13 @@ graph_t::graph_t(graph_t *f, property_vect const &h)
 }
 
 /**
- * Empties #known_reals and #partial_reals.
+ * Empties #known_reals.
  */
 void graph_t::purge()
 {
   for(node_map::const_iterator i = known_reals.begin(), end = known_reals.end(); i != end; ++i)
     i->second->remove_known();
-  for(node_map::const_iterator i = partial_reals.begin(), end = partial_reals.end(); i != end; ++i)
-    delete i->second;
   known_reals.clear();
-  partial_reals.clear();
 }
 
 /**
@@ -393,8 +383,7 @@ bool graph_t::try_property(property const &p) const
 /**
  * Stores @a n and updates it if an additional node was created.
  *
- * An ::intersection_node is created if there was already a node in #known_reals
- * or #partial_reals.
+ * An ::intersection_node is created if there was already a node in #known_reals.
  *
  * @pre the node should be worth it.
  * @see #try_property.
@@ -421,28 +410,6 @@ void graph_t::insert_node(node *&n)
     }
     dst = n;
     old->remove_known();
-  }
-  else
-  {
-    node_map::iterator i = partial_reals.find(res2.real);
-    if (i != partial_reals.end())
-    {
-      // there is a known inequality
-      node *m = i->second;
-      partial_reals.erase(i);
-      property const &res1 = m->get_result();
-      if (!res2.implies(res1))
-      {
-        node *old = n;
-        ++n->nb_good; // n has just become a known real, this data is needed in case a contradiction is found
-        n = new intersection_node(n, m);
-        if (n == contradiction) return;
-        --old->nb_good;
-        if (n->get_result().real != res2.real) { insert_node(n); return; }
-        dst = n;
-      }
-      else delete m;
-    }
   }
   ++n->nb_good;
 }
@@ -490,7 +457,6 @@ graph_t::~graph_t()
 
 /**
  * Replaces the known reals by the nodes from @a v which are usually weaker and a subset of #known_reals.
- * Purges #partial_reals too.
  * @note This function is meant to be called once the graph is complete, in order to retain only the nodes useful to prove the user proposition.
  */
 void graph_t::replace_known(node_vect const &v)
@@ -505,9 +471,6 @@ void graph_t::replace_known(node_vect const &v)
   }
   for (node_map::const_iterator i = old.begin(), end = old.end(); i != end; ++i)
     i->second->remove_known();
-  for (node_map::const_iterator i = partial_reals.begin(), end = partial_reals.end(); i != end; ++i)
-    delete i->second;
-  partial_reals.clear();
 }
 
 /**

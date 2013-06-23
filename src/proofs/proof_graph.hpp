@@ -118,16 +118,15 @@ class modus_node: public dependent_node
 
 /**
  * Graph of nodes.
- * @invariant All the nodes from #nodes are (indirectly accessible from nodes) stored in #known_reals, #partial_reals, and #contradiction.
+ * @invariant All the nodes from #nodes are transitively accessible from nodes stored in #known_reals and #contradiction.
  *            This property is temporarily false between node construction and #insert_node.
- * @invariant If #contradiction is set, #known_reals and #partial_reals are empty.
+ * @invariant If #contradiction is set, map #known_reals is empty.
  */
 class graph_t
 {
   graph_t *father;        /**< Parent graph. */
   node_set nodes;         /**< Nodes owned by this graph. Each node can be proved in the context of #hyp. */
   node_map known_reals;   /**< Best node implied by #hyp for each real. */
-  node_map partial_reals; /**< Partly-bounded hypotheses that have yet to be used by an intersection_node. */
   property_vect hyp;      /**< Hypotheses of this graph. They imply the hypotheses of the #father graph. */
   node *contradiction;    /**< Node proving an empty result, thus proving anything. */
  public:

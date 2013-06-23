@@ -681,6 +681,7 @@ void graph_t::populate(property_tree const &goals, property_tree const &targets,
     for (node_map::const_iterator i = known_reals.begin(),
          i_end = known_reals.end(); i != i_end; ++i)
     {
+      if (i->first.pred_bnd() && !is_bounded(i->second->get_result().bnd())) continue;
       insert_dependent(missing_schemes, i->first);
       --iter;
     }
