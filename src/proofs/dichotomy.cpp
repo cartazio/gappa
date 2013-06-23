@@ -215,13 +215,20 @@ struct dichotomy_failure {
   property found;
 };
 
-struct dichotomy_helper
+struct dichotomy_graphs
 {
   graph_vect graphs;
+  unsigned nb_ref;
+  dichotomy_graphs(): nb_ref(0) {}
+  ~dichotomy_graphs();
+};
+
+struct dichotomy_helper
+{
+  dichotomy_graphs *graphs;
   property_vect &tmp_hyp;
   int iter_max;
   int depth;
-  unsigned nb_ref;
   property_tree const &goals, &targets;
   dichotomy_sequence const &hints;
   dicho_graph last_graph;
@@ -232,17 +239,17 @@ struct dichotomy_helper
   dichotomy_node *generate_node(node *, property const &);
   dichotomy_helper(property_vect &v, property_tree const &g,
     property_tree const &t, dichotomy_sequence const &h, splitter *s)
-  : tmp_hyp(v), depth(0), nb_ref(0), goals(g), targets(t), hints(h),
-    last_graph(dicho_graph(NULL, 0)), gen(s) {}
+  : graphs(new dichotomy_graphs()), tmp_hyp(v), depth(0), goals(g),
+    targets(t), hints(h), last_graph(dicho_graph(NULL, 0)), gen(s) {}
   ~dichotomy_helper();
 };
 
 class dichotomy_node: public dependent_node {
   property res;
-  dichotomy_helper *helper;
+  dichotomy_graphs *graphs;
  public:
-  dichotomy_node(property const &p, dichotomy_helper *h)
-    : dependent_node(UNION), res(p), helper(h) { ++h->nb_ref; }
+  dichotomy_node(property const &p, dichotomy_graphs *g)
+    : dependent_node(UNION), res(p), graphs(g) { ++g->nb_ref; }
   ~dichotomy_node();
   virtual property const &get_result() const { return res; }
   using dependent_node::insert_pred;
@@ -255,19 +262,27 @@ property dichotomy_node::maximal_for(node const *n) const {
   return res;
 }
 
-dichotomy_helper::~dichotomy_helper() {
+dichotomy_graphs::~dichotomy_graphs()
+{
   assert(nb_ref == 0);
-  for(graph_vect::iterator i = graphs.begin(), end = graphs.end(); i != end; ++i)
+  for(graph_vect::iterator i = graphs.begin(),
+      i_end = graphs.end(); i != i_end; ++i)
+  {
     delete *i;
-  graphs.clear();
+  }
+}
+
+dichotomy_helper::~dichotomy_helper()
+{
   delete last_graph.first;
   delete gen;
 }
 
-dichotomy_node::~dichotomy_node() {
+dichotomy_node::~dichotomy_node()
+{
   clean_dependencies();
-  if (--helper->nb_ref == 0)
-    delete helper;
+  if (--graphs->nb_ref == 0)
+    delete graphs;
 }
 
 extern bool goal_reduction;
@@ -328,7 +343,7 @@ void dichotomy_helper::try_graph(dicho_graph g2)
     p.bnd() = interval(lower(p.bnd()), upper(g2.first->get_hypotheses()[0].bnd()));
     tmp_hyp[0] = p;
     iter_max = g1.second + g2.second;
-    dicho_graph g = try_hypothesis(NULL, graphs.empty(), false);
+    dicho_graph g = try_hypothesis(NULL, graphs->graphs.empty(), false);
     if (g.first)
     {
       // joined graph was successful, keep it as the last graph instead of g1 and g2
@@ -339,7 +354,7 @@ void dichotomy_helper::try_graph(dicho_graph g2)
     }
   }
   // validate g1 and keep g2 as the last graph
-  graphs.push_back(g1.first);
+  graphs->graphs.push_back(g1.first);
   last_graph = g2;
 }
 
@@ -347,7 +362,8 @@ dichotomy_node *dichotomy_helper::generate_node(node *varn, property const &p)
 {
   property q;
   bool found_one = false;
-  for (graph_vect::const_iterator i = graphs.begin(), end = graphs.end(); i != end; ++i)
+  for (graph_vect::const_iterator i = graphs->graphs.begin(),
+       i_end = graphs->graphs.end(); i != i_end; ++i)
   {
     graph_t *g = *i;
     if (g->get_contradiction()) continue;
@@ -363,9 +379,10 @@ dichotomy_node *dichotomy_helper::generate_node(node *varn, property const &p)
   }
   assert(found_one && q.implies(p));
   if (!q.strict_implies(p)) return NULL;
-  dichotomy_node *n = new dichotomy_node(q, this);
+  dichotomy_node *n = new dichotomy_node(q, graphs);
   n->insert_pred(varn);
-  for (graph_vect::const_iterator i = graphs.begin(), end = graphs.end(); i != end; ++i)
+  for (graph_vect::const_iterator i = graphs->graphs.begin(),
+       i_end = graphs->graphs.end(); i != i_end; ++i)
   {
     graph_t *g = *i;
     if (node *m = g->get_contradiction()) n->insert_pred(m); 
@@ -392,7 +409,7 @@ void dichotomy_helper::dichotomize() {
       bool old_rright = rright;
       if (!gen->next(bnd, iter_max, rleft, rright))
       {
-        graphs.push_back(last_graph.first);
+        graphs->graphs.push_back(last_graph.first);
         last_graph = dicho_graph(NULL, 0);
         (void)&old_rright;
         assert(!old_rright);
@@ -453,9 +470,9 @@ void graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
     }
     gen = new best_splitter(hyp2[0].bnd(), iter_max);
   }
-  dichotomy_helper *h = new dichotomy_helper(hyp2, goals, targets, hints, gen);
+  dichotomy_helper h(hyp2, goals, targets, hints, gen);
   try {
-    h->dichotomize();
+    h.dichotomize();
   } catch (dichotomy_failure const &e) {
     if (warning_dichotomy_failure) {
       property const &h = e.hyp;
@@ -479,13 +496,14 @@ void graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
         std::cerr << ".\n";
       }
     }
-    delete h;
+    delete h.graphs;
     return;
   }
   bool only_contradictions = true;
   typedef std::set< predicated_real > preal_set;
   preal_set reals;
-  for (graph_vect::const_iterator i = h->graphs.begin(), i_end = h->graphs.end(); i != i_end; ++i)
+  for (graph_vect::const_iterator i = h.graphs->graphs.begin(),
+       i_end = h.graphs->graphs.end(); i != i_end; ++i)
   {
     graph_t *g = *i;
     if (g->contradiction) continue;
@@ -497,28 +515,34 @@ void graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
   }
   assert(!contradiction);
   if (only_contradictions) {
-    dichotomy_node *n = new dichotomy_node(property(), h);
+    dichotomy_node *n = new dichotomy_node(property(), h.graphs);
     n->insert_pred(varn);
-    for(graph_vect::const_iterator i = h->graphs.begin(), end = h->graphs.end(); i != end; ++i)
+    for (graph_vect::const_iterator i = h.graphs->graphs.begin(),
+         i_end = h.graphs->graphs.end(); i != i_end; ++i)
+    {
       n->insert_pred((*i)->get_contradiction());
+    }
     set_contradiction(n);
     return;
   }
-  ++h->nb_ref;
+  ++h.graphs->nb_ref;
   for(preal_set::const_iterator i = reals.begin(), end = reals.end(); i != end; ++i) {
     property p(*i);
     if (node *n = find_already_known(*i)) p = n->get_result();
-    if (node *n = h->generate_node(varn, p)) try_node(n);
+    if (node *n = h.generate_node(varn, p)) try_node(n);
   }
-  if (--h->nb_ref == 0) {
-    delete h;
+  if (--h.graphs->nb_ref == 0) {
+    delete h.graphs;
     if (warning_dichotomy_failure)
       std::cerr << "Warning: case split on " << dump_real(var.real)
                 << " has not produced any interesting new result.\n";
     return;
   }
-  for(graph_vect::const_iterator i = h->graphs.begin(), i_end = h->graphs.end(); i != i_end; ++i)
+  for (graph_vect::const_iterator i = h.graphs->graphs.begin(),
+       i_end = h.graphs->graphs.end(); i != i_end; ++i)
+  {
     (*i)->purge();
+  }
 }
 
 interval create_interval(ast_number const *, ast_number const * = NULL, bool = true);
