@@ -5,7 +5,6 @@
   <xsl:import href="http://docbook.sourceforge.net/release/xsl/current/xhtml/chunk.xsl"/>
   <xsl:import href="http://docbook.sourceforge.net/release/xsl/current/xhtml/highlight.xsl"/>
 
-  <xsl:param name="tex.math.in.alt" select="'latex'"/>
   <xsl:param name="html.stylesheet" select="'gappa.css'"/>
   <xsl:param name="navig.graphics" select="1"/>
   <xsl:param name="navig.graphics.extension" select="'.png'"/>
@@ -138,5 +137,21 @@
         </table>
     </div>
 </xsl:template>
+
+  <!-- Mathematical formulas -->
+  <xsl:template name="user.head.content">
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({ config: ["MMLorHTML.js"], jax: ["input/TeX","output/HTML-CSS","output/NativeMML"] });
+    </script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
+  </xsl:template>
+
+  <xsl:template match="texinline">
+    <span class="MathJax_Preview">[math]</span><script type="math/tex"><xsl:value-of select="."/></script>
+  </xsl:template>
+
+  <xsl:template match="texinformal">
+    <script type="math/tex;mode=display"><xsl:value-of select="."/></script>
+  </xsl:template>
 
 </xsl:stylesheet>

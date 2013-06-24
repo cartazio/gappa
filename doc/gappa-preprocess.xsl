@@ -5,17 +5,6 @@
               doctype-public="-//OASIS//DTD DocBook XML V4.3//EN"
               doctype-system="http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd"/>
 
-  <!-- Mathematical formulas -->
-  <xsl:template match="texinline">
-    <inlineequation><alt role="tex"><xsl:value-of select="."/></alt>
-    <graphic fileref="eqn-{generate-id()}.png"/></inlineequation>
-  </xsl:template>
-
-  <xsl:template match="texinformal">
-    <informalequation><alt role="tex"><xsl:value-of select="."/></alt>
-    <graphic fileref="eqn-{generate-id()}.png"/></informalequation>
-  </xsl:template>
-
   <!-- Bibliography -->
   <xsl:template name="get-uri">
     <xsl:if test="@class='doi'">http://dx.doi.org/</xsl:if><xsl:apply-templates/>

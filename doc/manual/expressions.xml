@@ -138,7 +138,7 @@ can be decomposed as a generic binary floating-point number:
 <texinline>\exists m,e \in Z,~x = m \cdot 2^e</texinline>. For
 <code>@FIX</code> this decomposition satisfies <texinline>e \ge
 k</texinline>, while for <code>@FLT</code> it satisfies <texinline>|m|
-&lt; 2^k</texinline>. For instance, the following Gappa formula
+\lt 2^k</texinline>. For instance, the following Gappa formula
 holds</para>
 <programlisting language="gappa"><![CDATA[x = float<ieee_32,ne>(x_);
 { @FIX(x,-149) /\ @FLT(x,24) }]]></programlisting>

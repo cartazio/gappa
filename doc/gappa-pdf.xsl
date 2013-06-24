@@ -11,4 +11,13 @@
   <xsl:param name="latex.bibwidelabel">99</xsl:param>
   <xsl:param name="default.table.width">autowidth.default</xsl:param>
 
+  <!-- Mathematical formulas -->
+  <xsl:template match="texinline">
+    <inlineequation><alt role="tex">\(<xsl:value-of select="."/>\)</alt></inlineequation>
+  </xsl:template>
+
+  <xsl:template match="texinformal">
+    <informalequation><alt role="tex">\[<xsl:value-of select="."/>\]</alt></informalequation>
+  </xsl:template>
+
 </xsl:stylesheet>
