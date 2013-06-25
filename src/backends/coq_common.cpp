@@ -722,11 +722,12 @@ std::string display(node *n)
   }
   switch (n->type) {
   case MODUS: {
+    property_map pmap_graph = pmap;
     for (node_vect::const_iterator i = pred.begin(),
          i_end = pred.end(); i != i_end; ++i)
     {
       node *m = *i;
-      pose_hypothesis(plouf, num_hyp, m, pmap);
+      pose_hypothesis(plouf, num_hyp, m, pmap_graph);
       property const &res = m->get_result();
       pmap[res.real] = std::make_pair(num_hyp++, &res);
     }

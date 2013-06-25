@@ -308,11 +308,12 @@ static std::string display(node *n) {
   }
   switch (n->type) {
   case MODUS: {
+    property_map pmap_graph = pmap;
     for(node_vect::const_iterator i = pred.begin(), i_end = pred.end(); i != i_end; ++i) {
       node *m = *i;
       property const &res = m->get_result();
       plouf << " ASSERT \"h" << num_hyp << "\" `(" << display(res) << ":bool)`;;";
-      invoke_lemma(plouf, m, pmap);
+      invoke_lemma(plouf, m, pmap_graph);
       pmap[res.real] = std::make_pair(num_hyp++, &res);
     }
     modus_node *mn = dynamic_cast< modus_node * >(n);
