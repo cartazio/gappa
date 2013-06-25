@@ -160,21 +160,28 @@ unfortunately far from being guaranteed.</para>
 example, the second script of <xref linkend="example-fixed"/>
 gives:</para>
 <screen>Statistics:
-  2121 expressions were considered,
-    but then 472 of these got discarded.
-  7738 theorems were tried. Among these,
-    4370 were successfully instantiated,
-    yet 1752 of these were not good enough
-    and 16 were only partially better.</screen>
+  2359 expressions were considered,
+    but then 127 of those got discarded.
+  6317 theorems were considered,
+    but then 326 of those got discarded.
+  7437 applications were tried. Among those,
+    5933 were successful,
+    yet 2626 proved useless
+    and 13 improved existing results.</screen>
 <para>The first two lines show how many intermediate expressions Gappa
 has prepared. The first number tells how many have been considered, and
 the second number tells how many of them were discarded because no
-theorem could handle them. Once this set of expressions is ready, Gappa
-tries to find properties by applying theorems. The next statistic how
-many theorems Gappa tried to apply. Among the theorems for which Gappa
-could satisfy hypotheses, some gave a usable result, and some others did
-not (because a better property was already proved at the time the theorem
-was considered).</para>
+theorem could handle them. Similarly, the next two lines show how many
+theorem instances Gappa has prepared. The first number tells how many
+have been considered, and the second number tells how many of them were
+discarded because their hypotheses could never have been satisfied.</para>
+<para>Once both sets are ready, Gappa tries to deduce new properties by
+repeatedly applying the prepared theorems. The next statistic show how
+many of those theorems Gappa tried to apply. Applications are successful
+if Gappa could satisfy theorem hypotheses. Even if an application succeeded,
+the deduced property could have been (partly) useless because a stronger
+property had already been found at the time the theorem was applied. The
+last two lines track these cases.</para>
 </section>
 
 <section>

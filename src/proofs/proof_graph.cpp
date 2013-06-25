@@ -349,7 +349,7 @@ void graph_t::set_contradiction(node *n)
   purge();
 }
 
-int stat_successful_th = 0, stat_discarded_pred = 0, stat_intersected_pred = 0;
+int stat_successful_app = 0, stat_discarded_pred = 0, stat_intersected_pred = 0;
 
 /**
  * Checks whether property @a p is worth it:
@@ -362,7 +362,7 @@ int stat_successful_th = 0, stat_discarded_pred = 0, stat_intersected_pred = 0;
 bool graph_t::try_property(property const &p) const
 {
   assert(top_graph == this && !contradiction);
-  ++stat_successful_th;
+  ++stat_successful_app;
   node_map::const_iterator i = known_reals.find(p.real);
   if (i != known_reals.end())
   {

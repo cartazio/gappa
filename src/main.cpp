@@ -29,8 +29,9 @@ context goal;
 bool goal_reduction = true;
 
 extern int
-  stat_tested_th, stat_successful_th,
   stat_tested_real, stat_discarded_real,
+  stat_tested_theo, stat_discarded_theo,
+  stat_tested_app, stat_successful_app,
   stat_intersected_pred, stat_discarded_pred;
 
 void display_context(context const &ctx)
@@ -143,11 +144,13 @@ int main(int argc, char **argv)
     std::cerr <<
       "Statistics:\n"
       "  " << stat_tested_real << " expressions were considered,\n"
-      "    but then " << stat_discarded_real << " of these got discarded.\n"
-      "  " << stat_tested_th << " theorems were tried. Among these,\n"
-      "    " << stat_successful_th << " were successfully instantiated,\n"
-      "    yet " << stat_discarded_pred << " of these were not good enough\n"
-      "    and " << stat_intersected_pred << " were only partially better.\n";
+      "    but then " << stat_discarded_real << " of those got discarded.\n"
+      "  " << stat_tested_theo << " theorems were considered,\n"
+      "    but then " << stat_discarded_theo << " of those got discarded.\n"
+      "  " << stat_tested_app << " applications were tried. Among those,\n"
+      "    " << stat_successful_app << " were successful,\n"
+      "    yet " << stat_discarded_pred << " proved useless\n"
+      "    and " << stat_intersected_pred << " improved existing results.\n";
   }
   return globally_proven ? EXIT_SUCCESS : EXIT_FAILURE;
 }

@@ -161,6 +161,9 @@ proof_scheme const *scheme_queue::pop()
   return s;
 }
 
+int stat_tested_real = 0, stat_discarded_real = 0,
+    stat_tested_theo = 0, stat_discarded_theo = 0;
+
 /**
  * Marks the source schemes as visited and puts them into @a v.
  */
@@ -199,7 +202,8 @@ static void insert_dependent(scheme_queue &v, predicated_real const &real, proof
   }
 }
 
-static void delete_scheme(proof_scheme const *s, predicated_real const *restricted_real) {
+static void delete_scheme(proof_scheme const *s, predicated_real const *restricted_real)
+{
   // if there is a restriction, we are removing a scheme that depends on a real,
   // otherwise we are removing a scheme from a real; in both cases, we should
   // not modify the dependencies of this real
@@ -210,10 +214,9 @@ static void delete_scheme(proof_scheme const *s, predicated_real const *restrict
     reals[real].dependent.erase(s);
   }
   if (restricted_real) reals[s->real].schemes.erase(s);
+  ++stat_discarded_theo;
   delete s;
 }
-
-int stat_tested_real = 0, stat_discarded_real = 0;
 
 static real_dependency &initialize_dependencies(predicated_real const &real)
 {
@@ -260,6 +263,7 @@ static real_dependency &initialize_dependencies(predicated_real const &real)
   // create the dependencies
   for (scheme_set::const_iterator i = l.begin(), i_end = l.end(); i != i_end; ++i)
   {
+    ++stat_tested_theo;
     proof_scheme const *s = *i;
     preal_vect v = s->needed_reals;
     for(preal_vect::const_iterator j = v.begin(), j_end = v.end(); j != j_end; ++j)
@@ -513,7 +517,7 @@ static bool fill_hypotheses(property *hyp, preal_vect const &v)
   return true;
 }
 
-int stat_tested_th = 0;
+int stat_tested_app = 0;
 
 extern bool goal_reduction;
 
@@ -596,7 +600,7 @@ void graph_t::populate(property_tree const &goals, property_tree const &targets,
     while (iter++ != iter_max && ((s = missing_schemes.pop())))
     {
       s->visited = 0; // allows the scheme to be reused later, if needed
-      ++stat_tested_th;
+      ++stat_tested_app;
       property hyps[s->needed_reals.size()];
       if (!fill_hypotheses(hyps, s->needed_reals)) {
         // The scheme is missing some hypotheses.
