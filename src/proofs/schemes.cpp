@@ -127,59 +127,38 @@ bool real_dependency::can_visit() const
 /** Priority queue for storing schemes. */
 struct scheme_queue
 {
-  static int const
-    nb_queues = 10,		/**< Number of queues. */
-    score_per_queue = 3,	/**< Granularity of the score. */
-    pop_per_queue = 3,		/**< Period for removing from a lower queue. */
-    success_score = 6;		/**< Score increase for successful schemes. */
-  scheme_queue();
-  /** Decreases the score of @a s and stores it in the corresponding queue. */
+  static int const success = 50; /**< Score when successfully leaving #bad_queue. */
   void push(proof_scheme const *a);
-  /**
-   * Removes a scheme from a queue and returns it.
-   * Queues with the highest scores are emptied more often.
-   */
   proof_scheme const *pop();
-  scheme_list queues[nb_queues];
-  int counters[nb_queues];
+  scheme_list good_queue, bad_queue;
 };
 
-scheme_queue::scheme_queue()
-{
-  for (int i = 0; i < nb_queues; ++i) counters[i] = 0;
-}
-
+/**
+ * Decreases the score of @a s and stores it in the corresponding queue.
+ */
 void scheme_queue::push(proof_scheme const *s)
 {
-  int zero_queue = nb_queues / 2,
-      min_score = - zero_queue * score_per_queue,
-      max_score = (nb_queues - zero_queue - 1) * score_per_queue;
   --s->score;
-  if (s->score <= min_score) s->score = min_score; else
-  if (s->score >= max_score) s->score = max_score;
-  int num = (s->score - min_score) / score_per_queue;
-  queues[num].push_back(s);
+  if (s->score > 0) good_queue.push_back(s);
+  else {
+    s->score = 0;
+    bad_queue.push_back(s);
+  }
 }
 
+/**
+ * Removes a scheme from #good_queue and returns it.
+ * If the queue was empty, promotes #bad_queue to #good_queue first.
+ */
 proof_scheme const *scheme_queue::pop()
 {
-  for (int j = 0; j < 2; ++j)
-  {
-    // Two runs, to ensure we return a scheme if there is one.
-    for (int i = nb_queues - 1; i >= 0; --i)
-    {
-      if (queues[i].empty()) continue;
-      if (++counters[i] == pop_per_queue)
-      {
-        counters[i] = 0;
-        continue;
-      }
-      proof_scheme const *s = queues[i].front();
-      queues[i].pop_front();
-      return s;
-    }
+  if (good_queue.empty()) {
+    if (bad_queue.empty()) return NULL;
+    good_queue.swap(bad_queue);
   }
-  return NULL;
+  proof_scheme const *s = good_queue.front();
+  good_queue.pop_front();
+  return s;
 }
 
 /**
@@ -637,7 +616,7 @@ void graph_t::populate(property_tree const &goals, property_tree const &targets,
       }
       node *n = create_theorem(s->needed_reals.size(), hyps, res, name, s);
       insert_node(n);
-      s->score += scheme_queue::success_score;
+      if (!s->score) s->score = scheme_queue::success;
       if (contradiction) {
         // We have got a contradiction, everything is true.
         return;
