@@ -292,41 +292,6 @@ static real_dependency &initialize_dependencies(predicated_real const &real)
 typedef std::list< predicated_real > preal_list;
 
 /**
- * Tells if the scheme @a s depends indirectly on @a real only.
- *
- * @note Scans only 10 reals below @a real before it assumes there are
- *       other dependencies.
- */
-static bool depends_only_on(proof_scheme const *s, predicated_real const &real)
-{
-  preal_vect v = s->needed_reals;
-  if (v.empty()) return false;
-  ++visit_counter;
-  reals[real].visited = visit_counter;
-  preal_list pending_reals;
-  for (preal_vect::const_iterator i = v.begin(), i_end = v.end(); i != i_end; ++i)
-    if (reals[*i].can_visit()) pending_reals.push_back(*i);
-  int iter = 0;
-  while (!pending_reals.empty())
-  {
-    if (iter++ == 10) return false;
-    predicated_real r = pending_reals.back();
-    pending_reals.pop_back();
-    scheme_set const &v = reals[r].schemes;
-    for (scheme_set::const_iterator i = v.begin(), i_end = v.end(); i != i_end; ++i)
-    {
-      proof_scheme const *t = *i;
-      if (!t) return false;
-      preal_vect w = t->needed_reals;
-      if (w.empty()) return false;
-      for (preal_vect::const_iterator j = w.begin(), j_end = w.end(); j != j_end; ++j)
-        if (reals[*j].can_visit()) pending_reals.push_back(*j);
-    }
-  }
-  return true;
-}
-
-/**
  * Marks all the schemes and reals reachable from @a real.
  */
 static void mark_dependent_schemes(predicated_real const &real)
@@ -370,28 +335,6 @@ static void mark_useful_reals(predicated_real const &real)
         if (reals[*j].can_visit()) pending_reals.push_back(*j);
     }
   }
-}
-
-/**
- * Detects some schemes known to be useless.
- */
-static bool is_useless_scheme(proof_scheme const *s)
-{
-  predicated_real rfix = s->real;
-  if (rfix.pred() != PRED_FIX) return false;
-  preal_vect v = s->needed_reals;
-  if (v.size() != 2) return false;
-  predicated_real rflt = v[0], rabs = v[1];
-  if (rflt != predicated_real(rfix.real(), PRED_FLT)) return false;
-  if (rabs != predicated_real(rfix.real(), PRED_ABS)) return false;
-  real_dependency const &r = reals[rflt];
-  if (r.schemes.size() != 2) return false;
-  v = (*r.schemes.begin())->needed_reals;
-  preal_vect v2 = (*++r.schemes.begin())->needed_reals;
-  if (v.size() < v2.size()) std::swap(v, v2);
-  if (v.size() != 2 || v2.size() != 1) return false;
-  if (v[0] != rfix || v[1] != rabs || v2[0] != rabs) return false;
-  return true;
 }
 
 /**
@@ -441,21 +384,6 @@ preal_vect generate_proof_paths()
     {
       proof_scheme const *s = *j;
       if (!s || s->visited == visit_counter) r.schemes.insert(s);
-      else delete_scheme(s, NULL);
-    }
-  }
-  // remove useless schemes
-  for (real_dependencies::iterator i = reals.begin(), i_end = reals.end(); i != i_end; ++i)
-  {
-    predicated_real const &real = i->first;
-    real_dependency &r = i->second;
-    scheme_set v;
-    v.swap(r.schemes);
-    for (scheme_set::iterator j = v.begin(), j_end = v.end(); j != j_end; ++j)
-    {
-      proof_scheme const *s = *j;
-      if (!s || !(depends_only_on(s, real) || is_useless_scheme(s)))
-        r.schemes.insert(s);
       else delete_scheme(s, NULL);
     }
   }
