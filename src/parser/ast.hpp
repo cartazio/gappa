@@ -43,6 +43,9 @@ inline ast_atom *ast_atom_flt(ast_real const *r, long c)
 inline ast_atom *ast_atom_eql(ast_real const *r1, ast_real const *r2)
 { return new ast_atom(PRED_EQL, r1, r2, NULL, NULL, 0); }
 
+inline ast_atom *ast_atom_nzr(ast_real const *r)
+{ return new ast_atom(PRED_NZR, r, NULL, NULL, NULL, 0); }
+
 enum ast_prop_type { PROP_ATOM, PROP_NOT, PROP_AND, PROP_OR, PROP_IMPL };
 
 struct ast_prop {

@@ -146,6 +146,12 @@ PROP:
 			{ $$ = new ast_prop(ast_atom_rel($2, $4, negative_number($7), $7)); }
 | REAL RDIV REAL IN '?'	{ $$ = new ast_prop(ast_atom_rel($1, $3, NULL, NULL)); }
 | REAL '=' REAL		{ $$ = new ast_prop(ast_atom_eql($1, $3)); }
+| REAL NE REAL
+  {
+    ast_number const *const *r = boost::get<ast_number const *const>($3);
+    if (r && *r == token_zero) $$ = new ast_prop(ast_atom_nzr($1));
+    else $$ = new ast_prop(new ast_prop(ast_atom_eql($1, $3)));
+  }
 | PROP AND PROP		{ $$ = new ast_prop($1, PROP_AND,  $3); }
 | PROP OR PROP		{ $$ = new ast_prop($1, PROP_OR,   $3); }
 | PROP IMPL PROP	{ $$ = new ast_prop($1, PROP_IMPL, $3); }
