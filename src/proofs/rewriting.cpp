@@ -495,16 +495,6 @@ REWRITE(val_xebs,
 	a_b,
 	hide(b - (b - a)));
 
-REWRIT3(val_xabq,
-	b,
-	hide(a * hide(one + (b - a) / a)),
-	~a);
-
-REWRIT3(val_xebq,
-	a_b,
-	hide(b / hide(one + (b - a) / a)),
-	~a && ~b);
-
 // BLI
 
 REWRIT3(square_sqrt,
