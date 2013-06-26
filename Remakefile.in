@@ -42,6 +42,7 @@ OBJS = \
 	src/backends/coq_common.o \
 	src/backends/coq_lambda.o \
 	src/backends/holl.o \
+	src/backends/latex.o \
 	src/numbers/interval.o \
 	src/numbers/io.o \
 	src/numbers/real.o \
