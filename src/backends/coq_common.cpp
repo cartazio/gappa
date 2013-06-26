@@ -102,6 +102,7 @@ static char const *theorem_defs[][2] = {
   { "sub_rr", "$gpred_rel.$t $1x $1y $2x $2y $1i $2i $3i $i $1p $2p $3p $4p $b" },
   { "mul_rr", "$gpred_rel.$t $1x $1y $2x $2y $1i $2i $i $" },
   { "div_rr", "$gpred_rel.$t $1x $1y $2x $3x $1i $2i $i $" },
+  { "inv_r", "$gpred_rel.$t $1x $1y _ $1i $i $1p $2p $b" },
   { "compose", "$gpred_rel.$t $1x $1y $2y $1i $2i $i $" },
   { "compose_swap", "$gpred_rel.$t $1x $y $2x $3x $1i $2i $i $" },
   { "bnd_div_of_rel_bnd_div", "$gpred_rel.$t $1x $1y $3x $1i $2i $i $" },

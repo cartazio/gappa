@@ -981,6 +981,27 @@ proof_scheme *computation_rel_div_scheme::factory(predicated_real const &real, a
   return new computation_rel_div_scheme(real, hyps);
 }
 
+// COMPUTATION_REL_INV
+REGISTER_SCHEME_BEGIN(computation_rel_inv);
+  computation_rel_inv_scheme(predicated_real const &r, preal_vect const &v)
+    : proof_scheme(r, v, "inv_r") {}
+REGISTER_SCHEME_END_PATTERN(computation_rel_inv,
+  predicated_real(pattern(0) / pattern(1), pattern(0) / pattern(2), PRED_REL));
+
+void computation_rel_inv_scheme::compute(property const hyps[], property &res, std::string &) const
+{
+  res.bnd() = compose_relative_inv(zero(), hyps[0].bnd());
+}
+
+proof_scheme *computation_rel_inv_scheme::factory(predicated_real const &real, ast_real_vect const &holders)
+{
+  if (holders[1] == holders[2]) return NULL;
+  preal_vect hyps;
+  hyps.push_back(predicated_real(holders[1], holders[2], PRED_REL));
+  hyps.push_back(predicated_real(holders[2], PRED_NZR));
+  return new computation_rel_inv_scheme(real, hyps);
+}
+
 // COMPOSE_REL
 REGISTER_SCHEME_BEGIN(compose_rel);
   compose_rel_scheme(predicated_real const &r, preal_vect const &v)
