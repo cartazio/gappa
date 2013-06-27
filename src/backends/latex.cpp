@@ -141,7 +141,7 @@ static std::string display(ast_real const *r, unsigned prio = 0)
 
 static std::string display(property const &p)
 {
-  if (p.real.null()) return "\\bottom";
+  if (p.real.null()) return "\\bot";
   std::ostringstream s;
   std::string r = display(p.real.real());
   switch (p.real.pred()) {
