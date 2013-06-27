@@ -157,7 +157,7 @@ static std::string display(property const &p)
   interval const &bnd = p.bnd();
   if (p.real.pred() == PRED_ABS && lower(bnd) == 0) {
     s << " \\le " << display(upper(bnd));
-  } else if (p.real.pred() != PRED_ABS && upper(bnd) == -lower(bnd)) {
+  } else if (p.real.pred() != PRED_ABS && upper(bnd) == -lower(bnd) && upper(bnd) != 0) {
     r = s.str();
     s.str(std::string());
     s << "\\left| " << r << " \\right| \\le" << display(upper(bnd));
@@ -254,8 +254,8 @@ std::string latex_backend::rewrite(ast_real const *src, ast_real const *dst, pat
   std::ostringstream name;
   name << "rewriting " << ++a_id;
   std::cout << "\\noindent\nLet us assume that the following equality holds.\n"
-    "\\begin{equation}\n" << display(dst)
-    << " = " << display(src) << ".\n\\end{equation}\n";
+    "\\begin{equation}\n" << display(src)
+    << " = " << display(dst) << ".\n\\end{equation}\n";
   return name.str();
 }
 
