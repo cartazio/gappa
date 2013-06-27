@@ -330,12 +330,12 @@ property intersection_node::maximal_for(node const *n) const
 }
 
 /**
- * Creates a new graph with stronger hypotheses @a h than the parent graph @a f.
- * \li Marks all the parent nodes in #known_reals as known in this new graph too.
- * \li Tries to add ::HYPOTHESIS nodes for properties of @a h.
+ * Creates a new graph inheriting from the parent graph @a f.
+ * \li Marks all the parent nodes in #known_reals and #trees as known in this new graph too.
+ * \li Adds a ::LOGIC nodes for @a h.
  */
 graph_t::graph_t(graph_t *f, property_tree const &h)
-  : father(f), contradiction(NULL)
+  : father(f), hyps(h), contradiction(NULL)
 {
   graph_loader loader(this);
   if (f)
@@ -353,9 +353,7 @@ graph_t::graph_t(graph_t *f, property_tree const &h)
       ++(*i)->nb_good;
       trees.push_back(*i);
     }
-    hyps = f->hyps;
   }
-  hyps.push_back(h);
   logic_node *n = new logic_node(h);
   ++n->nb_good;
   trees.push_back(n);

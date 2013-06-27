@@ -149,7 +149,7 @@ class graph_t
   graph_t *father;        /**< Parent graph. */
   node_set nodes;         /**< Nodes owned by this graph. Each node can be proved in the context of #hyp. */
   node_map known_reals;   /**< Best node implied by #hyp for each real. */
-  property_trees hyps;    /**< Hypotheses of this graph. They imply the hypotheses of the #father graph. */
+  property_tree hyps;     /**< Hypotheses of this graph. They supplement the ones from #father graph. */
   node *contradiction;    /**< Node proving an empty result, thus proving anything. */
   std::list<logic_node *> trees; /**< Hypothesis trees not yet reduced to a single property.*/
  public:
@@ -164,7 +164,7 @@ class graph_t
   void insert_node(node *&);
   bool try_node(node *&);
   /** Returns the hypotheses #hyps of this graph. */
-  property_trees const &get_hypotheses() const { return hyps; }
+  property_tree const &get_hypotheses() const { return hyps; }
   bool dominates(graph_t const *) const;
   void populate(property_tree const &, dichotomy_sequence const &, int, undefined_map *);
   void dichotomize(dichotomy_hint const &, int);

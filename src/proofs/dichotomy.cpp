@@ -341,8 +341,8 @@ void dichotomy_helper::try_graph(dicho_graph g2)
   }
   if (proof_generator && gen->merge())
   {
-    property p(g1.first->get_hypotheses().back()->leaves[0].first);
-    p.bnd() = interval(lower(p.bnd()), upper(g2.first->get_hypotheses().back()->leaves[0].first.bnd()));
+    property p(g1.first->get_hypotheses()->leaves[0].first);
+    p.bnd() = interval(lower(p.bnd()), upper(g2.first->get_hypotheses()->leaves[0].first.bnd()));
     tmp_hyp = p;
     iter_max = g1.second + g2.second;
     dicho_graph g = try_hypothesis(NULL, graphs->graphs.empty(), false);
@@ -460,7 +460,9 @@ void graph_t::dichotomize(dichotomy_hint const &hint, int iter_max)
     gen = new fixed_splitter(hyp.bnd(), 4, iter_max);
   else {
     targets = hint.dst;
-    targets.fill_undefined(hyps.front());
+    graph_t *g = this;
+    while (g->father) g = g->father;
+    targets.fill_undefined(g->hyps);
     if (targets.empty()) {
       if (warning_dichotomy_failure)
         std::cerr << "Warning: case split on " << dump_real(var.real)
