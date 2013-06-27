@@ -114,6 +114,9 @@ static char const *theorem_defs[][2] = {
   { "sub_flt", "$gpred_fixflt.$t $1x $2x $1c $2c $3i $c $" },
   { "sub_flt_rev", "$gpred_fixflt.$t $1x $2x $1c $2c $3i $c $" },
 
+  { "neg_nzr", "$gpred_nzr.$t $1x $1p" },
+  { "mul_nzr", "$gpred_nzr.$t $1x $2x $1p $2p" },
+  { "div_nzr", "$gpred_nzr.$t $1x $2x $1p $2p" },
   { "nzr_of_abs", "$gpred_nzr.$t $x $1i $" },
   { "nzr_of_nzr_rel", "$gpred_nzr.$t $x $1x $2i $" },
   { "nzr_of_nzr_rel_rev", "$gpred_nzr.$t $1x $x $2i $1p $2p" },

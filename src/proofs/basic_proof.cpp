@@ -1134,6 +1134,59 @@ proof_scheme *bnd_of_rel_bnd_scheme::factory(predicated_real const &real,
   return new bnd_of_rel_bnd_scheme(real, hyps);
 }
 
+// NEG_NZR
+REGISTER_SCHEME_BEGIN(neg_nzr);
+  neg_nzr_scheme(predicated_real const &r, preal_vect const &v)
+    : proof_scheme(r, v, "neg_nzr") {}
+REGISTER_SCHEME_END_PATTERN(neg_nzr, predicated_real(-pattern(0), PRED_NZR));
+
+void neg_nzr_scheme::compute(property const[], property &, std::string &) const
+{
+}
+
+proof_scheme *neg_nzr_scheme::factory(predicated_real const &real, ast_real_vect const &holders)
+{
+  preal_vect hyps;
+  hyps.push_back(predicated_real(holders[0], PRED_NZR));
+  return new neg_nzr_scheme(real, hyps);
+}
+
+// MUL_NZR
+REGISTER_SCHEME_BEGIN(mul_nzr);
+  mul_nzr_scheme(predicated_real const &r, preal_vect const &v)
+    : proof_scheme(r, v, "mul_nzr") {}
+REGISTER_SCHEME_END_PATTERN(mul_nzr, predicated_real(pattern(0) * pattern(1), PRED_NZR));
+
+void mul_nzr_scheme::compute(property const[], property &, std::string &) const
+{
+}
+
+proof_scheme *mul_nzr_scheme::factory(predicated_real const &real, ast_real_vect const &holders)
+{
+  preal_vect hyps;
+  hyps.push_back(predicated_real(holders[0], PRED_NZR));
+  hyps.push_back(predicated_real(holders[1], PRED_NZR));
+  return new mul_nzr_scheme(real, hyps);
+}
+
+// DIV_NZR
+REGISTER_SCHEME_BEGIN(div_nzr);
+  div_nzr_scheme(predicated_real const &r, preal_vect const &v)
+    : proof_scheme(r, v, "div_nzr") {}
+REGISTER_SCHEME_END_PATTERN(div_nzr, predicated_real(pattern(0) / pattern(1), PRED_NZR));
+
+void div_nzr_scheme::compute(property const[], property &, std::string &) const
+{
+}
+
+proof_scheme *div_nzr_scheme::factory(predicated_real const &real, ast_real_vect const &holders)
+{
+  preal_vect hyps;
+  hyps.push_back(predicated_real(holders[0], PRED_NZR));
+  hyps.push_back(predicated_real(holders[1], PRED_NZR));
+  return new div_nzr_scheme(real, hyps);
+}
+
 // NZR_OF_ABS
 REGISTER_SCHEME_BEGIN(nzr_of_abs);
   nzr_of_abs_scheme(predicated_real const &r, predicated_real const &n)
