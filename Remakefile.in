@@ -32,17 +32,18 @@ src/parser/parser.cpp src/parser/parser.hpp: src/parser/parser.ypp
 src/parser/lexer.cpp: src/parser/lexer.lpp
 	@LEX@ -o src/parser/lexer.cpp src/parser/lexer.lpp
 
+#	src/backends/coq.o \
+#	src/backends/coq_common.o \
+#	src/backends/coq_lambda.o \
+#	src/backends/holl.o \
+#	src/backends/latex.o \
+
 OBJS = \
 	src/arithmetic/fixed.o \
 	src/arithmetic/float.o \
 	src/arithmetic/homogen.o \
 	src/arithmetic/relative.o \
 	src/backends/backend.o \
-	src/backends/coq.o \
-	src/backends/coq_common.o \
-	src/backends/coq_lambda.o \
-	src/backends/holl.o \
-	src/backends/latex.o \
 	src/numbers/interval.o \
 	src/numbers/io.o \
 	src/numbers/real.o \

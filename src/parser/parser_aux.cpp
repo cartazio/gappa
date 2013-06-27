@@ -126,7 +126,7 @@ static void generate_tree(property_tree &tree, ast_prop const *p, bool positive)
   }
 }
 
-static void massage_property_tree(property_tree &tree, context &ctx)
+static void massage_property_tree(property_tree &tree)
 {
   std::vector<property_tree::leaf> new_leaves;
 
@@ -151,42 +151,6 @@ static void massage_property_tree(property_tree &tree, context &ctx)
   }
 
   tree->leaves.insert(tree->leaves.end(), new_leaves.begin(), new_leaves.end());
-  new_leaves.clear();
-  typedef std::map< predicated_real, property > input_set;
-  input_set inputs;
-
-  // intersect hypothesis properties for common reals
-  for (std::vector<property_tree::leaf>::const_iterator i = tree->leaves.begin(),
-       i_end = tree->leaves.end(); i != i_end; ++i)
-  {
-    if (i->second) {
-      new_leaves.push_back(*i);
-      continue;
-    }
-    property const &p = i->first;
-    std::pair< input_set::iterator, bool > ib = inputs.insert(std::make_pair(p.real, p));
-    if (!ib.second) // there was already a known range
-      ib.first->second.intersect(p);
-  }
-
-  for (input_set::const_iterator i = inputs.begin(),
-       i_end = inputs.end(); i != i_end; ++i)
-  {
-    ctx.hyp.push_back(i->second);
-    if (!i->second.real.pred_bnd()) continue;
-    interval const &bnd = i->second.bnd();
-    // bail out early if there is an empty set on an input
-    if (is_empty(bnd))
-    {
-      std::cerr << "Warning: the hypotheses on " << dump_real_short(i->first)
-                << " are trivially contradictory, skipping.\n";
-      exit(0);
-    }
-  }
-
-  tree->leaves = new_leaves;
-  if (!tree->subtrees.empty() || !tree->leaves.empty())
-    ctx.goals = tree;
 }
 
 static void delete_prop(ast_prop const *p)
@@ -228,8 +192,6 @@ static void check_unbound()
   }
 }
 
-extern context goal;
-
 void parse_property_tree(property_tree &tree, ast_prop const *p)
 {
   tree = new property_tree::data(false);
@@ -237,11 +199,13 @@ void parse_property_tree(property_tree &tree, ast_prop const *p)
   delete_prop(p);
 }
 
+extern property_tree context;
+
 void generate_graph(ast_prop const *p)
 {
-  property_tree tree;
-  parse_property_tree(tree, p);
-  massage_property_tree(tree, goal);
+  parse_property_tree(context, p);
+  massage_property_tree(context);
+  context.negate();
   if (warning_unbound_variable)
     check_unbound();
   free_variables.clear();

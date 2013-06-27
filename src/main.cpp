@@ -24,8 +24,7 @@ extern int yyparse(void);
 extern bool detailed_io;
 extern backend *proof_generator;
 dichotomy_sequence dichotomies;
-property_tree current_goals;
-context goal;
+property_tree context;
 bool goal_reduction = true;
 
 extern int
@@ -34,6 +33,7 @@ extern int
   stat_tested_app, stat_successful_app,
   stat_intersected_pred, stat_discarded_pred;
 
+#if 0
 void display_context(context const &ctx)
 {
   property_vect const &hyp = ctx.hyp;
@@ -60,6 +60,7 @@ void display_context(context const &ctx)
     std::cerr << ":\n";
   }
 }
+#endif
 
 int main(int argc, char **argv)
 {
@@ -82,63 +83,27 @@ int main(int argc, char **argv)
     std::cerr << "Warning: no path was found for " << dump_real(*i) << ".\n";
   }
   bool globally_proven = true;
+  if (proof_generator) proof_generator->reset();
+  undefined_map umap;
+  graph_t *g = new graph_t(NULL, context);
+  g->populate(property_tree(), dichotomies, 100*1000*1000, &umap);
+  for (undefined_map::const_iterator i = umap.begin(),
+       i_end = umap.end(); i != i_end; ++i)
   {
-    context const &current_context = goal;
-    if (proof_generator) proof_generator->reset();
-    graph_t *g = new graph_t(NULL, current_context.hyp);
-    g->populate(current_context.goals, property_tree(), dichotomies, 100*1000*1000);
-    if (node *n = g->get_contradiction())
-    {
-      display_context(current_context);
-      if (!goal_reduction) {
-        if (!current_context.goals.empty())
-          std::cerr << "Warning: hypotheses are in contradiction, any result is true.\n";
-        else
-          std::cerr << "A contradiction was built from the hypotheses.\n";
-      }
-      if (proof_generator) {
-        enlarger(node_vect(1, n));
-        proof_generator->theorem(n);
-      }
-      g->show_dangling();
-    } else if (current_context.goals.empty()) {
-      display_context(current_context);
-      std::cerr << "Warning: no contradiction was found.\n";
-      globally_proven = false;
-    } else {
-      node_vect nodes;
-      property_tree pt = current_context.goals;
-      pt.get_nodes(g, nodes);
-      if (proof_generator) enlarger(nodes);
-      typedef std::map< std::string, node * > named_nodes;
-      named_nodes results;
-      for (node_vect::const_iterator j = nodes.begin(),
-           j_end = nodes.end(); j != j_end; ++j)
-      {
-        node *n = *j;
-        assert(n->type == GOAL);
-        results[dump_real(n->get_result().real)] = n;
-      }
-      display_context(current_context);
-      for (named_nodes::const_iterator j = results.begin(),
-           j_end = results.end(); j != j_end; ++j)
-      {
-        node *n = j->second;
-        property const &res = n->get_result();
-        if (proof_generator) proof_generator->theorem(n);
-        change_io_format dummy(IO_FULL);
-        std::cerr << dump_property_nice(res) << '\n';
-      }
-      if (!pt.empty()) {
-        std::cerr << "Warning: some enclosures were not satisfied.\n"
-          "Missing ";
-        std::cerr << dump_prop_tree(pt) << '\n';
-        globally_proven = false;
-      }
-      g->show_dangling();
-    }
-    delete g;
+    change_io_format dummy(IO_FULL);
+    std::cerr << dump_property_nice(i->second) << '\n';
   }
+  if (node *n = g->get_contradiction()) {
+    if (proof_generator) {
+      enlarger(node_vect(1, n));
+      proof_generator->theorem(n);
+    }
+  } else {
+    std::cerr << "Warning: some enclosures were not satisfied.\n";
+    globally_proven = false;
+  }
+  g->show_dangling();
+  delete g;
   if (proof_generator) proof_generator->finalize();
   if (parameter_statistics) {
     std::cerr <<

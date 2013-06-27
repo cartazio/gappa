@@ -180,7 +180,7 @@ modus_node::modus_node(theorem_node *n)
       m = create_theorem(0, NULL, *i, "$FALSE", NULL);
     }
     assert(m && dominates(m, this));
-    if (m->type != HYPOTHESIS && nodes.insert(m).second)
+    if (nodes.insert(m).second)
       insert_pred(m);
   }
 }
@@ -221,6 +221,36 @@ node *create_theorem(int nb, property const h[], property const &p, std::string 
   return new modus_node(new theorem_node(nb, h, p, n, s));
 }
 
+logic_node::logic_node(property_tree const &t, logic_node *n, node *m)
+  : node(LOGIC, top_graph), before(n), modifier(m), tree(t)
+{
+  n->succ.insert(this);
+  m->succ.insert(this);
+}
+
+logic_node::logic_node(property_tree const &t, logic_node *n, int i)
+  : node(LOGIC, top_graph), before(n), modifier(NULL), index(i), tree(t)
+{
+  n->succ.insert(this);
+}
+
+logic_node::~logic_node()
+{
+  if (before) before->remove_succ(this);
+  if (modifier) modifier->remove_succ(this);
+}
+
+logicp_node::logicp_node(property const &p, logic_node *n, int i)
+  : node(LOGICP, top_graph), res(p), before(n), index(i)
+{
+  n->succ.insert(this);
+}
+
+logicp_node::~logicp_node()
+{
+  before->remove_succ(this);
+}
+
 class intersection_node: public dependent_node
 {
   property res;
@@ -259,9 +289,6 @@ intersection_node::intersection_node(node *n1, node *n2)
   // to simplify the graph, no intersection should be nested
   get_inner_intersection_node(n1, 0);
   get_inner_intersection_node(n2, 1);
-  // by disallowing both nodes to be hypotheses, we are sure that even if the
-  // output real is also an input, it is a meaningful input; enforced by the parser
-  assert(n1->type != HYPOTHESIS || n2->type != HYPOTHESIS);
   insert_pred(n1);
   insert_pred(n2);
   if (is_empty(res.bnd()))
@@ -307,35 +334,50 @@ property intersection_node::maximal_for(node const *n) const
  * \li Marks all the parent nodes in #known_reals as known in this new graph too.
  * \li Tries to add ::HYPOTHESIS nodes for properties of @a h.
  */
-graph_t::graph_t(graph_t *f, property_vect const &h)
-  : father(f), hyp(h), contradiction(NULL)
+graph_t::graph_t(graph_t *f, property_tree const &h)
+  : father(f), contradiction(NULL)
 {
   graph_loader loader(this);
   if (f)
   {
-    assert(hyp.implies(f->hyp));
     assert(!f->contradiction);
     known_reals = f->known_reals;
-    for (node_map::iterator i = known_reals.begin(), end = known_reals.end(); i != end; ++i)
+    for (node_map::iterator i = known_reals.begin(),
+         i_end = known_reals.end(); i != i_end; ++i)
+    {
       ++i->second->nb_good;
-  }
-  for (property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
-  {
-    if (try_property(*i)) {
-      node *n = new hypothesis_node(*i);
-      insert_node(n);
     }
+    for (std::list<logic_node *>::const_iterator i = f->trees.begin(),
+         i_end = f->trees.end(); i != i_end; ++i)
+    {
+      ++(*i)->nb_good;
+      trees.push_back(*i);
+    }
+    hyps = f->hyps;
   }
+  hyps.push_back(h);
+  logic_node *n = new logic_node(h);
+  ++n->nb_good;
+  trees.push_back(n);
 }
 
 /**
- * Empties #known_reals.
+ * Empties #known_reals and #trees.
  */
 void graph_t::purge()
 {
-  for(node_map::const_iterator i = known_reals.begin(), end = known_reals.end(); i != end; ++i)
+  for (node_map::const_iterator i = known_reals.begin(),
+       i_end = known_reals.end(); i != i_end; ++i)
+  {
     i->second->remove_known();
+  }
   known_reals.clear();
+  for (std::list<logic_node *>::const_iterator i = trees.begin(),
+       i_end = trees.end(); i != i_end; ++i)
+  {
+    (*i)->remove_known();
+  }
+  trees.clear();
 }
 
 /**

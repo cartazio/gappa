@@ -13,6 +13,8 @@
 #define PROOFS_PROPERTY_HPP
 
 #include <cassert>
+#include <list>
+#include <map>
 #include <vector>
 #include "numbers/interval.hpp"
 #include "parser/ast_real.hpp"
@@ -93,6 +95,8 @@ struct split_point;
 typedef std::multiset<split_point> split_point_mset;
 typedef std::map<predicated_real, split_point_mset> splitting;
 
+typedef std::map<predicated_real, property> undefined_map;
+
 struct property_tree
 {
   //* Second member is true if the property is in the goal.
@@ -123,6 +127,7 @@ struct property_tree
   data const *operator->() const { return ptr; }
   data *operator->() { unique(); return ptr; }
   bool empty() const { return !ptr; }
+  void negate();
 
   /**
    * Fills leaves that have an undefined interval with a corresponding
@@ -131,12 +136,14 @@ struct property_tree
   void fill_undefined(property_tree const &p);
 
   /**
-   * Simplifies the tree according to property @a p.
-   * @param force If true, the function removes undefined yet matching leaves.
+   * Simplifies the tree according to property @a p (modality @a positive).
+   * @param hypothesis If true, the function removes contradicting leaves. Otherwise implied ones.
+   * @param force If set, the function removes undefined yet matching leaves.
+   * @param changed Set to true if a change happened.
    * @return zero if the tree is not empty yet, a positive value if it is
    *         true, a negative value if it is false.
    */
-  int simplify(property const &p, bool positive = true, bool force = false);
+  int simplify(property const &p, bool positive, bool hypothesis, undefined_map *force, bool *changed);
 
   /**
    * Checks if the tree is satisfied by graph @a g.
@@ -154,9 +161,6 @@ struct property_tree
   void get_splitting(splitting &) const;
 };
 
-struct context {
-  property_vect hyp;
-  property_tree goals;
-};
+typedef std::list<property_tree> property_trees;
 
 #endif // PROOFS_PROPERTY_HPP

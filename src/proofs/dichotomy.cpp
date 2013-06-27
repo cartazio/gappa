@@ -226,10 +226,10 @@ struct dichotomy_graphs
 struct dichotomy_helper
 {
   dichotomy_graphs *graphs;
-  property_vect &tmp_hyp;
+  property tmp_hyp;
   int iter_max;
   int depth;
-  property_tree const &goals, &targets;
+  property_tree const &targets;
   dichotomy_sequence const &hints;
   dicho_graph last_graph;
   splitter *gen;
@@ -237,9 +237,9 @@ struct dichotomy_helper
   void try_graph(dicho_graph);
   void dichotomize();
   dichotomy_node *generate_node(node *, property const &);
-  dichotomy_helper(property_vect &v, property_tree const &g,
-    property_tree const &t, dichotomy_sequence const &h, splitter *s)
-  : graphs(new dichotomy_graphs()), tmp_hyp(v), depth(0), goals(g),
+  dichotomy_helper(property &v, property_tree const &t,
+    dichotomy_sequence const &h, splitter *s)
+  : graphs(new dichotomy_graphs()), tmp_hyp(v), depth(0),
     targets(t), hints(h), last_graph(dicho_graph(NULL, 0)), gen(s) {}
   ~dichotomy_helper();
 };
@@ -285,13 +285,14 @@ dichotomy_node::~dichotomy_node()
     delete graphs;
 }
 
-extern bool goal_reduction;
-
 dicho_graph dichotomy_helper::try_hypothesis(dichotomy_failure *exn,
   bool remove_left, bool remove_right) const
 {
-  graph_t *g = new graph_t(top_graph, tmp_hyp);
+  property_tree::data *td = new property_tree::data(true);
+  td->leaves.push_back(property_tree::leaf(tmp_hyp, true));
+  graph_t *g = new graph_t(top_graph, property_tree(td));
 
+#if 0
   property_tree current_goals = goals;
   if (goal_reduction && !current_goals.empty())
   {
@@ -314,16 +315,17 @@ dicho_graph dichotomy_helper::try_hypothesis(dichotomy_failure *exn,
       if (current_goals.simplify(p, !remove_right) > 0) goto found_it;
     }
   }
+#endif
 
-  g->populate(current_goals, targets, hints, iter_max);
+  g->populate(targets, hints, iter_max, NULL);
   if (g->get_contradiction() ||
-      (targets.empty() ? current_goals : targets).verify(g, exn ? &exn->expected : NULL))
+      (!targets.empty() && targets.verify(g, exn ? &exn->expected : NULL)))
     return dicho_graph(g, iter_max);
   if (exn && !exn->expected.null()) {
     graph_loader loader(g);
     if (node *n = find_proof(exn->expected.real))
       exn->found = n->get_result();
-    exn->hyp = find_proof(tmp_hyp[0].real)->get_result();
+    exn->hyp = find_proof(tmp_hyp.real)->get_result();
   }
   delete g;
   return dicho_graph(NULL, 0);
@@ -339,9 +341,9 @@ void dichotomy_helper::try_graph(dicho_graph g2)
   }
   if (proof_generator && gen->merge())
   {
-    property p(g1.first->get_hypotheses()[0]);
-    p.bnd() = interval(lower(p.bnd()), upper(g2.first->get_hypotheses()[0].bnd()));
-    tmp_hyp[0] = p;
+    property p(g1.first->get_hypotheses().back()->leaves[0].first);
+    p.bnd() = interval(lower(p.bnd()), upper(g2.first->get_hypotheses().back()->leaves[0].first.bnd()));
+    tmp_hyp = p;
     iter_max = g1.second + g2.second;
     dicho_graph g = try_hypothesis(NULL, graphs->graphs.empty(), false);
     if (g.first)
@@ -391,8 +393,9 @@ dichotomy_node *dichotomy_helper::generate_node(node *varn, property const &p)
   return n;
 }
 
-void dichotomy_helper::dichotomize() {
-  interval &h = tmp_hyp[0].bnd();
+void dichotomy_helper::dichotomize()
+{
+  interval &h = tmp_hyp.bnd();
   interval bnd;
   bool rleft, rright;
   bool b = gen->next(bnd, iter_max, rleft, rright);
@@ -401,7 +404,7 @@ void dichotomy_helper::dichotomize() {
   for (;;)
   {
     h = bnd;
-    exn.hyp = tmp_hyp[0];
+    exn.hyp = tmp_hyp;
     dicho_graph g = try_hypothesis(&exn, rleft, rright);
     if (g.first)
     {
@@ -427,7 +430,7 @@ void dichotomy_helper::dichotomize() {
  * Applies a ::dichotomy_hint.
  * @param goals subset of the user goal that drives the bisection.
  */
-void graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint, int iter_max)
+void graph_t::dichotomize(dichotomy_hint const &hint, int iter_max)
 {
   assert(top_graph == this);
   dichotomy_sequence hints;
@@ -446,31 +449,27 @@ void graph_t::dichotomize(property_tree const &goals, dichotomy_hint const &hint
                 << " has no range to split.\n";
     return;
   }
-  property_vect hyp2;
-  hyp2.push_back(varn->get_result());
-  property_vect const &hyp = top_graph->get_hypotheses();
-  for(property_vect::const_iterator i = hyp.begin(), end = hyp.end(); i != end; ++i)
-    if (i->real != predicated_real(var.real, PRED_BND)) hyp2.push_back(*i);
+  property hyp = varn->get_result();
   splitter *gen;
   property_tree targets;
   if (var.splitter & 1)
-    gen = new fixed_splitter(hyp2[0].bnd(), var.splitter / 2, iter_max);
+    gen = new fixed_splitter(hyp.bnd(), var.splitter / 2, iter_max);
   else if (var.splitter)
-    gen = new point_splitter(hyp2[0].bnd(), (number_vect const *)var.splitter, iter_max);
+    gen = new point_splitter(hyp.bnd(), (number_vect const *)var.splitter, iter_max);
   else if (hint.dst.empty())
-    gen = new fixed_splitter(hyp2[0].bnd(), 4, iter_max);
+    gen = new fixed_splitter(hyp.bnd(), 4, iter_max);
   else {
     targets = hint.dst;
-    targets.fill_undefined(goals);
+    targets.fill_undefined(hyps.front());
     if (targets.empty()) {
       if (warning_dichotomy_failure)
         std::cerr << "Warning: case split on " << dump_real(var.real)
                   << " is not goal-driven anymore.\n";
       return;
     }
-    gen = new best_splitter(hyp2[0].bnd(), iter_max);
+    gen = new best_splitter(hyp.bnd(), iter_max);
   }
-  dichotomy_helper h(hyp2, goals, targets, hints, gen);
+  dichotomy_helper h(hyp, targets, hints, gen);
   try {
     h.dichotomize();
   } catch (dichotomy_failure const &e) {

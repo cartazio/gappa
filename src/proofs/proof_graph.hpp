@@ -12,6 +12,7 @@
 #ifndef PROOFS_PROOF_GRAPH_HPP
 #define PROOFS_PROOF_GRAPH_HPP
 
+#include <list>
 #include <map>
 #include <set>
 #include <vector>
@@ -21,11 +22,11 @@
 /** Category of a node in a proof graph. */
 enum node_id
 {
-  HYPOTHESIS,   /**< A property found on the left hand side of an implication. */
+  LOGICP,       /**< A property extracted from a property tree. */
+  LOGIC,        /**< A simplification step of a property tree. */
   MODUS,        /**< The application of a theorem of the database. */
   UNION,        /**< The parent node of all the related nodes of a dichotomy. */
   INTERSECTION, /**< The intersection between two nodes on the same real. */
-  GOAL          /**< A property found on the right hand side of an application. */
 };
 
 struct node;
@@ -45,9 +46,10 @@ struct theorem_node
   theorem_node(int, property const [], property const &, std::string const &, proof_scheme const *);
 };
 
-typedef std::vector< node * > node_vect;
-typedef std::set< node * > node_set;
-typedef std::map< predicated_real, node * > node_map;
+typedef std::vector<node *> node_vect;
+typedef std::list<node *> node_list;
+typedef std::set<node *> node_set;
+typedef std::map<predicated_real, node *> node_map;
 
 /**
  * Node of a proof graph.
@@ -76,16 +78,36 @@ struct node
   virtual void enlarge(property const &) = 0;
 };
 
-/** Node of type ::HYPOTHESIS. */
-class hypothesis_node: public node
+/** Node of type ::LOGIC. */
+class logic_node: public node
 {
-  property const &res; /**< Reference to an hypothesis of the parent graph. */
+  logic_node *before;
+  node *modifier;
+  int index;
  public:
-  hypothesis_node(property const &p): node(HYPOTHESIS, top_graph), res(p) {}
-  virtual property const &get_result() const { return res; }
-  virtual property maximal() const { return res; }
+  property_tree tree;
+  logic_node(property_tree const &, logic_node *, node *);
+  logic_node(property_tree const &, logic_node *, int);
+  logic_node(property_tree const &t)
+    : node(LOGIC, top_graph), before(NULL), modifier(NULL), tree(t) {}
+  virtual ~logic_node();
+  virtual property const &get_result() const { assert(false); }
   virtual property maximal_for(node const *) const { assert(false); }
-  virtual void enlarge(property const &) { return; }
+  virtual void enlarge(property const &) { assert(false); }
+};
+
+/** Node of type ::LOGICP. */
+class logicp_node: public node
+{
+  logic_node *before;
+  property res;
+  int index;
+ public:
+  logicp_node(property const &, logic_node *, int);
+  virtual ~logicp_node();
+  virtual property const &get_result() const { return res; }
+  virtual property maximal_for(node const *) const { assert(false); }
+  virtual void enlarge(property const &) { assert(false); }
 };
 
 /** Node refering to other nodes previously proven. */
@@ -127,25 +149,25 @@ class graph_t
   graph_t *father;        /**< Parent graph. */
   node_set nodes;         /**< Nodes owned by this graph. Each node can be proved in the context of #hyp. */
   node_map known_reals;   /**< Best node implied by #hyp for each real. */
-  property_vect hyp;      /**< Hypotheses of this graph. They imply the hypotheses of the #father graph. */
+  property_trees hyps;    /**< Hypotheses of this graph. They imply the hypotheses of the #father graph. */
   node *contradiction;    /**< Node proving an empty result, thus proving anything. */
+  std::list<logic_node *> trees; /**< Hypothesis trees not yet reduced to a single property.*/
  public:
   /** Inserts a node in the graph. */
   void insert(node *n) { nodes.insert(n); }
   /** Removes a node from the graph. */
   void remove(node *n) { nodes.erase (n); }
-  graph_t(graph_t *, property_vect const &);
+  graph_t(graph_t *, property_tree const &);
   ~graph_t();
   node *find_already_known(predicated_real const &) const;
   bool try_property(property const &) const;
   void insert_node(node *&);
   bool try_node(node *&);
-  /** Returns the hypotheses #hyp of this graph. */
-  property_vect const &get_hypotheses() const { return hyp; }
+  /** Returns the hypotheses #hyps of this graph. */
+  property_trees const &get_hypotheses() const { return hyps; }
   bool dominates(graph_t const *) const;
-  void populate(property_tree const &, property_tree const &,
-    dichotomy_sequence const &, int);
-  void dichotomize(property_tree const &, dichotomy_hint const &, int);
+  void populate(property_tree const &, dichotomy_sequence const &, int, undefined_map *);
+  void dichotomize(dichotomy_hint const &, int);
   /** Returns the #contradiction node of this graph, if any. */
   node *get_contradiction() const { return contradiction; }
   void purge();

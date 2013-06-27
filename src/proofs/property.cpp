@@ -229,16 +229,18 @@ static int check_imply(bool positive, property const &p, property const &q)
   return 0;
 }
 
-int property_tree::simplify(property const &p, bool positive, bool force)
+int property_tree::simplify(property const &p, bool positive, bool hypothesis, undefined_map *force, bool *changed)
 {
-  int res = ptr->conjunction ? -1 : 1;
+  assert(ptr);
+  bool conj = ptr->conjunction ^ hypothesis;
+  int res = conj ? -1 : 1;
   if (false) {
     kill_tree:
     decr();
     ptr = NULL;
-    return res;
+    if (changed) *changed = true;
+    return hypothesis ? -res : res;
   }
-  assert(ptr);
   unique();
 
   // Filter out satisfied leaves.
@@ -247,20 +249,30 @@ int property_tree::simplify(property const &p, bool positive, bool force)
   for (std::vector<leaf>::const_iterator i = leaves.begin(),
        i_end = leaves.end(); i != i_end; ++i)
   {
+    property const *q = &i->first;
     if (i->first.real != p.real)
       goto keep;
     if (i->first.real.pred_bnd() && !is_defined(i->first.bnd()))
     {
       // True by choice.
-      assert(i->second);
+      assert(hypothesis ^ i->second);
       if (!force) goto keep;
-      if (!ptr->conjunction) goto kill_tree;
+      undefined_map::iterator j = force->find(p.real);
+      if (j != force->end()) {
+        q = &j->second;
+        goto def;
+      }
+      (*force)[p.real] = p;
+      if (!conj) goto kill_tree;
+      if (changed) *changed = true;
       continue;
     }
-    if (int valid = check_imply(positive, p, i->first))
+    def:
+    if (int valid = check_imply(positive, p, *q))
     {
       // From (not) p, one can deduce either i->first or not i->first.
-      if ((valid < 0) ^ i->second ^ ptr->conjunction) goto kill_tree;
+      if ((valid < 0) ^ i->second ^ hypothesis ^ conj) goto kill_tree;
+      if (changed) *changed = true;
       continue;
     }
     keep:
@@ -273,8 +285,9 @@ int property_tree::simplify(property const &p, bool positive, bool force)
   for (std::vector<property_tree>::iterator i = subtrees.begin(),
        i_end = subtrees.end(); i != i_end; ++i)
   {
-    if (int valid = i->simplify(p, positive, force)) {
-      if ((valid > 0) ^ ptr->conjunction) goto kill_tree;
+    if (int valid = i->simplify(p, positive, hypothesis, force, changed)) {
+      if ((valid > 0) ^ conj) goto kill_tree;
+      if (changed) *changed = true;
       continue;
     }
     ptr->subtrees.push_back(*i);
@@ -312,82 +325,20 @@ bool property_tree::verify(graph_t *g, property *p) const
   return b;
 }
 
-struct goal_node: node {
-  property res;
-  node *pred;
-  goal_node(property const &p, node *n): node(GOAL, top_graph), res(p), pred(n)
-  { n->succ.insert(this); }
-  virtual property const &get_result() const { return res; }
-  virtual node_vect const &get_subproofs() const;
-  virtual void enlarge(property const &) { return; }
-  virtual property maximal() const { return res; }
-  virtual property maximal_for(node const *) const { return res; }
-  virtual ~goal_node() { pred->remove_succ(this); }
-};
-
-node_vect const &goal_node::get_subproofs() const {
-  static node_vect v(1);
-  v[0] = pred;
-  return v;
-}
-
-typedef std::vector< std::pair< node *, interval > > goal_vect;
-
-bool property_tree::get_nodes_aux(goal_vect &goals) const
+void property_tree::negate()
 {
-  bool all = true;
-  for (std::vector<leaf>::const_iterator i = ptr->leaves.begin(),
+  unique();
+  ptr->conjunction = !ptr->conjunction;
+  for (std::vector<leaf>::iterator i = ptr->leaves.begin(),
        i_end = ptr->leaves.end(); i != i_end; ++i)
   {
-    if (node *n = find_proof(i->first, i->second)) {
-      interval b;
-      if (i->first.real.pred_bnd())
-        b = i->second ? i->first.bnd() : n->get_result().bnd();
-      goals.push_back(std::make_pair(n, b));
-      if (!ptr->conjunction) return true;
-    } else all = false;
+    i->second = !i->second;
   }
-  if (ptr->conjunction || (ptr->leaves.size() + ptr->subtrees.size() <= 1)) {
-    for(std::vector< property_tree >::const_iterator i = ptr->subtrees.begin(),
-        end = ptr->subtrees.end(); i != end; ++i)
-      if (!i->get_nodes_aux(goals)) all = false;
-    return all;
-  } else {
-    unsigned sz = goals.size();
-    for(std::vector< property_tree >::const_iterator i = ptr->subtrees.begin(),
-        end = ptr->subtrees.end(); i != end; ++i) {
-      if (i->get_nodes_aux(goals)) return true;
-      goals.erase(goals.begin() + sz, goals.end());
-    }
-    return false;
+  for (std::vector<property_tree>::iterator i = ptr->subtrees.begin(),
+       i_end = ptr->subtrees.end(); i != i_end; ++i)
+  {
+    i->negate();
   }
-}
-
-void property_tree::get_nodes(graph_t *g, node_vect &goals)
-{
-  assert(ptr);
-  graph_loader loader(g);
-  goal_vect gs;
-  get_nodes_aux(gs);
-  typedef std::map< node *, interval > node_map;
-  node_map m;
-  for(goal_vect::const_iterator i = gs.begin(), end = gs.end(); i != end; ++i) {
-    node_map::iterator j = m.find(i->first);
-    if (j == m.end())
-      m.insert(*i);
-    else if (is_defined(i->second)) {
-      if (!is_defined(j->second)) j->second = i->second;
-      else j->second = intersect(i->second, j->second);
-    }
-  }
-  goals.clear();
-  for(node_map::const_iterator i = m.begin(), end = m.end(); i != end; ++i) {
-    property p(i->first->get_result());
-    if (is_defined(i->second)) p.bnd() = i->second;
-    goals.push_back(new goal_node(p, i->first));
-    simplify(p, true, true);
-  }
-  g->replace_known(goals);
 }
 
 /**
@@ -400,7 +351,7 @@ static bool lookup(property_tree::leaf &p, property_tree const &from)
   for (std::vector<property_tree::leaf>::const_iterator i = from->leaves.begin(),
        i_end = from->leaves.end(); i != i_end; ++i)
   {
-    if (p.second == i->second && p.first.real == i->first.real && is_defined(i->first.bnd())) {
+    if (p.second == !i->second && p.first.real == i->first.real && is_defined(i->first.bnd())) {
       p.first.bnd() = i->first.bnd();
       return true;
     }

@@ -519,48 +519,82 @@ static bool fill_hypotheses(property *hyp, preal_vect const &v)
 
 int stat_tested_app = 0;
 
-extern bool goal_reduction;
-
-static bool reduce_goal(property_tree &current_goals,
-  property_tree &current_targets, scheme_queue *missing_schemes)
+/**
+ * Reduces disjunctions inside hypotheses given the knowledge of node @a n.
+ */
+static void reduce_hypotheses(node *n, std::list<logic_node *> &trees, logic_node *excluded, undefined_map *umap)
 {
-  if (!goal_reduction || current_goals.empty() ||
-      (current_goals->conjunction &&
-       current_goals->leaves.size() + current_goals->subtrees.size() > 1))
-    return false;
-
-  std::vector<property_tree::leaf> old_leaves = current_goals->leaves;
-  for (std::vector<property_tree::leaf>::const_iterator i = old_leaves.begin(),
-       i_end = old_leaves.end(); i != i_end; ++i)
+  std::list<logic_node *>::iterator i = trees.begin();
+  while (i != trees.end())
   {
-    if (!i->first.real.pred_bnd() || !is_defined(i->first.bnd())) continue;
-    node *m;
-    if (!i->second) {
-      m = create_theorem(0, NULL, i->first, "$LOGIC", NULL);
-    } else {
-      m = find_proof(i->first.real);
-      if (!m) continue;
-      property const &p = m->get_result();
-      interval const &h = p.bnd(), &g = i->first.bnd();
-      if (is_singleton(g)) continue;
-      if (lower(h) >= lower(g)) {
-        m = create_theorem(0, NULL, property(p.real,
-          interval(upper(g), upper(h))), "$LOGIC", NULL);
-      } else if (upper(h) <= upper(g)) {
-        m = create_theorem(0, NULL, property(p.real,
-          interval(lower(h), lower(g))), "$LOGIC", NULL);
-      } else continue;
+    if (*i == excluded) { ++i; continue; }
+    property_tree t = (*i)->tree;
+    bool changed = false;
+    int v = t.simplify(n->get_result(), true, true, umap, &changed);
+    if (v > 0) {
+      (*i)->remove_known();
+      i = trees.erase(i);
+      continue;
     }
-    if (!top_graph->try_node(m)) continue;
-    if (top_graph->get_contradiction()) return true;
-    if (missing_schemes) insert_dependent(*missing_schemes, i->first.real);
-    if (current_goals.empty()) continue;
-    if (current_goals.simplify(m->get_result()) > 0) {
-      top_graph->set_contradiction(m);
-      return true;
+    if (changed) {
+      logic_node *m = new logic_node(t, *i, n);
+      if (v < 0) { top_graph->set_contradiction(m); return; }
+      ++m->nb_good;
+      trees.push_back(m);
     }
-    if (!current_targets.empty() && current_targets.simplify(m->get_result()))
-      return true;
+    ++i;
+  }
+}
+
+/**
+ * Repeatedly splits and reduces hypotheses.
+ */
+static bool split_hypotheses(std::list<logic_node *> &trees, property_tree &targets, scheme_queue *pending_schemes)
+{
+  restart:
+  for (std::list<logic_node *>::iterator j = trees.begin(),
+       j_end = trees.end(); j != j_end; ++j)
+  {
+    logic_node *n = *j;
+    property_tree const &hyp = n->tree;
+    assert(!hyp.empty());
+    size_t sz = hyp->leaves.size() + hyp->subtrees.size();
+    if (!hyp->conjunction && sz > 1) continue;
+    if (sz == 1) {
+      assert(hyp->subtrees.empty());
+      if (!hyp->leaves[0].second) continue;
+    }
+    for (std::vector<property_tree::leaf>::const_iterator i = hyp->leaves.begin(),
+         i_end = hyp->leaves.end(); i != i_end; ++i)
+    {
+      if (!i->second) {
+        property_tree::data *d = new property_tree::data(true);
+        d->leaves.push_back(*i);
+        logic_node *m = new logic_node(property_tree(d), n, &*i - &hyp->leaves[0]);
+        ++m->nb_good;
+        trees.push_back(m);
+      } else if (top_graph->try_property(i->first)) {
+        //std::cout << "Creating node for " << dump_property(i->first) << '\n';
+        node *m = new logicp_node(i->first, n, &*i - &hyp->leaves[0]);
+        top_graph->insert_node(m);
+        if (top_graph->get_contradiction()) return true;
+        if (!targets.empty() &&
+            targets.simplify(m->get_result(), true, false, NULL, NULL) > 0) return true;
+        reduce_hypotheses(m, trees, n, NULL);
+        if (top_graph->get_contradiction()) return true;
+        if (pending_schemes) insert_dependent(*pending_schemes, i->first.real);
+      }
+    }
+    for (std::vector<property_tree>::const_iterator i = hyp->subtrees.begin(),
+         i_end = hyp->subtrees.end(); i != i_end; ++i)
+    {
+      logic_node *m = new logic_node(*i, n, &*i - &hyp->subtrees[0] + hyp->leaves.size());
+      ++m->nb_good;
+      trees.push_back(m);
+    }
+    n->remove_known();
+    trees.erase(j);
+    goto restart;
   }
   return false;
 }
@@ -568,20 +602,19 @@ static bool reduce_goal(property_tree &current_goals,
 /**
  * Fills this graph by iteratively applying theorems until
  * \li @a targets are satisfied, or
- * \li a contradiction (possibly with @a goals) is found, or
+ * \li a contradiction is found, or
  * \li a fixpoint is reached for the results, or
  * \li an upper bound on the number of iterations is reached.
  */
-void graph_t::populate(property_tree const &goals, property_tree const &targets,
-  dichotomy_sequence const &dichotomy, int iter_max)
+void graph_t::populate(property_tree const &targets,
+  dichotomy_sequence const &dichotomy, int iter_max, undefined_map *umap)
 {
   if (contradiction) return;
   iter_max = iter_max / (2 * dichotomy.size() + 1);
-  property_tree current_goals = goals, current_targets = targets;
+  property_tree current_targets = targets;
   graph_loader loader(this);
 
-  if (reduce_goal(current_goals, current_targets, NULL))
-    return;
+  if (split_hypotheses(trees, current_targets, NULL)) return;
 
   for (dichotomy_sequence::const_iterator dichotomy_it = dichotomy.begin(),
        dichotomy_end = dichotomy.end(); /*nothing*/; ++dichotomy_it)
@@ -618,6 +651,7 @@ void graph_t::populate(property_tree const &goals, property_tree const &targets,
         // The scheme did not find anything new.
         continue;
       }
+      //std::cout << dump_property(res) << '\t' << typeid(*s).name() << '\n';
       node *n = create_theorem(s->needed_reals.size(), hyps, res, name, s);
       insert_node(n);
       if (!s->score) s->score = scheme_queue::success;
@@ -625,25 +659,29 @@ void graph_t::populate(property_tree const &goals, property_tree const &targets,
         // We have got a contradiction, everything is true.
         return;
       }
-      //std::cout << dump_property(n->get_result()) << '\t' << typeid(*s).name() << '\n';
       insert_dependent(missing_schemes, s->real, s);
-      if (current_goals.empty()) {
-        // Originally empty, we are striving for a contradiction.
-        continue;
-      }
-      if (s->real.pred() != PRED_BND && s->real.pred() != PRED_REL) continue;
-      if (current_goals.simplify(n->get_result()) > 0) {
-        // Now empty, there is nothing left to prove.
-        if (goal_reduction) set_contradiction(n);
-        return;
-      }
-      if (!current_targets.empty() && current_targets.simplify(n->get_result())) return;
-      if (reduce_goal(current_goals, current_targets, &missing_schemes)) return;
+      reduce_hypotheses(n, trees, NULL, NULL);
+      if (contradiction) return;
+      if (split_hypotheses(trees, current_targets, &missing_schemes)) return;
+      if (!current_targets.empty() &&
+          current_targets.simplify(n->get_result(), true, false, NULL, NULL) > 0) return;
     }
     if (iter > iter_max)
       std::cerr << "Warning: maximum number of iterations reached.\n";
-    if (dichotomy_it == dichotomy_end)
+    if (dichotomy_it != dichotomy_end) {
+      dichotomize(*dichotomy_it, iter_max);
+      if (contradiction) return;
+    }
+    for (node_map::const_iterator i = known_reals.begin(),
+         i_end = known_reals.end(); i != i_end; ++i)
     {
+      if (i->first.pred_bnd() && !is_bounded(i->second->get_result().bnd())) continue;
+      reduce_hypotheses(i->second, trees, NULL, dichotomy_it != dichotomy_end ? NULL : umap);
+      if (contradiction) return;
+    }
+    if (dichotomy_it == dichotomy_end) return;
+    if (split_hypotheses(trees, current_targets, &missing_schemes)) return;
+#if 0
       if (!goal_reduction || current_goals.empty()) return;
       static ast_real_set already;
       splitting s;
@@ -676,9 +714,6 @@ void graph_t::populate(property_tree const &goals, property_tree const &targets,
       dichotomy_hint dh = { dvar_vect(1, dv), property_tree() };
       dichotomize(current_goals, dh, iter_max);
       already = save;
-      return;
-    }
-    dichotomize(current_goals, *dichotomy_it, iter_max);
-    if (contradiction) return;
+#endif
   }
 }
