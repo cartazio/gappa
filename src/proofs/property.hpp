@@ -80,6 +80,9 @@ class property {
   void hull(property const &);
   bool null() const { return real.null(); }
   void clear();
+  bool operator<(property const &r) const;
+  bool operator==(property const &r) const;
+  bool operator!=(property const &r) const { return !(*this == r); }
 };
 
 struct property_vect: std::vector< property > {
@@ -128,6 +131,9 @@ struct property_tree
   data *operator->() { unique(); return ptr; }
   bool empty() const { return !ptr; }
   void negate();
+  bool operator<(property_tree const &t) const;
+  bool operator==(property_tree const &t) const;
+  bool operator!=(property_tree const &t) const { return !(*this == t); }
 
   /**
    * Fills leaves that have an undefined interval with a corresponding

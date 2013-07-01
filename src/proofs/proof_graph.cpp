@@ -550,6 +550,7 @@ void enlarger(node_vect const &nodes)
     for (node_vect::const_iterator j = v.begin(), end = v.end(); j != end; ++j)
       if ((*j)->can_visit()) pending.push_back(*j);
   }
+#if 0
   while (!pending.empty())
   {
     node *n = pending.front();
@@ -560,4 +561,5 @@ void enlarger(node_vect const &nodes)
     for (node_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i)
       if ((*i)->can_visit()) pending.push_back(*i);
   }
+#endif
 }

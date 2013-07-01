@@ -432,18 +432,18 @@ std::string display(ast_real const *r)
   return name;
 }
 
-static id_cache< std::string > displayed_properties;
+static id_cache<property> displayed_properties;
 
 std::string display(property const &p)
 {
+  if (p.null()) return qualify(GAPPADEF) + "contradiction";
+  int p_id = displayed_properties.find(p);
+  std::string name = composite('p', p_id);
+  if (p_id < 0) return name;
   std::ostringstream s;
   predicate_type t = p.real.pred();
   ast_real const *real = p.real.real();
-  if (p.null())
-  {
-    return qualify(GAPPADEF) + "contradiction";
-  }
-  else if (p.real.pred_bnd())
+  if (p.real.pred_bnd())
   {
     interval const &bnd = p.bnd();
     if (lower(bnd) == number::neg_inf) {
@@ -496,12 +496,40 @@ std::string display(property const &p)
       assert(false);
     }
   }
-  std::string s_ = s.str();
-  int p_id = displayed_properties.find(s_);
-  std::string name = composite('p', p_id);
-  if (p_id >= 0)
-    *out << (vernac ? "Notation " : "let ") << name << (vernac ? " := (" : " := ")
-         << s_ << (vernac ? "). (* " : " in (* ") << dump_property(p) << " *)\n";
+  *out << (vernac ? "Notation " : "let ") << name << (vernac ? " := (" : " := ")
+       << s.str() << (vernac ? "). (* " : " in (* ") << dump_property(p) << " *)\n";
+  return name;
+}
+
+static id_cache<property_tree> displayed_trees;
+
+std::string display(property_tree const &t)
+{
+  if (t.empty()) return qualify(GAPPADEF) + "contradiction";
+  int t_id = displayed_trees.find(t);
+  std::string name = composite('s', t_id);
+  if (t_id < 0) return name;
+  auto_flush plouf;
+  plouf << (vernac ? "Notation " : "let ") << name << (vernac ? " := (" : " := ");
+  char const *conn = t->conjunction ? " /\\ " : " \\/ ";
+  bool first = true;
+  for (std::vector<property_tree::leaf>::const_iterator i = t->leaves.begin(),
+       i_end = t->leaves.end(); i != i_end; ++i)
+  {
+    if (first) first = false;
+    else plouf << conn;
+    if (!i->second) plouf << "not ";
+    plouf << display(i->first);
+  }
+  for (std::vector<property_tree>::const_iterator i = t->subtrees.begin(),
+       i_end = t->subtrees.end(); i != i_end; ++i)
+  {
+    if (first) first = false;
+    else plouf << conn;
+    plouf << '(' << display(*i) << ')';
+  }
+  assert(!first);
+  plouf << (vernac ? ").\n" : " in\n");
   return name;
 }
 
@@ -650,19 +678,6 @@ void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_map cons
   if (vernac) plouf << '\n';
 }
 
-void invoke_lemma(auto_flush &plouf, node *n, property_map const &pmap)
-{
-  if (n->type != HYPOTHESIS) {
-    if (vernac) plouf << " apply " << display(n) << '.';
-    else plouf << display(n);
-    invoke_lemma(plouf, n->graph->get_hypotheses(), pmap);
-  } else {
-    property_vect hyp;
-    hyp.push_back(n->get_result());
-    invoke_lemma(plouf, hyp, pmap);
-  }
-}
-
 static void invoke_subset(auto_flush &plouf, property const &p1, property const &p2)
 {
   std::string sn = subset_name(p1, p2);
@@ -676,12 +691,22 @@ static void invoke_subset(auto_flush &plouf, property const &p1, property const 
   plouf << ". 2: finalize.\n";
 }
 
-static void pose_hypothesis(auto_flush &plouf, int num_hyp, node *m, property_map const &pmap)
+/**
+ * Instantiate node @a m as "h @a num_hyp" with the hypotheses of node @a n.
+ */
+static void pose_hypothesis(auto_flush &plouf, int num_hyp, node *m, node *n)
 {
-  plouf << (vernac ? " assert (h" : "  let h") << num_hyp << " : "
-        << display(m->get_result()) << (vernac ? ")." : " := ");
-  if (vernac) invoke_lemma(plouf, m, pmap);
-  else plouf << display(m) << " in\n";
+  plouf << (vernac ? " assert (h" : "  let h") << num_hyp << " := ";
+  int i = 0;
+  graph_t *g = n->graph;
+  for (; g != m->graph; g = g->get_father()) ++i;
+  logic_node *ln = dynamic_cast<logic_node *>(m);
+  if (ln && !ln->before) plouf << 'h' << i;
+  else {
+    plouf << display(m);
+    for (; g; g = g->get_father()) plouf << " h" << (i++);
+  }
+  plouf << (vernac ? ").\n" : " in\n");
 }
 
 static id_cache< node * > displayed_nodes;
@@ -694,40 +719,65 @@ std::string display(node *n)
   if (n_id < 0) return name;
   auto_flush plouf;
   if (vernac) plouf << "Lemma " << name << " : ";
-  else plouf << "let "<< name;
-  property_vect const &n_hyp = n->graph->get_hypotheses();
-  property_map pmap;
+  else plouf << "let " << name << " : ";
   int num_hyp = 0;
-  for (property_vect::const_iterator i = n_hyp.begin(),
-       i_end = n_hyp.end(); i != i_end; ++i)
+  for (graph_t *g = n->graph; g; g = g->get_father())
   {
-    property const &p = *i;
-    if (vernac) plouf << display(p) << " -> ";
-    pmap[p.real] = std::make_pair(num_hyp++, &p);
+    plouf << display(g->get_hypotheses()) << " -> ";
+    ++num_hyp;
   }
-  node_vect const &pred = n->get_subproofs();
-  property const &n_res = n->get_result();
-  std::string p_res, prefix;
-  if (n_res.null()) {
-    p_res = qualify(GAPPADEF) + "contradiction";
-    prefix = "absurd_";
-  } else
-    p_res = display(n_res);
-  plouf << (vernac ? "" : " : ") << p_res << (vernac ? ". (* " : " := (* ")
-        << (!n_res.null() ? dump_property(n_res) : "contradiction") << " *)\n";
-  if (vernac && num_hyp) {
-    plouf << " intros";
-    for(int i = 0; i < num_hyp; ++i) plouf << " h" << i;
-    plouf << ".\n";
+  logic_node *ln = NULL;
+  if (n->type == LOGIC) {
+    ln = dynamic_cast<logic_node *>(n);
+    assert(ln && ln->before);
+    plouf << display(ln->tree);
+  } else {
+    property const &n_res = n->get_result();
+    if (n_res.null())
+      plouf << (qualify(GAPPADEF) + "contradiction");
+    else
+      plouf << display(n_res) << " (* " << dump_property(n_res) << " *)";
+  }
+  plouf << (vernac ? ".\n" : " :=\n");
+  if (num_hyp) {
+    plouf << (vernac ? " intros" : " fun");
+    for (int i = 0; i < num_hyp; ++i) plouf << " h" << i;
+    plouf << (vernac ? ".\n" : " =>\n");
   }
   switch (n->type) {
+  case LOGIC: {
+    pose_hypothesis(plouf, num_hyp++, ln->before, n);
+    if (ln->modifier) pose_hypothesis(plouf, num_hyp, ln->modifier, n);
+    plouf << " (* admit *) ";
+    break; }
+  case LOGICP: {
+    logicp_node *ln = dynamic_cast<logicp_node *>(n);
+    assert(ln && ln->before);
+    pose_hypothesis(plouf, num_hyp, ln->before, n);
+    if (vernac) plouf << " exact";
+    int i = 0;
+    property_tree const &tree = ln->before->tree;
+    int sz = tree->leaves.size(), idx = ln->index;
+    assert(0 <= idx && idx < sz && tree->leaves[idx].first == ln->res);
+    if (!tree->subtrees.empty())
+      plouf << " proj1";
+    else if (idx && idx == sz - 1) {
+      plouf << " proj2";
+      --idx;
+    }
+    for (int i = 0; i < idx; ++i) std::cout << " (proj1";
+    plouf << " h" << num_hyp;
+    for (int i = 0; i < idx; ++i) std::cout << ')';
+    if (vernac) plouf << ".\n";
+    break; }
   case MODUS: {
-    property_map pmap_graph = pmap;
+    property_map pmap;
+    node_vect const &pred = n->get_subproofs();
     for (node_vect::const_iterator i = pred.begin(),
          i_end = pred.end(); i != i_end; ++i)
     {
       node *m = *i;
-      pose_hypothesis(plouf, num_hyp, m, pmap_graph);
+      pose_hypothesis(plouf, num_hyp, m, n);
       property const &res = m->get_result();
       pmap[res.real] = std::make_pair(num_hyp++, &res);
     }
@@ -739,8 +789,11 @@ std::string display(node *n)
     break; }
   case INTERSECTION: {
     property hyps[2];
+    node_vect const &pred = n->get_subproofs();
     int num[2];
-    char const *suffix = "";
+    char const *suffix = "", *prefix = "";
+    property const &n_res = n->get_result();
+    if (n_res.null()) prefix = "absurd_";
     for (int i = 0; i < 2; ++i)
     {
       node *m = pred[i];
@@ -759,13 +812,7 @@ std::string display(node *n)
         default:
           assert(false);
       }
-      if (m->type == HYPOTHESIS) {
-        property_map::iterator pki = pmap.find(res.real);
-        assert(pki != pmap.end());
-        num[i] = pki->second.first;
-        continue;
-      }
-      pose_hypothesis(plouf, num_hyp, m, pmap);
+      pose_hypothesis(plouf, num_hyp, m, n);
       num[i] = num_hyp++;
     }
     if (vernac) {
@@ -778,24 +825,22 @@ std::string display(node *n)
                     n_res, hyps, NULL, num);
     }
     break; }
+#if 0
   case UNION: {
+    node_vect const &pred = n->get_subproofs();
     assert(vernac);
     assert(pred.size() >= 2);
     node *mcase = pred[0];
     property const &pcase = mcase->get_result();
     assert(pcase.real.pred() == PRED_BND);
-    property_map::mapped_type &hcase = pmap[pcase.real];
-    if (mcase->type != HYPOTHESIS) {
-      pose_hypothesis(plouf, num_hyp, mcase, pmap);
-      hcase = std::make_pair(num_hyp, &pcase);
-    }
-    plouf << " generalize h" << hcase.first << ". clear h" << hcase.first << ".\n";
+    pose_hypothesis(plouf, num_hyp, mcase, n);
+    plouf << " generalize h" << num_hyp << ". clear h" << num_hyp << ".\n";
     for(node_vect::const_iterator i = pred.begin() + 1, i_end = pred.end(); i != i_end; ++i) {
       node *m = *i;
-      property_vect const &m_hyp = m->graph->get_hypotheses();
-      hcase.second = &m_hyp[0];
-      plouf << " assert (u : " << display(m_hyp[0]) << " -> " << p_res << ")."
-               " intro h" << hcase.first << ". (* " << m_hyp[0].bnd() << " *)\n";
+      property_tree const &m_hyp = m->graph->get_hypotheses();
+      hcase.second = &m_hyp->leaves[0].first;
+      plouf << " assert (u : " << display(*hcase.second) << " -> " << p_res << ")."
+               " intro h" << hcase.first << ". (* " << hcase.second->bnd() << " *)\n";
       property const &res = m->get_result();
       if (!res.null()) // not a contradictory result
         invoke_subset(plouf, res, n_res);
@@ -806,27 +851,7 @@ std::string display(node *n)
         plouf << " exact u.\n";
     }
     break; }
-  case GOAL: {
-    node *m = pred[0];
-    if (vernac) {
-      invoke_subset(plouf, m->get_result(), n_res);
-      invoke_lemma(plouf, m, pmap);
-    } else {
-      property const &res = m->get_result();
-      std::string sn = subset_name(res, n_res);
-      if (!sn.empty()) {
-        plouf << "  let h" << num_hyp << " : " << display(res) << " := "
-              << display(m) << " in ";
-        pmap[res.real] = std::make_pair(num_hyp++, &res);
-        apply_theorem(plouf, sn, n_res, &res, &pmap);
-      } else
-        plouf << "  " << display(m);
-    }
-    break; }
-  case HYPOTHESIS: {
-    assert(!vernac);
-    invoke_lemma(plouf, n, pmap);
-    break; }
+#endif
   }
   plouf << (vernac ? "Qed.\n" : " in\n");
   return name;

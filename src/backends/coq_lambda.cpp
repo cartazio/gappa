@@ -47,30 +47,19 @@ std::string coq_lambda_backend::rewrite
 
 std::string coq_lambda_backend::theorem(node *n)
 {
-  int nb_hyps = n->graph->get_hypotheses().size();
-  if (n->type == GOAL && n->get_subproofs()[0]->type == HYPOTHESIS) nb_hyps = 1;
-  *out << "(* " << nb_hyps;
-  if (n->get_result().null()) *out << ",contradiction";
-  *out << " *)\n(";
+  *out << '(';
   std::ostringstream buf_var, buf_lem, buf_hyp, buf_prf;
   std::ostream *old_out;
   old_out = out;
   out_vars = &buf_var;
   out = &buf_lem;
-  property_vect const &n_hyp = n->graph->get_hypotheses();
-  int num_hyp = 0;
-  for (property_vect::const_iterator i = n_hyp.begin(),
-       i_end = n_hyp.end(); i != i_end; ++i)
-  {
-    buf_hyp << " (h" << num_hyp << " : " << display(*i) << ')';
-    ++num_hyp;
-  }
+  buf_hyp << " (h0 : " << display(n->graph->get_hypotheses()) << ')';
   out = &buf_prf;
   std::string s = display(n);
   out = old_out;
   if (!buf_var.str().empty()) *out << "fun" << buf_var.str() << " =>\n";
   *out << buf_lem.str();
-  if (num_hyp) *out << "fun" << buf_hyp.str() << " =>\n";
+  *out << "fun" << buf_hyp.str() << " =>\n";
   *out << buf_prf.str() << s << ")\n";
   return s;
 }

@@ -18,6 +18,7 @@ class interval;
 class number;
 class predicated_real;
 class property;
+class property_tree;
 class property_vect;
 class theorem_node;
 
@@ -42,6 +43,7 @@ std::string display(number const &f);
 std::string display(interval const &i);
 std::string display(ast_real const *r);
 std::string display(property const &p);
+std::string display(property_tree const &p);
 std::string display(theorem_node *t);
 std::string display(node *n);
 

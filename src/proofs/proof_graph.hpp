@@ -79,12 +79,11 @@ struct node
 };
 
 /** Node of type ::LOGIC. */
-class logic_node: public node
+struct logic_node: node
 {
   logic_node *before;
   node *modifier;
   int index;
- public:
   property_tree tree;
   logic_node(property_tree const &, logic_node *, node *);
   logic_node(property_tree const &, logic_node *, int);
@@ -97,12 +96,11 @@ class logic_node: public node
 };
 
 /** Node of type ::LOGICP. */
-class logicp_node: public node
+struct logicp_node: node
 {
   logic_node *before;
   property res;
   int index;
- public:
   logicp_node(property const &, logic_node *, int);
   virtual ~logicp_node();
   virtual property const &get_result() const { return res; }
@@ -165,6 +163,7 @@ class graph_t
   bool try_node(node *&);
   /** Returns the hypotheses #hyps of this graph. */
   property_tree const &get_hypotheses() const { return hyps; }
+  graph_t *get_father() const { return father; }
   bool dominates(graph_t const *) const;
   void populate(property_tree const &, dichotomy_sequence const &, int, undefined_map *);
   void dichotomize(dichotomy_hint const &, int);

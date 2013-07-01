@@ -125,7 +125,6 @@ void property::intersect(property const &p) {
   }
 }
 
-
 void property::hull(property const &p) {
   assert(real == p.real);
   switch (real.pred()) {
@@ -137,6 +136,25 @@ void property::hull(property const &p) {
   case PRED_EQL:
   case PRED_NZR: break;
   }
+}
+
+bool property::operator<(property const &r) const
+{
+  if (real != r.real) return real < r.real;
+  if (real.pred_cst()) return store._int < r.store._int;
+  if (!real.pred_bnd()) return false;
+  if (!is_defined(_bnd())) return is_defined(r._bnd());
+  return lower(_bnd()) < lower(r._bnd()) ||
+    (lower(_bnd()) == lower(r._bnd()) && upper(_bnd()) < upper(r._bnd()));
+}
+
+bool property::operator==(property const &r) const
+{
+  if (real != r.real) return false;
+  if (real.pred_cst()) return store._int == r.store._int;
+  if (!real.pred_bnd()) return true;
+  if (!is_defined(_bnd())) return !is_defined(_bnd());
+  return lower(_bnd()) == lower(r._bnd()) && upper(_bnd()) == upper(r._bnd());
 }
 
 bool property_vect::implies(property_vect const &s) const {
@@ -162,6 +180,26 @@ void property_tree::unique() {
     --ptr->ref;
     ptr = p;
   }
+}
+
+bool property_tree::operator<(property_tree const &t) const
+{
+  if (!ptr) return t.ptr;
+  if (ptr == t.ptr) return false;
+  if (ptr->conjunction < t.ptr->conjunction) return true;
+  if (ptr->conjunction == t.ptr->conjunction) return false;
+  if (ptr->leaves < t.ptr->leaves) return true;
+  if (ptr->leaves == t.ptr->leaves) return false;
+  return ptr->subtrees < t.ptr->subtrees;
+}
+
+bool property_tree::operator==(property_tree const &t) const
+{
+  if (!ptr) return !t.ptr;
+  if (ptr == t.ptr) return true;
+  if (ptr->conjunction != t.ptr->conjunction) return false;
+  if (ptr->leaves != t.ptr->leaves) return false;
+  return ptr->subtrees == t.ptr->subtrees;
 }
 
 void property_tree::flatten()
