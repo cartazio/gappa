@@ -83,7 +83,6 @@ int main(int argc, char **argv)
     std::cerr << "Warning: no path was found for " << dump_real(*i) << ".\n";
   }
   bool globally_proven = true;
-  if (proof_generator) proof_generator->reset();
   undefined_map umap;
   graph_t *g = new graph_t(NULL, context);
   g->populate(property_tree(), dichotomies, 100*1000*1000, &umap);

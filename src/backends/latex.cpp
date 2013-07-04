@@ -243,7 +243,6 @@ struct latex_backend: backend
   void initialize(std::ostream &o) { out = &o;
     std::cout << "\\documentclass{article}\n\\begin{document}\n"; }
   void finalize() { std::cout << "\\end{document}\n"; }
-  void reset() { displayed_nodes.clear(); }
   virtual std::string rewrite(ast_real const *, ast_real const *, pattern_cond_vect const &);
   virtual std::string theorem(node *n) { return display(n); }
 };

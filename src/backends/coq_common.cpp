@@ -958,9 +958,4 @@ std::string display(node *n)
   return name;
 }
 
-void reset()
-{
-  displayed_nodes.clear();
-}
-
 }

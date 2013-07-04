@@ -28,7 +28,6 @@ struct backend
   backend(std::string const &);
   virtual void initialize(std::ostream &) = 0;
   virtual std::string rewrite(ast_real const *, ast_real const *, pattern_cond_vect const &) = 0;
-  virtual void reset() = 0;
   virtual std::string theorem(node *) = 0;
   virtual void finalize() = 0;
   virtual ~backend() {}
