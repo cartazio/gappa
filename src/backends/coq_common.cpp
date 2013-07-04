@@ -922,33 +922,37 @@ std::string display(node *n)
                     n_res, hyps, NULL, num);
     }
     break; }
-#if 0
   case UNION: {
     node_vect const &pred = n->get_subproofs();
+    property const &n_res = n->get_result();
     assert(vernac);
     assert(pred.size() >= 2);
     node *mcase = pred[0];
     property const &pcase = mcase->get_result();
     assert(pcase.real.pred() == PRED_BND);
     pose_hypothesis(plouf, num_hyp, mcase, n);
-    plouf << " generalize h" << num_hyp << ". clear h" << num_hyp << ".\n";
-    for(node_vect::const_iterator i = pred.begin() + 1, i_end = pred.end(); i != i_end; ++i) {
+    plouf << " revert h" << num_hyp << ".\n";
+    for (node_vect::const_iterator i = pred.begin() + 1,
+         i_end = pred.end(); i != i_end; ++i)
+    {
       node *m = *i;
       property_tree const &m_hyp = m->graph->get_hypotheses();
-      hcase.second = &m_hyp->leaves[0].first;
-      plouf << " assert (u : " << display(*hcase.second) << " -> " << p_res << ")."
-               " intro h" << hcase.first << ". (* " << hcase.second->bnd() << " *)\n";
+      property const &p = m_hyp->leaves[0].first;
+      plouf << " assert (u : " << display(p) << " -> " << display(n_res) << ")."
+               " intro h" << num_hyp << ". (* " << p.bnd() << " *)\n";
       property const &res = m->get_result();
       if (!res.null()) // not a contradictory result
         invoke_subset(plouf, res, n_res);
-      invoke_lemma(plouf, m, pmap);
+      plouf << (res.null() ? " elim " : " apply ")
+        << display(m) << ". exact h" << num_hyp << '.';
+      for (int j = 0; j != num_hyp; ++j) plouf << " exact h" << j << '.';
+      plouf << '\n';
       if (i + 1 != i_end)
         plouf << " next_interval (union) u.\n";
       else
         plouf << " exact u.\n";
     }
     break; }
-#endif
   }
   plouf << (vernac ? "Qed.\n" : " in\n");
   return name;
