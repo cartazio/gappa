@@ -436,7 +436,7 @@ static id_cache<property> displayed_properties;
 
 std::string display(property const &p)
 {
-  if (p.null()) return qualify(GAPPADEF) + "contradiction";
+  if (p.null()) return "False";
   int p_id = displayed_properties.find(p);
   std::string name = composite('p', p_id);
   if (p_id < 0) return name;
@@ -505,7 +505,7 @@ static id_cache<property_tree> displayed_trees;
 
 std::string display(property_tree const &t)
 {
-  if (t.empty()) return qualify(GAPPADEF) + "contradiction";
+  if (t.empty()) return "False";
   int t_id = displayed_trees.find(t);
   std::string name = composite('s', t_id);
   if (t_id < 0) return name;
@@ -709,6 +709,95 @@ static void pose_hypothesis(auto_flush &plouf, int num_hyp, node *m, node *n)
   plouf << (vernac ? ").\n" : " in\n");
 }
 
+typedef std::map<ast_real const *, int> real_map;
+
+static int find_real(real_map &rm, ast_real const *r)
+{
+  real_map::const_iterator i = rm.find(r);
+  if (i == rm.end()) {
+    int j = rm.size();
+    rm[r] = j;
+    return j;
+  }
+  return i->second;
+}
+
+static void reify(auto_flush &plouf, real_map &rm, property const &p)
+{
+  switch (p.real.pred()) {
+  case PRED_BND:
+    plouf << "Abnd " << find_real(rm, p.real.real()) << "%nat " << display(p.bnd());
+    break;
+  case PRED_ABS:
+    plouf << "Aabs " << find_real(rm, p.real.real()) << "%nat " << display(p.bnd());
+    break;
+  case PRED_REL:
+    plouf << "Arel " << find_real(rm, p.real.real()) << "%nat " << find_real(rm, p.real.real2()) << "%nat " << display(p.bnd());
+    break;
+  case PRED_FIX:
+    plouf << "Afix " << find_real(rm, p.real.real()) << "%nat (" << p.cst() << ")%Z";
+    break;
+  case PRED_FLT:
+    plouf << "Aflt " << find_real(rm, p.real.real()) << "%nat " << p.cst() << "%positive";
+    break;
+  case PRED_NZR:
+    plouf << "Anzr " << find_real(rm, p.real.real()) << "%nat";
+    break;
+  case PRED_EQL:
+    plouf << "Aeql " << find_real(rm, p.real.real()) << "%nat " << find_real(rm, p.real.real2()) << "%nat";
+    break;
+  }
+}
+
+static void reify(auto_flush &plouf, real_map &rm, property_tree const &t)
+{
+  assert(!t.empty());
+  plouf << "(Ttree " << (t->conjunction ? "true" : "false") << ' ';
+  for (std::vector<property_tree::leaf>::const_iterator i = t->leaves.begin(),
+       i_end = t->leaves.end(); i != i_end; ++i)
+  {
+    plouf << "(List.cons (Atom (";
+    reify(plouf, rm, i->first);
+    plouf << ") " << (i->second ? "true" : "false") << ") ";
+  }
+  plouf << "List.nil" << std::string(t->leaves.size(), ')') << ' ';
+  for (std::vector<property_tree>::const_iterator i = t->subtrees.begin(),
+       i_end = t->subtrees.end(); i != i_end; ++i)
+  {
+    plouf << "(List.cons ";
+    reify(plouf, rm, *i);
+    plouf << ' ';
+  }
+  plouf << "List.nil" << std::string(t->subtrees.size(), ')') << ')';
+}
+
+static void simplification(auto_flush &plouf, property_tree const &before, property_tree const &after, property const &mod, int num_hyp)
+{
+  real_map rm;
+  if (vernac) plouf << " refine ";
+  plouf << "(simplify ";
+  reify(plouf, rm, before);
+  plouf << ' ';
+  if (after.empty()) plouf << "(Ttree false List.nil List.nil)";
+  else reify(plouf, rm, after);
+  plouf << " (";
+  reify(plouf, rm, mod);
+  plouf << ") ";
+  std::vector<ast_real const *> inv(rm.size(), NULL);
+  for (real_map::const_iterator i = rm.begin(), i_end = rm.end(); i != i_end; ++i)
+  {
+    inv[i->second] = i->first;
+  }
+  for (std::vector<ast_real const *>::const_iterator i = inv.begin(),
+       i_end = inv.end(); i != i_end; ++i)
+  {
+    plouf << "(List.cons " << display(*i) << ' ';
+  }
+  plouf << "List.nil" << std::string(rm.size(), ')')
+     << " h" << num_hyp << " h" << (num_hyp - 1) << " _)";
+  if (vernac) plouf << " ; finalize.\n";
+}
+
 static id_cache< node * > displayed_nodes;
 
 std::string display(node *n)
@@ -734,7 +823,7 @@ std::string display(node *n)
   } else {
     property const &n_res = n->get_result();
     if (n_res.null())
-      plouf << (qualify(GAPPADEF) + "contradiction");
+      plouf << "False";
     else
       plouf << display(n_res) << " (* " << dump_property(n_res) << " *)";
   }
@@ -747,8 +836,9 @@ std::string display(node *n)
   switch (n->type) {
   case LOGIC: {
     pose_hypothesis(plouf, num_hyp++, ln->before, n);
-    if (ln->modifier) pose_hypothesis(plouf, num_hyp, ln->modifier, n);
-    plouf << " (* admit *) ";
+    assert(ln->modifier);
+    pose_hypothesis(plouf, num_hyp, ln->modifier, n);
+    simplification(plouf, ln->before->tree, ln->tree, ln->modifier->get_result(), num_hyp);
     break; }
   case LOGICP: {
     logicp_node *ln = dynamic_cast<logicp_node *>(n);
