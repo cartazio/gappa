@@ -47,18 +47,13 @@ std::string coq_lambda_backend::rewrite
 std::string coq_lambda_backend::theorem(node *n)
 {
   *out << '(';
-  std::ostringstream buf_var, buf_lem, buf_hyp, buf_prf;
-  std::ostream *old_out;
-  old_out = out;
+  std::ostringstream buf_var, buf_prf;
+  std::ostream *old_out = out;
   out_vars = &buf_var;
-  out = &buf_lem;
-  buf_hyp << " (h0 : " << display(n->graph->get_hypotheses()) << ')';
   out = &buf_prf;
   std::string s = display(n);
   out = old_out;
   if (!buf_var.str().empty()) *out << "fun" << buf_var.str() << " =>\n";
-  *out << buf_lem.str();
-  *out << "fun" << buf_hyp.str() << " =>\n";
   *out << buf_prf.str() << s << ")\n";
   return s;
 }
