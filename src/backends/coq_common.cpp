@@ -798,6 +798,24 @@ static void simplification(auto_flush &plouf, property_tree const &before, prope
   if (vernac) plouf << " ; finalize.\n";
 }
 
+static void select(auto_flush &plouf, property_tree const &t, int idx, int num_hyp)
+{
+  assert(!t.empty());
+  int sz = t->leaves.size() + t->subtrees.size();
+  assert (0 <= idx && idx < sz);
+  if (vernac) plouf << " exact (";
+  if (sz != 1) {
+    if (idx == sz - 1) {
+      plouf << "proj2";
+      --idx;
+    } else plouf << "proj1";
+  }
+  for (int i = 0; i < idx; ++i) plouf << " (proj2";
+  plouf << " h" << num_hyp;
+  for (int i = 0; i < idx; ++i) plouf << ')';
+  if (vernac) plouf << ").\n";
+}
+
 static id_cache< node * > displayed_nodes;
 
 std::string display(node *n)
@@ -835,30 +853,19 @@ std::string display(node *n)
   }
   switch (n->type) {
   case LOGIC: {
-    pose_hypothesis(plouf, num_hyp++, ln->before, n);
-    assert(ln->modifier);
-    pose_hypothesis(plouf, num_hyp, ln->modifier, n);
-    simplification(plouf, ln->before->tree, ln->tree, ln->modifier->get_result(), num_hyp);
+    pose_hypothesis(plouf, num_hyp, ln->before, n);
+    if (ln->modifier) {
+      pose_hypothesis(plouf, ++num_hyp, ln->modifier, n);
+      simplification(plouf, ln->before->tree, ln->tree, ln->modifier->get_result(), num_hyp);
+    } else {
+      select(plouf, ln->before->tree, ln->index, num_hyp);
+    }
     break; }
   case LOGICP: {
     logicp_node *ln = dynamic_cast<logicp_node *>(n);
     assert(ln && ln->before);
     pose_hypothesis(plouf, num_hyp, ln->before, n);
-    if (vernac) plouf << " exact";
-    int i = 0;
-    property_tree const &tree = ln->before->tree;
-    int sz = tree->leaves.size(), idx = ln->index;
-    assert(0 <= idx && idx < sz && tree->leaves[idx].first == ln->res);
-    if (!tree->subtrees.empty())
-      plouf << " proj1";
-    else if (idx && idx == sz - 1) {
-      plouf << " proj2";
-      --idx;
-    }
-    for (int i = 0; i < idx; ++i) std::cout << " (proj1";
-    plouf << " h" << num_hyp;
-    for (int i = 0; i < idx; ++i) std::cout << ')';
-    if (vernac) plouf << ".\n";
+    select(plouf, ln->before->tree, ln->index, num_hyp);
     break; }
   case MODUS: {
     property_map pmap;
