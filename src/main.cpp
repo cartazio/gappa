@@ -95,6 +95,7 @@ int main(int argc, char **argv)
   if (node *n = g->get_contradiction()) {
     if (proof_generator) {
       enlarger(node_vect(1, n));
+      instances = &umap;
       proof_generator->theorem(n);
     }
   } else {

@@ -501,6 +501,16 @@ std::string display(property const &p)
   return name;
 }
 
+static property const &fetch(property const &p)
+{
+  if (p.real.pred_bnd() && !is_defined(p.bnd())) {
+    undefined_map::const_iterator i = instances->find(p.real);
+    assert(i != instances->end());
+    return i->second;
+  }
+  return p;
+}
+
 static id_cache<property_tree> displayed_trees;
 
 std::string display(property_tree const &t)
@@ -519,7 +529,7 @@ std::string display(property_tree const &t)
     if (first) first = false;
     else plouf << conn;
     if (!i->second) plouf << "not ";
-    plouf << display(i->first);
+    plouf << display(fetch(i->first));
   }
   for (std::vector<property_tree>::const_iterator i = t->subtrees.begin(),
        i_end = t->subtrees.end(); i != i_end; ++i)
@@ -757,7 +767,7 @@ static void reify(auto_flush &plouf, real_map &rm, property_tree const &t)
        i_end = t->leaves.end(); i != i_end; ++i)
   {
     plouf << "(List.cons (Atom (";
-    reify(plouf, rm, i->first);
+    reify(plouf, rm, fetch(i->first));
     plouf << ") " << (i->second ? "true" : "false") << ") ";
   }
   plouf << "List.nil" << std::string(t->leaves.size(), ')') << ' ';

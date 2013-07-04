@@ -21,7 +21,10 @@
 struct node;
 struct ast_real;
 struct pattern_cond;
+struct predicated_real;
+struct property;
 typedef std::vector< pattern_cond > pattern_cond_vect;
+typedef std::map<predicated_real, property> undefined_map;
 
 struct backend
 {
@@ -36,6 +39,7 @@ struct backend
 };
 
 extern std::ostream *out;
+extern undefined_map const *instances;
 
 struct auto_flush: std::ostringstream {
   ~auto_flush() { *::out << str(); }

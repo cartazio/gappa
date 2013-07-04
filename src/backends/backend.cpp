@@ -13,6 +13,7 @@
 #include "backends/backend.hpp"
 
 std::ostream *out;
+undefined_map const *instances;
 
 typedef std::map< std::string, backend * > backend_map;
 static static_ptr<backend_map> backends;
