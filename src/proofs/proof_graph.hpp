@@ -90,7 +90,7 @@ struct logic_node: node
   logic_node(property_tree const &t)
     : node(LOGIC, top_graph), before(NULL), modifier(NULL), tree(t) {}
   virtual ~logic_node();
-  virtual property const &get_result() const { assert(false); }
+  virtual property const &get_result() const;
   virtual property maximal_for(node const *) const { assert(false); }
   virtual void enlarge(property const &) { assert(false); }
 };

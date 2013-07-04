@@ -240,6 +240,13 @@ logic_node::~logic_node()
   if (modifier) modifier->remove_succ(this);
 }
 
+property const &logic_node::get_result() const
+{
+  assert(tree.empty());
+  static property p;
+  return p;
+}
+
 logicp_node::logicp_node(property const &p, logic_node *n, int i)
   : node(LOGICP, top_graph), res(p), before(n), index(i)
 {
