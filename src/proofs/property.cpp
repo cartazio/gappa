@@ -187,9 +187,9 @@ bool property_tree::operator<(property_tree const &t) const
   if (!ptr) return t.ptr;
   if (ptr == t.ptr) return false;
   if (ptr->conjunction < t.ptr->conjunction) return true;
-  if (ptr->conjunction == t.ptr->conjunction) return false;
+  if (ptr->conjunction != t.ptr->conjunction) return false;
   if (ptr->leaves < t.ptr->leaves) return true;
-  if (ptr->leaves == t.ptr->leaves) return false;
+  if (ptr->leaves != t.ptr->leaves) return false;
   return ptr->subtrees < t.ptr->subtrees;
 }
 
