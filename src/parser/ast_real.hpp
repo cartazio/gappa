@@ -18,7 +18,6 @@
 #include <vector>
 #include <boost/blank.hpp>
 #include <boost/variant/get.hpp>
-#include <boost/variant/recursive_wrapper.hpp>
 #include <boost/variant/variant.hpp>
 
 struct ast_number {
@@ -79,9 +78,8 @@ struct real_op {
   real_op(function_class const *f, ast_real const *o): ops(1, o), fun(f), type(ROP_FUN) {}
   real_op(real_op_type t, ast_real const *o): ops(1, o), fun(NULL), type(t) {}
   real_op(ast_real const *l, real_op_type t, ast_real const *r): fun(NULL), type(t) { ops.push_back(l); ops.push_back(r); }
-  bool operator==(real_op const &v) const { return type == v.type && fun == v.fun && ops == v.ops; }
-  bool operator<(real_op const &v) const
-  { return type < v.type || (type == v.type && (fun < v.fun || (fun == v.fun && ops < v.ops))); }
+  bool operator==(real_op const &v) const;
+  bool operator<(real_op const &v) const;
 };
 
 struct ast_ident;

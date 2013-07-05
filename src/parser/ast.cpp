@@ -65,13 +65,25 @@ cache< T >::~cache() {
   #endif
 }
 
-bool ast_real::operator==(ast_real const &v) const {
+bool real_op::operator==(real_op const &v) const
+{
+  return type == v.type && fun == v.fun && ops == v.ops;
+}
+
+bool real_op::operator<(real_op const &v) const
+{
+  return type < v.type || (type == v.type && (fun < v.fun || (fun == v.fun && ops < v.ops)));
+}
+
+bool ast_real::operator==(ast_real const &v) const
+{
   if (boost::get< undefined_real const >(this) && boost::get< undefined_real const >(&v))
     return name == v.name;
   return ast_real_aux::operator==(static_cast< ast_real_aux const & >(v));
 }
 
-bool ast_real::operator<(ast_real const &v) const {
+bool ast_real::operator<(ast_real const &v) const
+{
   if (boost::get< undefined_real const >(this) && boost::get< undefined_real const >(&v))
     return name < v.name;
   return ast_real_aux::operator<(static_cast< ast_real_aux const & >(v));

@@ -15,9 +15,9 @@
 #include <cassert>
 #include <list>
 #include <map>
+#include <set>
 #include <vector>
 #include "numbers/interval.hpp"
-#include "parser/ast_real.hpp"
 
 enum predicate_type
 {
@@ -26,7 +26,10 @@ enum predicate_type
   PRED_EQL = 8, PRED_NZR
 };
 
-class predicated_real {
+struct ast_real;
+
+class predicated_real
+{
   long d1, d2;
  public:
   predicated_real(): d1(0), d2(0) {}
