@@ -145,8 +145,8 @@ class modus_node: public dependent_node
 class graph_t
 {
   graph_t *father;        /**< Parent graph. */
-  node_set nodes;         /**< Nodes owned by this graph. Each node can be proved in the context of #hyp. */
-  node_map known_reals;   /**< Best node implied by #hyp for each real. */
+  node_set nodes;         /**< Nodes owned by this graph. Each node can be proved in the context of #hyps. */
+  node_map known_reals;   /**< Best node implied by #hyps for each real. */
   property_tree hyps;     /**< Hypotheses of this graph. They supplement the ones from #father graph. */
   node *contradiction;    /**< Node proving an empty result, thus proving anything. */
   std::list<logic_node *> trees; /**< Hypothesis trees not yet reduced to a single property.*/

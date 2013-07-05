@@ -428,7 +428,6 @@ void dichotomy_helper::dichotomize()
 
 /**
  * Applies a ::dichotomy_hint.
- * @param goals subset of the user goal that drives the bisection.
  */
 void graph_t::dichotomize(dichotomy_hint const &hint, int iter_max)
 {
