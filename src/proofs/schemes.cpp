@@ -572,7 +572,7 @@ static bool split_hypotheses(std::list<logic_node *> &trees, property_tree &targ
     logic_node *n = *j;
     property_tree const &hyp = n->tree;
     assert(!hyp.empty());
-    if (hyp.atom && !hyp.conjunction) continue;
+    if (!hyp.conjunction) continue;
     if (!hyp.left) {
       if (insert_atom(n, *hyp.atom, 0, trees, targets, pending_schemes))
         return true;

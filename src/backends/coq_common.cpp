@@ -723,6 +723,7 @@ static int find_real(real_map &rm, ast_real const *r)
 
 static void reify(auto_flush &plouf, real_map &rm, property const &p)
 {
+  assert(!p.real.pred_bnd() || is_bounded(p.bnd()));
   switch (p.real.pred()) {
   case PRED_BND:
     plouf << "Abnd " << find_real(rm, p.real.real()) << "%nat " << display(p.bnd());
@@ -758,9 +759,9 @@ static void reify(auto_flush &plouf, real_map &rm, property_tree const &t)
     reify(plouf, rm, *t.right);
     plouf << ')';
   } else {
-    plouf << "(Tatom " << (t.conjunction ? "true" : "false") << ' ';
+    plouf << "(Tatom " << (t.conjunction ? "true" : "false") << " (";
     reify(plouf, rm, fetch(*t.atom));
-    plouf << ')';
+    plouf << "))";
   }
 }
 
@@ -841,12 +842,13 @@ std::string display(node *n)
       pose_hypothesis(plouf, ++num_hyp, ln->modifier, n);
       simplification(plouf, ln->before->tree, ln->tree, ln->modifier->get_result(), num_hyp);
     } else {
+      assert(ln->before->tree.conjunction);
       select(plouf, ln->index, num_hyp);
     }
     break; }
   case LOGICP: {
     logicp_node *ln = dynamic_cast<logicp_node *>(n);
-    assert(ln && ln->before);
+    assert(ln && ln->before && ln->before->tree.conjunction);
     pose_hypothesis(plouf, num_hyp, ln->before, n);
     select(plouf, ln->index, num_hyp);
     break; }
