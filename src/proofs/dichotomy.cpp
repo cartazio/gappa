@@ -288,9 +288,7 @@ dichotomy_node::~dichotomy_node()
 dicho_graph dichotomy_helper::try_hypothesis(dichotomy_failure *exn,
   bool remove_left, bool remove_right) const
 {
-  property_tree::data *td = new property_tree::data(true);
-  td->leaves.push_back(property_tree::leaf(tmp_hyp, true));
-  graph_t *g = new graph_t(top_graph, property_tree(td));
+  graph_t *g = new graph_t(top_graph, property_tree(tmp_hyp));
 
 #if 0
   property_tree current_goals = goals;
@@ -341,8 +339,8 @@ void dichotomy_helper::try_graph(dicho_graph g2)
   }
   if (proof_generator && gen->merge())
   {
-    property p(g1.first->get_hypotheses()->leaves[0].first);
-    p.bnd() = interval(lower(p.bnd()), upper(g2.first->get_hypotheses()->leaves[0].first.bnd()));
+    property p(*g1.first->get_hypotheses().atom);
+    p.bnd() = interval(lower(p.bnd()), upper(g2.first->get_hypotheses().atom->bnd()));
     tmp_hyp = p;
     iter_max = g1.second + g2.second;
     dicho_graph g = try_hypothesis(NULL, graphs->graphs.empty(), false);
@@ -461,6 +459,7 @@ void graph_t::dichotomize(dichotomy_hint const &hint, int iter_max)
     targets = hint.dst;
     graph_t *g = this;
     while (g->father) g = g->father;
+    targets.negate();
     targets.fill_undefined(g->hyps);
     if (targets.empty()) {
       if (warning_dichotomy_failure)

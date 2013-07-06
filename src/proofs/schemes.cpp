@@ -528,15 +528,15 @@ static void reduce_hypotheses(node *n, std::list<logic_node *> &trees, logic_nod
   while (i != trees.end())
   {
     if (*i == excluded) { ++i; continue; }
-    property_tree t = (*i)->tree;
-    bool changed = false;
-    int v = t.simplify(n->get_result(), true, true, umap, &changed);
+    property_tree t;
+    bool changed;
+    int v = (*i)->tree.try_simplify(n->get_result(), true, umap, changed, t);
     if (v > 0) {
       (*i)->remove_known();
       i = trees.erase(i);
       continue;
     }
-    if (changed) {
+    if (changed || v < 0) {
       logic_node *m = new logic_node(t, *i, n);
       if (v < 0) { top_graph->set_contradiction(m); return; }
       ++m->nb_good;
@@ -544,6 +544,20 @@ static void reduce_hypotheses(node *n, std::list<logic_node *> &trees, logic_nod
     }
     ++i;
   }
+}
+
+static bool insert_atom(logic_node *n, property const &p, int i, std::list<logic_node *> &trees, property_tree &targets, scheme_queue *pending_schemes)
+{
+  if (!top_graph->try_property(p)) return false;
+  //std::cerr << "Creating node for " << dump_property(p) << '\n';
+  node *m = new logicp_node(p, n, i);
+  top_graph->insert_node(m);
+  if (top_graph->get_contradiction()) return true;
+  if (!targets.empty() && targets.simplify(m->get_result()) < 0) return true;
+  reduce_hypotheses(m, trees, n, NULL);
+  if (top_graph->get_contradiction()) return true;
+  if (pending_schemes) insert_dependent(*pending_schemes, p.real);
+  return false;
 }
 
 /**
@@ -558,39 +572,19 @@ static bool split_hypotheses(std::list<logic_node *> &trees, property_tree &targ
     logic_node *n = *j;
     property_tree const &hyp = n->tree;
     assert(!hyp.empty());
-    size_t sz = hyp->leaves.size() + hyp->subtrees.size();
-    if (!hyp->conjunction && sz > 1) continue;
-    if (sz == 1) {
-      assert(hyp->subtrees.empty());
-      if (!hyp->leaves[0].second) continue;
-    }
-    for (std::vector<property_tree::leaf>::const_iterator i = hyp->leaves.begin(),
-         i_end = hyp->leaves.end(); i != i_end; ++i)
+    if (hyp.atom && !hyp.conjunction) continue;
+    if (!hyp.left) {
+      if (insert_atom(n, *hyp.atom, 0, trees, targets, pending_schemes))
+        return true;
+    } else for (int i = 0; i != 2; ++i)
     {
-      if (!i->second) {
-        property_tree::data *d = new property_tree::data(true);
-        d->leaves.push_back(*i);
-        logic_node *m = new logic_node(property_tree(d), n, &*i - &hyp->leaves[0]);
+      property_tree const *t = i ? hyp.right : hyp.left;
+      if (t->left || !t->conjunction) {
+        logic_node *m = new logic_node(*t, n, i + 1);
         ++m->nb_good;
         trees.push_back(m);
-      } else if (top_graph->try_property(i->first)) {
-        //std::cout << "Creating node for " << dump_property(i->first) << '\n';
-        node *m = new logicp_node(i->first, n, &*i - &hyp->leaves[0]);
-        top_graph->insert_node(m);
-        if (top_graph->get_contradiction()) return true;
-        if (!targets.empty() &&
-            targets.simplify(m->get_result(), true, false, NULL, NULL) > 0) return true;
-        reduce_hypotheses(m, trees, n, NULL);
-        if (top_graph->get_contradiction()) return true;
-        if (pending_schemes) insert_dependent(*pending_schemes, i->first.real);
-      }
-    }
-    for (std::vector<property_tree>::const_iterator i = hyp->subtrees.begin(),
-         i_end = hyp->subtrees.end(); i != i_end; ++i)
-    {
-      logic_node *m = new logic_node(*i, n, &*i - &hyp->subtrees[0] + hyp->leaves.size());
-      ++m->nb_good;
-      trees.push_back(m);
+      } else if (insert_atom(n, *t->atom, i + 1, trees, targets, pending_schemes))
+        return true;
     }
     n->remove_known();
     trees.erase(j);
@@ -651,7 +645,7 @@ void graph_t::populate(property_tree const &targets,
         // The scheme did not find anything new.
         continue;
       }
-      //std::cout << dump_property(res) << '\t' << typeid(*s).name() << '\n';
+      //std::cerr << dump_property(res) << '\t' << name << '\n';
       node *n = create_theorem(s->needed_reals.size(), hyps, res, name, s);
       insert_node(n);
       if (!s->score) s->score = scheme_queue::success;
@@ -663,8 +657,7 @@ void graph_t::populate(property_tree const &targets,
       reduce_hypotheses(n, trees, NULL, NULL);
       if (contradiction) return;
       if (split_hypotheses(trees, current_targets, &missing_schemes)) return;
-      if (!current_targets.empty() &&
-          current_targets.simplify(n->get_result(), true, false, NULL, NULL) > 0) return;
+      if (!current_targets.empty() && current_targets.simplify(n->get_result()) < 0) return;
     }
     if (iter > iter_max)
       std::cerr << "Warning: maximum number of iterations reached.\n";

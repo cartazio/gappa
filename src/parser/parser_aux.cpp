@@ -103,29 +103,28 @@ static property generate_property(ast_atom const &p, bool goal)
 
 static void generate_tree(property_tree &tree, ast_prop const *p, bool positive)
 {
+  assert(tree.empty());
   switch (p->type) {
   case PROP_ATOM:
-    tree->leaves.push_back(property_tree::leaf
-      (generate_property(*p->atom, positive), positive));
+    tree.atom = new property(generate_property(*p->atom, positive));
+    tree.conjunction = positive;
     break;
   case PROP_IMPL:
   case PROP_AND:
-  case PROP_OR: {
-    property_tree *dst = &tree;
-    bool conjunction = (p->type == PROP_AND) ^ !positive;
-    if (tree->conjunction != conjunction) {
-      tree->subtrees.push_back(new property_tree::data(conjunction));
-      dst = &tree->subtrees.back();
-    }
-    generate_tree(*dst, p->lhs, positive ^ (p->type == PROP_IMPL));
-    generate_tree(*dst, p->rhs, positive);
-    break; }
+  case PROP_OR:
+    tree.left = new property_tree;
+    tree.right = new property_tree;
+    generate_tree(*tree.left, p->lhs, positive ^ (p->type == PROP_IMPL));
+    generate_tree(*tree.right, p->rhs, positive);
+    tree.conjunction = !positive ^ (p->type == PROP_AND);
+    break;
   case PROP_NOT:
     generate_tree(tree, p->lhs, !positive);
     break;
   }
 }
 
+#if 0
 static void massage_property_tree(property_tree &tree)
 {
   std::vector<property_tree::leaf> new_leaves;
@@ -152,6 +151,7 @@ static void massage_property_tree(property_tree &tree)
 
   tree->leaves.insert(tree->leaves.end(), new_leaves.begin(), new_leaves.end());
 }
+#endif
 
 static void delete_prop(ast_prop const *p)
 {
@@ -194,7 +194,6 @@ static void check_unbound()
 
 void parse_property_tree(property_tree &tree, ast_prop const *p)
 {
-  tree = new property_tree::data(false);
   generate_tree(tree, p, true);
   delete_prop(p);
 }
@@ -204,7 +203,6 @@ extern property_tree context;
 void generate_graph(ast_prop const *p)
 {
   parse_property_tree(context, p);
-  massage_property_tree(context);
   context.negate();
   if (warning_unbound_variable)
     check_unbound();

@@ -520,25 +520,14 @@ std::string display(property_tree const &t)
   std::string name = composite('s', t_id);
   if (t_id < 0) return name;
   auto_flush plouf;
-  plouf << (vernac ? "Notation " : "let ") << name << (vernac ? " := (" : " := ");
-  char const *conn = t->conjunction ? " /\\ " : " \\/ ";
-  bool first = true;
-  for (std::vector<property_tree::leaf>::const_iterator i = t->leaves.begin(),
-       i_end = t->leaves.end(); i != i_end; ++i)
-  {
-    if (first) first = false;
-    else plouf << conn;
-    if (!i->second) plouf << "not ";
-    plouf << display(fetch(i->first));
+  plouf << (vernac ? "Definition " : "let ") << name << (vernac ? " := (" : " := ");
+  if (!t.left) {
+    if (!t.conjunction) plouf << "not ";
+    plouf << display(fetch(*t.atom));
+  } else {
+    plouf << display(*t.left) << (t.conjunction ? " /\\ " : " \\/ ")
+      << display(*t.right);
   }
-  for (std::vector<property_tree>::const_iterator i = t->subtrees.begin(),
-       i_end = t->subtrees.end(); i != i_end; ++i)
-  {
-    if (first) first = false;
-    else plouf << conn;
-    plouf << '(' << display(*i) << ')';
-  }
-  assert(!first);
   plouf << (vernac ? ").\n" : " in\n");
   return name;
 }
@@ -762,23 +751,17 @@ static void reify(auto_flush &plouf, real_map &rm, property const &p)
 static void reify(auto_flush &plouf, real_map &rm, property_tree const &t)
 {
   assert(!t.empty());
-  plouf << "(Ttree " << (t->conjunction ? "true" : "false") << ' ';
-  for (std::vector<property_tree::leaf>::const_iterator i = t->leaves.begin(),
-       i_end = t->leaves.end(); i != i_end; ++i)
-  {
-    plouf << "(List.cons (Atom (";
-    reify(plouf, rm, fetch(i->first));
-    plouf << ") " << (i->second ? "true" : "false") << ") ";
-  }
-  plouf << "List.nil" << std::string(t->leaves.size(), ')') << ' ';
-  for (std::vector<property_tree>::const_iterator i = t->subtrees.begin(),
-       i_end = t->subtrees.end(); i != i_end; ++i)
-  {
-    plouf << "(List.cons ";
-    reify(plouf, rm, *i);
+  if (t.left) {
+    plouf << "(Ttree " << (t.conjunction ? "true" : "false") << ' ';
+    reify(plouf, rm, *t.left);
     plouf << ' ';
+    reify(plouf, rm, *t.right);
+    plouf << ')';
+  } else {
+    plouf << "(Tatom " << (t.conjunction ? "true" : "false") << ' ';
+    reify(plouf, rm, fetch(*t.atom));
+    plouf << ')';
   }
-  plouf << "List.nil" << std::string(t->subtrees.size(), ')') << ')';
 }
 
 static void simplification(auto_flush &plouf, property_tree const &before, property_tree const &after, property const &mod, int num_hyp)
@@ -788,7 +771,7 @@ static void simplification(auto_flush &plouf, property_tree const &before, prope
   plouf << "(simplify ";
   reify(plouf, rm, before);
   plouf << ' ';
-  if (after.empty()) plouf << "(Ttree false List.nil List.nil)";
+  if (after.empty()) plouf << "Tfalse";
   else reify(plouf, rm, after);
   plouf << " (";
   reify(plouf, rm, mod);
@@ -808,21 +791,11 @@ static void simplification(auto_flush &plouf, property_tree const &before, prope
   if (vernac) plouf << " ; finalize.\n";
 }
 
-static void select(auto_flush &plouf, property_tree const &t, int idx, int num_hyp)
+static void select(auto_flush &plouf, int idx, int num_hyp)
 {
-  assert(!t.empty());
-  int sz = t->leaves.size() + t->subtrees.size();
-  assert (0 <= idx && idx < sz);
   if (vernac) plouf << " exact (";
-  if (sz != 1) {
-    if (idx == sz - 1) {
-      plouf << "proj2";
-      --idx;
-    } else plouf << "proj1";
-  }
-  for (int i = 0; i < idx; ++i) plouf << " (proj2";
-  plouf << " h" << num_hyp;
-  for (int i = 0; i < idx; ++i) plouf << ')';
+  if (idx) plouf << "proj" << idx << ' ';
+  plouf << 'h' << num_hyp;
   if (vernac) plouf << ").\n";
 }
 
@@ -868,14 +841,14 @@ std::string display(node *n)
       pose_hypothesis(plouf, ++num_hyp, ln->modifier, n);
       simplification(plouf, ln->before->tree, ln->tree, ln->modifier->get_result(), num_hyp);
     } else {
-      select(plouf, ln->before->tree, ln->index, num_hyp);
+      select(plouf, ln->index, num_hyp);
     }
     break; }
   case LOGICP: {
     logicp_node *ln = dynamic_cast<logicp_node *>(n);
     assert(ln && ln->before);
     pose_hypothesis(plouf, num_hyp, ln->before, n);
-    select(plouf, ln->before->tree, ln->index, num_hyp);
+    select(plouf, ln->index, num_hyp);
     break; }
   case MODUS: {
     property_map pmap;
@@ -946,8 +919,7 @@ std::string display(node *n)
          i_end = pred.end(); i != i_end; ++i)
     {
       node *m = *i;
-      property_tree const &m_hyp = m->graph->get_hypotheses();
-      property const &p = m_hyp->leaves[0].first;
+      property const &p = *m->graph->get_hypotheses().atom;
       plouf << " assert (u : " << display(p) << " -> " << display(n_res) << ")."
                " intro h" << num_hyp << ". (* " << p.bnd() << " *)\n";
       property const &res = m->get_result();

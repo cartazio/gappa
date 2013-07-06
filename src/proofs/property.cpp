@@ -173,77 +173,82 @@ int property_vect::find_compatible_property(property const &p) const {
   return -1;
 }
 
-void property_tree::unique() {
-  if (ptr && ptr->ref > 1) {
-    data *p = new data(*ptr);
-    p->ref = 1;
-    --ptr->ref;
-    ptr = p;
-  }
-}
-
 bool property_tree::operator<(property_tree const &t) const
 {
-  if (!ptr) return t.ptr;
-  if (ptr == t.ptr) return false;
-  if (ptr->conjunction < t.ptr->conjunction) return true;
-  if (ptr->conjunction != t.ptr->conjunction) return false;
-  if (ptr->leaves < t.ptr->leaves) return true;
-  if (ptr->leaves != t.ptr->leaves) return false;
-  return ptr->subtrees < t.ptr->subtrees;
+  if (conjunction < t.conjunction) return true;
+  if (conjunction != t.conjunction) return false;
+  if (t.left) {
+    if (!left) return true;
+    if (*left < *t.left) return true;
+    if (*left != *t.left) return false;
+    return *right < *t.right;
+  }
+  if (left) return false;
+  if (!t.atom) return false;
+  if (!atom) return true;
+  return *atom < *t.atom;
 }
 
 bool property_tree::operator==(property_tree const &t) const
 {
-  if (!ptr) return !t.ptr;
-  if (ptr == t.ptr) return true;
-  if (ptr->conjunction != t.ptr->conjunction) return false;
-  if (ptr->leaves != t.ptr->leaves) return false;
-  return ptr->subtrees == t.ptr->subtrees;
+  if (conjunction != t.conjunction) return false;
+  if (t.left) {
+    if (!left) return false;
+    if (*left != *t.left) return false;
+    return *right == *t.right;
+  }
+  if (left) return false;
+  if (t.atom) {
+    if (!atom) return false;
+    return *atom == *t.atom;
+  }
+  return !atom;
 }
 
-void property_tree::flatten()
+property_tree::property_tree(property const &p)
+  : conjunction(true), left(NULL), right(NULL), atom(new property(p))
 {
-  bool possible = false;
-  for (std::vector<property_tree>::const_iterator i = ptr->subtrees.begin(),
-       i_end = ptr->subtrees.end(); i != i_end; ++i)
-  {
-    if (i->ptr->conjunction != ptr->conjunction &&
-        i->ptr->leaves.size() + i->ptr->subtrees.size() > 1) continue;
-    possible = true;
-    break;
-  }
-  if (!possible)
-  {
-    if (ptr->subtrees.size() != 1) return;
-    property_tree &t = ptr->subtrees[0];
-    if (!ptr->leaves.empty() && t.ptr->conjunction != ptr->conjunction) return;
-    // The root is a singleton or its only subtree has a compatible
-    // modality; replace the root with it.
-    t.unique();
-    data *p = t.ptr;
-    p->leaves.insert(p->leaves.end(), ptr->leaves.begin(), ptr->leaves.end());
-    ++p->ref; // have to "incr" before decr; decr may erase t otherwise
-    decr();
-    ptr = p;
-    return;
-  }
-  // Some subtrees are singleton or have a modality compatible with the
-  // root; merge them into the root.
-  unique();
-  std::vector<property_tree> old_trees;
-  old_trees.swap(ptr->subtrees);
-  for (std::vector<property_tree>::const_iterator i = old_trees.begin(),
-       i_end = old_trees.end(); i != i_end; ++i)
-  {
-    if (i->ptr->conjunction != ptr->conjunction &&
-        i->ptr->leaves.size() + i->ptr->subtrees.size() > 1) {
-      ptr->subtrees.push_back(*i);
-      continue;
-    }
-    ptr->subtrees.insert(ptr->subtrees.end(), i->ptr->subtrees.begin(), i->ptr->subtrees.end());
-    ptr->leaves.insert(ptr->leaves.end(), i->ptr->leaves.begin(), i->ptr->leaves.end());
-  }
+}
+
+property_tree::property_tree(property_tree const &t)
+  : conjunction(t.conjunction), left(NULL), right(NULL), atom(NULL)
+{
+  if (t.atom) atom = new property(*t.atom);
+  if (t.left) left = new property_tree(*t.left);
+  if (t.right) right = new property_tree(*t.right);
+}
+
+property_tree::~property_tree()
+{
+  delete atom;
+  delete left;
+  delete right;
+}
+
+void property_tree::clear()
+{
+  delete atom; atom = NULL;
+  delete left; left = NULL;
+  delete right; right = NULL;
+}
+
+property_tree &property_tree::operator=(property_tree const &t)
+{
+  if (this == &t) return *this;
+  clear();
+  conjunction = t.conjunction;
+  if (t.atom) atom = new property(*t.atom);
+  if (t.left) left = new property_tree(*t.left);
+  if (t.right) right = new property_tree(*t.right);
+  return *this;
+}
+
+void property_tree::swap(property_tree &t)
+{
+  std::swap(conjunction, t.conjunction);
+  std::swap(atom, t.atom);
+  std::swap(left, t.left);
+  std::swap(right, t.right);
 }
 
 /**
@@ -267,185 +272,142 @@ static int check_imply(bool positive, property const &p, property const &q)
   return 0;
 }
 
-int property_tree::simplify(property const &p, bool positive, bool hypothesis, undefined_map *force, bool *changed)
+int property_tree::try_simplify(property const &p, bool positive, undefined_map *force, bool &changed, property_tree &tgt) const
 {
-  assert(ptr);
-  bool conj = ptr->conjunction ^ hypothesis;
-  int res = conj ? -1 : 1;
-  if (false) {
-    kill_tree:
-    decr();
-    ptr = NULL;
-    if (changed) *changed = true;
-    return hypothesis ? -res : res;
-  }
-  unique();
-
-  // Filter out satisfied leaves.
-  std::vector<leaf> leaves;
-  leaves.swap(ptr->leaves);
-  for (std::vector<leaf>::const_iterator i = leaves.begin(),
-       i_end = leaves.end(); i != i_end; ++i)
-  {
-    property const *q = &i->first;
-    if (i->first.real != p.real)
-      goto keep;
-    if (i->first.real.pred_bnd() && !is_defined(i->first.bnd()))
-    {
+  assert(atom || left);
+  changed = false;
+  if (atom) {
+    if (atom->real != p.real) return 0;
+    property const *q = atom;
+    if (atom->real.pred_bnd() && !is_defined(atom->bnd())) {
       // True by choice.
-      assert(hypothesis ^ i->second);
-      if (!force) goto keep;
+      assert(!conjunction);
+      if (!force) return 0;
       undefined_map::iterator j = force->find(p.real);
       if (j != force->end()) {
         q = &j->second;
         goto def;
       }
       (*force)[p.real] = p;
-      if (!conj) goto kill_tree;
-      if (changed) *changed = true;
-      continue;
+      return -1;
     }
     def:
-    if (int valid = check_imply(positive, p, *q))
-    {
+    if (int valid = check_imply(positive, p, *q)) {
       // From (not) p, one can deduce either i->first or not i->first.
-      if ((valid < 0) ^ i->second ^ hypothesis ^ conj) goto kill_tree;
-      if (changed) *changed = true;
-      continue;
+      if (!conjunction) valid = -valid;
+      return valid;
     }
-    keep:
-    ptr->leaves.push_back(*i);
+    return 0;
   }
-
-  // Filter out satisfied subtrees.
-  std::vector<property_tree> subtrees;
-  subtrees.swap(ptr->subtrees);
-  for (std::vector<property_tree>::iterator i = subtrees.begin(),
-       i_end = subtrees.end(); i != i_end; ++i)
-  {
-    if (int valid = i->simplify(p, positive, hypothesis, force, changed)) {
-      if ((valid > 0) ^ conj) goto kill_tree;
-      if (changed) *changed = true;
-      continue;
-    }
-    ptr->subtrees.push_back(*i);
+  bool chg1, chg2;
+  property_tree t1;
+  if (int valid = left->try_simplify(p, positive, force, chg1, t1)) {
+    if ((valid > 0) ^ conjunction) return valid;
+    valid = right->try_simplify(p, positive, force, chg2, tgt);
+    if (!chg2) tgt = *right;
+    changed = true;
+    return 0;
   }
-
-  res = -res;
-  if (ptr->leaves.empty() && ptr->subtrees.empty()) goto kill_tree;
-  flatten();
+  property_tree t2;
+  if (int valid = right->try_simplify(p, positive, force, chg2, t2)) {
+    if ((valid > 0) ^ conjunction) return valid;
+    if (chg1) tgt.swap(t1);
+    else tgt = *left;
+    changed = true;
+    return 0;
+  }
+  if (!chg1 && !chg2) return 0;
+  if (!chg1) t1 = *left;
+  if (!chg2) t2 = *right;
+  tgt.clear();
+  tgt.left = new property_tree;
+  tgt.right = new property_tree;
+  tgt.left->swap(t1);
+  tgt.right->swap(t2);
+  changed = true;
   return 0;
 }
 
-bool property_tree::verify(graph_t *g, property *p) const
+int property_tree::simplify(property const &p)
 {
-  if (!ptr) return false;
-  graph_loader loader(g);
-  bool b = ptr->conjunction || (ptr->leaves.size() + ptr->subtrees.size() <= 1);
-  for (std::vector<leaf>::const_iterator i = ptr->leaves.begin(),
-       i_end = ptr->leaves.end(); i != i_end; ++i)
-  {
-    if (b == !!find_proof(i->first, i->second)) continue;
-    // Either this tree node is a conjunction and property *i is not satisfied,
-    // or it is a disjunction and property *i is satisfied.
-    if (b && p) *p = i->first;
-    return !b;
+  bool changed;
+  property_tree t;
+  int v = try_simplify(p, true, NULL, changed, t);
+  if (v) {
+    clear();
+    t.conjunction = v == 1;
+  } else if (changed) {
+    swap(t);
   }
-  for (std::vector< property_tree >::const_iterator i = ptr->subtrees.begin(),
-       end = ptr->subtrees.end(); i != end; ++i)
-  {
-    if (b == i->verify(g, b ? p : NULL)) continue;
-    // Same here, but for the *i subtree.
-    return !b;
-  }
-  // Either the tree node is a conjunction and all its properties are satisfied,
-  // or it is a disjunction and none are satisfied.
-  return b;
+  return v;
 }
 
 void property_tree::negate()
 {
-  unique();
-  ptr->conjunction = !ptr->conjunction;
-  for (std::vector<leaf>::iterator i = ptr->leaves.begin(),
-       i_end = ptr->leaves.end(); i != i_end; ++i)
-  {
-    i->second = !i->second;
+  conjunction = !conjunction;
+  if (left) {
+    left->negate();
+    right->negate();
   }
-  for (std::vector<property_tree>::iterator i = ptr->subtrees.begin(),
-       i_end = ptr->subtrees.end(); i != i_end; ++i)
-  {
-    i->negate();
+}
+
+bool property_tree::verify(graph_t *g, property *p) const
+{
+  if (empty()) return false;
+  graph_loader loader(g);
+  if (atom) {
+    if (find_proof(*atom, !conjunction)) return true;
+    if (p) *p = *atom;
+    return false;
   }
+  if (!conjunction ^ left->verify(g, !conjunction ? p : NULL)) return conjunction;
+  return right->verify(g, !conjunction ? p : NULL);
 }
 
 /**
- * Look for a leaf in @a about the same predicated_real than @a p.
+ * Look for an atom in @a from about the same predicated_real than atom @a p.
  * Fill @a p with its content.
  * @return true when successful.
  */
-static bool lookup(property_tree::leaf &p, property_tree const &from)
+static bool lookup(property_tree &p, property_tree const &from)
 {
-  for (std::vector<property_tree::leaf>::const_iterator i = from->leaves.begin(),
-       i_end = from->leaves.end(); i != i_end; ++i)
-  {
-    if (p.second == !i->second && p.first.real == i->first.real && is_defined(i->first.bnd())) {
-      p.first.bnd() = i->first.bnd();
-      return true;
-    }
+  assert(p.atom);
+  if (from.left) {
+    if (lookup(p, *from.left)) return true;
+    return lookup(p, *from.right);
   }
-  for (std::vector<property_tree>::const_iterator i = from->subtrees.begin(),
-       i_end = from->subtrees.end(); i != i_end; ++i)
-  {
-    if (lookup(p, *i)) return true;
-  }
-  return false;
+  assert(from.atom);
+  if (p.conjunction != from.conjunction) return false;
+  if (p.atom->real != from.atom->real) return false;
+  if (!is_defined(from.atom->bnd())) return false;
+  p.atom->bnd() = from.atom->bnd();
+  return true;
 }
-
-struct remove_pred3
-{
-  property_tree const &base;
-  remove_pred3(property_tree const &t): base(t) {}
-  bool operator()(property_tree::leaf &p) const
-  {
-    if (!p.first.real.pred_bnd() || is_defined(p.first.bnd())) return false;
-    return !lookup(p, base);
-  }
-};
-
-struct remove_pred4
-{
-  property_tree const &base;
-  remove_pred4(property_tree const &t): base(t) {}
-  bool operator()(property_tree &t) const
-  {
-    t.fill_undefined(base);
-    return t.empty();
-  }
-};
 
 void property_tree::fill_undefined(property_tree const &base)
 {
-  if (!ptr) return;
-  if (base.empty()) {
-    kill_tree:
-    decr();
-    ptr = NULL;
+  if (atom) {
+    if (!atom->real.pred_bnd() || is_defined(atom->bnd())) return;
+    if (!lookup(*this, base)) clear();
     return;
   }
-  unique();
-  remove_pred3 pred1(base);
-  remove_pred4 pred2(base);
-  std::vector<leaf>::iterator end1 = ptr->leaves.end(),
-    i1 = std::remove_if(ptr->leaves.begin(), end1, pred1);
-  std::vector< property_tree >::iterator end2 = ptr->subtrees.end(),
-    i2 = std::remove_if(ptr->subtrees.begin(), end2, pred2);
-  ptr->leaves.erase(i1, end1);
-  ptr->subtrees.erase(i2, end2);
-  if (ptr->leaves.empty() && ptr->subtrees.empty()) goto kill_tree;
-  flatten();
+  assert(left && right);
+  left->fill_undefined(base);
+  right->fill_undefined(base);
+  if (left->empty()) {
+    property_tree *p = right;
+    right = NULL;
+    swap(*p);
+    delete p;
+  } else if (right->empty()) {
+    property_tree *p = left;
+    left = NULL;
+    swap(*p);
+    delete p;
+  }
 }
 
+#if 0
 void property_tree::get_splitting(splitting &res) const
 {
   for (std::vector<leaf>::const_iterator i = ptr->leaves.begin(),
@@ -466,3 +428,4 @@ void property_tree::get_splitting(splitting &res) const
     i->get_splitting(res);
   }
 }
+#endif

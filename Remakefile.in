@@ -2,7 +2,7 @@ all: src/gappa
 
 clean: src/clean doc/clean testsuite/clean
 
-check: testsuite/check-null testsuite/check-coq testsuite/check-holl
+check: testsuite/check-null testsuite/check-coq
 
 Remakefile: Remakefile.in config.status
 	./config.status Remakefile

@@ -108,9 +108,6 @@ std::string dump_real_short(predicated_real const &);
 struct property;
 std::string dump_property(property const &);
 std::string dump_property_nice(property const &);
-struct property_tree;
-std::string dump_prop_tree(property_tree const &);
-std::string dump_prop_tree_nice(property_tree const &);
 
 inline ast_ident const *param_ident(unsigned long l) {
   return (l & 1) ? NULL : reinterpret_cast< ast_ident const * >(l);

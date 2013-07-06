@@ -105,38 +105,24 @@ typedef std::map<predicated_real, property> undefined_map;
 
 struct property_tree
 {
-  //* Second member is true if the property is in the goal.
-  typedef std::pair< property, bool > leaf;
-  struct data {
-    std::vector<leaf> leaves;
-    std::vector<property_tree> subtrees;
-    unsigned ref;
-    bool conjunction;
-    data(bool b): ref(0), conjunction(b) {}
-  };
- private:
-  data *ptr;
-  void incr() { if (ptr) ++ptr->ref; }
-  void decr() { if (ptr && --ptr->ref == 0) delete ptr; }
-  void flatten();
-  bool get_nodes_aux(std::vector< std::pair< node *, interval > > &) const;
- public:
-  property_tree(): ptr(NULL) {}
-  property_tree(data *p): ptr(p) { incr(); }
-  property_tree(property_tree const &t): ptr(t.ptr) { incr(); }
-  property_tree &operator=(data *p)
-  { if (ptr != p) { decr(); ptr = p; incr(); } return *this; }
-  property_tree &operator=(property_tree const &t)
-  { if (ptr != t.ptr) { decr(); ptr = t.ptr; incr(); } return *this; }
-  ~property_tree() { decr(); }
-  void unique();
-  data const *operator->() const { return ptr; }
-  data *operator->() { unique(); return ptr; }
-  bool empty() const { return !ptr; }
-  void negate();
+  bool conjunction;
+  property_tree *left, *right;
+  property *atom;
+  property_tree()
+    : conjunction(false), left(NULL), right(NULL), atom(NULL) {}
+  property_tree(property const &);
+  property_tree(property_tree const &);
+  property_tree &operator=(property_tree const &);
+  ~property_tree();
   bool operator<(property_tree const &t) const;
   bool operator==(property_tree const &t) const;
   bool operator!=(property_tree const &t) const { return !(*this == t); }
+  bool empty() const { return !left && !atom; }
+
+  void clear();
+  void swap(property_tree &);
+
+  void negate();
 
   /**
    * Fills leaves that have an undefined interval with a corresponding
@@ -146,26 +132,22 @@ struct property_tree
 
   /**
    * Simplifies the tree according to property @a p (modality @a positive).
-   * @param hypothesis If true, the function removes contradicting leaves. Otherwise implied ones.
    * @param force If set, the function removes undefined yet matching leaves.
    * @param changed Set to true if a change happened.
+   * @param tgt Set to the resulting tree if the result is nonzero.
    * @return zero if the tree is not empty yet, a positive value if it is
    *         true, a negative value if it is false.
    */
-  int simplify(property const &p, bool positive, bool hypothesis, undefined_map *force, bool *changed);
+  int try_simplify(property const &p, bool positive, undefined_map *force, bool &changed, property_tree &tgt) const;
+
+  int simplify(property const &p);
 
   /**
-   * Checks if the tree is satisfied by graph @a g.
-   * @param p Pointer to an optional storage for an unsatisfied property.
-   * @return false if some properties are not satisfied.
+   * Checks if the tree is contradicted by graph @a g.
+   * @param p Pointer to an optional storage for a remaining property.
+   * @return false if the tree has remaining properties.
    */
   bool verify(graph_t *g, property *p) const;
-
-  /**
-   * Gets the nodes of graph @a g satisfying the property.
-   * Removes the satisfied leaves and subtrees.
-   */
-  void get_nodes(graph_t *g, std::vector< node * > &);
 
   void get_splitting(splitting &) const;
 };
