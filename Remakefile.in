@@ -2,7 +2,7 @@ all: src/gappa
 
 clean: src/clean doc/clean testsuite/clean
 
-check: testsuite/check-null testsuite/check-coq
+check: testsuite/check-null testsuite/check-coq testsuite/check-latex
 
 Remakefile: Remakefile.in config.status
 	./config.status Remakefile
@@ -33,7 +33,6 @@ src/parser/lexer.cpp: src/parser/lexer.lpp
 	@LEX@ -o src/parser/lexer.cpp src/parser/lexer.lpp
 
 #	src/backends/holl.o \
-#	src/backends/latex.o \
 
 OBJS = \
 	src/arithmetic/fixed.o \
@@ -44,6 +43,7 @@ OBJS = \
 	src/backends/coq.o \
 	src/backends/coq_common.o \
 	src/backends/coq_lambda.o \
+	src/backends/latex.o \
 	src/numbers/interval.o \
 	src/numbers/io.o \
 	src/numbers/real.o \

@@ -171,52 +171,110 @@ static std::string display(property const &p)
   return s.str();
 }
 
+static property const &fetch(property const &p)
+{
+  if (p.real.pred_bnd() && !is_defined(p.bnd())) {
+    undefined_map::const_iterator i = instances->find(p.real);
+    assert(i != instances->end());
+    return i->second;
+  }
+  return p;
+}
+
+static std::string display(property_tree const &t)
+{
+  std::ostringstream s;
+  if (t.left) {
+    s << "\\left( " << display(*t.left)
+      << (t.conjunction ? " \\land " : " \\lor ")
+      << display(*t.right) << " \\right)";
+  } else if (t.atom) {
+    if (!t.conjunction) s << "\\neg\\left( ";
+    s << display(fetch(*t.atom));
+    if (!t.conjunction) s << " \\right)";
+  } else
+    s << "\\bot";
+  return s.str();
+}
+
 static id_cache<node *> displayed_nodes;
 
 static graph_t *last_graph;
 
+static int num_graph;
+
 static std::string display(node *n)
 {
   assert(n);
+  if (logic_node const *ln = dynamic_cast<logic_node const *>(n)) {
+    if (!ln->before) return "";
+  }
   int n_id = displayed_nodes.find(n);
   std::string name = composite('l', n_id);
   if (n_id < 0) return name;
-  node_vect const &pred = n->get_subproofs();
   std::vector<std::string> hyps;
-  for (node_vect::const_iterator i = pred.begin(),
-       i_end = pred.end(); i != i_end; ++i)
-  {
-    node *n = *i;
-    if (n->type == HYPOTHESIS) continue;
-    hyps.push_back(display(*i));
+  switch (n->type) {
+  case LOGIC: {
+    logic_node const *ln = dynamic_cast<logic_node const *>(n);
+    hyps.push_back(display(ln->before));
+    if (ln->modifier) hyps.push_back(display(ln->modifier));
+    break; }
+  case LOGICP: {
+    logicp_node const *ln = dynamic_cast<logicp_node const *>(n);
+    if (!ln->index) return display(ln->before);
+    hyps.push_back(display(ln->before));
+    break; }
+  case MODUS:
+  case INTERSECTION:
+  case UNION: {
+    node_vect const &pred = n->get_subproofs();
+    for (node_vect::const_iterator i = pred.begin(),
+         i_end = pred.end(); i != i_end; ++i)
+    {
+      hyps.push_back(display(*i));
+    }
+    break; }
   }
   if (n->graph != last_graph) {
     last_graph = n->graph;
-    property_vect const &g_hyp = n->graph->get_hypotheses();
-    if (g_hyp.empty()) {
-      std::cout << "\n\\bigskip\\noindent\nOne can deduce the following properties:\n";
-    } else {
-      std::cout << "\n\\bigskip\\noindent\nUnder the following hypotheses\n";
-      for (property_vect::const_iterator i = g_hyp.begin(),
-           i_end = g_hyp.end(); i != i_end; ++i)
-      {
-        std::cout << "\\[" << display(*i) << ",\\]\n";
-      }
-      std::cout << "one can deduce the following properties:\n";
+    std::cout << "\n\\bigskip\\noindent\nUnder the following hypotheses\n";
+    ++num_graph;
+    for (graph_t *g = last_graph; g; g = g->get_father())
+    {
+      if (last_graph == g) {
+        std::cout << "\\begin{equation}\\label{g" << num_graph << "}\n"
+          << display(g->get_hypotheses()) << ",\n\\end{equation}\n";
+      } else
+        std::cout << "\\[" << display(g->get_hypotheses()) << ",\\]\n";
     }
+    std::cout << "one can deduce the following properties:\n";
   }
-  std::cout << "\\begin{equation}\\label{" << name << "}\n"
-    << display(n->get_result()) << "\n\\end{equation}\nby using";
+  std::cout << "\\begin{equation}\\label{" << name << "}\n";
+  if (n->type == LOGIC) {
+    logic_node const *ln = dynamic_cast<logic_node const *>(n);
+    std::cout << display(ln->tree);
+  } else {
+    std::cout << display(n->get_result());
+  }
+  std::cout << "\n\\end{equation}\nby using";
   bool first = true;
   for (std::vector<std::string>::const_iterator i = hyps.begin(),
        i_end = hyps.end(); i != i_end; ++i)
   {
     if (first) first = false;
     else std::cout << ',';
-    std::cout << " (\\ref{" << *i << "})";
+    if (i->empty()) std::cout << " (\\ref{g" << num_graph << "})";
+    else std::cout << " (\\ref{" << *i << "})";
   }
   if (!first) std::cout << ", and";
   switch (n->type) {
+  case LOGIC:
+    if (hyps.size() < 2) std::cout << " selecting a component";
+    else std::cout << " discarding contradictory literals";
+    break;
+  case LOGICP:
+    std::cout << " selecting a component";
+    break;
   case MODUS:
     std::cout << " theorem \\texttt{"
       << convert_name(dynamic_cast<modus_node *>(n)->target->name) << '}';
@@ -226,9 +284,6 @@ static std::string display(node *n)
     break;
   case UNION:
     std::cout << " performing an union";
-    break;
-  case GOAL:
-    std::cout << " concluding";
     break;
   default:
     assert(false);
