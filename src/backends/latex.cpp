@@ -206,34 +206,25 @@ static int num_graph;
 static std::string display(node *n)
 {
   assert(n);
-  if (logic_node const *ln = dynamic_cast<logic_node const *>(n)) {
+  switch (n->type) {
+  case LOGIC: {
+    logic_node const *ln = dynamic_cast<logic_node const *>(n);
     if (!ln->before) return "";
+    break; }
+  case LOGICP: {
+    logicp_node const *ln = dynamic_cast<logicp_node const *>(n);
+    if (!ln->index) return display(ln->before);
+    break; }
   }
   int n_id = displayed_nodes.find(n);
   std::string name = composite('l', n_id);
   if (n_id < 0) return name;
   std::vector<std::string> hyps;
-  switch (n->type) {
-  case LOGIC: {
-    logic_node const *ln = dynamic_cast<logic_node const *>(n);
-    hyps.push_back(display(ln->before));
-    if (ln->modifier) hyps.push_back(display(ln->modifier));
-    break; }
-  case LOGICP: {
-    logicp_node const *ln = dynamic_cast<logicp_node const *>(n);
-    if (!ln->index) return display(ln->before);
-    hyps.push_back(display(ln->before));
-    break; }
-  case MODUS:
-  case INTERSECTION:
-  case UNION: {
-    node_vect const &pred = n->get_subproofs();
-    for (node_vect::const_iterator i = pred.begin(),
-         i_end = pred.end(); i != i_end; ++i)
-    {
-      hyps.push_back(display(*i));
-    }
-    break; }
+  node_vect const &pred = n->get_subproofs();
+  for (node_vect::const_iterator i = pred.begin(),
+       i_end = pred.end(); i != i_end; ++i)
+  {
+    hyps.push_back(display(*i));
   }
   if (n->graph != last_graph) {
     last_graph = n->graph;

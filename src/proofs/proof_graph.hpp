@@ -68,7 +68,8 @@ struct node
   node(node_id, graph_t *);
   /** Returns the property this node proves. */
   virtual property const &get_result() const = 0;
-  virtual node_vect const &get_subproofs() const;
+  /** Returns the immediate ancestors of this node. */
+  virtual node_vect const &get_subproofs() const = 0;
   virtual ~node();
   void remove_known();
   void remove_succ(node const *);
@@ -91,6 +92,7 @@ struct logic_node: node
     : node(LOGIC, top_graph), before(NULL), modifier(NULL), tree(t) {}
   virtual ~logic_node();
   virtual property const &get_result() const;
+  virtual node_vect const &get_subproofs() const;
   virtual property maximal_for(node const *) const { assert(false); }
   virtual void enlarge(property const &) { assert(false); }
 };
@@ -104,6 +106,7 @@ struct logicp_node: node
   logicp_node(property const &, logic_node *, int);
   virtual ~logicp_node();
   virtual property const &get_result() const { return res; }
+  virtual node_vect const &get_subproofs() const;
   virtual property maximal_for(node const *) const { assert(false); }
   virtual void enlarge(property const &) { assert(false); }
 };

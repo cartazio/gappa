@@ -41,16 +41,6 @@ bool node::can_visit() const
 typedef std::list< node * > node_list;
 
 /**
- * Returns the immediate ancestors of this node.
- * By default, a node has no ancestors.
- */
-node_vect const &node::get_subproofs() const
-{
-  static node_vect dummy;
-  return dummy;
-}
-
-/**
  * Creates a node of type @a t. Inserts it in the graph @a g, if any.
  */
 node::node(node_id t, graph_t *g)
@@ -247,6 +237,15 @@ property const &logic_node::get_result() const
   return p;
 }
 
+node_vect const &logic_node::get_subproofs() const
+{
+  static node_vect res;
+  res.clear();
+  if (before) res.push_back(before);
+  if (modifier) res.push_back(modifier);
+  return res;
+}
+
 logicp_node::logicp_node(property const &p, logic_node *n, int i)
   : node(LOGICP, top_graph), res(p), before(n), index(i)
 {
@@ -256,6 +255,14 @@ logicp_node::logicp_node(property const &p, logic_node *n, int i)
 logicp_node::~logicp_node()
 {
   before->remove_succ(this);
+}
+
+node_vect const &logicp_node::get_subproofs() const
+{
+  static node_vect res;
+  res.clear();
+  res.push_back(before);
+  return res;
 }
 
 class intersection_node: public dependent_node
