@@ -672,13 +672,14 @@ void graph_t::populate(property_tree const &targets,
       reduce_hypotheses(i->second, trees, NULL, dichotomy_it != dichotomy_end ? NULL : umap);
       if (contradiction) return;
     }
-    if (dichotomy_it == dichotomy_end) return;
-    if (split_hypotheses(trees, current_targets, &missing_schemes)) return;
-#if 0
-      if (!goal_reduction || current_goals.empty()) return;
+    if (dichotomy_it == dichotomy_end) {
       static ast_real_set already;
       splitting s;
-      current_goals.get_splitting(s);
+      for (std::list<logic_node *>::const_iterator i = trees.begin(),
+           i_end = trees.end(); i != i_end; ++i)
+      {
+        (*i)->tree.get_splitting(s);
+      }
       unsigned max_pts = 0;
       splitting::value_type const *sv = NULL;
       for (splitting::const_iterator i = s.begin(), i_end = s.end(); i != i_end; ++i)
@@ -705,8 +706,10 @@ void graph_t::populate(property_tree const &targets,
       already.insert(sv->first.real());
       dichotomy_var dv = { sv->first.real(), ds };
       dichotomy_hint dh = { dvar_vect(1, dv), property_tree() };
-      dichotomize(current_goals, dh, iter_max);
+      dichotomize(dh, iter_max);
       already = save;
-#endif
+      return;
+    }
+    if (split_hypotheses(trees, current_targets, &missing_schemes)) return;
   }
 }

@@ -407,25 +407,19 @@ void property_tree::fill_undefined(property_tree const &base)
   }
 }
 
-#if 0
 void property_tree::get_splitting(splitting &res) const
 {
-  for (std::vector<leaf>::const_iterator i = ptr->leaves.begin(),
-       i_end = ptr->leaves.end(); i != i_end; ++i)
-  {
-    if (!i->first.real.pred_bnd()) continue;
-    interval const &b = i->first.bnd();
-    if (!is_defined(b)) continue;
-    split_point_mset &nums = res[i->first.real];
+  if (atom) {
+    if (!atom->real.pred_bnd()) return;
+    interval const &b = atom->bnd();
+    if (!is_defined(b)) return;
+    split_point_mset &nums = res[atom->real];
     number const &l = lower(b), &u = upper(b);
-    if (l == u) continue;
+    if (l == u) return;
     if (l != number::neg_inf) nums.insert(split_point(l, false));
     if (u != number::pos_inf) nums.insert(split_point(u, true));
-  }
-  for (std::vector<property_tree>::const_iterator i = ptr->subtrees.begin(),
-       i_end = ptr->subtrees.end(); i != i_end; ++i)
-  {
-    i->get_splitting(res);
+  } else {
+    left->get_splitting(res);
+    right->get_splitting(res);
   }
 }
-#endif
