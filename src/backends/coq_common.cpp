@@ -723,11 +723,17 @@ static int find_real(real_map &rm, ast_real const *r)
 
 static void reify(auto_flush &plouf, real_map &rm, property const &p)
 {
-  assert(!p.real.pred_bnd() || is_bounded(p.bnd()));
   switch (p.real.pred()) {
-  case PRED_BND:
-    plouf << "Abnd " << find_real(rm, p.real.real()) << "%nat " << display(p.bnd());
-    break;
+  case PRED_BND: {
+    interval const &b = p.bnd();
+    int r = find_real(rm, p.real.real());
+    if (is_bounded(b))
+      plouf << "Abnd " << r << "%nat " << display(b);
+    else if (lower(b) == number::neg_inf)
+      plouf << "Aleq " << r << "%nat " << display(upper(b));
+    else
+      plouf << "Ageq " << r << "%nat " << display(lower(b));
+    break; }
   case PRED_ABS:
     plouf << "Aabs " << find_real(rm, p.real.real()) << "%nat " << display(p.bnd());
     break;
