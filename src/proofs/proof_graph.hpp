@@ -93,7 +93,7 @@ struct logic_node: node
   virtual ~logic_node();
   virtual property const &get_result() const;
   virtual node_vect const &get_subproofs() const;
-  virtual property maximal_for(node const *) const { assert(false); }
+  virtual property maximal_for(node const *n) const { return n->get_result(); }
   virtual void enlarge(property const &) { assert(false); }
 };
 
@@ -107,7 +107,7 @@ struct logicp_node: node
   virtual ~logicp_node();
   virtual property const &get_result() const { return res; }
   virtual node_vect const &get_subproofs() const;
-  virtual property maximal_for(node const *) const { assert(false); }
+  virtual property maximal_for(node const *n) const { return n->get_result(); }
   virtual void enlarge(property const &) { assert(false); }
 };
 

@@ -564,16 +564,15 @@ void enlarger(node_vect const &nodes)
     for (node_vect::const_iterator j = v.begin(), end = v.end(); j != end; ++j)
       if ((*j)->can_visit()) pending.push_back(*j);
   }
-#if 0
   while (!pending.empty())
   {
     node *n = pending.front();
     pending.pop_front();
     n->visited = 0;
-    n->enlarge(n->maximal());
+    if (n->type != LOGIC && n->type != LOGICP)
+      n->enlarge(n->maximal());
     node_vect const &v = n->get_subproofs();
     for (node_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i)
       if ((*i)->can_visit()) pending.push_back(*i);
   }
-#endif
 }
