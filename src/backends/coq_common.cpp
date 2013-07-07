@@ -516,14 +516,15 @@ static id_cache<property_tree> displayed_trees;
 std::string display(property_tree const &t)
 {
   if (t.empty()) return "False";
+  if (t.atom && t.conjunction) return display(fetch(*t.atom));
   int t_id = displayed_trees.find(t);
   std::string name = composite('s', t_id);
   if (t_id < 0) return name;
   auto_flush plouf;
   plouf << (vernac ? "Definition " : "let ") << name << (vernac ? " := (" : " := ");
   if (!t.left) {
-    if (!t.conjunction) plouf << "not ";
-    plouf << display(fetch(*t.atom));
+    assert(!t.conjunction);
+    plouf << "not " << display(fetch(*t.atom));
   } else {
     plouf << display(*t.left) << (t.conjunction ? " /\\ " : " \\/ ")
       << display(*t.right);
