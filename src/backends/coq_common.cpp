@@ -678,19 +678,6 @@ void invoke_lemma(auto_flush &plouf, property_vect const &hyp, property_map cons
   if (vernac) plouf << '\n';
 }
 
-static void invoke_subset(auto_flush &plouf, property const &p1, property const &p2)
-{
-  std::string sn = subset_name(p1, p2);
-  if (sn.empty()) return;
-  plouf << " apply " << sn << " with ";
-  switch (p1.real.pred()) {
-  case PRED_FIX: plouf << p1.cst() << "%Z"; break;
-  case PRED_FLT: plouf << p1.cst() << "%positive"; break;
-  default: plouf << display(p1.bnd());
-  }
-  plouf << ". 2: finalize.\n";
-}
-
 /**
  * Instantiate node @a m as "h @a num_hyp" with the hypotheses of node @a n.
  */
@@ -917,32 +904,55 @@ std::string display(node *n)
   case UNION: {
     node_vect const &pred = n->get_subproofs();
     property const &n_res = n->get_result();
-    assert(vernac);
     assert(pred.size() >= 2);
     node *mcase = pred[0];
     property const &pcase = mcase->get_result();
     assert(pcase.real.pred() == PRED_BND);
     pose_hypothesis(plouf, num_hyp, mcase, n);
-    plouf << " revert h" << num_hyp << ".\n";
+    if (vernac) plouf << " revert h" << num_hyp << ".\n";
     for (node_vect::const_iterator i = pred.begin() + 1,
          i_end = pred.end(); i != i_end; ++i)
     {
       node *m = *i;
       property const &p = *m->graph->get_hypotheses().atom;
-      plouf << " assert (u : " << display(p) << " -> " << display(n_res) << ")."
-               " intro h" << num_hyp << ". (* " << p.bnd() << " *)\n";
+      plouf << (vernac ? " assert (u : " : "  let u : ")
+        << display(p) << " -> " << display(n_res)
+        << (vernac ? "). intro h" : " := fun h") << num_hyp
+        << (vernac ? ". (* " : " => (* ") << p.bnd() << " *)\n";
       property const &res = m->get_result();
-      if (!res.null()) // not a contradictory result
-        invoke_subset(plouf, res, n_res);
-      plouf << (res.null() ? " elim " : " apply ")
-        << display(m) << ". exact h" << num_hyp << '.';
-      for (int j = 0; j != num_hyp; ++j) plouf << " exact h" << j << '.';
-      plouf << '\n';
+      if (res.null()) {
+        if (n_res.null())
+          plouf << (vernac ? " apply (" : "   (");
+        else
+          plouf << (vernac ? " elim (" : " False_ind _ (");
+      } else {
+        // not a contradictory result
+        std::string sn = subset_name(res, n_res);
+        if (!sn.empty()) {
+          assert(vernac);
+          plouf << " apply " << sn << " with ";
+          switch (res.real.pred()) {
+          case PRED_FIX: plouf << res.cst() << "%Z"; break;
+          case PRED_FLT: plouf << res.cst() << "%positive"; break;
+          default: plouf << display(res.bnd());
+          }
+          plouf << ". 2: finalize.\n";
+        }
+        plouf << (vernac ? " apply (" : " (");
+      }
+      plouf << display(m) << " h" << num_hyp;
+      for (int j = 0; j != num_hyp; ++j) plouf << " h" << j;
+      plouf << (vernac ? ").\n" : ") in\n");
       if (i + 1 != i_end)
-        plouf << " next_interval (union) u.\n";
+        if (vernac)
+          plouf << " next_interval (union) u.\n";
+        else
+          plouf << "  Gappa.Gappa_pred_bnd.union " << display(pcase.real.real())
+            << ' ' << display(n_res) << " (" GAPPADEF "makepairF _ _) _ u _ (\n";
       else
-        plouf << " exact u.\n";
+        plouf << (vernac ? " exact u.\n" : "  u");
     }
+    if (!vernac) plouf << std::string(pred.size() - 2, ')') << " h" << num_hyp;
     break; }
   }
   plouf << (vernac ? "Qed.\n" : " in\n");
