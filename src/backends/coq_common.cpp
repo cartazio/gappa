@@ -41,6 +41,7 @@ static char const *theorem_defs[][2] = {
   { "intersect", "$gpred_bnd.$t $x $1i $2i $i $" },
   { "intersect_hb", "$gpred_bnd.$t $x $1u $2i $i $" },
   { "intersect_bh", "$gpred_bnd.$t $x $2l $1i $i $" },
+  { "intersect_hh", "$gpred_bnd.$t $x $1u $2l $i $" },
   { "intersect_aa", "$gpred_abs.$t $x $1i $2i $i $" },
   { "intersect_rr", "$gpred_rel.$t $x $y $1i $2i $i $" },
   { "intersect_rr0", "$gpred_rel.$t $1x $1y $1i $2i $i $" },
@@ -877,7 +878,10 @@ std::string display(node *n)
       hyps[i] = res;
       switch (res.real.pred()) {
         case PRED_BND:
-          if (!is_bounded(res.bnd())) suffix = (i == 0) ? "_hb" : "_bh";
+          if (!is_bounded(res.bnd()))
+            if (!i) suffix = "_hb";
+            else if (suffix[0]) suffix = "_hh";
+            else suffix = "_bh";
           break;
         case PRED_ABS:
           suffix = "_aa";
