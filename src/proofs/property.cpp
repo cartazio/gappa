@@ -304,9 +304,9 @@ int property_tree::try_simplify(property const &p, bool positive, undefined_map 
   if (int valid = left->try_simplify(p, positive, force, chg1, t1)) {
     if ((valid > 0) ^ conjunction) return valid;
     valid = right->try_simplify(p, positive, force, chg2, tgt);
-    if (!chg2) tgt = *right;
+    if (!valid && !chg2) tgt = *right;
     changed = true;
-    return 0;
+    return valid;
   }
   property_tree t2;
   if (int valid = right->try_simplify(p, positive, force, chg2, t2)) {
@@ -335,7 +335,7 @@ int property_tree::simplify(property const &p)
   int v = try_simplify(p, true, NULL, changed, t);
   if (v) {
     clear();
-    t.conjunction = v == 1;
+    conjunction = v > 0;
   } else if (changed) {
     swap(t);
   }
