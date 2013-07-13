@@ -59,6 +59,7 @@ static property generate_property(ast_atom const &p, bool goal)
     return property(pr, p.cst);
   case PRED_EQL:
     register_approx(p.real, p.real2);
+    check_approx(p.real);
     // no break
   case PRED_NZR:
     input_reals.insert(pr);
