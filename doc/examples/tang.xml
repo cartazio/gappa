@@ -129,9 +129,9 @@ r1 -> R - r2;]]></programlisting>
 <para>Gappa answers that the error is bounded by 0.535 ulp. This is consistent
 with the bounds computed by Tang and Harrison.</para>
 
-<screen>Results for n in [-10176, 10176] and R in [0, 0.0217] and Z in [-1.00044e-10, 1.00044e-10] and S - S0 in [-4.54747e-13, 4.54747e-13] and R - R0 in [-5.82077e-11, 5.82077e-11]:
-e in [4282253b-22 {1.02097, 2^(0.0299396)}, 8768135b-23 {1.04524, 2^(0.0638374)}]
-e - E0 in [-75807082762648785b-80 {-6.27061e-08, -2^(-23.9268)}, 154166255364809243b-81 {6.37617e-08, 2^(-23.9027)}]</screen>
+<screen>Results:
+  e in [8572295b-23 {1.0219, 2^(0.0312489)}, 4380173b-22 {1.04431, 2^(0.0625575)}]
+  e - E0 in [-75807082762648785b-80 {-6.27061e-08, -2^(-23.9268)}, 154166255364809243b-81 {6.37617e-08, 2^(-23.9027)}]</screen>
 
 </section>
 </section>

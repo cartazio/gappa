@@ -42,7 +42,7 @@ decimal arithmetic).</para>
 <title>Floating-point operators</title>
 
 <para>This class of operators covers all the formats whose number sets are
-<texinline>F(p,d) = \{m \times 2^e; |m| &lt; 2^p, e \ge d\}</texinline>. In
+<texinline>F(p,d) = \{m \times 2^e; |m| \lt 2^p, e \ge d\}</texinline>. In
 particular, IEEE-754 floating-point formats (with subnormal numbers) are part
 of this class, if we set apart overflow issues. Both parameters p and d select
 a particular format. The last parameter selects the rounding direction.</para>

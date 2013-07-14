@@ -1,5 +1,6 @@
 <section>
 <title>Input and output</title>
+
 <para>Gappa reads the script whose filename is passed as an argument to
 the tool, or on its standard input if none. Such a script is made of
 three parts: the definitions, the logical formula, and the hints. Warning
@@ -19,9 +20,8 @@ Gappa is correct.</para>
 <screen><![CDATA[$ echo "{ x in [-2,2] -> x * x in ? }" > test.g
 
 $ gappa -Bcoq test.g > test.v
-
-Results for x in [-2, 2]:
-x * x in [0, 1b2 {4, 2^(2)}]
+Results:
+  x * x in [0, 4]
 
 $ echo "Return code is $?"
 Return code is 0
@@ -29,6 +29,14 @@ Return code is 0
 $ coqc -I path/to/gappalib-coq test.v
 
 $]]></screen>
+
+<para>Note that, if no ranges are left unspecified in the logical formula,
+Gappa will not have anything to display in case of success.</para>
+<screen><![CDATA[$ echo "{ 1 + 1 = 2 }" | gappa
+
+$ echo "Return code is $?"
+Return code is 0]]></screen>
+
 </section>
 
 <!-- ###### -->
@@ -54,16 +62,25 @@ option.</para>
 <title>Coq back-end</title>
 <para>Option: <code>-Bcoq</code></para>
 <para>When this back-end is selected, Gappa generates a script that proves the
-results it displays. This script can be automatically verified by the Coq
-proof-checker. It can also be reused in bigger formal developments made with
+logical formula. This script can be mechanically verified by the Coq
+proof checker. It can also be reused in bigger formal developments made with
 Coq.</para>
 </section>
 
 <section>
+<title>Latex back-end</title>
+<para>Option: <code>-Blatex</code></para>
+<para>When this back-end is selected, Gappa generates a Latex file that
+contains the steps for proving the logical formula.</para>
+</section>
+
+<!--
+<section>
 <title>HOL Light back-end</title>
 <para>Option: <code>-Bholl</code></para>
-<para>Similar to the previous option, but for the HOL Light proof-checker.</para>
+<para>Similar to the previous option, but for the HOL Light proof checker.</para>
 </section>
+-->
 
 <section>
 <title>Coq lambda-term back-end</title>
@@ -71,7 +88,7 @@ Coq.</para>
 <para>This back-end is used by the <code>gappa</code> tactic available
 for the Coq proof checker. It generates a lambda-term that can be
 directly loaded by the proof checker, but it only supports the features
-needed by the tactic: no bisection nor rewriting.</para>
+needed by the tactic. For instance, it does not support rewriting rules.</para>
 </section>
 
 </section>
@@ -116,7 +133,7 @@ not be the preferred order for the operands, the option makes Gappa use
 <section>
 <title>Assuming vague hypotheses</title>
 <para>Option: <code>-Munconstrained</code></para>
-<para>By default, Gappa checks that all its hypotheses hold before using a
+<para>By default, Gappa checks that all the hypotheses hold before applying a
 theorem. This mode weakens the engine by making it skip hypotheses that are not
 needed for computing intermediate results. For example, Gappa will no longer
 check that <code>x</code> is not zero before applying the lemma proving
@@ -126,31 +143,23 @@ as it makes it possible to get some early results about them without having to
 prove that they are well-defined.</para>
 <para>At the end of its run, Gappa displays all the facts that are left
 unproven. In the following example, the property <code>NZR</code>
-indicates that Gappa possibly need to prove that a value (namely <code>x
-- 1</code>, which appears as a denominator and is equal to zero for
-<code>x</code> equal to 1) is nonzero.</para>
+indicates that Gappa possibly needs to prove that some values are not
+zero.</para>
 <programlisting language="gappa"><![CDATA[{ x in [1,2] ->
   (x + 1) / (x + 1) in ? /\ (x - 1) / (x - 1) in ? }]]></programlisting>
-<screen>Results for x in [1, 2]:
-(x + 1) / (x + 1) in [1, 1]
-(x - 1) / (x - 1) in [1, 1]
-Unproven assumptions:
+<screen>Results:
+  (x + 1) / (x + 1) in [1, 1]
+  (x - 1) / (x - 1) in [1, 1]
+Warning: some properties were assumed:
+  NZR(x + 1)
   NZR(x - 1)</screen>
-<para>While Gappa only displays the properties that are left unproven at the end
-of its run, it may contain false positive. This is especially true when one of
-the unproven properties actually relies on the proof of another one. Both will
-be displayed as unproven, although only the second one needs to be
-proved.</para>
+<para>Notice that Gappa has assumed <code>x + 1</code> to be nonzero, while
+it actually can be deduced from <code>x in [1,2].</code> So there might be
+false positives among assumptions, depending on the order Gappa deduced
+properties.</para>
 <para>This mode cannot be used when a proof back-end is selected, as a
-generated proof would contain holes.</para>
-</section>
-
-<section>
-<title>Improving generated proofs</title>
-<para>Option: <code>-Mexpensive</code></para>
-<para>In this mode, Gappa tries to find shorter proofs. Although this
-mode may considerably slow down the computations, its effectiveness is
-unfortunately far from being guaranteed.</para>
+generated proof would contain holes. It is, however, as slow as if a
+back-end had been selected, since the whole proof graph is kept around.</para>
 </section>
 
 <section>
@@ -184,33 +193,12 @@ property had already been found at the time the theorem was applied. The
 last two lines track these cases.</para>
 </section>
 
-<section>
-<title>Displaying propositions as Gappa scripts</title>
-<para>Option: <code>-Msequent</code></para>
-<para>Gappa applies several transformations to the input proposition if it is too complicated. The left-hand sides of the resulting sub-propositions (conjunction of atoms implying conjunctions and disjunctions of atoms) are then displayed in the results. This mode causes the propositions to be displayed in a syntax close to Gappa's one and with their right-hand side, so that one can work directly on the simpler sub-propositions.</para>
-<programlisting language="gappa"><![CDATA[{ x in [0,1] \/ x in [2,3] -> not x + 1 in [0,1] }]]></programlisting>
-<screen><![CDATA[Script:
-  x in [1b1,3] /\
-  x + 1 in [0,1] ->
-  1 <= 0
-Results:
-A contradiction was built from the hypotheses.
-
-Script:
-  x in [0,1] /\
-  x + 1 in [0,1] ->
-  1 <= 0
-Results:
-Warning: no contradiction was found.]]></screen>
-<para>Note that <code>1 &lt;= 0</code> is only there to complete the scripts, since they happen to not have any right-hand side, which means that Gappa tries to prove false from the hypotheses.</para>
-</section>
-
 </section>
 
 <section>
 <title>Enabling and disabling warning messages</title>
 <para>By default, all the warning messages are enabled. See annex for details
-on warning messages during <link linkend="warning-messages1">parsing</link>
+on warning messages displayed during <link linkend="warning-messages1">parsing</link>
 and during <link linkend="warning-messages2">computations</link>.</para>
 </section>
 

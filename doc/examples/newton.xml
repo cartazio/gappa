@@ -49,8 +49,8 @@ between <code>r2</code> and <code>R</code>.</para>
 <para>We expect Gappa to prove that <code>r2</code> is <texinline>R \pm
 2^{-24}</texinline>. Unfortunately, this is not the case.</para>
 
-<screen>Results for d in [0.5, 1] and @FIX(d, -24) and @FIX(r0, -8) and r0 - R in [-0.00390625, 0.00390625]:
-r2 - R in [-1320985b-18 {-5.03916, -2^(2.33318)}, 42305669b-23 {5.04323, 2^(2.33435)}]</screen>
+<screen>Results:
+  r2 - R in [-1320985b-18 {-5.03916, -2^(2.33318)}, 42305669b-23 {5.04323, 2^(2.33435)}]</screen>
 
 </section>
 
@@ -75,9 +75,9 @@ iteration.</para>
 <para>Gappa now gives the answer below. Notice that the range of the rounding
 error almost matches the precision of the computations.</para>
 
-<screen>Results for d in [0.5, 1] and @FIX(d, -24) and @FIX(r0, -8) and r0 - R in [-0.00390625, 0.00390625]:
-r0 * (2 - d * r0) - R in [-131585b-16 {-2.00783, -2^(1.00564)}, 263425b-17 {2.00977, 2^(1.00703)}]
-r1 - r0 * (2 - d * r0) in [-255b-22 {-6.07967e-05, -2^(-14.0056)}, 201456639b-40 {0.000183224, 2^(-12.4141)}]</screen>
+<screen>Results:
+  r1 - r0 * (2 - d * r0) in [-255b-22 {-6.07967e-05, -2^(-14.0056)}, 201456639b-40 {0.000183224, 2^(-12.4141)}]
+  r0 * (2 - d * r0) - R in [-131585b-16 {-2.00783, -2^(1.00564)}, 263425b-17 {2.00977, 2^(1.00703)}]</screen>
 
 <para>So Gappa was fine with the rounding error, but not with the algorithmic
 error. We can help Gappa by directly providing an expression of this error. So
@@ -109,9 +109,8 @@ r2 - R -> (r2 - r1 * (2 - d * r1)) - (r1 - R) * (r1 - R) * d;]]></programlisting
 <para>Gappa answers that <texinline>r_2 = R \pm 2^{-24.7}</texinline>.</para>
 
 <screen>Warning: although present in a quotient, the expression (d) may have not been tested for non-zeroness.
-
-Results for d in [0.5, 1] and @FIX(d, -24) and @FIX(r0, -8) and r0 - R in [-0.00390625, 0.00390625]:
-r2 - R in [-41710608584542209b-80 {-3.45022e-08, -2^(-24.7887)}, 8356605b-52 {1.85554e-09, 2^(-29.0055)}]</screen>
+Results:
+  r2 - R in [-41710608584542209b-80 {-3.45022e-08, -2^(-24.7887)}, 8356605b-52 {1.85554e-09, 2^(-29.0055)}]</screen>
 
 </section>
 
@@ -178,8 +177,8 @@ r1 * (2 - d * r1) - R -> (r1 - R) * (r1 - R) * -d   { d <> 0 };]]></programlisti
 
 <para>The answer is the same.</para>
 
-<screen>Results for d in [0.5, 1] and @FIX(d, -24) and @FIX(r0, -8) and r0 - R in [-0.00390625, 0.00390625]:
-r2 - R in [-41710608584542209b-80 {-3.45022e-08, -2^(-24.7887)}, 8356605b-52 {1.85554e-09, 2^(-29.0055)}]</screen>
+<screen>Results:
+  r2 - R in [-41710608584542209b-80 {-3.45022e-08, -2^(-24.7887)}, 8356605b-52 {1.85554e-09, 2^(-29.0055)}]</screen>
 
 <para>Another example of a Newton iteration is given in <xref linkend="why"/>.</para>
 

@@ -28,55 +28,40 @@ y - z $ x;]]></programlisting>
 
 <para>This is the fundamental part of the script, it contains the logical
 formula Gappa is expected to prove. This formula is written between brackets
-and can contain any implication, disjunction, conjunction of enclosures of
-mathematical expressions. Enclosures are either bounded ranges or
-inequalities. Any identifier without definition is assumed to be universally
-quantified over the set of real numbers.</para>
-
-<programlisting language="gappa"><![CDATA[{ x - 2 in [-2,0] /\ (x + 1 in [0,2] -> y in [3,4]) -> not x <= 1 \/ x + y in ? }]]></programlisting>
-
-<para>The logical formula is first modified and loosely broken according to
-the rules of sequent calculus. Each of the new formulas will then be verified
-by Gappa. Ranges on the right of these sub-formulas can be left unspecified.
-Gappa will then suggest a range such that the logical formula is verified.</para>
-
-<programlisting language="gappa"><![CDATA[(1)  x <= 1 /\ x - 2 in [-2,0] -> x + 1 in [0,2] \/ x + y in ?
-(2)  x <= 1 /\ x - 2 in [-2,0] /\ y in [3,4] -> x + y in ?]]></programlisting>
+and can contain any implication, disjunction, conjunction, negation of
+properties of mathematical expressions. These properties can be enclosures,
+inequalities, relative errors, equalities, and expression precisions. Any
+identifier without definition is assumed to be universally quantified over
+the set of real numbers.</para>
 
 <section>
-<title>Inequalities</title>
+<title>Enclosures</title>
 
-<para>Inequalities can be used instead of enclosures. The tool will display
-them as intervals with an infinite bound.</para>
+<para>Enclosures are either bounded ranges or inequalities. In positive
+position, ranges can be left unspecified. Gappa will then suggest a range
+such that the logical formula is verified.</para>
 
-<para>They can be present on both sides of a sub-formula. On the left,
-it will be used only if Gappa is already able to compute an enclosure of the
-expression by another way.</para>
+<programlisting language="gappa"><![CDATA[{ x - 2 in [-2,0] /\ (x + 1 in [0,2] -> y in [3,4]) -> not x <= 1 \/ x + y in ? }]]></programlisting>
+<screen><![CDATA[Results:
+  x + y in [3, 5]]]></screen>
 
-<para>On the right, Gappa will put a reverted copy on the
-left in order to increase the number of available hypotheses, if the equality
-was part of a disjunction at top level.</para>
+<para>Note that Gappa might be able to prove the formula without even
+having to fill the unspecified ranges. In that case, Gappa will not display
+anything.</para>
 
-<para>For instance, given the first formula below, Gappa actually tries to
-prove the second one.</para>
-<programlisting><![CDATA[(before)  a <= 1 /\ b in [2,3] -> ((c >= 4 \/ d in [5,6]) /\ e in [7,8]) \/ f <= 9
-(after)   a <= 1 /\ b in [2,3] /\ f >= 9 -> ((c >= 4 \/ d in [5,6]) /\ e in [7,8]) \/ f <= 9]]></programlisting>
-
-<para>In particular, when displaying the results, the tool will display the new
-hypothesis on <code>f</code>:</para>
-<screen><![CDATA[Results for a in [-inf, 1] and b in [2, 3] and f in [9, inf]:]]></screen>
+<programlisting language="gappa"><![CDATA[{ x in [1,2] /\ x - 3 >= 0 -> x + 1 in ? }
+# notice the contradiction between the hypotheses]]></programlisting>
 
 <para>Inequalities that give an upper bound on an absolute value are treated
-differently. They are assumed to be full enclosures with a lower bound equal
+specially. They are assumed to be full enclosures with a lower bound equal
 to zero. In other words, <code>|x| &lt;= 1</code> is syntactic sugar for
 <code>|x| in [0,1]</code>.</para>
 
-<para>Gappa does not know much about inequalities, as they never appear
-as hypotheses of its theorems. They can only be used to refine a
-previously computed enclosure. For instance, Gappa cannot deduce a
-contradiction from <code>x * x &lt;= -1</code> alone. It needs to know
-either an enclosure of <code>x</code> or a positive enclosure of <code>x
-* x</code>.</para>
+<para>Gappa does not know much about inequalities, as they never appear as
+hypotheses of its theorems. They can only be used to refine a previously
+computed enclosure. For instance, Gappa cannot deduce a contradiction from
+<code>x * x &lt;= -1</code> alone. It needs to know either an enclosure of
+<code>x</code> or a nonnegative enclosure of <code>x * x</code>.</para>
 </section>
 
 <section>
@@ -122,7 +107,7 @@ handling of <link linkend="hint-rewriting">rewriting rules</link>.</para>
 
 <para>Whenever possible, equalities should be expressed as <link
 linkend="definitions">definitions</link> rather than inside the logical
-formulas, as it offers more chances for Gappa to apply its
+formulas, as it offers more opportunities for Gappa to apply its
 theorems.</para>
 </section>
 

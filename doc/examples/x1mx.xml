@@ -53,8 +53,8 @@ describing our previous function is true.</para>
 <para>Gappa answers that the result is between 0 and 1. Without any help from
 the user, they are the best bounds Gappa is able to prove.</para>
 
-<screen>Results for x in [0, 1]:
-[rounding_float,ne,24,149](x * [rounding_float,ne,24,149](1 - x)) in [0, 1]</screen>
+<screen><![CDATA[Results:
+  float<24,-149,ne>(x * float<24,-149,ne>(1 - x)) in [0, 1]]]></screen>
 
 </section>
 
@@ -104,9 +104,9 @@ z = x * (1 - x);
 
 <para>On the script above, Gappa displays:</para>
 
-<screen><![CDATA[Results for x in [0, 1]:
-y in [0, 1]
-y - z in [-1b-24 {-5.96046e-08, -2^(-24)}, 1b-24 {5.96046e-08, 2^(-24)}]]]></screen>
+<screen><![CDATA[Results:
+  y in [0, 1]
+  y - z in [-1b-24 {-5.96046e-08, -2^(-24)}, 1b-24 {5.96046e-08, 2^(-24)}]]]></screen>
 
 <para>Gappa displays the bounds it has computed. Numbers enclosed in braces are
 approximations of the numbers on their left. These exact left numbers are
@@ -201,14 +201,11 @@ z -> 0.25 - (x - 0.5) * (x - 0.5);     # x * (1 - x) == 1/4 - (x - 1/2)^2
 y $ x;                                 # bound y by splitting the interval on x
 y - z $ x;                             # bound y - z by splitting ...]]></programlisting>
 
-<para>Gappa gives the results below.</para>
+<para>Gappa gives the results below. Since it proved the whole formula and
+there was no unspecified range, it does not have much to say.</para>
 
 <screen>Warning: z and 25e-2 - (x - 5e-1) * (x - 5e-1) are not trivially equal.
-         Difference: (5e-1)^2 - (25e-2) - 2 * (x) * (5e-1) + (x)
-
-Results for x in [0, 1]:
-y in [0, 1b-2 {0.25, 2^(-2)}]
-y - z in [-3b-27 {-2.23517e-08, -2^(-25.415)}, 3b-27 {2.23517e-08, 2^(-25.415)}]</screen>
+         Difference: -(25e-2) - 2 * (x) * (5e-1) + (5e-1)^2 + (x)</screen>
 
 <para>Note that Gappa checks the rewriting rules in order to provide early
 detection of mistyping. Since this check does not involve computations on
