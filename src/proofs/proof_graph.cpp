@@ -542,7 +542,7 @@ void graph_t::show_dangling() const
       if (first)
       {
         first = false;
-        std::cerr << "Unproven assumptions:\n";
+        std::cerr << "Warning: some properties were assumed:\n";
       }
       std::cerr << "  " << dump_property(n->get_result()) << '\n';
     }
@@ -574,10 +574,10 @@ void graph_t::show_negative() const
     find_negative(ps, (*i)->tree);
   }
   if (ps.empty()) {
-    std::cerr << "No contradiction was found.\n";
+    std::cerr << "Error: no contradiction was found.\n";
     return;
   }
-  std::cerr << "Some properties were not satisfied:\n";
+  std::cerr << "Error: some properties were not satisfied:\n";
   for (preal_set::const_iterator i = ps.begin(),
        i_end = ps.end(); i != i_end; ++i)
   {

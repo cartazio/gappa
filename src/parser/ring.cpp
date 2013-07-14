@@ -158,7 +158,7 @@ static bool check_divisor;
 static quotient div(quotient const &q1, quotient const &q2) {
   sum const &d = q2.first;
   if (d.empty()) {
-    std::cerr << "Error: a zero appears as a denominator in a rewriting rule.\n";
+    std::cerr << "Error: zero appears as a denominator in a rewriting rule.\n";
     exit(EXIT_FAILURE);
   }
   if (check_divisor && (d.size() > 1 || !d.begin()->first.empty()))

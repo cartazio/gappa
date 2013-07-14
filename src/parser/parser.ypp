@@ -166,14 +166,14 @@ SNUMBER:
 INTEGER:
   NUMBER
   {
-    if ($1->exponent != 0 || $1->mantissa.size() >= 7) failure("the number does not look like an integer");
+    if ($1->exponent != 0 || $1->mantissa.size() >= 7) failure("integer expected");
     $$ = $1;
   }
 
 SINTEGER:
   SNUMBER
   {
-    if ($1->exponent != 0 || $1->mantissa.size() >= 7) failure("the number does not look like an integer");
+    if ($1->exponent != 0 || $1->mantissa.size() >= 7) failure("integer expected");
     $$ = $1;
   }
 
@@ -203,7 +203,7 @@ FUNCTION:
       f = (*r->fun)(*p);
       delete p;
     } else f = (*r->fun)(function_params());
-    if (!f) failure("invalid parameters for " << r->name);
+    if (!f) failure("invalid parameters for '" << r->name << "'");
     $$ = f;
   }
 
@@ -212,7 +212,7 @@ EQUAL:
 | FUNCTION '='
   {
     function_class const *f = $1;
-    if (f->type != UOP_ID) failure(f->pretty_name() << " is not a rounding operator");
+    if (f->type != UOP_ID) failure("rounding operator expected, got '" << f->pretty_name() << "'");
     rounding_mode = f;
   }
 
@@ -221,10 +221,10 @@ PROG:
   {
     ast_ident *v = $2;
     ast_real const *r = $4;
-    if (v->type != ID_NONE) failure("the symbol " << $2->name << " is redefined");
+    if (v->type != ID_NONE) failure("redefinition of identifier '" << $2->name << "'");
     v->type = ID_VAR;
     v->var = r;
-    if (r->name) warning(r->name->name << " is being renamed to " << v->name);
+    if (r->name) warning("renaming identifier '" << r->name->name << "' as '" << v->name << "'");
     r->name = v;
     rounding_mode = NULL;
   }
@@ -234,10 +234,10 @@ PROG:
     v->type = ID_FUN;
     v->fun = new default_function_generator($5);
   }
-| PROG VARID		{ failure("the symbol " << $2->name << " is redefined"); }
-| PROG FUNID		{ failure("the symbol " << $2->name << " is redefined"); }
-| PROG '@' VARID	{ failure("the symbol " << $3->name << " is redefined"); }
-| PROG '@' FUNID	{ failure("the symbol " << $3->name << " is redefined"); }
+| PROG VARID		{ failure("redefinition of identifier '" << $2->name << "'"); }
+| PROG FUNID		{ failure("redefinition of identifier '" << $2->name << "'"); }
+| PROG '@' VARID	{ failure("redefinition of identifier '" << $3->name << "'"); }
+| PROG '@' FUNID	{ failure("redefinition of identifier '" << $3->name << "'"); }
 
 REAL:
   SNUMBER	{ $$ = normalize(ast_real($1)); }
@@ -258,7 +258,7 @@ REAL:
     if ((f->type == UOP_ID && ops->size() != 1) ||
         (f->type != UOP_ID && f->type != COP_FMA && ops->size() != 2) ||
         (f->type == COP_FMA && ops->size() != 3))
-      failure("incorrect number of arguments when calling " << f->pretty_name());
+      failure("incorrect number of arguments for '" << f->pretty_name() << "'");
     $$ = normalize(ast_real(real_op(f, *ops)));
     delete ops;
   }
