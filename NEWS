@@ -1,3 +1,17 @@
+Version 1.0.0:
+ * syntax
+   - recognized "e <> 0" for inputting NZR properties
+ * fact database
+   - added some new theorems for NZR
+ * back-ends
+   - added a back-end producing LaTeX files
+   - disabled HOL Light back-end as it was not used
+   - enabled automatic dichotomy and formula reduction
+ * proof graph
+   - allowed arbitrary formulas as output of nodes
+ * main interface
+   - removed option -Msequent as formulas are handled as a whole now
+
 Version 0.18.0:
  * main interface
    - removed option -Mexpensive
