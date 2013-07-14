@@ -531,18 +531,15 @@ static void reduce_hypotheses(node *n, std::list<logic_node *> &trees, logic_nod
     property_tree t;
     bool changed;
     int v = (*i)->tree.try_simplify(n->get_result(), true, umap, changed, t);
-    if (v > 0) {
-      (*i)->remove_known();
-      i = trees.erase(i);
-      continue;
-    }
-    if (changed || v < 0) {
+    if (!v && !changed) { ++i; continue; }
+    if ((v == 0 && changed) || v < 0) {
       logic_node *m = new logic_node(t, *i, n);
       if (v < 0) { top_graph->set_contradiction(m); return; }
       ++m->nb_good;
       trees.push_back(m);
     }
-    ++i;
+    (*i)->remove_known();
+    i = trees.erase(i);
   }
 }
 
