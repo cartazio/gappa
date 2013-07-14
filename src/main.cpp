@@ -18,49 +18,18 @@
 #include "proofs/proof_graph.hpp"
 #include "proofs/schemes.hpp"
 
-extern bool
-  parameter_constrained, parameter_statistics, parameter_sequent;
+extern bool parameter_constrained, parameter_statistics;
 extern int yyparse(void);
 extern bool detailed_io;
 extern backend *proof_generator;
 dichotomy_sequence dichotomies;
 property_tree context;
-bool goal_reduction = true;
 
 extern int
   stat_tested_real, stat_discarded_real,
   stat_tested_theo, stat_discarded_theo,
   stat_tested_app, stat_successful_app,
   stat_intersected_pred, stat_discarded_pred;
-
-#if 0
-void display_context(context const &ctx)
-{
-  property_vect const &hyp = ctx.hyp;
-  if (parameter_sequent)
-  {
-    change_io_format dummy(IO_EXACT);
-    std::cerr << "\nScript:\n";
-    for(unsigned i = 0, nb_hyp = hyp.size(); i < nb_hyp; ++i) {
-      std::cerr << "  " << dump_property_nice(hyp[i])
-                << (i != nb_hyp - 1 ? " /\\\n" : " ->\n");
-    }
-    std::cerr << "  " << dump_prop_tree_nice(ctx.goals) << "\nResults:\n";
-  }
-  else
-  {
-    std::cerr << "\nResults";
-    if (unsigned nb_hyp = hyp.size()) {
-      std::cerr << " for ";
-      for(unsigned i = 0; i < nb_hyp; ++i) {
-        if (i != 0) std::cerr << " and ";
-        std::cerr << dump_property_nice(hyp[i]);
-      }
-    }
-    std::cerr << ":\n";
-  }
-}
-#endif
 
 int main(int argc, char **argv)
 {
@@ -73,7 +42,6 @@ int main(int argc, char **argv)
       return EXIT_FAILURE;
     }
     proof_generator->initialize(std::cout);
-    goal_reduction = false;
   }
   if (yyparse()) return EXIT_FAILURE;
   preal_vect missing_paths = generate_proof_paths();

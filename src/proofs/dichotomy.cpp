@@ -290,31 +290,6 @@ dicho_graph dichotomy_helper::try_hypothesis(dichotomy_failure *exn,
 {
   graph_t *g = new graph_t(top_graph, property_tree(tmp_hyp));
 
-#if 0
-  property_tree current_goals = goals;
-  if (goal_reduction && !current_goals.empty())
-  {
-    graph_loader loader(g);
-    property p = tmp_hyp[0];
-    if (current_goals.simplify(p) > 0) {
-      found_it:
-      node *n = create_theorem(0, NULL, p, "$LOGIC", NULL);
-      g->set_contradiction(n);
-      return dicho_graph(g, iter_max);
-    }
-    if (!current_goals.empty()) {
-      number n = lower(tmp_hyp[0].bnd());
-      p.bnd() = remove_left ? interval(number::neg_inf, n) : interval(n, number::pos_inf);
-      if (current_goals.simplify(p, !remove_left) > 0) goto found_it;
-    }
-    if (!current_goals.empty()) {
-      number n = upper(tmp_hyp[0].bnd());
-      p.bnd() = remove_right ? interval(n, number::pos_inf) : interval(number::neg_inf, n);
-      if (current_goals.simplify(p, !remove_right) > 0) goto found_it;
-    }
-  }
-#endif
-
   g->populate(targets, hints, iter_max, NULL);
   if (g->get_contradiction() ||
       (!targets.empty() && targets.verify(g, exn ? &exn->expected : NULL)))
