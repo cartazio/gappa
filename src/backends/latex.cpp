@@ -19,7 +19,7 @@
 #include "parser/ast.hpp"
 #include "proofs/proof_graph.hpp"
 
-extern std::string get_real_split(number const &f, int &exp, bool &zero);
+extern std::string get_real_split(number const &f, int &exp, bool &zero, bool);
 
 static std::string convert_name(std::string const &name)
 {
@@ -46,7 +46,7 @@ static std::string display(number const &f)
 {
   bool zero;
   int exp;
-  std::string t = get_real_split(f, exp, zero);
+  std::string t = get_real_split(f, exp, zero, true);
   if (zero) return "0";
   if (!exp) return t;
   std::ostringstream s;

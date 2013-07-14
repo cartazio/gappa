@@ -20,7 +20,6 @@
 #include "parser/ast.hpp"
 #include "proofs/schemes.hpp"
 
-extern std::string get_real_split(number const &f, int &exp, bool &zero);
 extern bool parameter_rfma;
 link_map accurates, approximates;
 

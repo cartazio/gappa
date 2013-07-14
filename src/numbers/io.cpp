@@ -55,19 +55,29 @@ static std::string signed_lexical(mpz_t const &frac, bool sgn) {
   return res;
 }
 
-static std::string get_real_split(mpfr_t const &f, int &exp, bool &zero) {
+static std::string get_real_split(mpfr_t const &f, int &exp, bool &zero, bool beautify)
+{
   mpz_t frac;
   mpz_init(frac);
   int sgn;
   split_exact(f, frac, exp, sgn);
   zero = sgn == 0;
-  std::string res = zero ? "0" : signed_lexical(frac, sgn < 0);
+  if (zero) {
+    mpz_clear(frac);
+    return "0";
+  }
+  if (beautify && exp > 0 && exp + mpz_sizeinbase(frac, 2) < 20) {
+    mpz_mul_2exp(frac, frac, exp);
+    exp = 0;
+  }
+  std::string res = signed_lexical(frac, sgn < 0);
   mpz_clear(frac);
   return res;
 }
 
-std::string get_real_split(number const &f, int &exp, bool &zero) {
-  return get_real_split(f.data->val, exp, zero);
+std::string get_real_split(number const &f, int &exp, bool &zero, bool beautify)
+{
+  return get_real_split(f.data->val, exp, zero, beautify);
 }
 
 io_format change_io_format::current = IO_APPROX;
@@ -79,14 +89,15 @@ static std::string mpfr_approx(mpfr_t const &f)
   return buf;
 }
 
-std::ostream &operator<<(std::ostream &stream, number const &value) {
+std::ostream &operator<<(std::ostream &stream, number const &value)
+{
   mpfr_t const &f = value.data->val;
   if (change_io_format::current == IO_APPROX || mpfr_inf_p(f)) {
     stream << mpfr_approx(f);
     return stream;
   }
   bool zero; int exp;
-  std::string s = get_real_split(f, exp, zero);
+  std::string s = get_real_split(f, exp, zero, true);
   bool neg = s[0] == '-';
   stream << s;
   if (!zero && exp != 0) stream << 'b' << exp;

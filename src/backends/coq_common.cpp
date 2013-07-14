@@ -25,7 +25,7 @@
 #define COQRDEF "Reals.Rdefinitions."
 #define FLOCQDEF "Flocq.Core.Fcore_"
 
-extern std::string get_real_split(number const &f, int &exp, bool &zero);
+extern std::string get_real_split(number const &f, int &exp, bool &zero, bool);
 
 namespace coq {
 
@@ -326,7 +326,7 @@ std::string display(number const &f)
   std::ostringstream s;
   bool zero;
   int exp;
-  s << '(' << get_real_split(f, exp, zero);
+  s << '(' << get_real_split(f, exp, zero, false);
   s << ") (" << (zero ? 0 : exp) << ')';
   std::string const &s_ = s.str();
   int f_id = displayed_floats.find(s_);
