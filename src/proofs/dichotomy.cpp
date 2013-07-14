@@ -291,8 +291,8 @@ dicho_graph dichotomy_helper::try_hypothesis(dichotomy_failure *exn,
   graph_t *g = new graph_t(top_graph, property_tree(tmp_hyp));
 
   g->populate(targets, hints, iter_max, NULL);
-  if (g->get_contradiction() ||
-      (!targets.empty() && targets.verify(g, exn ? &exn->expected : NULL)))
+  if (g->get_contradiction() || targets.empty() ||
+      targets.verify(g, exn ? &exn->expected : NULL))
     return dicho_graph(g, iter_max);
   if (exn && !exn->expected.null()) {
     graph_loader loader(g);
