@@ -57,7 +57,6 @@ static void help() {
     "  -Bnull                          do not generate a proof (default)\n"
     "  -Bcoq                           produce a script for the Coq proof checker\n"
     "  -Bcoq-lambda                    produce a term for the Coq proof checker\n"
-    "  -Bholl                          produce a script for the HOL Light checker\n"
     "  -Blatex                         produce a LaTeX text\n";
 }
 
