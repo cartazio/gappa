@@ -176,6 +176,7 @@ class graph_t
   void set_contradiction(node *);
   void replace_known(node_vect const &);
   void show_dangling() const;
+  void show_negative() const;
 };
 
 /** Helper for keeping ::top_graph up-to-date. */

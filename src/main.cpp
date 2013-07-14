@@ -67,7 +67,7 @@ int main(int argc, char **argv)
       proof_generator->theorem(n);
     }
   } else {
-    std::cerr << "Warning: some enclosures were not satisfied.\n";
+    g->show_negative();
     globally_proven = false;
   }
   g->show_dangling();

@@ -549,6 +549,48 @@ void graph_t::show_dangling() const
   }
 }
 
+typedef std::set<predicated_real> preal_set;
+
+static void find_negative(preal_set &ps, property_tree const &t)
+{
+  if (t.left) {
+    find_negative(ps, *t.left);
+    find_negative(ps, *t.right);
+    return;
+  }
+  if (t.conjunction) return;
+  ps.insert(t.atom->real);
+}
+
+/**
+ * Displays the negative tree properties and the currently known properties.
+ */
+void graph_t::show_negative() const
+{
+  preal_set ps;
+  for (std::list<logic_node *>::const_iterator i = trees.begin(),
+       i_end = trees.end(); i != i_end; ++i)
+  {
+    find_negative(ps, (*i)->tree);
+  }
+  if (ps.empty()) {
+    std::cerr << "No contradiction was found.\n";
+    return;
+  }
+  std::cerr << "Some properties were not satisfied:\n";
+  for (preal_set::const_iterator i = ps.begin(),
+       i_end = ps.end(); i != i_end; ++i)
+  {
+    std::cerr << "  " << dump_real(*i);
+    if (node *n = find_already_known(*i)) {
+      std::cerr << ", best: ";
+      if (i->pred_bnd()) std::cerr << n->get_result().bnd();
+      else std::cerr << n->get_result().cst();
+    }
+    std::cerr << '\n';
+  }
+}
+
 /**
  * Scans the nodes of the graph from goals to hypotheses and tries to weaken results.
  */
