@@ -158,7 +158,7 @@ modus_node::modus_node(theorem_node *n)
   : dependent_node(MODUS), target(n)
 {
   assert(n);
-  if (!proof_generator) return;
+  if (!proof_generator && parameter_constrained) return;
   node_set nodes;
   for (property_vect::const_iterator i = n->hyp.begin(),
        i_end = n->hyp.end(); i != i_end; ++i)
