@@ -689,7 +689,7 @@ void graph_t::populate(property_tree const &targets,
         max_pts = i->second.size();
         sv = &*i;
       }
-      if (max_pts <= 1) return;
+      if (max_pts <= 1) goto fill_holes;
       ast_real_set save = already;
       unsigned long ds = 0;
       number prev = number::neg_inf;
@@ -705,8 +705,18 @@ void graph_t::populate(property_tree const &targets,
       dichotomy_hint dh = { dvar_vect(1, dv), property_tree() };
       dichotomize(dh, iter_max);
       already = save;
-      return;
+      goto fill_holes;
     }
     if (split_hypotheses(trees, current_targets, &missing_schemes)) return;
+  }
+
+  fill_holes:
+  if (!umap) return;
+  for (node_map::const_iterator i = known_reals.begin(),
+       i_end = known_reals.end(); i != i_end; ++i)
+  {
+    if (i->first.pred_bnd() && !is_bounded(i->second->get_result().bnd())) continue;
+    reduce_hypotheses(i->second, trees, NULL, umap);
+    if (contradiction) return;
   }
 }
