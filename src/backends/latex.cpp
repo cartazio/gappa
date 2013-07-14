@@ -208,11 +208,11 @@ static std::string display(node *n)
   assert(n);
   switch (n->type) {
   case LOGIC: {
-    logic_node const *ln = dynamic_cast<logic_node const *>(n);
+    logic_node const *ln = static_cast<logic_node const *>(n);
     if (!ln->before) return "";
     break; }
   case LOGICP: {
-    logicp_node const *ln = dynamic_cast<logicp_node const *>(n);
+    logicp_node const *ln = static_cast<logicp_node const *>(n);
     if (!ln->index) return display(ln->before);
     break; }
   }
@@ -242,7 +242,7 @@ static std::string display(node *n)
   }
   std::cout << "\\begin{equation}\\label{" << name << "}\n";
   if (n->type == LOGIC) {
-    logic_node const *ln = dynamic_cast<logic_node const *>(n);
+    logic_node const *ln = static_cast<logic_node const *>(n);
     std::cout << display(ln->tree);
   } else {
     std::cout << display(n->get_result());
@@ -268,7 +268,7 @@ static std::string display(node *n)
     break;
   case MODUS:
     std::cout << " theorem \\texttt{"
-      << convert_name(dynamic_cast<modus_node *>(n)->target->name) << '}';
+      << convert_name(static_cast<modus_node *>(n)->target->name) << '}';
     break;
   case INTERSECTION:
     std::cout << " performing an intersection";

@@ -688,9 +688,9 @@ static void pose_hypothesis(auto_flush &plouf, int num_hyp, node *m, node *n)
   int i = 0;
   graph_t *g = n->graph;
   for (; g != m->graph; g = g->get_father()) ++i;
-  logic_node *ln = dynamic_cast<logic_node *>(m);
-  if (ln && !ln->before) plouf << 'h' << i;
-  else {
+  if (m->type == LOGIC && !static_cast<logic_node *>(m)->before) {
+    plouf << 'h' << i;
+  } else {
     plouf << display(m);
     for (; g; g = g->get_father()) plouf << " h" << (i++);
   }
@@ -814,8 +814,8 @@ std::string display(node *n)
   }
   logic_node *ln = NULL;
   if (n->type == LOGIC) {
-    ln = dynamic_cast<logic_node *>(n);
-    assert(ln && ln->before);
+    ln = static_cast<logic_node *>(n);
+    assert(ln->before);
     plouf << display(ln->tree);
   } else {
     property const &n_res = n->get_result();
@@ -842,8 +842,8 @@ std::string display(node *n)
     }
     break; }
   case LOGICP: {
-    logicp_node *ln = dynamic_cast<logicp_node *>(n);
-    assert(ln && ln->before && ln->before->tree.conjunction);
+    logicp_node *ln = static_cast<logicp_node *>(n);
+    assert(ln->before && ln->before->tree.conjunction);
     pose_hypothesis(plouf, num_hyp, ln->before, n);
     select(plouf, ln->index, num_hyp);
     break; }
@@ -858,8 +858,8 @@ std::string display(node *n)
       property const &res = m->get_result();
       pmap[res.real] = std::make_pair(num_hyp++, &res);
     }
-    modus_node *mn = dynamic_cast< modus_node * >(n);
-    assert(mn && mn->target);
+    modus_node *mn = static_cast<modus_node *>(n);
+    assert(mn->target);
     plouf << (vernac ? " apply " : "  ") << display(mn->target);
     if (vernac) plouf << '.';
     invoke_lemma(plouf, mn->target->hyp, pmap);
