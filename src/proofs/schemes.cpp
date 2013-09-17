@@ -658,59 +658,59 @@ void graph_t::populate(property_tree const &targets,
     }
     if (iter > iter_max)
       std::cerr << "Warning: maximum number of iterations reached.\n";
-    if (dichotomy_it != dichotomy_end) {
-      dichotomize(*dichotomy_it, iter_max);
-      if (contradiction) return;
-    }
+    if (dichotomy_it == dichotomy_end) break;
+    dichotomize(*dichotomy_it, iter_max);
+    if (contradiction) return;
     for (node_map::const_iterator i = known_reals.begin(),
          i_end = known_reals.end(); i != i_end; ++i)
     {
       if (i->first.pred_bnd() && !is_bounded(i->second->get_result().bnd())) continue;
-      reduce_hypotheses(i->second, trees, NULL, dichotomy_it != dichotomy_end ? NULL : umap);
+      reduce_hypotheses(i->second, trees, NULL, NULL);
       if (contradiction) return;
-    }
-    if (dichotomy_it == dichotomy_end) {
-      static ast_real_set already;
-      splitting s;
-      for (std::list<logic_node *>::const_iterator i = trees.begin(),
-           i_end = trees.end(); i != i_end; ++i)
-      {
-        (*i)->tree.get_splitting(s);
-      }
-      unsigned max_pts = 0;
-      splitting::value_type const *sv = NULL;
-      for (splitting::const_iterator i = s.begin(), i_end = s.end(); i != i_end; ++i)
-      {
-        if (i->first.real2() || i->second.size() <= max_pts ||
-            already.find(i->first.real()) != already.end())
-          continue;
-        node *n = find_proof(i->first.real());
-        if (!n || is_singleton(n->get_result().bnd())) continue;
-        max_pts = i->second.size();
-        sv = &*i;
-      }
-      if (max_pts <= 1) goto fill_holes;
-      ast_real_set save = already;
-      unsigned long ds = 0;
-      number prev = number::neg_inf;
-      for (split_point_mset::const_iterator i = sv->second.begin(),
-           i_end = sv->second.end(); i != i_end; ++i)
-      {
-        if (i->pt == prev) continue;
-        ds = fill_splitter(ds, *i);
-        prev = i->pt;
-      }
-      already.insert(sv->first.real());
-      dichotomy_var dv = { sv->first.real(), ds };
-      dichotomy_hint dh = { dvar_vect(1, dv), property_tree() };
-      dichotomize(dh, iter_max);
-      already = save;
-      goto fill_holes;
     }
     if (split_hypotheses(trees, current_targets, &missing_schemes)) return;
   }
 
-  fill_holes:
+  // Look for an expression on which to perform a point-based dichotomy.
+  static ast_real_set already;
+  splitting s;
+  for (std::list<logic_node *>::const_iterator i = trees.begin(),
+       i_end = trees.end(); i != i_end; ++i)
+  {
+    (*i)->tree.get_splitting(s);
+  }
+  unsigned max_pts = 0;
+  splitting::value_type const *sv = NULL;
+  for (splitting::const_iterator i = s.begin(), i_end = s.end(); i != i_end; ++i)
+  {
+    if (i->first.real2() || i->second.size() <= max_pts ||
+        already.find(i->first.real()) != already.end())
+      continue;
+    node *n = find_proof(i->first.real());
+    if (!n || is_singleton(n->get_result().bnd())) continue;
+    max_pts = i->second.size();
+    sv = &*i;
+  }
+  if (max_pts > 1)
+  {
+    ast_real_set save = already;
+    unsigned long ds = 0;
+    number prev = number::neg_inf;
+    for (split_point_mset::const_iterator i = sv->second.begin(),
+         i_end = sv->second.end(); i != i_end; ++i)
+    {
+      if (i->pt == prev) continue;
+      ds = fill_splitter(ds, *i);
+      prev = i->pt;
+    }
+    already.insert(sv->first.real());
+    dichotomy_var dv = { sv->first.real(), ds };
+    dichotomy_hint dh = { dvar_vect(1, dv), property_tree() };
+    dichotomize(dh, iter_max);
+    already = save;
+  }
+
+  // Fill all the remaining holes in the formula.
   if (!umap) return;
   for (node_map::const_iterator i = known_reals.begin(),
        i_end = known_reals.end(); i != i_end; ++i)
