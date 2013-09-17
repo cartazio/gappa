@@ -54,6 +54,7 @@ struct number {
   bool operator==(number const &v) const { return mpfr_equal_p(data->val, v.data->val); }
   bool operator!=(number const &v) const { return mpfr_lessgreater_p(data->val, v.data->val); }
   number operator-() const;
+  double to_double() const;
   static number pos_inf, neg_inf;
 };
 

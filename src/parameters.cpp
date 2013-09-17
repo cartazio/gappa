@@ -28,6 +28,7 @@ bool warning_hint_difference = true;
 bool warning_null_denominator = true;
 bool warning_unbound_variable = true;
 backend *proof_generator = NULL;
+double parameter_slow_convergence = 0.99;
 
 static void help() {
   std::cerr <<
@@ -41,6 +42,7 @@ static void help() {
     "  -Eprecision=int                 internal precision (default: " << parameter_internal_precision << ")\n"
     "  -Edichotomy=int                 dichotomy depth (default: " << parameter_dichotomy_depth << ")\n"
     "  -E[no-]reverted-fma             change fma(a,b,c) from a*b+c to c+a*b\n"
+    "  -Echange-threshold=float        threshold for new results (default: " << 1 - parameter_slow_convergence << ")\n"
     "\n"
     "Engine modes:\n"
     "  -Munconstrained                 do not check for theorem constraints\n"
@@ -89,8 +91,13 @@ bool parse_option(std::string const &s, bool embedded)
     } else {
       std::string o = s.substr(2, p - 2), v = s.substr(p + 1);
       int *param;
-      if (o == "precision") param = &parameter_internal_precision; else
-      if (o == "dichotomy") param = &parameter_dichotomy_depth;
+      if (o == "change-threshold")
+      {
+        parameter_slow_convergence = 1 - atof(v.c_str());
+        return true;
+      }
+      else if (o == "precision") param = &parameter_internal_precision;
+      else if (o == "dichotomy") param = &parameter_dichotomy_depth;
       else return false;
       *param = atoi(v.c_str()); 
     }

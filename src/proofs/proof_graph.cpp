@@ -21,6 +21,7 @@
 struct backend;
 extern backend *proof_generator;
 extern bool parameter_constrained;
+extern double parameter_slow_convergence;
 
 graph_t *top_graph = NULL;
 
@@ -422,11 +423,24 @@ bool graph_t::try_property(property const &p) const
   {
     property const &res = i->second->get_result();
     if (!res.implies(p)) {
-      if (p.real.pred() != PRED_REL) return true;
+      if (!p.real.pred_bnd()) return true;
       property r = res;
       r.intersect(p);
-      if (!is_empty(r.bnd())) return true;
-      return try_property(property(p.real.real2(), interval(0, 0)));
+      interval const &bold = res.bnd(), &bnew = r.bnd();
+      if (!is_empty(bnew))
+      {
+        if (parameter_slow_convergence >= 1) return true;
+        double f = parameter_slow_convergence,
+          dlnew = lower(bnew).to_double(), dunew = upper(bnew).to_double(),
+          dlold = lower(bold).to_double(), duold = upper(bold).to_double();
+        if (dunew - dlnew < (duold - dlold) * f) return true;
+        if (dlold < 0 && dlnew > dlold * f) return true;
+        if (dlnew > 0 && dlnew * f > dlold) return true;
+        if (dunew < 0 && dunew * f < duold) return true;
+        if (duold > 0 && dunew < duold * f) return true;
+      }
+      else if (p.real.pred() != PRED_REL) return true;
+      else return try_property(property(p.real.real2(), interval(0, 0)));
     }
     ++stat_discarded_pred;
     return false;

@@ -123,6 +123,17 @@ not be the preferred order for the operands, the option makes Gappa use
 <code>c + a * b</code> instead.</para>
 </section>
 
+<section>
+<title>Threshold for accepting new results</title>
+<para>Option: <code>-Echange-threshold=</code><emphasis>float</emphasis></para>
+<para>When Gappa discovers a new result, it compares it to the ones previously
+found. If the changes are smaller than the threshold, the new result is
+discarded. The threshold is a floating-point value between 0 and 1. Setting it
+to 0 prevents Gappa from ever discarding a better result. By default, its value
+is 0.01, that is, interval bounds or widths have to improve by at least one
+percent.</para>
+</section>
+
 </section>
 
 <section>

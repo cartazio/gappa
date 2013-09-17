@@ -72,3 +72,8 @@ RUN_ONCE(load_infinities) {
   mpfr_set_inf(r->val, -1);
   number::neg_inf = number(r);
 }
+
+double number::to_double() const
+{
+  return mpfr_get_d(data->val, GMP_RNDN);
+}
