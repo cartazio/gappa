@@ -41,7 +41,7 @@ Version 0.16.6:
  * Coq lambda back-end
    - fixed crash on goals that are trivial implications
 
-Version 0.16.5;
+Version 0.16.5:
  * arithmetic
    - fixed incorrect round-off error for values close to zero
 
