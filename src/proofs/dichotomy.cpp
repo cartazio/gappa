@@ -537,3 +537,8 @@ unsigned long fill_splitter(unsigned long s, split_point const &m)
   else v->push_back(m);
   return (unsigned long)v;
 }
+
+void clear_splitter(unsigned long s)
+{
+  delete (number_vect *)s;
+}

@@ -707,6 +707,7 @@ void graph_t::populate(property_tree const &targets,
     dichotomy_var dv = { sv->first.real(), ds };
     dichotomy_hint dh = { dvar_vect(1, dv), property_tree() };
     dichotomize(dh, iter_max);
+    clear_splitter(ds);
     already = save;
   }
 
