@@ -878,10 +878,10 @@ std::string display(node *n)
       hyps[i] = res;
       switch (res.real.pred()) {
         case PRED_BND:
-          if (!is_bounded(res.bnd()))
-            if (!i) suffix = "_hb";
-            else if (suffix[0]) suffix = "_hh";
-            else suffix = "_bh";
+          if (is_bounded(res.bnd())) break;
+          if (!i) suffix = "_hb";
+          else if (suffix[0]) suffix = "_hh";
+          else suffix = "_bh";
           break;
         case PRED_ABS:
           suffix = "_aa";

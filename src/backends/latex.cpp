@@ -215,6 +215,8 @@ static std::string display(node *n)
     logicp_node const *ln = static_cast<logicp_node const *>(n);
     if (!ln->index) return display(ln->before);
     break; }
+  default:
+    break;
   }
   int n_id = displayed_nodes.find(n);
   std::string name = composite('l', n_id);
