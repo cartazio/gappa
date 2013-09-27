@@ -625,7 +625,8 @@ void graph_t::populate(property_tree const &targets,
     {
       s->visited = 0; // allows the scheme to be reused later, if needed
       ++stat_tested_app;
-      property hyps[s->needed_reals.size()];
+      std::vector<property> hyps_(s->needed_reals.size());
+      property *hyps = &hyps_[0];
       if (!fill_hypotheses(hyps, s->needed_reals)) {
         // The scheme is missing some hypotheses.
         continue;
