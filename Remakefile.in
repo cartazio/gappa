@@ -1,3 +1,7 @@
+.PHONY: all check clean dist distclean install
+.PHONY: src/clean doc/clean testsuite/clean
+.PHONY: testsuite/check-null testsuite/check-coq testsuite/check-latex
+
 all: src/gappa
 
 clean: src/clean doc/clean testsuite/clean
