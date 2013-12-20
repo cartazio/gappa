@@ -28,8 +28,6 @@ src/parser/parser.cpp src/parser/parser.hpp: src/parser/parser.ypp
 src/parser/lexer.cpp: src/parser/lexer.lpp
 	@LEX@ -o src/parser/lexer.cpp src/parser/lexer.lpp
 
-#	src/backends/holl.o \
-
 OBJS = \
 	src/arithmetic/fixed.o \
 	src/arithmetic/float.o \
@@ -64,9 +62,7 @@ src/gappa: $(OBJS)
 	@CXX@ @LDFLAGS@ -o src/gappa $(OBJS) @LIBS@
 
 src/clean:
-	rm -f $(OBJS)
-	cd src
-	rm -f gappa parser/parser.hpp parser/parser.cpp parser/lexer.cpp
+	rm -f $(OBJS) src/gappa
 
 doc/gappa-news.xml: NEWS
 	cd doc ; ./changelog.pl > ./gappa-news.xml
@@ -145,6 +141,9 @@ EXTRA_DIST = \
 	src/parser/parser.cpp \
 	src/parser/parser.hpp \
 	src/parser/lexer.cpp
+
+distclean: clean
+	rm -f $(EXTRA_DIST) config.h stamp-config_h config.status config.log Remakefile
 
 dist: $(EXTRA_DIST)
 	PACK=@PACKAGE_TARNAME@-@PACKAGE_VERSION@
