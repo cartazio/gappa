@@ -1,3 +1,9 @@
+Version 1.1.0:
+ * proof graph
+   - added detection and avoidance of slow convergence
+ * main interface
+   - added option -Echange-threshold to control detection of slow convergence
+
 Version 1.0.0:
  * syntax
    - recognized "e <> 0" for inputting NZR properties
