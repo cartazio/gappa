@@ -57,8 +57,9 @@ static void help() {
     "\n"
     "Backend:\n"
     "  -Bnull                          do not generate a proof (default)\n"
-    "  -Bcoq                           produce a script for the Coq proof checker\n"
-    "  -Bcoq-lambda                    produce a term for the Coq proof checker\n"
+    "  -Bcoq                           produce a script for Coq\n"
+    "  -Bcoq-lambda                    produce a lambda-term for Coq\n"
+    "  -Bholl                          produce a script for HOL Light\n"
     "  -Blatex                         produce a LaTeX text\n";
 }
 
