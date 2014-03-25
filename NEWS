@@ -1,3 +1,9 @@
+Version 1.1.1:
+ * arithmetic
+   - fixed incorrect error computation for some uncommon bound values
+ * back-ends
+   - fixed crash on useless leaves with undefined properties
+
 Version 1.1.0:
  * proof graph
    - added detection and avoidance of slow convergence
