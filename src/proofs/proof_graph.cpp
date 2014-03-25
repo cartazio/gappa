@@ -605,6 +605,13 @@ void graph_t::show_negative() const
   }
 }
 
+bool graph_t::get_undefined(undefined_map &umap) const
+{
+  size_t nb = umap.size();
+  hyps.get_undefined(umap);
+  return nb != umap.size();
+}
+
 /**
  * Scans the nodes of the graph from goals to hypotheses and tries to weaken results.
  */

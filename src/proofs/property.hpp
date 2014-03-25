@@ -131,6 +131,11 @@ struct property_tree
   void fill_undefined(property_tree const &p);
 
   /**
+   * Arbitrary fills leaves that have an undefined interval.
+   */
+  void get_undefined(undefined_map &) const;
+
+  /**
    * Simplifies the tree according to property @a p (modality @a positive).
    * @param force If set, the function removes undefined yet matching leaves.
    * @param changed Set to true if a change happened.

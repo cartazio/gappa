@@ -177,6 +177,8 @@ class graph_t
   void replace_known(node_vect const &);
   void show_dangling() const;
   void show_negative() const;
+  /** Arbitrary fills remaining undefined properties. Returns true if any. */
+  bool get_undefined(undefined_map &umap) const;
 };
 
 /** Helper for keeping ::top_graph up-to-date. */

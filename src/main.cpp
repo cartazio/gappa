@@ -54,14 +54,20 @@ int main(int argc, char **argv)
   undefined_map umap;
   graph_t *g = new graph_t(NULL, context);
   g->populate(property_tree(), dichotomies, 100*1000*1000, &umap);
+  bool has_results = false;
   if (!umap.empty()) {
     std::cerr << "Results:\n";
+    has_results = true;
+    change_io_format dummy(IO_FULL);
     for (undefined_map::const_iterator i = umap.begin(),
          i_end = umap.end(); i != i_end; ++i)
     {
-      change_io_format dummy(IO_FULL);
       std::cerr << "  " << dump_property_nice(i->second) << '\n';
     }
+  }
+  if (g->get_undefined(umap)) {
+    if (!has_results) std::cerr << "Results:\n";
+    std::cerr << "  remaining results are pointless, anything can be proved.\n";
   }
   if (node *n = g->get_contradiction()) {
     if (proof_generator) {

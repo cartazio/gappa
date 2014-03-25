@@ -407,6 +407,19 @@ void property_tree::fill_undefined(property_tree const &base)
   }
 }
 
+void property_tree::get_undefined(undefined_map &umap) const
+{
+  if (atom) {
+    if (!atom->real.pred_bnd() || is_defined(atom->bnd())) return;
+    undefined_map::iterator j = umap.find(atom->real);
+    if (j != umap.end()) return;
+    umap[atom->real] = property(atom->real, zero());
+    return;
+  }
+  left->get_undefined(umap);
+  right->get_undefined(umap);
+}
+
 void property_tree::get_splitting(splitting &res) const
 {
   if (atom) {
