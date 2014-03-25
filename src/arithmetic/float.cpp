@@ -124,7 +124,7 @@ static int exponent(number const &n, float_format const &f) {
   mpz_init(m);
   split_exact(n.data->val, m, e, s);
   if (s == 0) e = f.min_exp;
-  else if (e != f.min_exp) {
+  else {
     e -= f.prec - mpz_sizeinbase(m, 2);
     if (e < f.min_exp) e = f.min_exp;
   }
