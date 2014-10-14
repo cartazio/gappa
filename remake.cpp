@@ -74,6 +74,7 @@ Usage: <tt>remake <i>options</i> <i>targets</i></tt>
 
 Options:
 
+- <tt>-B</tt>, <tt>--always-make</tt>: Unconditionally make all targets.
 - <tt>-d</tt>: Echo script commands.
 - <tt>-f FILE</tt>: Read <tt>FILE</tt> as <b>Remakefile</b>.
 - <tt>-j[N]</tt>, <tt>--jobs=[N]</tt>: Allow <tt>N</tt> jobs at once;
@@ -347,8 +348,8 @@ https://github.com/apenwarr/redo for an implementation and some comprehensive do
 \section sec-licensing Licensing
 
 @author Guillaume Melquiond
-@version 0.11
-@date 2012-2013
+@version 0.12
+@date 2012-2014
 @copyright
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -733,6 +734,11 @@ static bool changed_prefix_dir;
  * Whether target-specific variables are propagated to prerequisites.
  */
 static bool propagate_vars = false;
+
+/**
+ * Whether targets are unconditionally obsolete.
+ */
+static bool obsolete_targets = false;
 
 #ifndef WINDOWS
 static volatile sig_atomic_t got_SIGCHLD = 0;
@@ -1936,6 +1942,13 @@ static status_t const &get_status(std::string const &target)
 		ts.last = s.st_mtime;
 		return ts;
 	}
+	if (obsolete_targets)
+	{
+		DEBUG_close << "forcefully obsolete\n";
+		ts.status = Todo;
+		ts.last = 0;
+		return ts;
+	}
 	dependency_t const &dep = *j->second;
 	status_e st = Uptodate;
 	time_t latest = 0;
@@ -2050,7 +2063,7 @@ static bool still_need_rebuild(std::string const &target)
 /**
  * Handle job completion.
  */
-static void complete_job(int job_id, bool success)
+static void complete_job(int job_id, bool success, bool started = true)
 {
 	DEBUG << "Completing job " << job_id << '\n';
 	job_map::iterator i = jobs.find(job_id);
@@ -2058,14 +2071,15 @@ static void complete_job(int job_id, bool success)
 	string_list const &targets = i->second.rule.targets;
 	if (success)
 	{
-		if (show_targets) std::cout << "Finished";
+		bool show = show_targets && started;
+		if (show) std::cout << "Finished";
 		for (string_list::const_iterator j = targets.begin(),
 		     j_end = targets.end(); j != j_end; ++j)
 		{
 			update_status(*j);
-			if (show_targets) std::cout << ' ' << *j;
+			if (show) std::cout << ' ' << *j;
 		}
-		if (show_targets) std::cout << std::endl;
+		if (show) std::cout << std::endl;
 	}
 	else
 	{
@@ -2073,9 +2087,15 @@ static void complete_job(int job_id, bool success)
 		for (string_list::const_iterator j = targets.begin(),
 		     j_end = targets.end(); j != j_end; ++j)
 		{
-			status[*j].status = Failed;
 			std::cerr << ' ' << *j;
-			remove(j->c_str());
+			update_status(*j);
+			status_e &s = status[*j].status;
+			if (s != Uptodate)
+			{
+				DEBUG << "Removing " << *j << '\n';
+				remove(j->c_str());
+			}
+			s = Failed;
 		}
 		std::cerr << std::endl;
 	}
@@ -2359,7 +2379,7 @@ static void complete_request(client_t &client, bool success)
 			assert(i != jobs.end());
 			if (still_need_rebuild(i->second.rule.targets.front()))
 				run_script(client.job_id, i->second);
-			else complete_job(client.job_id, true);
+			else complete_job(client.job_id, true, false);
 		}
 		else complete_job(client.job_id, false);
 	}
@@ -2938,12 +2958,13 @@ static void usage(int exit_status)
 {
 	std::cerr << "Usage: remake [options] [target] ...\n"
 		"Options\n"
+		"  -B, --always-make      Unconditionally make all targets.\n"
 		"  -d                     Echo script commands.\n"
 		"  -d -d                  Print lots of debugging information.\n"
 		"  -f FILE                Read FILE as Remakefile.\n"
 		"  -h, --help             Print this message and exit.\n"
 		"  -j[N], --jobs=[N]      Allow N jobs at once; infinite jobs with no arg.\n"
-		"  -k                     Keep going when some targets cannot be made.\n"
+		"  -k, --keep-going       Keep going when some targets cannot be made.\n"
 		"  -r                     Look up targets from the dependencies on stdin.\n"
 		"  -s, --silent, --quiet  Do not echo targets.\n";
 	exit(exit_status);
@@ -2983,6 +3004,8 @@ int main(int argc, char *argv[])
 			show_targets = false;
 		else if (arg == "-r")
 			indirect_targets = true;
+		else if (arg == "-B" || arg == "--always-make")
+			obsolete_targets = true;
 		else if (arg == "-f")
 		{
 			if (++i == argc) usage(EXIT_FAILURE);
