@@ -1,6 +1,8 @@
 Version 1.1.2:
  * back-ends
    - fixed missing proof parts with the LaTeX back-end
+ * main interface
+   - fixed confusing message in case of failure
 
 Version 1.1.1:
  * arithmetic
