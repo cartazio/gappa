@@ -295,7 +295,34 @@ variable (denoted <code>a~</code>).</para>
 <section>
 <title>Theorems about rounding operators</title>
 
-<para>...</para>
+<para>The following table describes the kind of theorems that can be
+applied to rounding operators. These theorems have no specific names, as
+each rounding operator comes with its dedicated set of theorems. When a
+specific theorem is not available for a given rounding operator, its
+effect can usually be obtained through an available one combined with a
+rewriting rule.</para>
+
+<informaltable frame='all'>
+<tgroup cols='3'>
+<thead>
+<row><entry>Goal</entry><entry>Hypothesis</entry><entry>Rounding kind</entry></row>
+</thead>
+<tbody>
+<row><entry><code>BND(rnd(a))</code></entry><entry><code>BND(a)</code></entry><entry>fixed, float</entry></row>
+<row><entry><code>BND(rnd(a))</code></entry><entry><code>BND(rnd(a))</code></entry><entry>float</entry></row>
+<row><entry><code>BND(rnd(a) - a)</code></entry><entry></entry><entry>fixed</entry></row>
+<row><entry><code>BND(rnd(a) - a)</code></entry><entry><code>BND(a)</code></entry><entry>fixed (zr, aw), float (up, dn, nu, nd)</entry></row>
+<row><entry><code>BND(rnd(a) - a)</code></entry><entry><code>ABS(a)</code></entry><entry>float (zr, aw, od, ne, nz, na, no)</entry></row>
+<row><entry><code>BND(rnd(a) - a)</code></entry><entry><code>BND(rnd(a))</code></entry><entry>fixed (zr, aw), float (up, dn, nu, nd)</entry></row>
+<row><entry><code>BND(rnd(a) - a)</code></entry><entry><code>ABS(rnd(a))</code></entry><entry>float (zr, aw, od, ne, nz, na, no)</entry></row>
+<row><entry><code>REL(rnd(a), a)</code></entry><entry></entry><entry></entry></row>
+<row><entry><code>REL(rnd(a), a)</code></entry><entry><code>BND(a)</code></entry><entry></entry></row>
+<row><entry><code>REL(rnd(a), a)</code></entry><entry><code>ABS(a)</code></entry><entry>float</entry></row>
+<row><entry><code>REL(rnd(a), a)</code></entry><entry><code>BND(rnd(a))</code></entry><entry></entry></row>
+<row><entry><code>REL(rnd(a), a)</code></entry><entry><code>ABS(rnd(a))</code></entry><entry>float</entry></row>
+</tbody>
+</tgroup>
+</informaltable>
 </section>
 
 <section>
