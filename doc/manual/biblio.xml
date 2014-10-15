@@ -91,7 +91,7 @@
   </biblioset>
   <biblioset relation='proceedings'>
     <title>Proceedings of the 8th Conference on Real Numbers and Computers</title>
-    <address>Santiago de Compostella</address>
+    <address>Santiago de Compostella, Spain</address>
     <pubdate>2008</pubdate>
   </biblioset>
 </biblioentry>
@@ -109,7 +109,7 @@
   </biblioset>
   <biblioset relation='proceedings'>
     <title>Proceedings of the 8th Conference on Real Numbers and Computers</title>
-    <address>Santiago de Compostella</address>
+    <address>Santiago de Compostella, Spain</address>
     <pubdate>2008</pubdate>
   </biblioset>
 </biblioentry>
@@ -316,6 +316,23 @@
     <title>Proceedings of the 23rd International Conference on Application-Specific Systems, Architectures and Processors</title>
     <address>Delft, The Netherlands</address>
     <pubdate>2012</pubdate>
+  </biblioset>
+</biblioentry>
+
+<biblioentry>
+  <biblioset relation='article'>
+    <authorgroup>
+      <author><firstname>Olga</firstname><surname>Kupriianova</surname></author>
+      <author><firstname>Christoph</firstname><surname>Lauter</surname></author>
+    </authorgroup>
+    <title>Metalibm: A Mathematical Functions Code Generator</title>
+    <pagenums>713-717</pagenums>
+    <biblioid class="doi">10.1007/978-3-662-44199-2_106</biblioid>
+  </biblioset>
+  <biblioset relation='proceedings'>
+    <title>Proceedings of the 4th International Congress on Mathematical Software</title>
+    <address>Seoul, Korea</address>
+    <pubdate>2014</pubdate>
   </biblioset>
 </biblioentry>
 
