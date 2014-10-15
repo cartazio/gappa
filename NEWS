@@ -95,15 +95,15 @@ Version 0.16.0:
    - changed fixed_of_fix so that it produces an EQL property
 
 Version 0.15.1:
- * fact database:
+ * fact database
    - fixed broken simplification of a*b -/ c*b
 
 Version 0.15.0:
- * fact database:
+ * fact database
    - added EQL predicate: e1 = e2
    - changed user rewriting to use the EQL predicate
    - improved rewriting rules to handle ABS, FIX, FLT, NZR, REL in addition to BND predicate
- * syntax:
+ * syntax
    - added "@FLT(e,k)" and "@FIX(e,k)" for inputting FLT and FIX properties
    - added "e1 = e2" for inputting EQL properties
    - allowed arbitrary logical propositions as termination condition for bisection
