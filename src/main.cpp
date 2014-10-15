@@ -65,11 +65,11 @@ int main(int argc, char **argv)
       std::cerr << "  " << dump_property_nice(i->second) << '\n';
     }
   }
-  if (g->get_undefined(umap)) {
-    if (!has_results) std::cerr << "Results:\n";
-    std::cerr << "  remaining results are pointless, anything can be proved.\n";
-  }
   if (node *n = g->get_contradiction()) {
+    if (g->get_undefined(umap)) {
+      if (!has_results) std::cerr << "Results:\n";
+      std::cerr << "  remaining results are pointless, anything can be proved.\n";
+    }
     if (proof_generator) {
       enlarger(node_vect(1, n));
       instances = &umap;

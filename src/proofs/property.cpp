@@ -144,6 +144,7 @@ bool property::operator<(property const &r) const
   if (real.pred_cst()) return store._int < r.store._int;
   if (!real.pred_bnd()) return false;
   if (!is_defined(_bnd())) return is_defined(r._bnd());
+  if (!is_defined(r._bnd())) return false;
   return lower(_bnd()) < lower(r._bnd()) ||
     (lower(_bnd()) == lower(r._bnd()) && upper(_bnd()) < upper(r._bnd()));
 }
@@ -153,7 +154,8 @@ bool property::operator==(property const &r) const
   if (real != r.real) return false;
   if (real.pred_cst()) return store._int == r.store._int;
   if (!real.pred_bnd()) return true;
-  if (!is_defined(_bnd())) return !is_defined(_bnd());
+  if (!is_defined(_bnd())) return !is_defined(r._bnd());
+  if (!is_defined(r._bnd())) return false;
   return lower(_bnd()) == lower(r._bnd()) && upper(_bnd()) == upper(r._bnd());
 }
 

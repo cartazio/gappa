@@ -1,4 +1,4 @@
-AC_INIT([Gappa], [1.1.1],
+AC_INIT([Gappa], [1.1.2],
         [Guillaume Melquiond <guillaume.melquiond@inria.fr>],
         [gappa])
 

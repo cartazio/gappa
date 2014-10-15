@@ -222,7 +222,7 @@ static std::string display(node *n)
   std::string name = composite('l', n_id);
   if (n_id < 0) return name;
   std::vector<std::string> hyps;
-  node_vect const &pred = n->get_subproofs();
+  node_vect const pred = n->get_subproofs(); // transient result, so copy it
   for (node_vect::const_iterator i = pred.begin(),
        i_end = pred.end(); i != i_end; ++i)
   {
