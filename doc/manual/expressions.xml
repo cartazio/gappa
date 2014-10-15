@@ -46,11 +46,13 @@ such that the logical formula is verified.</para>
   x + y in [3, 5]]]></screen>
 
 <para>Note that Gappa might be able to prove the formula without even
-having to fill the unspecified ranges. In that case, Gappa will not display
-anything.</para>
+having to fill some unspecified ranges. In that case, Gappa will not display
+anything about them.</para>
 
 <programlisting language="gappa"><![CDATA[{ x in [1,2] /\ x - 3 >= 0 -> x + 1 in ? }
 # notice the contradiction between the hypotheses]]></programlisting>
+<screen><![CDATA[Results:
+  remaining results are pointless, anything can be proved.]]></screen>
 
 <para>Inequalities that give an upper bound on an absolute value are treated
 specially. They are assumed to be full enclosures with a lower bound equal
@@ -85,6 +87,11 @@ it can only be used as the left-hand side of an enclosure:</para>
 <para>This enclosure on the relative error represents the following
 proposition: <texinline>\exists \epsilon \in [-2^{-53},2^{-53}],\ x = y
 \times (1 + \epsilon)</texinline>.</para>
+
+<para>As with enclosures, the range can be left unspecified.</para>
+<programlisting language="gappa"><![CDATA[{ x -/ x in ? }]]></programlisting>
+<screen><![CDATA[Results:
+  x -/ x in [0, 0]]]></screen>
 
 <para>When the bounds on a relative error are symmetric, the enclosure can be
 written as <code>|x -/ y| &lt;= ...</code> instead.</para>
@@ -124,9 +131,18 @@ can be decomposed as a generic binary floating-point number:
 <code>@FIX</code> this decomposition satisfies <texinline>e \ge
 k</texinline>, while for <code>@FLT</code> it satisfies <texinline>|m|
 \lt 2^k</texinline>. For instance, the following Gappa formula
-holds</para>
+holds:</para>
 <programlisting language="gappa"><![CDATA[x = float<ieee_32,ne>(x_);
 { @FIX(x,-149) /\ @FLT(x,24) }]]></programlisting>
+</section>
+
+<section>
+<title>Nonzero expressions</title>
+
+<para>Finally, Gappa has special support for expressions that are not
+zero (and thus can be properly handled when they appear as
+denominators).</para>
+<programlisting language="gappa"><![CDATA[{ x <> 0 -> x / x in [1,1] }]]></programlisting>
 </section>
 
 </section>

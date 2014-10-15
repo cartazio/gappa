@@ -35,10 +35,9 @@ following predicates are handled internally:</para>
 bounds have known numerical values, while <code>k</code> is a known
 integer. In the description of the theorems, these parameters will
 usually be ignored. For instance, <code>BND(x)</code> just means that an
-enclosure of <code>x</code> is known. Except for <code>NZR</code>, all
-these predicates can appear in the logical formula the user wants to
-check. In addition, <code>EQL</code> properties are also used to express
-rewriting hints provided by the user.</para>
+enclosure of <code>x</code> is known. In addition, <code>EQL</code>
+properties are also used to express rewriting hints provided by the
+user.</para>
 
 </section>
 
@@ -323,6 +322,9 @@ term to some provably equal term.</para>
 <row><entry><code>flt_rewrite</code></entry>
   <entry><code>FLT(a)</code></entry>
   <entry><code>EQL(a, b)</code>, <code>FLT(b)</code></entry></row>
+<row><entry><code>nzr_rewrite</code></entry>
+  <entry><code>NZR(a)</code></entry>
+  <entry><code>EQL(a, b)</code>, <code>NZR(b)</code></entry></row>
 <row><entry><code>rel_rewrite_1</code></entry>
   <entry><code>REL(a, c)</code></entry>
   <entry><code>EQL(a, b)</code>, <code>REL(b, c)</code></entry></row>
