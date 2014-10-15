@@ -517,7 +517,7 @@ basic interval arithmetic will be able to match it.</para>
 <row><entry><code>addf_8</code></entry>
   <entry><code>b / (a - b)</code></entry>
   <entry><code>((a / (a - b)) [-] 1)</code></entry>
-  <entry><code>NZR(a)</code>, <code>NZR(a - b)</code>, <code>a &ne; b</code></entry></row>
+  <entry><code>NZR(a - b)</code>, <code>a &ne; b</code></entry></row>
 </tbody>
 </tgroup>
 </informaltable>
