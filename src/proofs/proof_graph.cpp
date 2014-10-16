@@ -615,12 +615,11 @@ bool graph_t::get_undefined(undefined_map &umap) const
 /**
  * Scans the nodes of the graph from goals to hypotheses and tries to weaken results.
  */
-void enlarger(node_vect const &nodes)
+void enlarger(node *top)
 {
   ++visit_counter;
   node_list pending;
-  for (node_vect::const_iterator i = nodes.begin(), end = nodes.end(); i != end; ++i)
-    if ((*i)->can_visit()) pending.push_back(*i);
+  pending.push_back(top);
   for (node_list::iterator i = pending.begin(); i != pending.end(); ++i)
   {
     node_vect const &v = (*i)->get_subproofs();

@@ -71,7 +71,7 @@ int main(int argc, char **argv)
       std::cerr << "  remaining results are pointless, anything can be proved.\n";
     }
     if (proof_generator) {
-      enlarger(node_vect(1, n));
+      enlarger(n);
       instances = &umap;
       proof_generator->theorem(n);
     }

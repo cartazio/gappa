@@ -191,6 +191,6 @@ struct graph_loader
   ~graph_loader() { top_graph = old_graph; }
 };
 
-void enlarger(node_vect const &);
+void enlarger(node *);
 
 #endif // PROOFS_PROOF_GRAPH_HPP
