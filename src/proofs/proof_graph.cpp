@@ -618,23 +618,32 @@ bool graph_t::get_undefined(undefined_map &umap) const
 void enlarger(node *top)
 {
   ++visit_counter;
+  typedef std::pair<bool, node *> bnode;
+  std::list<bnode> bns;
   node_list pending;
-  pending.push_back(top);
-  for (node_list::iterator i = pending.begin(); i != pending.end(); ++i)
+  bns.push_back(std::make_pair(false, top));
+  while (!bns.empty())
   {
-    node_vect const &v = (*i)->get_subproofs();
-    for (node_vect::const_iterator j = v.begin(), end = v.end(); j != end; ++j)
-      if ((*j)->can_visit()) pending.push_back(*j);
+    bnode &bn = bns.back();
+    if (bn.first)
+    {
+      pending.push_front(bn.second);
+      bns.pop_back();
+      continue;
+    }
+    bn.first = true;
+    node_vect const &v = bn.second->get_subproofs();
+    for (node_vect::const_iterator i = v.begin(),
+         i_end = v.end(); i != i_end; ++i)
+    {
+      if ((*i)->can_visit()) bns.push_back(std::make_pair(false, *i));
+    }
   }
   while (!pending.empty())
   {
     node *n = pending.front();
     pending.pop_front();
-    n->visited = 0;
     if (n->type != LOGIC && n->type != LOGICP)
       n->enlarge(n->maximal());
-    node_vect const &v = n->get_subproofs();
-    for (node_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i)
-      if ((*i)->can_visit()) pending.push_back(*i);
   }
 }
