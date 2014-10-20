@@ -77,6 +77,9 @@ struct node
   /** Returns the widest result that node @a n (an immediate ancestor of this node) can prove without changing the result proved by this node. */
   virtual property maximal_for(node const *n) const = 0;
   virtual void enlarge(property const &) = 0;
+  /** Replaces subproof @a m by @a n. */
+  virtual void subst_subproof(node *m, node *n)
+  { assert(false); }
 };
 
 /** Node of type ::LOGIC. */
@@ -122,6 +125,7 @@ class dependent_node: public node
  public:
   virtual node_vect const &get_subproofs() const { return pred; }
   virtual ~dependent_node() { clean_dependencies(); }
+  virtual void subst_subproof(node *, node *);
 };
 
 node *create_theorem(int, property const [], property const &, std::string const &, proof_scheme const *);

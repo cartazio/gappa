@@ -84,7 +84,7 @@ void node::remove_succ(node const *n)
 
 /**
  * Tells if graph @a g is a super-set of this graph.
- * @note It means that @a g has weaker hypotheses than this graph.
+ * @note It means that @a g has stronger hypotheses than this graph.
  */
 bool graph_t::dominates(graph_t const *g) const
 {
@@ -150,6 +150,19 @@ void dependent_node::clean_dependencies()
   for(node_vect::const_iterator i = pred.begin(), end = std::unique(pred.begin(), pred.end()); i != end; ++i)
     (*i)->remove_succ(this);
   pred.clear();
+}
+
+void dependent_node::subst_subproof(node *m, node *n)
+{
+  bool found = false;
+  for (node_vect::iterator i = pred.begin(),
+       i_end = pred.end(); i != i_end; ++i)
+  {
+    if (*i == m) { *i = n; found = true; }
+  }
+  assert(found);
+  n->succ.insert(this);
+  m->remove_succ(this);
 }
 
 /**
@@ -639,11 +652,36 @@ void enlarger(node *top)
       if ((*i)->can_visit()) bns.push_back(std::make_pair(false, *i));
     }
   }
+  node_list replaced;
   while (!pending.empty())
   {
     node *n = pending.front();
     pending.pop_front();
-    if (n->type != LOGIC && n->type != LOGICP)
-      n->enlarge(n->maximal());
+    if (n->type == LOGIC || n->type == LOGICP) continue;
+    n->enlarge(n->maximal());
+    node_vect const &v = n->get_subproofs();
+    for (node_vect::const_iterator i = v.begin(),
+         i_end = v.end(); i != i_end; ++i)
+    {
+      node *m = *i;
+      property p = n->maximal_for(m);
+      if (!m->get_result().strict_implies(p)) continue;
+      for (node_list::const_reverse_iterator j = pending.rbegin(),
+           j_end = pending.rend(); j != j_end && *j != m; ++j)
+      {
+        node *k = *j;
+        if (k->type == LOGIC) continue;
+        if (!dominates(k, m) || !k->get_result().implies(p)) continue;
+        ++m->nb_good;
+        n->subst_subproof(m, k);
+        replaced.push_back(m);
+        break;
+      }
+    }
+  }
+  for (node_list::const_iterator i = replaced.begin(),
+       i_end = replaced.end(); i != i_end; ++i)
+  {
+    (*i)->remove_known();
   }
 }
