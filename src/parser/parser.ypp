@@ -57,9 +57,9 @@ static ast_number const *negative_number(ast_number const *nn) {
 static function_class const *rounding_mode = NULL;
 
 static ast_real const *rnd_normalize(ast_real const &real) {
-  ast_real const *r = normalize(real);
+  ast_real const *r = normalize(real, true);
   if (!rounding_mode) return r;
-  return normalize(ast_real(real_op(rounding_mode, r)));
+  return normalize(ast_real(real_op(rounding_mode, r)), true);
 }
 
 static unsigned long read_integer_param(ast_number const *n)
@@ -240,13 +240,13 @@ PROG:
 | PROG '@' FUNID	{ failure("redefinition of identifier '" << $3->name << "'"); }
 
 REAL:
-  SNUMBER	{ $$ = normalize(ast_real($1)); }
+  SNUMBER	{ $$ = normalize(ast_real($1), true); }
 | VARID		{ $$ = $1->var; }
 | IDENT
   {
     ast_ident *v = $1;
     v->type = ID_VAR;
-    ast_real *r = normalize(ast_real(v));
+    ast_real *r = normalize(ast_real(v), true);
     free_variables.insert(r);
     v->var = r;
     $$ = r;
@@ -259,25 +259,25 @@ REAL:
         (f->type != UOP_ID && f->type != COP_FMA && ops->size() != 2) ||
         (f->type == COP_FMA && ops->size() != 3))
       failure("incorrect number of arguments for '" << f->pretty_name() << "'");
-    $$ = normalize(ast_real(real_op(f, *ops)));
+    $$ = normalize(ast_real(real_op(f, *ops)), true);
     delete ops;
   }
 | REAL '+' REAL		{ $$ = rnd_normalize(ast_real(real_op($1, BOP_ADD, $3))); }
 | REAL '-' REAL		{ $$ = rnd_normalize(ast_real(real_op($1, BOP_SUB, $3))); }
 | REAL '*' REAL		{ $$ = rnd_normalize(ast_real(real_op($1, BOP_MUL, $3))); }
 | REAL '/' REAL		{ $$ = rnd_normalize(ast_real(real_op($1, BOP_DIV, $3))); }
-| '|' REAL '|'		{ $$ = normalize(ast_real(real_op(UOP_ABS, $2))); }
+| '|' REAL '|'		{ $$ = normalize(ast_real(real_op(UOP_ABS, $2)), true); }
 | SQRT '(' REAL ')'	{ $$ = rnd_normalize(ast_real(real_op(UOP_SQRT, $3))); }
 | FMA '(' REAL ',' REAL ',' REAL ')'
   {
     if (!parameter_rfma)
-      $$ = rnd_normalize(ast_real(real_op(normalize(ast_real(real_op($3, BOP_MUL, $5))), BOP_ADD, $7)));
+      $$ = rnd_normalize(ast_real(real_op(normalize(ast_real(real_op($3, BOP_MUL, $5)), true), BOP_ADD, $7)));
     else
-      $$ = rnd_normalize(ast_real(real_op($7, BOP_ADD, normalize(ast_real(real_op($3, BOP_MUL, $5))))));
+      $$ = rnd_normalize(ast_real(real_op($7, BOP_ADD, normalize(ast_real(real_op($3, BOP_MUL, $5)), true))));
   }
 | '(' REAL ')'		{ $$ = $2; }
 | '+' REAL %prec NEG	{ $$ = $2; }
-| '-' REAL %prec NEG	{ $$ = normalize(ast_real(real_op(UOP_NEG, $2))); }
+| '-' REAL %prec NEG	{ $$ = normalize(ast_real(real_op(UOP_NEG, $2)), true); }
 
 REALS:
   REAL		{ $$ = new ast_real_vect(1, $1); }

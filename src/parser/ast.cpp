@@ -137,11 +137,14 @@ ast_number *normalize(ast_number const &v)
 
 static static_ptr< cache<ast_real> > ast_real_cache;
 
-ast_real *normalize(ast_real const &v)
+ast_real *normalize(ast_real const &v, bool user)
 {
   bool b;
   ast_real *p = ast_real_cache->find(v, &b);
-  if (!b || p->has_placeholder) return p;
+  if (!b || p->has_placeholder || !user) return p;
+  if (!p->is_userdef) {
+    p->is_userdef = true;
+  }
   real_op *o = boost::get< real_op >(p);
   if (!o || !o->fun) return p;
   ast_real const *a = unround(o->fun->type, o->ops);
