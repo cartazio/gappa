@@ -37,6 +37,7 @@ int my_yyerror(YYLTYPE &yylloc, char const *errstr) {
 } while (0)
 
 extern void register_user_rewrite(ast_real const *, ast_real const *, hint_cond_vect *);
+extern void generate_all_approx();
 extern void generate_graph(ast_prop const *p);
 extern void parse_property_tree(property_tree &tree, ast_prop const *p);
 extern void test_ringularity(ast_real const *, ast_real const *, bool);
@@ -123,8 +124,8 @@ static unsigned long read_integer_param(ast_number const *n)
 
 %%
 
-BLOB: BLOB1 HINTS
-BLOB1: PROG '{' PROP '}'	{ generate_graph($3); }
+BLOB: BLOB1 HINTS		{ generate_all_approx(); }
+BLOB1: PROG '{' PROP '}'	{ generate_graph($3); generate_all_approx(); }
 
 PROP:
   REAL LE SNUMBER

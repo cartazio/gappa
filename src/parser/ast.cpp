@@ -40,6 +40,7 @@ class cache {
   store_t store;
  public:
   T *find(T const &, bool * = NULL);
+  T *test(T const &);
   ~cache();
 };
 
@@ -54,6 +55,13 @@ T *cache< T >::find(T const &v, bool *b) {
     store.insert(ptr);
   } else ptr = *i;
   return ptr;
+}
+
+template<class T>
+T *cache<T>::test(T const &v)
+{
+  typename store_t::iterator i = store.find(const_cast<T *>(&v));
+  return i == store.end() ? NULL : *i;
 }
 
 template< class T >
@@ -118,7 +126,7 @@ ast_real const *unround(real_op_type type, ast_real_vect const &v) {
     else
       return normalize(ast_real(real_op(v[2], BOP_ADD, normalize(ast_real(real_op(v[0], BOP_MUL, v[1]))))));
   default: return normalize(ast_real(real_op(type, v)));
-  }  
+  }
 }
 
 static static_ptr< cache<ast_ident> > ast_ident_cache;
@@ -137,6 +145,66 @@ ast_number *normalize(ast_number const &v)
 
 static static_ptr< cache<ast_real> > ast_real_cache;
 
+static void generate_approx_aux(
+  ast_real const *r, real_op_type type, size_t i,
+  ast_real_vect const &ops1, ast_real_vect &ops2)
+{
+  if (i == ops1.size())
+  {
+    ast_real const *r2 = type == UOP_ID ? ops2[0] :
+      ast_real_cache->test(ast_real(real_op(type, ops2)));
+    //if (r2) std::cerr << "  considering " << dump_real(r2) << std::endl;
+    if (!r2 || !r2->is_userdef) return;
+    register_approx(r, r2);
+    return;
+  }
+  ops2[i] = ops1[i];
+  generate_approx_aux(r, type, i + 1, ops1, ops2);
+  link_map::const_iterator j = accurates.find(ops1[i]);
+  if (j == accurates.end()) return;
+  for (ast_real_set::const_iterator k = j->second.begin(),
+       k_end = j->second.end(); k != k_end; ++k)
+  {
+    ops2[i] = *k;
+    generate_approx_aux(r, type, i + 1, ops1, ops2);
+  }
+}
+
+typedef std::map<ast_real const *, bool> real_map;
+static static_ptr<real_map> user_reals;
+
+static void generate_approx(ast_real const *r)
+{
+  real_map::iterator i = user_reals->find(r), i_end = user_reals->end();
+  if (i == i_end || i->second) return;
+  i->second = true;
+  //std::cerr << "Looking at " << dump_real(r) << std::endl;
+  real_op const *o = boost::get<real_op>(r);
+  if (!o) return;
+  for (ast_real_vect::const_iterator j = o->ops.begin(),
+       j_end = o->ops.end(); j != j_end; ++j)
+  {
+    generate_approx(*j);
+  }
+  ast_real_vect ops = o->ops;
+  real_op_type t = o->type == ROP_FUN ? o->fun->type : o->type;
+  generate_approx_aux(r, t, 0, o->ops, ops);
+}
+
+void generate_all_approx()
+{
+  for (real_map::iterator i = user_reals->begin(),
+       i_end = user_reals->end(); i != i_end; ++i)
+  {
+    i->second = false;
+  }
+  for (real_map::iterator i = user_reals->begin(),
+       i_end = user_reals->end(); i != i_end; ++i)
+  {
+    generate_approx(i->first);
+  }
+}
+
 ast_real *normalize(ast_real const &v, bool user)
 {
   bool b;
@@ -144,6 +212,7 @@ ast_real *normalize(ast_real const &v, bool user)
   if (!b || p->has_placeholder || !user) return p;
   if (!p->is_userdef) {
     p->is_userdef = true;
+    user_reals->insert(std::make_pair(p, false));
   }
   real_op *o = boost::get< real_op >(p);
   if (!o || !o->fun) return p;
@@ -244,6 +313,7 @@ std::string dump_real_short(predicated_real const &r)
 
 std::string dump_property(property const &p)
 {
+  if (p.real.null()) return "False";
   std::ostringstream s;
   std::string r = dump_real(p.real.real());
   switch (p.real.pred()) {
