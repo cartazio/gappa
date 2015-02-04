@@ -143,7 +143,7 @@ ast_real *normalize(ast_real const &v)
   ast_real *p = ast_real_cache->find(v, &b);
   if (!b || p->has_placeholder) return p;
   real_op *o = boost::get< real_op >(p);
-  if (!o || !o->fun || o->fun->type == ROP_UNK) return p;
+  if (!o || !o->fun) return p;
   ast_real const *a = unround(o->fun->type, o->ops);
   register_approx(p, a);
   return p;
