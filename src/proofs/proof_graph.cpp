@@ -115,7 +115,8 @@ property node::maximal() const
 
 /**
  * Tells if node @a n1 is owned by a graph dominating the graph of node @a n2.
- * @note It means that @a n2 can rely on the result proven by @a n1.
+ * @note It means that @a n2 can rely on the result proven by @a n1
+ *       (assuming the proof of @a n1 does not depend on @a n2).
  * @see graph_t::dominates
  */
 static bool dominates(node const *n1, node const *n2)
