@@ -644,12 +644,17 @@ void enlarger(node *top)
       bns.pop_back();
       continue;
     }
+    if (!bn.second->can_visit())
+    {
+      bns.pop_back();
+      continue;
+    }
     bn.first = true;
     node_vect const &v = bn.second->get_subproofs();
     for (node_vect::const_iterator i = v.begin(),
          i_end = v.end(); i != i_end; ++i)
     {
-      if ((*i)->can_visit()) bns.push_back(std::make_pair(false, *i));
+      bns.push_back(std::make_pair(false, *i));
     }
   }
   node_list replaced;
@@ -667,8 +672,9 @@ void enlarger(node *top)
       property p = n->maximal_for(m);
       if (!m->get_result().strict_implies(p)) continue;
       for (node_list::const_reverse_iterator j = pending.rbegin(),
-           j_end = pending.rend(); j != j_end && *j != m; ++j)
+           j_end = pending.rend(); *j != m; ++j)
       {
+        assert (j != j_end);
         node *k = *j;
         if (k->type == LOGIC) continue;
         if (!dominates(k, m) || !k->get_result().implies(p)) continue;
