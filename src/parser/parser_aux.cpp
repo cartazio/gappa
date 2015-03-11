@@ -226,7 +226,7 @@ int test_rewriting(ast_real const *src, ast_real const *dst, std::string &res)
     for(pattern_excl_vect::const_iterator j = rw.excl.begin(),
         j_end = rw.excl.end(); j != j_end; ++j)
       if (rewrite(j->first, holders) == rewrite(j->second, holders)) goto next_rule;
-    if (b) {
+    if (!rw.user_pattern && b) {
       assert(holders[0] && holders[1]);
       link_map::const_iterator k = approximates.find(holders[0]);
       if (k != approximates.end() && k->second.find(holders[1]) != k->second.end())

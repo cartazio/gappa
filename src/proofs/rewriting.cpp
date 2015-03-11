@@ -133,18 +133,17 @@ proof_scheme *rewriting_factory::operator()(predicated_real const &src,
 
 struct bnd_rewriting_factory: scheme_factory
 {
-  predicated_real dst;
   std::string name;
   rewriting_rule const *rule;
   virtual proof_scheme *operator()(predicated_real const &, ast_real_vect const &) const;
-  bnd_rewriting_factory(predicated_real const &p1, predicated_real const &p2,
-    std::string const &n, rewriting_rule const *r)
-  : scheme_factory(p1), dst(p2), name(n), rule(r) {}
+  bnd_rewriting_factory(std::string const &n, rewriting_rule const *r)
+    : scheme_factory(r->src, r->user_pattern), name(n), rule(r) {}
 };
 
 proof_scheme *bnd_rewriting_factory::operator()(predicated_real const &src,
   ast_real_vect const &holders) const
 {
+  predicated_real const &dst = rule->dst;
   predicated_real d(rewrite(dst.real(), holders), dst.real2() ? rewrite(dst.real2(), holders) : NULL, dst.pred());
   return generate_rewriting_scheme(src, d, name, rule, holders);
 }
@@ -250,11 +249,11 @@ rewriting_vect rewriting_rules;
 
 rewriting_rule::rewriting_rule
   (predicated_real const &p1, predicated_real const &p2, std::string const &n,
-   pattern_cond_vect const &c, pattern_excl_vect const &e)
-  : src(p1), dst(p2), cond(c), excl(e)
+   pattern_cond_vect const &c, pattern_excl_vect const &e, ast_real const *u)
+  : src(p1), dst(p2), cond(c), excl(e), user_pattern(u)
 {
   rewriting_rules.push_back(this);
-  new bnd_rewriting_factory(p1, p2, n, this);
+  new bnd_rewriting_factory(n, this);
 }
 
 // PATTERN OPERATIONS
@@ -293,19 +292,19 @@ Naming convention: operator name followed by
 #define REWRITE(name,p1,p2) \
   static rewriting_rule REWRITING_NAME \
     (predicated_real(p1, PRED_BND), predicated_real(p2, PRED_BND),\
-     #name, pattern_cond_vect(), pattern_excl_vect())
+     #name, pattern_cond_vect(), pattern_excl_vect(), NULL)
 #define REWRIT3(name,p1,p2,cond) \
   static rewriting_rule REWRITING_NAME \
     (predicated_real(p1, PRED_BND), predicated_real(p2, PRED_BND),\
-     #name, pattern_cond_vect() && cond, pattern_excl_vect())
+     #name, pattern_cond_vect() && cond, pattern_excl_vect(), NULL)
 #define REWRITe(name,p1,p2,excl) \
   static rewriting_rule REWRITING_NAME \
     (predicated_real(p1, PRED_BND), predicated_real(p2, PRED_BND),\
-     #name, pattern_cond_vect(), pattern_excl_vect() && excl)
+     #name, pattern_cond_vect(), pattern_excl_vect() && excl, NULL)
 #define REWRIT9(name,p1,p2,cond,excl) \
   static rewriting_rule REWRITING_NAME \
     (predicated_real(p1, PRED_BND), predicated_real(p2, PRED_BND),\
-     #name, pattern_cond_vect() && cond, pattern_excl_vect() && excl)
+     #name, pattern_cond_vect() && cond, pattern_excl_vect() && excl, NULL)
 
 // OPP
 
@@ -557,19 +556,19 @@ REWRIT9(addf_8,
 #define REWRITE(name,lhs1,rhs1,lhs2,rhs2) \
   static rewriting_rule REWRITING_NAME \
     (predicated_real(lhs1, rhs1, PRED_REL), predicated_real(lhs2, rhs2, PRED_REL),\
-     #name, pattern_cond_vect(), pattern_excl_vect())
+     #name, pattern_cond_vect(), pattern_excl_vect(), NULL)
 #define REWRIT3(name,lhs1,rhs1,lhs2,rhs2,cond) \
   static rewriting_rule REWRITING_NAME \
     (predicated_real(lhs1, rhs1, PRED_REL), predicated_real(lhs2, rhs2, PRED_REL),\
-     #name, pattern_cond_vect() && cond, pattern_excl_vect())
+     #name, pattern_cond_vect() && cond, pattern_excl_vect(), NULL)
 #define REWRITe(name,lhs1,rhs1,lhs2,rhs2,excl) \
   static rewriting_rule REWRITING_NAME \
     (predicated_real(lhs1, rhs1, PRED_REL), predicated_real(lhs2, rhs2, PRED_REL),\
-     #name, pattern_cond_vect(), pattern_excl_vect() && excl)
+     #name, pattern_cond_vect(), pattern_excl_vect() && excl, NULL)
 #define REWRIT9(name,lhs1,rhs1,lhs2,rhs2,cond,excl) \
   static rewriting_rule REWRITING_NAME \
     (predicated_real(lhs1, rhs1, PRED_REL), predicated_real(lhs2, rhs2, PRED_REL),\
-     #name, pattern_cond_vect() && cond, pattern_excl_vect() && excl)
+     #name, pattern_cond_vect() && cond, pattern_excl_vect() && excl, NULL)
 
 REWRITe(opp_fibq,
 	-a, -b,
@@ -599,19 +598,19 @@ REWRITe(div_firq,
 #define REWRITE(name,lhs1,rhs1,lhs2,rhs2) \
   static rewriting_rule REWRITING_NAME \
     (predicated_real(lhs1, rhs1, PRED_EQL), predicated_real(lhs2, rhs2, PRED_EQL),\
-     #name, pattern_cond_vect(), pattern_excl_vect())
+     #name, pattern_cond_vect(), pattern_excl_vect(), NULL)
 #define REWRIT3(name,lhs1,rhs1,lhs2,rhs2,cond) \
   static rewriting_rule REWRITING_NAME \
     (predicated_real(lhs1, rhs1, PRED_EQL), predicated_real(lhs2, rhs2, PRED_EQL),\
-     #name, pattern_cond_vect() && cond, pattern_excl_vect())
+     #name, pattern_cond_vect() && cond, pattern_excl_vect(), NULL)
 #define REWRITe(name,lhs1,rhs1,lhs2,rhs2,excl) \
   static rewriting_rule REWRITING_NAME \
     (predicated_real(lhs1, rhs1, PRED_EQL), predicated_real(lhs2, rhs2, PRED_EQL),\
-     #name, pattern_cond_vect(), pattern_excl_vect() && excl)
+     #name, pattern_cond_vect(), pattern_excl_vect() && excl, NULL)
 #define REWRIT9(name,lhs1,rhs1,lhs2,rhs2,cond,excl) \
   static rewriting_rule REWRITING_NAME \
     (predicated_real(lhs1, rhs1, PRED_EQL), predicated_real(lhs2, rhs2, PRED_EQL),\
-     #name, pattern_cond_vect() && cond, pattern_excl_vect() && excl)
+     #name, pattern_cond_vect() && cond, pattern_excl_vect() && excl, NULL)
 
 REWRITe(opp_fibe,
 	-a, -b,
