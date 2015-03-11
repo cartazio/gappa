@@ -68,8 +68,15 @@ struct scheme_factory
    * approximate/accurate pattern resolution.
    */
   const predicated_real target;
+  /**
+   * Real with holes.
+   * When non-null, the factory is called whenever a user real can be used to
+   * fill the holes.
+   * This mechanism overrides the approximate/accurate pattern resolution.
+   */
+  ast_real const *const user_source;
   /** Initializes the factory with its target predicate. Registers it globally. */
-  scheme_factory(predicated_real const &r);
+  scheme_factory(predicated_real const &r, ast_real const *u = NULL);
   /**
    * Generates a theorem instance for target predicate @a r, which is filled
    * by the values in @a holes.

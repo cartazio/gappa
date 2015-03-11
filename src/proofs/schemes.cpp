@@ -35,6 +35,7 @@ bool is_unknown_theorem(char const *th)
 
 typedef std::set< predicated_real > preal_set;
 extern preal_set input_reals, output_reals;
+extern ast_real_set user_reals;
 
 struct scheme_factories: std::vector< scheme_factory const * > {
   ~scheme_factories() { for(iterator i = begin(), i_end = end(); i != i_end; ++i) delete *i; }
@@ -42,7 +43,9 @@ struct scheme_factories: std::vector< scheme_factory const * > {
 
 static static_ptr<scheme_factories> factories;
 
-scheme_factory::scheme_factory(predicated_real const &r): target(r) {
+scheme_factory::scheme_factory(predicated_real const &r, ast_real const *u)
+  : target(r), user_source(u)
+{
   factories->push_back(this);
 }
 
@@ -246,6 +249,18 @@ static real_dependency &initialize_dependencies(predicated_real const &real)
         (r2 && !match(real.real2(), r2, holders)))
       continue;
     // the embedded pattern is a match, try generating schemes
+    if (f.user_source)
+    {
+      // look for user reals to fill the pattern holes
+      for (ast_real_set::const_iterator j = user_reals.begin(),
+           j_end = user_reals.end(); j != j_end; ++j)
+      {
+        ast_real_vect h = holders;
+        if (!match(*j, f.user_source, h)) continue;
+        if (proof_scheme *s = f(real, h)) l.insert(s);
+      }
+      continue;
+    }
     if (holders.size() < 2 || (holders[0] && holders[1]))
       goto no_hole;
     assert(holders[0] || holders[1]);
