@@ -22,6 +22,7 @@
 
 extern bool parameter_rfma;
 link_map accurates, approximates;
+ast_real_set user_reals;
 
 bool register_approx(ast_real const *r1, ast_real const *r2)
 {
@@ -153,7 +154,6 @@ static void generate_approx_aux(
   {
     ast_real const *r2 = type == UOP_ID ? ops2[0] :
       ast_real_cache->test(ast_real(real_op(type, ops2)));
-    //if (r2) std::cerr << "  considering " << dump_real(r2) << std::endl;
     if (!r2 || !r2->is_userdef) return;
     register_approx(r, r2);
     return;
@@ -170,21 +170,15 @@ static void generate_approx_aux(
   }
 }
 
-typedef std::map<ast_real const *, bool> real_map;
-static static_ptr<real_map> user_reals;
-
-static void generate_approx(ast_real const *r)
+static void generate_approx(ast_real const *r, ast_real_set &already_done)
 {
-  real_map::iterator i = user_reals->find(r), i_end = user_reals->end();
-  if (i == i_end || i->second) return;
-  i->second = true;
-  //std::cerr << "Looking at " << dump_real(r) << std::endl;
+  if (!already_done.insert(r).second) return;
   real_op const *o = boost::get<real_op>(r);
   if (!o) return;
   for (ast_real_vect::const_iterator j = o->ops.begin(),
        j_end = o->ops.end(); j != j_end; ++j)
   {
-    generate_approx(*j);
+    generate_approx(*j, already_done);
   }
   ast_real_vect ops = o->ops;
   real_op_type t = o->type == ROP_FUN ? o->fun->type : o->type;
@@ -193,15 +187,11 @@ static void generate_approx(ast_real const *r)
 
 void generate_all_approx()
 {
-  for (real_map::iterator i = user_reals->begin(),
-       i_end = user_reals->end(); i != i_end; ++i)
+  ast_real_set already_done;
+  for (ast_real_set::const_iterator i = user_reals.begin(),
+       i_end = user_reals.end(); i != i_end; ++i)
   {
-    i->second = false;
-  }
-  for (real_map::iterator i = user_reals->begin(),
-       i_end = user_reals->end(); i != i_end; ++i)
-  {
-    generate_approx(i->first);
+    generate_approx(*i, already_done);
   }
 }
 
@@ -212,7 +202,7 @@ ast_real *normalize(ast_real const &v, bool user)
   if (!b || p->has_placeholder || !user) return p;
   if (!p->is_userdef) {
     p->is_userdef = true;
-    user_reals->insert(std::make_pair(p, false));
+    user_reals.insert(p);
   }
   real_op *o = boost::get< real_op >(p);
   if (!o || !o->fun) return p;
