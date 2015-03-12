@@ -64,33 +64,45 @@ E0 = S0 * (1 + R0 + a1 * R0 * R0 + a2 * R0 * R0 * R0 + Z);
    ->
   e in ? /\ e - E0 in ? }]]></programlisting>
 
-<para>Gappa is unable to bound the expressions. This is not surprising
-for <code>e - E0</code>, since the tool is missing some of the implicit
-transformations hidden in the implementation. As for <code>e</code>
-itself, Gappa is missing the range of <code>r1</code>. Since Gappa has
-access to the ranges of <code>R</code> and <code>r2</code>, this issue can
-be solved by adding the hint: <code>r1 -&gt; R - r2</code>.</para>
-
 <para>Please note the way <code>Z</code> is introduced. Its definition is
 backward: <code>Z</code> is a real number such that <code>E0</code> is the
 product of <code>S0</code> and the exponential of <code>R0</code>. It makes for
 clearer definitions and it avoids having to deal with divisions.</para>
 
-<para>Now to <code>e - E0</code>. We compute this error by splitting it between
-a pure rounding error <code>e - E</code> and another term which combines
-discretization and truncation errors. This term is <code>E - E0</code>.
-Unfortunately, Gappa is unable to compute tight bounds for this term since the
-syntactic structures of its sub-terms do not match.</para>
+<screen>Results:
+  e in [4282253b-22 {1.02097, 2^(0.0299396)}, 8768135b-23 {1.04524, 2^(0.0638374)}]
+  e - E0 in [-13458043620277891b-59 {-0.023346, -2^(-5.42068)}, 3364512538651833b-57 {0.023346, 2^(-5.42068)}]</screen>
 
-<para>So we introduce a new expression <code>Er</code> equal to <code>E</code>
-yet matching the structure of <code>E0</code>. Since <code>Z</code> has no
-equivalent term in <code>E</code>, we insert an artificial term <code>0</code>
-in the corresponding place in <code>Er</code>.</para>
+<para>Gappa is able to bound both expressions. While the bounds for
+<code>e</code> seem sensible, the bounds for <code>e - E0</code> are
+grossly overestimated. This overestimation comes from the difference
+between the structures of <code>e</code> and <code>E0</code>. To improve
+the bounds on the error <code>e - E0</code>, we split it into two parts:
+a round-off error and a term that combines both discretization and
+truncation errors. The round-off error is expressed by introducing a term
+<code>E</code> with the same structure as <code>e</code> but without any
+rounding operator.</para>
 
-<programlisting language="gappa">E = s1 + (s2 + S * (r1 + (r2 + R * R * (a1 + R * a2))));
-Er = S * (1 + R + a1 * R * R + a2 * R * R * R + 0);
-...
-e - E0 -> (e - E) + (Er - E0);</programlisting>
+<programlisting language="gappa">E = s1 + (s2 + S * (r1 + (r2 + R * R * (a1 + R * a2))));</programlisting>
+
+<para>So the round-off error is <code>e - E</code>, while the other term
+is <code>E - E0</code>. As before, the expressions <code>E</code> and
+<code>E0</code> are structurally different, so Gappa grossly
+overestimates the bounds of <code>E - E0</code>. This time, we introduce a
+term <code>Er</code> with the same structure as <code>E0</code> but equal
+to <code>E</code>. Since <code>Z</code> has no corresponding term in
+<code>E</code>, we insert an artificial term <code>0</code> in
+<code>Er</code> to obtain the same structure.</para>
+
+<programlisting language="gappa">Er = S * (1 + R + a1 * R * R + a2 * R * R * R + 0);</programlisting>
+
+<para>Finally, we tell Gappa how to compute <code>e - E0</code> using
+<code>E</code> and <code>Er</code>.</para>
+
+<programlisting language="gappa">e - E0 -> (e - E) + (Er - E0);</programlisting>
+
+<para>Note that, rather than using a hint, this equality could also have
+been indicated as a hypothesis of the logical formula.</para>
 
 </section>
 
@@ -123,8 +135,7 @@ E0 = S0 * (1 + R0 + a1 * R0 * R0 + a2 * R0 * R0 * R0 + Z);
   R in [0,0.0217] /\ n in [-10176,10176] ->
   e in ? /\ e - E0 in ? }
 
-e - E0 -> (e - E) + (Er - E0);
-r1 -> R - r2;]]></programlisting>
+e - E0 -> (e - E) + (Er - E0);]]></programlisting>
 
 <para>Gappa answers that the error is bounded by 0.535 ulp. This is consistent
 with the bounds computed by Tang and Harrison.</para>
