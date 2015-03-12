@@ -286,7 +286,7 @@ Naming convention: operator name followed by
   x (expand term)      f (factor term)      m (mix)
   a (approximate expr) e (accurate expr)    i (irrelevant)
   l (left hand side)   r (right hand side)  b (both)
-  s (absolute error)   q (relative error)   e (equality)
+  s (absolute error)   q (relative error)   e (equality)   u (user term)
 */
 
 #define REWRITE(name,p1,p2) \
@@ -305,6 +305,14 @@ Naming convention: operator name followed by
   static rewriting_rule REWRITING_NAME \
     (predicated_real(p1, PRED_BND), predicated_real(p2, PRED_BND),\
      #name, pattern_cond_vect() && cond, pattern_excl_vect() && excl, NULL)
+#define R3WRITE(name,p1,p2,u) \
+  static rewriting_rule REWRITING_NAME \
+    (predicated_real(p1, PRED_BND), predicated_real(p2, PRED_BND),\
+     #name, pattern_cond_vect(), pattern_excl_vect(), u)
+#define R3WRIT3(name,p1,p2,u,cond) \
+  static rewriting_rule REWRITING_NAME \
+    (predicated_real(p1, PRED_BND), predicated_real(p2, PRED_BND),\
+     #name, pattern_cond_vect() && cond, pattern_excl_vect(), u)
 
 // OPP
 
@@ -350,6 +358,16 @@ REWRIT9(add_firq,
 	~(c + b),
 	a ^ c);
 
+R3WRITE(add_xilu,
+	a,
+	hide((a + b) - b),
+	a + b);
+
+R3WRITE(add_xiru,
+	b,
+	hide((a + b) - a),
+	a + b);
+
 // SUB
 
 REWRITe(sub_xals,
@@ -388,6 +406,16 @@ REWRIT9(sub_firq,
 	(a - c) / (c - b),
 	~(c - b),
 	a ^ c);
+
+R3WRITE(val_xabs, // actually sub_xilu
+	b,
+	hide(a + (b - a)),
+	b - a);
+
+R3WRITE(val_xebs, // actually sub_xiru
+	a,
+	hide(b - (b - a)),
+	b - a);
 
 // MUL
 
@@ -429,6 +457,18 @@ REWRITe(mul_mibs,
 	hide(hide(hide(c * (b - d)) + hide((a - c) * d)) + hide((a - c) * (b - d))),
 	a ^ c && b ^ d);
 
+R3WRIT3(mul_xilu,
+	a,
+	hide((a * b) / b),
+	a * b,
+	~b);
+
+R3WRIT3(mul_xiru,
+	b,
+	hide((a * b) / a),
+	a * b,
+	~a);
+
 // DIV
 
 REWRIT9(div_xals,
@@ -447,6 +487,18 @@ REWRIT3(div_fil,
 	b,
 	~a);
 
+R3WRIT3(div_xilu,
+	a,
+	hide((a / b) * b),
+	a / b,
+	~b);
+
+R3WRIT3(div_xiru,
+	b,
+	hide(a / (a / b)),
+	a / b,
+	~a && ~b);
+
 // SQRT
 
 REWRIT9(sqrt_mibs,
@@ -460,6 +512,12 @@ REWRIT9(sqrt_mibq,
 	hide(sqrt(hide(one + (a - b) / b)) - one),
 	a >= 0 && b > 0,
 	a ^ b);
+
+R3WRIT3(sqrt_xibu,
+	a,
+	hide(sqrt(a) * sqrt(a)),
+	sqrt(a),
+	a >= 0);
 
 // ERR
 
