@@ -369,7 +369,9 @@ will first consider the source one (hypothesis). As a consequence of this
 layout and contrarily to previous tables, constraints will also list
 additional hypotheses needed to apply the rules. Whenever an operator is
 put between square brackets, it means that only theorems that perform
-basic interval arithmetic will be able to match it.</para>
+basic interval arithmetic will be able to match it. A constraint written
+using <code>USR</code> means that the theorem will be applied only if a
+matching expression appears in the input file.</para>
 
 <informaltable frame='all'>
 <tgroup cols='4'>
@@ -409,6 +411,14 @@ basic interval arithmetic will be able to match it.</para>
   <entry><code>((a + b) - (c + b)) / (c + b)</code></entry>
   <entry><code>(a - c) / (c + b)</code></entry>
   <entry><code>NZR(c + b)</code>, <code>a &ne; c</code></entry></row>
+<row><entry><code>add_xilu</code></entry>
+  <entry><code>a</code></entry>
+  <entry><code>(a + b) [-] b</code></entry>
+  <entry><code>USR(a + b)</code></entry></row>
+<row><entry><code>add_xiru</code></entry>
+  <entry><code>b</code></entry>
+  <entry><code>(a + b) [-] a</code></entry>
+  <entry><code>USR(a + b)</code></entry></row>
 <row><entry><code>sub_xals</code></entry>
   <entry><code>b - c</code></entry>
   <entry><code>(b - a) [+] (a - c)</code></entry>
@@ -431,12 +441,20 @@ basic interval arithmetic will be able to match it.</para>
   <entry><code>a &ne; c</code></entry></row>
 <row><entry><code>sub_filq</code></entry>
   <entry><code>((a - b) - (a - c)) / (a - c)</code></entry>
-  <entry><code>[-] (b - c) / (a - c)</code></entry>
+  <entry><code>[-] ((b - c) / (a - c))</code></entry>
   <entry><code>NZR(a - c)</code>, <code>b &ne; c</code></entry></row>
 <row><entry><code>sub_firq</code></entry>
   <entry><code>((a - b) - (c - b)) / (c - b)</code></entry>
   <entry><code>(a - c) / (c - b)</code></entry>
   <entry><code>NZR(c - b)</code>, <code>a &ne; c</code></entry></row>
+<row><entry><code>val_xabs</code></entry>
+  <entry><code>b</code></entry>
+  <entry><code>a [+] (b - a)</code></entry>
+  <entry><code>USR(b - a)</code></entry></row>
+<row><entry><code>val_xebs</code></entry>
+  <entry><code>a</code></entry>
+  <entry><code>b [-] (b - a)</code></entry>
+  <entry><code>USR(b - a)</code></entry></row>
 <row><entry><code>mul_xals</code></entry>
   <entry><code>b * c</code></entry>
   <entry><code>((b - a) [*] c) [+] (a * c)</code></entry>
@@ -469,6 +487,14 @@ basic interval arithmetic will be able to match it.</para>
   <entry><code>a * b - c * d</code></entry>
   <entry><code>(c [*] (b - d)) [+] ((a - c) [*] d) [+] ((a - c) [*] (b - d))</code></entry>
   <entry><code>a &ne; c</code>, <code>b &ne; d</code></entry></row>
+<row><entry><code>mul_xilu</code></entry>
+  <entry><code>a</code></entry>
+  <entry><code>(a * b) [/] b</code></entry>
+  <entry><code>USR(a * b)</code>, <code>NZR(b)</code></entry></row>
+<row><entry><code>mul_xiru</code></entry>
+  <entry><code>b</code></entry>
+  <entry><code>(a * b) [/] a</code></entry>
+  <entry><code>USR(a * b)</code>, <code>NZR(a)</code></entry></row>
 <row><entry><code>div_xals</code></entry>
   <entry><code>b / c</code></entry>
   <entry><code>((b - a) / c) [+] (a / c)</code></entry>
@@ -481,6 +507,14 @@ basic interval arithmetic will be able to match it.</para>
   <entry><code>(a * b) / a</code></entry>
   <entry><code>b</code></entry>
   <entry><code>NZR(a)</code></entry></row>
+<row><entry><code>div_xilu</code></entry>
+  <entry><code>a</code></entry>
+  <entry><code>(a / b) [*] b</code></entry>
+  <entry><code>USR(a / b)</code>, <code>NZR(b)</code></entry></row>
+<row><entry><code>div_xiru</code></entry>
+  <entry><code>b</code></entry>
+  <entry><code>a [/] (a / b)</code></entry>
+  <entry><code>USR(a / b)</code>, <code>NZR(a)</code>, <code>NZR(b)</code></entry></row>
 <row><entry><code>sqrt_mibs</code></entry>
   <entry><code>sqrt(a) - sqrt(b)</code></entry>
   <entry><code>(a - b) [/] (sqrt(a) [+] sqrt(b))</code></entry>
@@ -489,6 +523,10 @@ basic interval arithmetic will be able to match it.</para>
   <entry><code>(sqrt(a) - sqrt(b)) / sqrt(b)</code></entry>
   <entry><code>sqrt(1 [+] ((a - b) / b)) [-] 1</code></entry>
   <entry><code>BND(a)</code>, <code>BND(b)</code>, <code>a &ne; b</code></entry></row>
+<row><entry><code>sqrt_xibu</code></entry>
+  <entry><code>a</code></entry>
+  <entry><code>sqrt(a) [*] sqrt(a)</code></entry>
+  <entry><code>USR(sqrt(a))</code>, <code>BND(a)</code></entry></row>
 <row><entry><code>sub_xals</code></entry>
   <entry><code>c - a</code></entry>
   <entry><code>(c - b) [+] (b - a)</code></entry>
