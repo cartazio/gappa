@@ -573,8 +573,8 @@ void bnd_of_bnd_abs_scheme::compute(property const hyps[], property &res, std::s
   interval const &ib = hyps[0].bnd(), &ia = hyps[1].bnd();
   number const &iba = lower(ib), &ibb = upper(ib), &iab = lower(ia), &iaa = -iab;
   bool b1 = iba <= iaa, b2 = iab <= ibb;
-  if (b1 && b2) return;
-  res.bnd() = b1 ? interval(iba, iaa) : interval(iab, b2 ? ibb : iab);
+  if (b1 == b2) return;
+  res.bnd() = b1 ? interval(iba, iaa) : interval(iab, ibb);
   name = b1 ? "bnd_of_bnd_abs_n" : "bnd_of_bnd_abs_p";
 }
 
