@@ -234,7 +234,7 @@ struct dichotomy_helper
   dicho_graph last_graph;
   splitter *gen;
   dicho_graph try_hypothesis(dichotomy_failure *, bool, bool) const;
-  void try_graph(dicho_graph);
+  void try_graph(dicho_graph, bool);
   void dichotomize();
   dichotomy_node *generate_node(node *, property const &);
   dichotomy_helper(property &v, property_tree const &t,
@@ -304,7 +304,7 @@ dicho_graph dichotomy_helper::try_hypothesis(dichotomy_failure *exn,
   return dicho_graph(NULL, 0);
 }
 
-void dichotomy_helper::try_graph(dicho_graph g2)
+void dichotomy_helper::try_graph(dicho_graph g2, bool rright)
 {
   dicho_graph g1 = last_graph;
   if (!g1.first)
@@ -319,7 +319,7 @@ void dichotomy_helper::try_graph(dicho_graph g2)
     p.bnd() = interval(lower(p.bnd()), upper(g2.first->get_hypotheses().atom->bnd()));
     tmp_hyp = p;
     iter_max = g1.second + g2.second;
-    dicho_graph g = try_hypothesis(NULL, graphs->graphs.empty(), false);
+    dicho_graph g = try_hypothesis(NULL, graphs->graphs.empty(), rright);
     if (g.first)
     {
       if (gen->merge() || g.first->get_contradiction())
@@ -386,7 +386,7 @@ void dichotomy_helper::dichotomize()
     dicho_graph g = try_hypothesis(&exn, rleft, rright);
     if (g.first)
     {
-      try_graph(g);
+      try_graph(g, rright);
       bool old_rright = rright;
       if (!gen->next(bnd, iter_max, rleft, rright))
       {
