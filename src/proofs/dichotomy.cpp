@@ -312,7 +312,8 @@ void dichotomy_helper::try_graph(dicho_graph g2)
     last_graph = g2;
     return;
   }
-  if (proof_generator && gen->merge())
+  if (proof_generator && (gen->merge() ||
+        (g1.first->get_contradiction() && g2.first->get_contradiction())))
   {
     property p(*g1.first->get_hypotheses().atom);
     p.bnd() = interval(lower(p.bnd()), upper(g2.first->get_hypotheses().atom->bnd()));
@@ -321,11 +322,15 @@ void dichotomy_helper::try_graph(dicho_graph g2)
     dicho_graph g = try_hypothesis(NULL, graphs->graphs.empty(), false);
     if (g.first)
     {
-      // joined graph was successful, keep it as the last graph instead of g1 and g2
-      delete g1.first;
-      delete g2.first;
-      last_graph = g;
-      return;
+      if (gen->merge() || g.first->get_contradiction())
+      {
+        // joined graph was successful, keep it as the last graph instead of g1 and g2
+        delete g1.first;
+        delete g2.first;
+        last_graph = g;
+        return;
+      }
+      delete g.first;
     }
   }
   // validate g1 and keep g2 as the last graph
