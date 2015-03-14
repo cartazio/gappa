@@ -321,6 +321,11 @@ REWRITe(opp_mibs,
 	hide(-(a - b)),
 	a ^ b);
 
+R3WRITE(opp_xibu,
+	a,
+	hide(-(-a)),
+	-a);
+
 // ADD
 
 REWRITE(add_xals,
@@ -558,6 +563,11 @@ REWRIT3(square_sqrt,
 	sqrt(a) * sqrt(a),
 	a,
 	a >= 0);
+
+R3WRITE(square_xibu,
+	abs(a),
+	hide(sqrt(a * a)),
+	a * a);
 
 REWRIT3(addf_1,
 	a / (a + b),

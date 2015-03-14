@@ -193,6 +193,7 @@ static char const *theorem_defs[][2] = {
   { "eql_trans", "$grewriting.$t $x $1y $y $1p $2p" },
 
   { "opp_mibs", "$grewriting.$t _ _ $i $1p" },
+  { "opp_xibu", "$grewriting.$t $x $i $1p" },
   { "add_xals", "$grewriting.$t _ _ _ $i $1p" },
   { "add_xars", "$grewriting.$t _ _ _ $i $1p" },
   { "sub_xals", "$grewriting.$t _ _ _ $i $1p" },
@@ -233,6 +234,7 @@ static char const *theorem_defs[][2] = {
   { "div_xiru", "$grewriting.$t _ $x $i $1p $2p $3p" },
   { "err_xabq", "$grewriting.$t _ $1x $i $1p $2p" },
   { "err_fabq", "$grewriting.$t _ $1x $i $1p $2p" },
+  { "square_xibu", "$grewriting.$t _ $i $1p" },
   { "addf_1", "$grewriting.$t $1x _ $i $1p $2p $3p" },
   { "addf_2", "$grewriting.$t _ _ $i $1p $2p" },
   { "addf_3", "$grewriting.$t $1x _ $i $1p $2p $3p" },
