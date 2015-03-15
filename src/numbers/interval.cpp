@@ -279,8 +279,13 @@ interval compose_relative_inv(interval const &u, interval const &v) {
   number const &ul = plup.lower(), &uu = plup.upper(),
                &vl = plvp.lower(), &vu = plvp.upper();
   if (ul < -1 || vl <= -1) return interval();
-  return interval(rnd::div_down(rnd::sub_down(ul, vu), rnd::add_up  (number(1), vu)),
-                  rnd::div_up  (rnd::sub_up  (uu, vl), rnd::add_down(number(1), vl)));
+  number wl = rnd::sub_down(ul, vu);
+  number wu = rnd::sub_up  (uu, vl);
+  if (wl < 0) wl = rnd::div_down(wl, rnd::add_down(number(1), vu));
+  else        wl = rnd::div_down(wl, rnd::add_up  (number(1), vu));
+  if (wu > 0) wu = rnd::div_up  (wu, rnd::add_down(number(1), vl));
+  else        wu = rnd::div_up  (wu, rnd::add_up  (number(1), vl));
+  return interval(wl, wu);
 }
 
 // compute u * w + v * (1 - w)
