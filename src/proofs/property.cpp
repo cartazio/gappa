@@ -274,44 +274,58 @@ static int check_imply(bool positive, property const &p, property const &q)
   return 0;
 }
 
-int property_tree::try_simplify(property const &p, bool positive, undefined_map *force, bool &changed, property_tree &tgt) const
+int simpl_prop::operator()(property const &atom, bool pos) const
+{
+  if (atom.real != prop.real) return 0;
+  property const *q = &atom;
+  if (atom.real.pred_bnd() && !is_defined(atom.bnd()))
+  {
+    // False by choice.
+    assert(!pos);
+    if (!umap) return 0;
+    undefined_map::iterator j = umap->find(prop.real);
+    if (j != umap->end()) {
+      q = &j->second;
+      goto def;
+    }
+    (*umap)[prop.real] = prop;
+    return -1;
+  }
+ def:
+  if (int valid = check_imply(positive, prop, *q)) {
+    // From (not) p, one can deduce either atom or not atom.
+    if (!pos) valid = -valid;
+    return valid;
+  }
+  return 0;
+}
+
+int simpl_graph::operator()(property const &atom, bool pos) const
+{
+  node *n = graph->find_already_known(atom.real);
+  if (!n) return 0;
+  int valid = check_imply(true, n->get_result(), atom);
+  if (!pos) valid = -valid;
+  return valid;
+}
+
+int property_tree::try_simplify(ptree_simplifier const &simpl,
+  bool &changed, property_tree &tgt) const
 {
   assert(atom || left);
   changed = false;
-  if (atom) {
-    if (atom->real != p.real) return 0;
-    property const *q = atom;
-    if (atom->real.pred_bnd() && !is_defined(atom->bnd())) {
-      // True by choice.
-      assert(!conjunction);
-      if (!force) return 0;
-      undefined_map::iterator j = force->find(p.real);
-      if (j != force->end()) {
-        q = &j->second;
-        goto def;
-      }
-      (*force)[p.real] = p;
-      return -1;
-    }
-    def:
-    if (int valid = check_imply(positive, p, *q)) {
-      // From (not) p, one can deduce either i->first or not i->first.
-      if (!conjunction) valid = -valid;
-      return valid;
-    }
-    return 0;
-  }
+  if (atom) return simpl(*atom, conjunction);
   bool chg1, chg2;
   property_tree t1;
-  if (int valid = left->try_simplify(p, positive, force, chg1, t1)) {
+  if (int valid = left->try_simplify(simpl, chg1, t1)) {
     if ((valid > 0) ^ conjunction) return valid;
-    valid = right->try_simplify(p, positive, force, chg2, tgt);
+    valid = right->try_simplify(simpl, chg2, tgt);
     if (!valid && !chg2) tgt = *right;
     changed = true;
     return valid;
   }
   property_tree t2;
-  if (int valid = right->try_simplify(p, positive, force, chg2, t2)) {
+  if (int valid = right->try_simplify(simpl, chg2, t2)) {
     if ((valid > 0) ^ conjunction) return valid;
     if (chg1) tgt.swap(t1);
     else tgt = *left;
@@ -330,11 +344,11 @@ int property_tree::try_simplify(property const &p, bool positive, undefined_map 
   return 0;
 }
 
-int property_tree::simplify(property const &p)
+int property_tree::simplify(ptree_simplifier const &simpl)
 {
   bool changed;
   property_tree t;
-  int v = try_simplify(p, true, NULL, changed, t);
+  int v = try_simplify(simpl, changed, t);
   if (v) {
     clear();
     conjunction = v > 0;
@@ -351,23 +365,6 @@ void property_tree::negate()
     left->negate();
     right->negate();
   }
-}
-
-bool property_tree::verify(graph_t *g, property *p) const
-{
-  if (empty()) return false;
-  graph_loader loader(g);
-  if (atom) {
-    if (node *n = find_proof(atom->real)) {
-      if (int valid = check_imply(true, n->get_result(), *atom)) {
-	if (conjunction ^ (valid < 0)) return true;
-      }
-    }
-    if (p) *p = *atom;
-    return false;
-  }
-  if (!conjunction ^ left->verify(g, !conjunction ? p : NULL)) return conjunction;
-  return right->verify(g, !conjunction ? p : NULL);
 }
 
 /**

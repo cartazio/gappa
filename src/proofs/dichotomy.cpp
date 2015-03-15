@@ -285,20 +285,33 @@ dichotomy_node::~dichotomy_node()
     delete graphs;
 }
 
+static bool find_negative(property &p, property_tree const &t)
+{
+  if (t.left)
+    return find_negative(p, *t.left) || find_negative(p, *t.right);
+  if (t.conjunction) return false;
+  p = *t.atom;
+  return true;
+}
+
 dicho_graph dichotomy_helper::try_hypothesis(dichotomy_failure *exn,
   bool remove_left, bool remove_right) const
 {
   graph_t *g = new graph_t(top_graph, property_tree(tmp_hyp));
-
   g->populate(targets, hints, iter_max, NULL);
-  if (g->get_contradiction() || targets.empty() ||
-      targets.verify(g, exn ? &exn->expected : NULL))
+  if (g->get_contradiction() || targets.empty())
     return dicho_graph(g, iter_max);
-  if (exn && !exn->expected.null()) {
-    graph_loader loader(g);
-    if (node *n = find_proof(exn->expected.real))
-      exn->found = n->get_result();
-    exn->hyp = find_proof(tmp_hyp.real)->get_result();
+  property_tree t;
+  bool chg;
+  if (targets.try_simplify(simpl_graph(g), chg, t) < 0)
+    return dicho_graph(g, iter_max);
+  if (exn)
+  {
+    if (find_negative(exn->expected, chg ? t : targets)) {
+      if (node *n = g->find_already_known(exn->expected.real))
+        exn->found = n->get_result();
+    }
+    exn->hyp = g->find_already_known(tmp_hyp.real)->get_result();
   }
   delete g;
   return dicho_graph(NULL, 0);
@@ -365,7 +378,7 @@ dichotomy_node *dichotomy_helper::generate_node(node *varn, property const &p)
        i_end = graphs->graphs.end(); i != i_end; ++i)
   {
     graph_t *g = *i;
-    if (node *m = g->get_contradiction()) n->insert_pred(m); 
+    if (node *m = g->get_contradiction()) n->insert_pred(m);
     else n->insert_pred(g->find_already_known(p.real));
   }
   return n;
@@ -447,6 +460,7 @@ void graph_t::dichotomize(dichotomy_hint const &hint, int iter_max)
                   << " is not goal-driven anymore.\n";
       return;
     }
+    if (targets.simplify(simpl_graph(this))) return;
     gen = new best_splitter(hyp.bnd(), iter_max);
   }
   dichotomy_helper h(hyp, targets, hints, gen);

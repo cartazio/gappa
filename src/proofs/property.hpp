@@ -103,6 +103,39 @@ typedef std::map<ast_real const *, split_point_mset> splitting;
 
 typedef std::map<predicated_real, property> undefined_map;
 
+/**
+ * Abstract interface for simplifying property trees.
+ */
+struct ptree_simplifier
+{
+  virtual int operator()(property const &atom, bool pos) const = 0;
+};
+
+/**
+ * Simplifier according to a property.
+ * If #umap is set, properties with undefined intervals are handled
+ * according to it.
+ */
+struct simpl_prop: ptree_simplifier
+{
+  property prop;
+  bool positive;
+  undefined_map *umap;
+  simpl_prop(property const &p, bool pos, undefined_map *u)
+    : prop(p), positive(pos), umap(u) {}
+  virtual int operator()(property const &atom, bool pos) const;
+};
+
+/**
+ * Simplifier according to the nodes of a graph.
+ */
+struct simpl_graph: ptree_simplifier
+{
+  graph_t *graph;
+  simpl_graph(graph_t *g): graph(g) {}
+  virtual int operator()(property const &atom, bool pos) const;
+};
+
 struct property_tree
 {
   bool conjunction;
@@ -136,23 +169,20 @@ struct property_tree
   void get_undefined(undefined_map &) const;
 
   /**
-   * Simplifies the tree according to property @a p (modality @a positive).
-   * @param force If set, the function removes undefined yet matching leaves.
-   * @param changed Set to true if a change happened.
-   * @param tgt Set to the resulting tree if the result is nonzero.
+   * Produces a simplified tree according to simplifier @a simpl.
+   * @param changed Set to true if a simplification happened.
+   * @param tgt Set to the resulting tree if @a changed is true.
    * @return zero if the tree is not empty yet, a positive value if it is
    *         true, a negative value if it is false.
    */
-  int try_simplify(property const &p, bool positive, undefined_map *force, bool &changed, property_tree &tgt) const;
-
-  int simplify(property const &p);
+  int try_simplify(ptree_simplifier const &simpl, bool &changed, property_tree &tgt) const;
 
   /**
-   * Checks if the tree is contradicted by graph @a g.
-   * @param p Pointer to an optional storage for a remaining property.
-   * @return false if the tree has remaining properties.
+   * Simplifies the tree according to simplifier @a simpl.
+   * @return zero if the tree is not empty yet, a positive value if it is
+   *         true, a negative value if it is false.
    */
-  bool verify(graph_t *g, property *p) const;
+  int simplify(ptree_simplifier const &simpl);
 
   void get_splitting(splitting &) const;
 };

@@ -531,7 +531,7 @@ static void reduce_hypotheses(node *n, std::list<logic_node *> &trees, logic_nod
     if (*i == excluded) { ++i; continue; }
     property_tree t;
     bool changed;
-    int v = (*i)->tree.try_simplify(n->get_result(), true, umap, changed, t);
+    int v = (*i)->tree.try_simplify(simpl_prop(n->get_result(), true, umap), changed, t);
     if (!v && !changed) { ++i; continue; }
     if ((v == 0 && changed) || v < 0) {
       logic_node *m = new logic_node(t, *i, n);
@@ -551,7 +551,7 @@ static bool insert_atom(logic_node *n, property const &p, int i, std::list<logic
   node *m = new logicp_node(p, n, i);
   top_graph->insert_node(m);
   if (top_graph->get_contradiction()) return true;
-  if (!targets.empty() && targets.simplify(m->get_result()) < 0) return true;
+  if (!targets.empty() && targets.simplify(simpl_prop(m->get_result(), true, NULL)) < 0) return true;
   reduce_hypotheses(m, trees, n, NULL);
   if (top_graph->get_contradiction()) return true;
   if (pending_schemes) insert_dependent(*pending_schemes, p.real);
@@ -656,7 +656,8 @@ void graph_t::populate(property_tree const &targets,
       reduce_hypotheses(n, trees, NULL, NULL);
       if (contradiction) return;
       if (split_hypotheses(trees, current_targets, &missing_schemes)) return;
-      if (!current_targets.empty() && current_targets.simplify(n->get_result()) < 0) return;
+      if (!current_targets.empty() &&
+          current_targets.simplify(simpl_prop(n->get_result(), true, NULL)) < 0) return;
     }
     if (iter > iter_max)
       std::cerr << "Warning: maximum number of iterations reached.\n";
