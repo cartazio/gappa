@@ -508,20 +508,6 @@ proof_paths_cleaner::~proof_paths_cleaner() {
 static proof_paths_cleaner dummy;
 #endif // LEAK_CHECKER
 
-node *find_proof(property const &res, bool implies)
-{
-  node *n = find_proof(res.real);
-  if (!n) return NULL;
-  if (implies && !n->get_result().implies(res)) return NULL;
-  if (!implies) {
-    if (!res.real.pred_bnd()) return NULL;
-    property p = n->get_result();
-    p.intersect(res);
-    if (!is_empty(p.bnd())) return NULL;
-  }
-  return n;
-}
-
 static bool fill_hypotheses(property *hyp, preal_vect const &v)
 {
   for(preal_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i) {
@@ -699,10 +685,9 @@ void graph_t::populate(property_tree const &targets,
   splitting::value_type const *sv = NULL;
   for (splitting::const_iterator i = s.begin(), i_end = s.end(); i != i_end; ++i)
   {
-    if (i->first.real2() || i->second.size() <= max_pts ||
-        already.find(i->first.real()) != already.end())
+    if (i->second.size() <= max_pts || already.count(i->first))
       continue;
-    node *n = find_proof(i->first.real());
+    node *n = find_proof(predicated_real(i->first, PRED_BND));
     if (!n || is_singleton(n->get_result().bnd())) continue;
     max_pts = i->second.size();
     sv = &*i;
@@ -719,8 +704,8 @@ void graph_t::populate(property_tree const &targets,
       ds = fill_splitter(ds, *i);
       prev = i->pt;
     }
-    already.insert(sv->first.real());
-    dichotomy_var dv = { sv->first.real(), ds };
+    already.insert(sv->first);
+    dichotomy_var dv = { sv->first, ds };
     dichotomy_hint dh = { dvar_vect(1, dv), property_tree() };
     dichotomize(dh, iter_max);
     clear_splitter(ds);

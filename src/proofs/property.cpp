@@ -358,7 +358,11 @@ bool property_tree::verify(graph_t *g, property *p) const
   if (empty()) return false;
   graph_loader loader(g);
   if (atom) {
-    if (find_proof(*atom, !conjunction)) return true;
+    if (node *n = find_proof(atom->real)) {
+      if (int valid = check_imply(true, n->get_result(), *atom)) {
+	if (conjunction ^ (valid < 0)) return true;
+      }
+    }
     if (p) *p = *atom;
     return false;
   }
@@ -425,10 +429,10 @@ void property_tree::get_undefined(undefined_map &umap) const
 void property_tree::get_splitting(splitting &res) const
 {
   if (atom) {
-    if (!atom->real.pred_bnd()) return;
+    if (atom->real.pred() != PRED_BND) return;
     interval const &b = atom->bnd();
     if (!is_defined(b)) return;
-    split_point_mset &nums = res[atom->real];
+    split_point_mset &nums = res[atom->real.real()];
     number const &l = lower(b), &u = upper(b);
     if (l == u) return;
     if (l != number::neg_inf) nums.insert(split_point(l, false));

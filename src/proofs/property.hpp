@@ -99,7 +99,7 @@ struct graph_t;
 struct split_point;
 
 typedef std::multiset<split_point> split_point_mset;
-typedef std::map<predicated_real, split_point_mset> splitting;
+typedef std::map<ast_real const *, split_point_mset> splitting;
 
 typedef std::map<predicated_real, property> undefined_map;
 

@@ -178,8 +178,8 @@ modus_node::modus_node(theorem_node *n)
   for (property_vect::const_iterator i = n->hyp.begin(),
        i_end = n->hyp.end(); i != i_end; ++i)
   {
-    node *m = find_proof(*i);
-    if (!m)
+    node *m = find_proof(i->real);
+    if (!m || !m->get_result().implies(*i))
     {
       assert(!parameter_constrained);
       m = create_theorem(0, NULL, *i, "$FALSE", NULL);

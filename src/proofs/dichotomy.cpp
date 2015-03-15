@@ -419,7 +419,7 @@ void graph_t::dichotomize(dichotomy_hint const &hint, int iter_max)
     h.src = dvar_vect(hint.src.begin() + 1, hint.src.end());
     hints.push_back(h);
   }
-  node *varn = find_proof(var.real);
+  node *varn = find_proof(predicated_real(var.real, PRED_BND));
   if (!varn) {
     if (warning_dichotomy_failure)
       std::cerr << "Warning: case split on " << dump_real(var.real)
