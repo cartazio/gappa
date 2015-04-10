@@ -693,7 +693,7 @@ void graph_t::populate(property_tree const &targets,
     max_pts = i->second.size();
     sv = &*i;
   }
-  if (max_pts > 1)
+  if (max_pts)
   {
     ast_real_set save = already;
     unsigned long ds = 0;
