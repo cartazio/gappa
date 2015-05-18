@@ -125,35 +125,6 @@ static void generate_tree(property_tree &tree, ast_prop const *p, bool positive)
   }
 }
 
-#if 0
-static void massage_property_tree(property_tree &tree)
-{
-  std::vector<property_tree::leaf> new_leaves;
-
-  // for any goal x>=b or x<=b, add the converse inequality as a hypothesis
-  for (std::vector<property_tree::leaf>::const_iterator i = tree->leaves.begin(),
-       i_end = tree->leaves.end(); i != i_end; ++i)
-  {
-    property const &p = i->first;
-    if (!i->second || p.real.pred() != PRED_BND || !is_defined(p.bnd()) ||
-        is_bounded(p.bnd())) continue;
-    number l = upper(p.bnd()), u = lower(p.bnd());
-    if (l == number::pos_inf) {
-      l = number::neg_inf;
-      if (!p.real.real2()) {
-        real_op const *o = boost::get<real_op const>(p.real.real());
-        if (o && o->type == UOP_ABS) l = 0;
-      }
-    } else {
-      u = number::pos_inf;
-    }
-    new_leaves.push_back(property_tree::leaf(property(p.real, interval(l, u)), false));
-  }
-
-  tree->leaves.insert(tree->leaves.end(), new_leaves.begin(), new_leaves.end());
-}
-#endif
-
 static void delete_prop(ast_prop const *p)
 {
   switch (p->type) {
