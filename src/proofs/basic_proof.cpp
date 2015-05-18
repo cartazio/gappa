@@ -611,7 +611,7 @@ proof_scheme *uabs_of_abs_scheme::factory(ast_real const *real)
 REGISTER_SCHEME_BEGIN(abs_of_uabs);
   abs_of_uabs_scheme(predicated_real const &r, predicated_real const &v)
     : proof_scheme(r, preal_vect(1, v), "abs_of_uabs", UPD_COPY) {}
-REGISTER_SCHEME_END_PREDICATE(abs_of_uabs);
+REGISTER_SCHEME_END_PATTERN_USER(abs_of_uabs, predicated_real(pattern(0), PRED_ABS), pattern::abs(pattern(0)));
 
 void abs_of_uabs_scheme::compute(property const hyps[], property &res, std::string &) const
 {
@@ -619,13 +619,10 @@ void abs_of_uabs_scheme::compute(property const hyps[], property &res, std::stri
   res.bnd() = hyps[0].bnd();
 }
 
-proof_scheme *abs_of_uabs_scheme::factory(predicated_real const &real)
+proof_scheme *abs_of_uabs_scheme::factory(predicated_real const &real, ast_real_vect const &)
 {
-  if (real.pred() != PRED_ABS) return NULL;
   ast_real const *r = real.real();
   if (is_constant(r)) return NULL;
-  real_op const *p = boost::get< real_op const >(r);
-  if (p && p->type == UOP_ABS) return NULL;
   ast_real const *ra = normalize(ast_real(real_op(UOP_ABS, r)));
   return new abs_of_uabs_scheme(real, predicated_real(ra, PRED_BND));
 }

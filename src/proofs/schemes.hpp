@@ -95,6 +95,7 @@ struct factory_creator {
   typedef proof_scheme *(*factorx_fun)(predicated_real const &, ast_real_vect const &);
   typedef proof_scheme *(*factory_fun)(ast_real const *);
   typedef proof_scheme *(*factorz_fun)(predicated_real const &);
+  factory_creator(factorx_fun f, predicated_real const &, ast_real const *);
   factory_creator(factorx_fun f, predicated_real const &);
   factory_creator(factory_fun f);
   factory_creator(factorz_fun f);
@@ -121,6 +122,12 @@ struct factory_creator {
     static proof_scheme *factory(predicated_real const &, ast_real_vect const &); \
   }; \
   static factory_creator name##_scheme_register(&name##_scheme::factory, pattern)
+
+#define REGISTER_SCHEME_END_PATTERN_USER(name, pattern, user) \
+   public: \
+    static proof_scheme *factory(predicated_real const &, ast_real_vect const &); \
+  }; \
+  static factory_creator name##_scheme_register(&name##_scheme::factory, pattern, user)
 
 inline node *find_proof(predicated_real const &real)
 { return top_graph->find_already_known(real); }
