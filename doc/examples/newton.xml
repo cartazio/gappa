@@ -66,81 +66,43 @@ give results any better.</para>
 <para>Gappa does not find any useful relation between <code>r1</code> and
 <code>R</code>, as the first one is a rounded multiplication while the second one is
 an exact division. So we have to split the absolute error into two terms: a
-rounding error we expect Gappa to compute, and the convergence due to Newton's
+round-off error we expect Gappa to compute, and the convergence due to Newton's
 iteration.</para>
 
 <programlisting language="gappa"><![CDATA[{ ... ->
   r1 - r0 * (2 - d * r0) in ? /\ r0 * (2 - d * r0) - R in ? }]]></programlisting>
 
-<para>Gappa now gives the answer below. Notice that the range of the rounding
+<para>Gappa now gives the answer below. Notice that the range of the round-off
 error almost matches the precision of the computations.</para>
 
 <screen>Results:
-  r1 - r0 * (2 - d * r0) in [-255b-22 {-6.07967e-05, -2^(-14.0056)}, 201456639b-40 {0.000183224, 2^(-12.4141)}]
-  r0 * (2 - d * r0) - R in [-131585b-16 {-2.00783, -2^(1.00564)}, 263425b-17 {2.00977, 2^(1.00703)}]</screen>
+  r1 - r0 * (2 - d * r0) in [-1b-14 {-6.10352e-05, -2^(-14)}, 788481b-32 {0.000183583, 2^(-12.4113)}]
+  r0 * (2 - d * r0) - R in [-131585b-16 {-2.00783, -2^(1.00564)}, 131969b-16 {2.01369, 2^(1.00984)}]</screen>
 
-<para>So Gappa was fine with the rounding error, but not with the algorithmic
-error. We can help Gappa by directly providing an expression of this error. So
-we add a rule describing the quadratic convergence of Newton's iteration. And
-since we also have to split <code>r1 - R</code>, we perform both operations in
-one single rewriting
-rule.</para>
+<para>So Gappa computes correct bounds for the round-off error, but not for the
+algorithmic one. We can help Gappa by providing an expression of the latter one. So
+we add a rule describing the quadratic convergence of Newton's iteration:</para>
 
-<programlisting language="gappa"><![CDATA[r1 - R -> (r1 - r0 * (2 - d * r0)) - (r0 - R) * (r0 - R) * d;]]></programlisting>
-
-<para>A similar rule is then used for <code>r2 - R</code>.</para>
-</section>
-
-<section>
-<title>Full listing 1</title>
-
-<programlisting language="gappa"><![CDATA[R = 1 / d;
-
-r1 fixed<-14,dn>= r0 * (2 - fixed<-16,dn>(d) * r0);
-r2 fixed<-30,dn>= r1 * (2 - d * r1);
-
-{ @FIX(d,-24) /\ d in [0.5,1] /\
-  @FIX(r0,-8) /\ r0 - R in [-1b-8,1b-8] ->
-  r2 - R in ? }
-
-r1 - R -> (r1 - r0 * (2 - d * r0)) - (r0 - R) * (r0 - R) * d;
-r2 - R -> (r2 - r1 * (2 - d * r1)) - (r1 - R) * (r1 - R) * d;]]></programlisting>
+<programlisting language="gappa"><![CDATA[r0 * (2 - d * r0) - R -> (r0 - R) * (r0 - R) * -d;
+r1 * (2 - d * r1) - R -> (r1 - R) * (r1 - R) * -d;]]></programlisting>
 
 <para>Gappa answers that <texinline>r_2 = R \pm 2^{-24.7}</texinline>.</para>
 
 <screen>Warning: although present in a quotient, the expression (d) may have not been tested for non-zeroness.
 Results:
-  r2 - R in [-41710608584542209b-80 {-3.45022e-08, -2^(-24.7887)}, 8356605b-52 {1.85554e-09, 2^(-29.0055)}]</screen>
+  r2 - R in [-638882156545b-64 {-3.46339e-08, -2^(-24.7832)}, 32771b-44 {1.86282e-09, 2^(-28.9999)}]</screen>
 
-</section>
-
-<section>
-<title>Improving the rewriting rules</title>
-
-<para>First of all, there is this warning message about <code>d</code> possibly
+<para>While the answer is the expected one, there is this warning message
+about <code>d</code> possibly
 being zero. Indeed, <code>R</code> is the reciprocal of <code>d</code> and we
 are using the fact that <code>R * d = 1</code>. So the rewriting rules cannot
 be proved on their own. (But they can be proved in the context of the
-problem, so there is no correctness issue.) In order to avoid this
+problem, so there is no correctness issue.) In order to eliminate this
 warning, we can give the precise hypotheses such that the left hand sides
-of the rewriting rules are equal to their right hand side without any
+of the rewriting rules are equal to their right hand sides without any
 other assumption. This is indicated at the end of the rule.</para>
 
-<programlisting language="gappa"><![CDATA[r1 - R -> (r1 - r0 * (2 - d * r0)) - (r0 - R) * (r0 - R) * d   {d <> 0};]]></programlisting>
-
-<para>Second, the rewriting rules are too specialized. For example, in the first
-one, the occurrences of <code>r1</code> could be replaced by any other real
-number and the rule would still be valid. Let us consider the problem again. We
-wanted to split <code>r1 - R</code> into a rounding error and an algorithmic
-error. So we could just say that <code>r1</code> is an approximation of
-<code>r0 * (2 - d * r0)</code>.</para>
-
-<programlisting language="gappa">r1 ~ r0 * (2 - d * r0);</programlisting>
-
-<para>We are left with hinting Gappa at the quadratic convergence of Newton's
-iterations.</para>
-
-<programlisting language="gappa"><![CDATA[r0 * (2 - d * r0) - R -> (r0 - R) * (r0 - R) * -d   { d <> 0};]]></programlisting>
+<programlisting language="gappa"><![CDATA[r0 * (2 - d * r0) - R -> (r0 - R) * (r0 - R) * -d   { d <> 0 };]]></programlisting>
 
 <para>When generating a script for an external proof checker, Gappa will add
 this rewriting rule as a global hypothesis. For example, when selecting the Coq
@@ -159,7 +121,7 @@ tactic.</para>
 </section>
 
 <section>
-<title>Full listing 2</title>
+<title>Full listing</title>
 
 <programlisting language="gappa"><![CDATA[R = 1 / d;
 
@@ -170,15 +132,14 @@ r2 fixed<-30,dn>= r1 * (2 - d * r1);
   @FIX(r0,-8) /\ r0 - R in [-1b-8,1b-8] ->
   r2 - R in ? }
 
-r1 ~ r0 * (2 - d * r0);
 r0 * (2 - d * r0) - R -> (r0 - R) * (r0 - R) * -d   { d <> 0 };
-r2 ~ r1 * (2 - d * r1);
 r1 * (2 - d * r1) - R -> (r1 - R) * (r1 - R) * -d   { d <> 0 };]]></programlisting>
 
-<para>The answer is the same.</para>
+<para>The answer is the same as before, since Gappa easily proves that
+<code>d</code> is not zero.</para>
 
 <screen>Results:
-  r2 - R in [-41710608584542209b-80 {-3.45022e-08, -2^(-24.7887)}, 8356605b-52 {1.85554e-09, 2^(-29.0055)}]</screen>
+  r2 - R in [-638882156545b-64 {-3.46339e-08, -2^(-24.7832)}, 32771b-44 {1.86282e-09, 2^(-28.9999)}]</screen>
 
 <para>Another example of a Newton iteration is given in <xref linkend="why"/>.</para>
 
