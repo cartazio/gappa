@@ -740,7 +740,12 @@ REGISTER_SCHEME_END_PREDICATE(mul_fix_flt);
 
 void mul_fix_flt_scheme::compute(property const hyps[], property &res, std::string &) const
 {
-  res.cst() = hyps[0].cst() + hyps[1].cst();
+  long c0 = hyps[0].cst(), c1 = hyps[1].cst();
+  if (res.real.pred() == PRED_FLT) {
+    if (c0 == 1) c0 = 0;
+    else if (c1 == 1) c1 = 0;
+  }
+  res.cst() = c0 + c1;
 }
 
 proof_scheme *mul_fix_flt_scheme::factory(predicated_real const &real)
