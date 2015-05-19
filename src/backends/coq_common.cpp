@@ -83,6 +83,7 @@ static char const *theorem_defs[][2] = {
   { "div_nn", "$gpred_bnd.$t $1x $2x $1i $2i $i $" },
   { "square", "$gpred_bnd.$t $1x $1i $i $" },
   { "sqrt", "$gpred_bnd.sqrtG $1x $1i $i $" },
+  { "square_rev", "$gpred_bnd.$t $x $1i $i $" },
 
   { "sub_refl", "$gpred_bnd.$t _ $i $" },
   { "div_refl", "$gpred_bnd.$t $1x $i $" },
@@ -234,7 +235,6 @@ static char const *theorem_defs[][2] = {
   { "div_xiru", "$grewriting.$t _ $x $i $1p $2p $3p" },
   { "err_xabq", "$grewriting.$t _ $1x $i $1p $2p" },
   { "err_fabq", "$grewriting.$t _ $1x $i $1p $2p" },
-  { "square_xibu", "$grewriting.$t _ $i $1p" },
   { "addf_1", "$grewriting.$t $1x _ $i $1p $2p $3p" },
   { "addf_2", "$grewriting.$t _ _ $i $1p $2p" },
   { "addf_3", "$grewriting.$t $1x _ $i $1p $2p $3p" },

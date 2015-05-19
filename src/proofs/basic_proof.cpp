@@ -521,6 +521,23 @@ proof_scheme *computation_abs_scheme::factory(predicated_real const &real)
   return new computation_abs_scheme(real, needed, name, upd);
 }
 
+// SQUARE_REV
+REGISTER_SCHEME_BEGIN(square_rev);
+  square_rev_scheme(predicated_real const &r, ast_real const *u)
+    : proof_scheme(r, preal_vect(1, predicated_real(u, PRED_ABS)), "square_rev") {}
+REGISTER_SCHEME_END_PATTERN_USER(square_rev, predicated_real(pattern(0), PRED_ABS), pattern(0) * pattern(0));
+
+void square_rev_scheme::compute(property const hyps[], property &res, std::string &) const
+{
+  res.bnd() = sqrt(hyps[0].bnd());
+}
+
+proof_scheme *square_rev_scheme::factory(predicated_real const &real, ast_real_vect const &v)
+{
+  ast_real const *u = normalize(ast_real(real_op(v[0], BOP_MUL, v[0])));
+  return new square_rev_scheme(real, u);
+}
+
 // BND_OF_ABS
 REGISTER_SCHEME_BEGIN(bnd_of_abs);
   bnd_of_abs_scheme(ast_real const *r)

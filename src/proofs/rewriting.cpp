@@ -564,11 +564,6 @@ REWRIT3(square_sqrt,
 	a,
 	a >= 0);
 
-R3WRITE(square_xibu,
-	abs(a),
-	hide(sqrt(a * a)),
-	a * a);
-
 REWRIT3(addf_1,
 	a / (a + b),
 	hide(one / hide(one + b / a)),
