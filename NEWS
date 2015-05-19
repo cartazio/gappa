@@ -1,3 +1,14 @@
+Version 1.2.0:
+ * fact database
+   - improved handling of powers of two in mul_flt
+   - fixed incorrect computation of the order-3 term of the relative error for division
+   - added rewriting rules for emulating reverse propagation
+ * proof graph
+   - improved proof simplication
+ * proof paths
+   - improved performances by avoiding some absolute values
+   - improved detection of approximate/exact pairs of expressions
+
 Version 1.1.2:
  * back-ends
    - fixed missing proof parts with the LaTeX back-end
