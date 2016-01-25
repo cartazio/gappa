@@ -100,11 +100,11 @@ static char const *theorem_defs[][2] = {
   { "mul_aa", "$gpred_abs.$t $1x $2x $1i $2i $i $" },
   { "div_aa", "$gpred_abs.$t $1x $2x $1i $2i $i $" },
 
-  { "add_rr", "$gpred_rel.$t $1x $1y $2x $2y $1i $2i $3i $i $1p $2p $3p $4p $b" },
-  { "sub_rr", "$gpred_rel.$t $1x $1y $2x $2y $1i $2i $3i $i $1p $2p $3p $4p $b" },
+  { "add_rr", "$gpred_rel.$t $1x $1y $2x $2y $1i $2i $3i $i $1p $2p $3p $4p _" },
+  { "sub_rr", "$gpred_rel.$t $1x $1y $2x $2y $1i $2i $3i $i $1p $2p $3p $4p _" },
   { "mul_rr", "$gpred_rel.$t $1x $1y $2x $2y $1i $2i $i $" },
   { "div_rr", "$gpred_rel.$t $1x $1y $2x $3x $1i $2i $i $" },
-  { "inv_r", "$gpred_rel.$t $1x $1y _ $1i $i $1p $2p $b" },
+  { "inv_r", "$gpred_rel.$t $1x $1y _ $1i $i $1p $2p _" },
   { "compose", "$gpred_rel.$t $1x $1y $2y $1i $2i $i $" },
   { "compose_swap", "$gpred_rel.$t $1x $y $2x $3x $1i $2i $i $" },
   { "bnd_div_of_rel_bnd_div", "$gpred_rel.$t $1x $1y $3x $1i $2i $i $" },
@@ -267,7 +267,7 @@ theorem_map theorems;
 RUN_ONCE(fill_theorem_map)
 {
   for (char const *(*p)[2] = theorem_defs; (*p)[0]; ++p) {
-    theorems.insert(std::pair<std::string, char const *>((*p)[0], (*p)[1]));
+    theorems.insert(theorem_map::value_type((*p)[0], (*p)[1]));
   }
 };
 
@@ -553,7 +553,6 @@ void apply_theorem(auto_flush &plouf, std::string const &th,
     return;
   }
   char const *p = it->second.c_str();
-  bool has_comp = false;
   int max = 0;
   std::string buf;
   for (; *p; ++p)
@@ -585,8 +584,10 @@ void apply_theorem(auto_flush &plouf, std::string const &th,
       case 'x': plouf << display(h->real.real()); break;
       case 'y': plouf << display(h->real.real2()); break;
       case '\0':
-        has_comp = true;
+        buf += " _";
         p = buf.c_str();
+        // the first character will be skipped
+        assert (*p == ' ');
         break;
       case 'p':
         plouf << 'h';
@@ -599,14 +600,10 @@ void apply_theorem(auto_flush &plouf, std::string const &th,
         else
           plouf << h - hyp;
         break;
-      case 'b':
-        has_comp = true;
-        break;
       default:
         plouf << '$';
     }
   }
-  if (has_comp) plouf << " _";
 }
 
 std::string display(theorem_node *t)
