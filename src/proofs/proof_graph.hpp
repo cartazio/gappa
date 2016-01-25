@@ -151,7 +151,9 @@ class modus_node: public dependent_node
  */
 class graph_t
 {
+ public:
   graph_t *father;        /**< Parent graph. */
+ private:
   node_set nodes;         /**< Nodes owned by this graph. Each node can be proved in the context of #hyps. */
   node_map known_reals;   /**< Best node implied by #hyps for each real. */
   property_tree hyps;     /**< Hypotheses of this graph. They supplement the ones from #father graph. */

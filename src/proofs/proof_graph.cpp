@@ -631,6 +631,7 @@ bool graph_t::get_undefined(undefined_map &umap) const
  */
 void enlarger(node *top)
 {
+  // perform a topological sort of the nodes
   ++visit_counter;
   typedef std::pair<bool, node *> bnode;
   std::list<bnode> bns;
@@ -658,6 +659,35 @@ void enlarger(node *top)
       bns.push_back(std::make_pair(false, *i));
     }
   }
+  // compute which nodes can be used as a replacement
+  std::set<graph_t *> gs;
+  for (node_list::const_iterator i = pending.begin(),
+       i_end = pending.end(); i != i_end; ++i)
+  {
+    gs.insert((*i)->graph);
+  }
+  std::map<graph_t *, std::list<graph_t *> > ggs;
+  for (std::set<graph_t *>::const_iterator i = gs.begin(),
+       i_end = gs.end(); i != i_end; ++i)
+  {
+    graph_t *g = *i;
+    // the nodes of k can be used by the nodes of g
+    for (graph_t *k = g; k; k = k->father) ggs[k].push_back(g);
+  }
+  std::map<graph_t *, node_list> gnls;
+  for (node_list::const_iterator i = pending.begin(),
+       i_end = pending.end(); i != i_end; ++i)
+  {
+    node *n = *i;
+    std::list<graph_t *> const &gs = ggs[n->graph];
+    // the nodes of *j can use node n
+    for (std::list<graph_t *>::const_iterator j = gs.begin(),
+         j_end = gs.end(); j != j_end; ++j)
+    {
+      gnls[*j].push_front(n);
+    }
+  }
+  // enlarge node results and see if some of them can be replaced
   node_list replaced;
   while (!pending.empty())
   {
@@ -672,13 +702,14 @@ void enlarger(node *top)
       node *m = *i;
       property p = n->maximal_for(m);
       if (!m->get_result().strict_implies(p)) continue;
-      for (node_list::const_reverse_iterator j = pending.rbegin(),
-           j_end = pending.rend(); *j != m; ++j)
+      node_list const &ns = gnls[m->graph];
+      for (node_list::const_iterator j = ns.begin(),
+           j_end = ns.end(); *j != m; ++j)
       {
         assert (j != j_end);
         node *k = *j;
         if (k->type == LOGIC) continue;
-        if (!dominates(k, m) || !k->get_result().implies(p)) continue;
+        if (!k->get_result().implies(p)) continue;
         ++m->nb_good;
         n->subst_subproof(m, k);
         replaced.push_back(m);
