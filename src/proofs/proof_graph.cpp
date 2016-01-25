@@ -661,31 +661,26 @@ void enlarger(node *top)
   }
   // compute which nodes can be used as a replacement
   std::set<graph_t *> gs;
+  std::multimap<graph_t *, graph_t *> ggs;
   for (node_list::const_iterator i = pending.begin(),
        i_end = pending.end(); i != i_end; ++i)
   {
-    gs.insert((*i)->graph);
-  }
-  std::map<graph_t *, std::list<graph_t *> > ggs;
-  for (std::set<graph_t *>::const_iterator i = gs.begin(),
-       i_end = gs.end(); i != i_end; ++i)
-  {
-    graph_t *g = *i;
+    graph_t *g = (*i)->graph;
+    if (!gs.insert(g).second) continue;
     // the nodes of k can be used by the nodes of g
-    for (graph_t *k = g; k; k = k->father) ggs[k].push_back(g);
+    for (graph_t *k = g; k; k = k->father)
+      ggs.insert(std::make_pair(k, g));
   }
   std::map<graph_t *, node_list> gnls;
   for (node_list::const_iterator i = pending.begin(),
        i_end = pending.end(); i != i_end; ++i)
   {
     node *n = *i;
-    std::list<graph_t *> const &gs = ggs[n->graph];
+    typedef std::multimap<graph_t *, graph_t *>::const_iterator iter;
+    std::pair<iter, iter> jj = ggs.equal_range(n->graph);
     // the nodes of *j can use node n
-    for (std::list<graph_t *>::const_iterator j = gs.begin(),
-         j_end = gs.end(); j != j_end; ++j)
-    {
-      gnls[*j].push_front(n);
-    }
+    for (iter j = jj.first; j != jj.second; ++j)
+      gnls[j->second].push_front(n);
   }
   // enlarge node results and see if some of them can be replaced
   node_list replaced;
