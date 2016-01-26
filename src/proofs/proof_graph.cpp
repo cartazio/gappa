@@ -262,7 +262,7 @@ node_vect const &logic_node::get_subproofs() const
 }
 
 logicp_node::logicp_node(property const &p, logic_node *n, int i)
-  : node(LOGICP, top_graph), res(p), before(n), index(i)
+  : node(LOGICP, top_graph), before(n), res(p), index(i)
 {
   n->succ.insert(this);
 }

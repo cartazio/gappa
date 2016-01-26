@@ -565,7 +565,7 @@ void apply_theorem(auto_flush &plouf, std::string const &th,
       int n = *(p++) - '1';
       h = &hyp[n];
       for (; max <= n; ++max) {
-        char t[] = { ' ', '$', '1' + max, 'p', '\0' };
+        char t[] = { ' ', '$', char('1' + max), 'p', '\0' };
         buf += t;
       }
     }
