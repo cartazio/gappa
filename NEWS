@@ -1,3 +1,9 @@
+Version 1.2.1:
+ * proof graph
+   - sped up simplification of large proofs
+ * Coq back-end
+   - fixed garbled generation of some theorem calls
+
 Version 1.2.0:
  * fact database
    - improved handling of powers of two in mul_flt
