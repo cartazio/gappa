@@ -1,3 +1,7 @@
+Version 1.2.2:
+ * arithmetic
+   - fixed incorrect error computation for negative inputs of float<zr>
+
 Version 1.2.1:
  * proof graph
    - sped up simplification of large proofs

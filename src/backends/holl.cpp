@@ -334,6 +334,7 @@ static void pose_hypothesis(auto_flush &plouf, int num_hyp, node *m, node *n)
   plouf << ":bool)`;;\n";
 }
 
+#if 0
 typedef std::map<ast_real const *, int> real_map;
 
 static int find_real(real_map &rm, ast_real const *r)
@@ -359,6 +360,7 @@ static void invoke_subset(auto_flush &plouf, property const p1, property const &
   }
   plouf << "] THEN FINALIZE ();;\n";
 }
+#endif
 
 static void simplification(auto_flush &plouf, property_tree const &before, property_tree const &after, property const &mod, int num_hyp)
 {
