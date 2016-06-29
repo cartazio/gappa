@@ -22,10 +22,46 @@
 #include <ext/hash_map>
 #endif
 
+#include <gmp.h>
+
 #include "parser/ast.hpp"
 
 extern bool warning_hint_difference, warning_null_denominator;
 extern bool parameter_constrained;
+
+struct mpz_class
+{
+  mpz_t value;
+  mpz_class()
+  { mpz_init(value); }
+  mpz_class(int i)
+  { mpz_init_set_si(value, i); }
+  mpz_class(mpz_t z)
+  { mpz_init_set(value, z); }
+  mpz_class(mpz_class const &n)
+  { mpz_init_set(value, n.value); }
+  mpz_class(std::string const &s)
+  { assert(s[0] == '+'); mpz_init_set_str(value, s.c_str() + 1, 10); }
+  ~mpz_class()
+  { mpz_clear(value); }
+  mpz_class &operator=(mpz_class const &n)
+  { mpz_set(value, n.value); return *this; }
+  mpz_class &operator+=(mpz_class const &n)
+  { mpz_add(value, value, n.value); return *this; }
+  mpz_class operator*(mpz_class const &n) const
+  { mpz_t res; mpz_init(res); mpz_mul(res, value, n.value); return res; }
+  mpz_class operator-() const
+  { mpz_t res; mpz_init(res); mpz_neg(res, value); return res; }
+  bool operator==(int i) const
+  { return mpz_cmp_si(value, i) == 0; }
+  bool operator!=(int i) const
+  { return mpz_cmp_si(value, i) != 0; }
+  bool operator<(int i) const
+  { return mpz_cmp_si(value, i) < 0; }
+};
+
+std::ostream &operator<<(std::ostream &o, mpz_class const &n)
+{ char *out = mpz_get_str(NULL, 10, n.value); o << out; free(out); return o; }
 
 typedef std::map< ast_real const *, int > product;
 
@@ -39,9 +75,9 @@ struct product_hash {
 };
 
 #ifdef HAVE_UMAP
-typedef std::tr1::unordered_map< product, int, product_hash > sum;
+typedef std::tr1::unordered_map< product, mpz_class, product_hash > sum;
 #else
-typedef __gnu_cxx::hash_map< product, int, product_hash > sum;
+typedef __gnu_cxx::hash_map< product, mpz_class, product_hash > sum;
 #endif
 
 typedef std::pair< sum, sum > quotient;
@@ -50,7 +86,7 @@ static std::string dump_sum(sum const &s) {
   std::stringstream res;
   bool first_term = true;
   for(sum::const_iterator i = s.begin(), i_end = s.end(); i != i_end; ++i) {
-    int coef = i->second;
+    mpz_class coef = i->second;
     if (coef < 0) {
       coef = -coef;
       if (first_term) { res << '-'; first_term = false; }
@@ -92,7 +128,8 @@ static product mul(product const &p1, product const &p2) {
   return res;
 }
 
-static void add_factor(sum &res, product const &factor, int coef) {
+static void add_factor(sum &res, product const &factor, mpz_class const &coef)
+{
   sum::iterator i = res.find(factor);
   if (i == res.end())
     res.insert(std::make_pair(factor, coef));
@@ -190,11 +227,9 @@ static quotient fieldalize_aux(ast_real const *r) {
   s2.insert(std::make_pair(p, 1));
   if (ast_number const *const *n = boost::get< ast_number const *const >(r)) {
     if ((*n)->base == 0) return quotient(s1, s2);
-    if ((*n)->exponent == 0 && (*n)->mantissa.length() < 6) {
+    if ((*n)->exponent == 0) {
       std::stringstream ss;
-      ss << (*n)->mantissa;
-      int m;
-      ss >> m;
+      mpz_class m((*n)->mantissa);
       s1.insert(std::make_pair(p, m));
       return quotient(s1, s2);
     }
