@@ -225,13 +225,28 @@ static quotient fieldalize_aux(ast_real const *r) {
   sum s1, s2;
   product p;
   s2.insert(std::make_pair(p, 1));
-  if (ast_number const *const *n = boost::get< ast_number const *const >(r)) {
-    if ((*n)->base == 0) return quotient(s1, s2);
-    if ((*n)->exponent == 0) {
-      std::stringstream ss;
-      mpz_class m((*n)->mantissa);
+  if (ast_number const *const *nn = boost::get< ast_number const *const >(r)) {
+    ast_number const &n = **nn;
+    if (n.base == 0) return quotient(s1, s2);
+    mpz_class m(n.mantissa);
+    if (n.exponent >= 0) {
+      if (n.base == 2) mpz_mul_2exp(m.value, m.value, n.exponent);
+      else {
+        mpz_t t;
+        mpz_init(t);
+        mpz_ui_pow_ui(t, n.base, n.exponent);
+        mpz_mul(m.value, m.value, t);
+        mpz_clear(t);
+      }
       s1.insert(std::make_pair(p, m));
       return quotient(s1, s2);
+    } else {
+      sum s3;
+      mpz_class q;
+      mpz_ui_pow_ui(q.value, n.base, -n.exponent);
+      s1.insert(std::make_pair(p, m));
+      s3.insert(std::make_pair(p, q));
+      return quotient(s1, s3);
     }
   }
   p.insert(std::make_pair(r, 1));
