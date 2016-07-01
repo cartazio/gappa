@@ -311,8 +311,8 @@ rewriting rule.</para>
 <row><entry><code>BND(rnd(a))</code></entry><entry><code>BND(a)</code></entry><entry>fixed, float</entry></row>
 <row><entry><code>BND(rnd(a))</code></entry><entry><code>BND(rnd(a))</code></entry><entry>float</entry></row>
 <row><entry><code>BND(rnd(a) - a)</code></entry><entry></entry><entry>fixed</entry></row>
-<row><entry><code>BND(rnd(a) - a)</code></entry><entry><code>BND(a)</code></entry><entry>fixed (zr, aw), float (up, dn, nu, nd)</entry></row>
-<row><entry><code>BND(rnd(a) - a)</code></entry><entry><code>ABS(a)</code></entry><entry>float (zr, aw, od, ne, nz, na, no)</entry></row>
+<row><entry><code>BND(rnd(a) - a)</code></entry><entry><code>BND(a)</code></entry><entry>fixed (zr, aw), float (zr, aw, up, dn, nu, nd)</entry></row>
+<row><entry><code>BND(rnd(a) - a)</code></entry><entry><code>ABS(a)</code></entry><entry>float (od, ne, nz, na, no)</entry></row>
 <row><entry><code>BND(rnd(a) - a)</code></entry><entry><code>BND(rnd(a))</code></entry><entry>fixed (zr, aw), float (up, dn, nu, nd)</entry></row>
 <row><entry><code>BND(rnd(a) - a)</code></entry><entry><code>ABS(rnd(a))</code></entry><entry>float (zr, aw, od, ne, nz, na, no)</entry></row>
 <row><entry><code>REL(rnd(a), a)</code></entry><entry></entry><entry></entry></row>
