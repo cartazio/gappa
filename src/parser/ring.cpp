@@ -160,11 +160,40 @@ static quotient neg(quotient const &q) {
   return quotient(neg(q.first), q.second);
 }
 
+static void gcd(mpz_t fact, sum const &s)
+{
+  for (sum::const_iterator i = s.begin(), i_end = s.end(); i != i_end; ++i)
+    mpz_gcd(fact, fact, i->second.value);
+}
+
+static void divide(sum &s, mpz_t const fact)
+{
+  for (sum::iterator i = s.begin(), i_end = s.end(); i != i_end; ++i)
+    mpz_divexact(i->second.value, i->second.value, fact);
+}
+
+static void reduce(quotient &q)
+{
+  if (q.first.empty()) {
+    q.second.clear();
+    q.second.insert(std::make_pair(product(), 1));
+    return;
+  }
+  mpz_t fact;
+  mpz_init_set(fact, q.first.begin()->second.value);
+  gcd(fact, q.first);
+  gcd(fact, q.second);
+  divide(q.first, fact);
+  divide(q.second, fact);
+  mpz_clear(fact);
+}
+
 static quotient add(quotient const &q1, quotient const &q2) {
   quotient res;
   fma(res.first, q1.first, q2.second);
   fma(res.first, q1.second, q2.first);
   fma(res.second, q1.second, q2.second);
+  reduce(res);
   return res;
 }
 
@@ -180,6 +209,7 @@ static quotient sub(quotient const &q1, quotient const &q2) {
   fma(res.first, q1.first, q2.second);
   fnma(res.first, q1.second, q2.first);
   fma(res.second, q1.second, q2.second);
+  reduce(res);
   return res;
 }
 
@@ -187,6 +217,7 @@ static quotient mul(quotient const &q1, quotient const &q2) {
   quotient res;
   fma(res.first, q1.first, q2.first);
   fma(res.second, q1.second, q2.second);
+  reduce(res);
   return res;
 }
 
@@ -204,6 +235,7 @@ static quotient div(quotient const &q1, quotient const &q2) {
   quotient res;
   fma(res.first, q1.first, q2.second);
   fma(res.second, q1.second, q2.first);
+  reduce(res);
   return res;
 }
 
