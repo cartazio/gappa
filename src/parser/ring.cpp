@@ -82,8 +82,8 @@ typedef __gnu_cxx::hash_map< product, mpz_class, product_hash > sum;
 
 typedef std::pair< sum, sum > quotient;
 
-static std::string dump_sum(sum const &s) {
-  std::stringstream res;
+static void dump_sum(std::ostream &res, sum const &s)
+{
   bool first_term = true;
   for(sum::const_iterator i = s.begin(), i_end = s.end(); i != i_end; ++i) {
     mpz_class coef = i->second;
@@ -105,7 +105,20 @@ static std::string dump_sum(sum const &s) {
       if (j->second != 1) res << '^' << j->second;
     }
   }
-  return res.str();
+}
+
+static void dump(std::ostream &res, quotient const &q)
+{
+  assert(!q.second.empty());
+  if (q.second.begin()->first.empty() && q.second.begin()->second == 1)
+    dump_sum(res, q.first);
+  else {
+    res << '(';
+    dump_sum(res, q.first);
+    res << ") / (";
+    dump_sum(res, q.second);
+    res << ')';
+  }
 }
 
 static product mul(product const &p1, product const &p2) {
@@ -197,13 +210,6 @@ static quotient add(quotient const &q1, quotient const &q2) {
   return res;
 }
 
-static sum sub_num(quotient const &q1, quotient const &q2) {
-  sum res;
-  fma(res, q1.first, q2.second);
-  fnma(res, q1.second, q2.first);
-  return res;
-}
-
 static quotient sub(quotient const &q1, quotient const &q2) {
   quotient res;
   fma(res.first, q1.first, q2.second);
@@ -229,9 +235,11 @@ static quotient div(quotient const &q1, quotient const &q2) {
     std::cerr << "Error: zero appears as a denominator in a rewriting rule.\n";
     exit(EXIT_FAILURE);
   }
-  if (check_divisor && (d.size() > 1 || !d.begin()->first.empty()))
-    std::cerr << "Warning: although present in a quotient, the expression "
-              << dump_sum(d) << " may have not been tested for non-zeroness.\n";
+  if (check_divisor && (d.size() > 1 || !d.begin()->first.empty())) {
+    std::cerr << "Warning: although present in a quotient, the expression ";
+    dump_sum(std::cerr, d);
+    std::cerr << " may have not been tested for non-zeroness.\n";
+  }
   quotient res;
   fma(res.first, q1.first, q2.second);
   fma(res.second, q1.second, q2.first);
@@ -298,11 +306,13 @@ void test_ringularity(ast_real const *r1, ast_real const *r2, bool b)
 {
   check_divisor = warning_null_denominator && b;
   if (!warning_hint_difference && !check_divisor) return;
-  sum const &diff = sub_num(ringalize(r1), ringalize(r2));
-  if (!diff.empty() && warning_hint_difference)
+  quotient diff = sub(ringalize(r1), ringalize(r2));
+  if (!diff.first.empty() && warning_hint_difference)
   {
     std::cerr <<
       "Warning: " << dump_real(r1) << " and " << dump_real(r2) << " are not trivially equal.\n"
-      "         Difference: " << dump_sum(diff) << '\n';
+      "         Difference: ";
+    dump(std::cerr, diff);
+    std::cerr << std::endl;
   }
 }
