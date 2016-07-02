@@ -171,6 +171,20 @@ static char const *theorem_defs[][2] = {
   { "rel_of_fix_float_ne", "$gfloat.$t _ _ $1c $1x $i $" },
   { "rel_of_fix_float_na", "$gfloat.$t _ _ $1c $1x $i $" },
 
+  { "flt_of_floatx", "$gfloat.$t _ _ $c _ $" },
+  { "floatx_of_flt", "$gfloat.$t _ $1x $1c _ $" },
+  { "fix_floatx_of_fix", "$gfloat.$t _ _ $1c $c $1x $" },
+  { "flt_floatx_of_flt", "$gfloat.$t _ _ $1c $c $1x $" },
+
+  { "floatx_round_dn", "$gfloat.$t _ $1x $1i $i $" },
+  { "floatx_round_up", "$gfloat.$t _ $1x $1i $i $" },
+  { "floatx_round_zr", "$gfloat.$t _ $1x $1i $i $" },
+  { "floatx_round_ne", "$gfloat.$t _ $1x $1i $i $" },
+  { "floatx_round_na", "$gfloat.$t _ $1x $1i $i $" },
+  { "floatx_enforce", "$gfloat.$t _ _ _ $1i $i $" },
+  { "floatx_relative_ne", "$gfloat.$t _ $1x $1i $i $" },
+  { "floatx_relative_na", "$gfloat.$t _ $1x $1i $i $" },
+
   { "fix_of_fixed", "$gfixed.$t _ _ _ $c $" },
   { "fixed_of_fix", "$gfixed.$t _ $1x $1c _ $" },
   { "fix_fixed_of_fix", "$gfixed.$t _ _ $1c $c $1x $" },
@@ -311,6 +325,14 @@ std::string convert_name(std::string const &name)
         << qualify(GAPPADEF) << "radix2 ("
         << qualify(FLOCQDEF "FLT.") << "FLT_exp ("
         << name.substr(p2 + 1) << ") (" << name.substr(p1 + 1, p2 - p1 - 1) << ")) ";
+    goto round_mode;
+  }
+  if (prefix == "rounding_floatx")
+  {
+    res << '(' << qualify(FLOCQDEF "generic_fmt.") << "round "
+        << qualify(GAPPADEF) << "radix2 ("
+        << qualify(FLOCQDEF "FLX.") << "FLX_exp ("
+        << name.substr(p1 + 1) << ")) ";
     goto round_mode;
   }
   bool fragile = false;

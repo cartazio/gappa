@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <climits>
 #include <map>
 #include <sstream>
 #include "utils.hpp"
@@ -65,20 +66,23 @@ struct float_rounding_class: function_class
 {
   float_format format;
   direction_type type;
-  std::string ident;
-  float_rounding_class(float_format const &f, direction_type t, std::string const &i)
-    : function_class(UOP_ID, TH_RND | TH_ENF | TH_REL_EXA_ABS | TH_REL_APX_ABS |
+  std::string rname, ident;
+  float_rounding_class(float_format const &f, direction_type t,
+                       std::string const &r, std::string const &i)
+    : function_class(UOP_ID, TH_RND | TH_ENF |
+        (f.min_exp == INT_MIN ? TH_REL : (TH_REL_EXA_ABS | TH_REL_APX_ABS)) |
         (use_abs(t) ?  TH_ABS_EXA_ABS | TH_ABS_APX_ABS : TH_ABS_EXA_BND | TH_ABS_APX_BND)),
-      format(f), type(t), ident(i) {}
+      format(f), type(t), rname(r), ident(i) {}
   virtual interval round                         (interval const &, std::string &) const;
   virtual interval enforce                       (interval const &, std::string &) const;
   virtual interval absolute_error_from_exact_bnd (interval const &, std::string &) const;
   virtual interval absolute_error_from_exact_abs (interval const &, std::string &) const;
   virtual interval absolute_error_from_approx_bnd(interval const &, std::string &) const;
   virtual interval absolute_error_from_approx_abs(interval const &, std::string &) const;
+  virtual interval relative_error                                  (std::string &) const;
   virtual interval relative_error_from_exact_abs (interval const &, std::string &) const;
   virtual interval relative_error_from_approx_abs(interval const &, std::string &) const;
-  virtual std::string description() const { return "rounding_float" + ident; }
+  virtual std::string description() const { return "rounding_" + rname + ident; }
   virtual std::string pretty_name() const;
 };
 
@@ -96,6 +100,7 @@ function_class const *float_rounding_generator::operator()(function_params const
   ast_ident const *nf = param_ident(p[0]);
   int nd;
   float_format f;
+  std::string name = "float";
   if (nf) {
     if (p.size() != 2) return NULL;
     float_formats::const_iterator i = formats.find(nf);
@@ -103,9 +108,16 @@ function_class const *float_rounding_generator::operator()(function_params const
     f = i->second;
     nd = 1;
   } else {
-    if (p.size() != 3) return NULL;
-    if (!param_int(p[0], f.prec) || !param_int(p[1], f.min_exp)) return NULL;
-    nd = 2;
+    if (p.size() < 2 || p.size() > 3) return NULL;
+    if (!param_int(p[0], f.prec)) return NULL;
+    if (p.size() == 3) {
+      if (!param_int(p[1], f.min_exp)) return NULL;
+      nd = 2;
+    } else {
+      f.min_exp = INT_MIN;
+      nd = 1;
+      name = "floatx";
+    }
   }
   direction_type d = get_direction(p[nd]);
   if (d == ROUND_ARGL) return NULL;
@@ -113,8 +125,9 @@ function_class const *float_rounding_generator::operator()(function_params const
   float_cache::const_iterator j = cache.find(h);
   if (j != cache.end()) return &j->second;
   std::ostringstream s;
-  s << ',' << direction_names[d] << ',' << f.prec << ',' << f.min_exp;
-  j = cache.insert(std::make_pair(h, float_rounding_class(f, d, s.str()))).first;
+  s << ',' << direction_names[d] << ',' << f.prec;
+  if (f.min_exp != INT_MIN) s << ',' << f.min_exp;
+  j = cache.insert(std::make_pair(h, float_rounding_class(f, d, name, s.str()))).first;
   return &j->second;
 }
 
@@ -123,7 +136,7 @@ static float_rounding_generator dummy;
 interval float_rounding_class::enforce(interval const &i, std::string &name) const {
   number a = round_number(lower(i), &format, &float_format::roundUP);
   number b = round_number(upper(i), &format, &float_format::roundDN);
-  name = "float_enforce";
+  name = rname + "_enforce";
   return interval(a, (a <= b) ? b : a);
 }
 
@@ -131,7 +144,7 @@ interval float_rounding_class::round(interval const &i, std::string &name) const
   rounding_fun f = direction_functions[type];
   number a = round_number(lower(i), &format, f);
   number b = round_number(upper(i), &format, f);
-  name = std::string("float_round,") + direction_names[type];
+  name = rname + "_round," + direction_names[type];
   return interval(a, b);
 }
 
@@ -173,7 +186,7 @@ interval float_rounding_class::absolute_error_from_exact_bnd(interval const &i, 
       e0 = std::max(e1, e2);
   int e_err = rnd_to_nearest(type) ? e0 - 1 : e0;
   int e = e0 + format.prec - 1;
-  name = "float_absolute";
+  name = rname + "_absolute";
   if (e0 > format.min_exp &&
       (v1 >= 0 || influenced(v1, e, e_err - 1, rnd_influence_direction(type, true ))) &&
       (v2 <= 0 || influenced(v2, e, e_err - 1, rnd_influence_direction(type, false)))) {
@@ -191,7 +204,7 @@ interval float_rounding_class::absolute_error_from_exact_abs(interval const &i, 
   int e0 = exponent(v, format);
   int e_err = rnd_to_nearest(type) ? e0 - 1 : e0;
   int e = e0 + format.prec - 1;
-  name = "float_absolute";
+  name = rname + "_absolute";
   if (e0 > format.min_exp &&
       influenced(v, e, e_err - 1, rnd_influence_direction(type, false))) {
     name += "_wide";
@@ -205,7 +218,7 @@ interval float_rounding_class::absolute_error_from_approx_bnd(interval const &i,
 {
   int e1 = exponent(lower(i), format), e2 = exponent(upper(i), format);
   int e_err = std::max(e1, e2);
-  name = "float_absolute_inv" + std::string(1, ',') + direction_names[type];
+  name = rname + "_absolute_inv," + direction_names[type];
   if (rnd_to_nearest(type)) return from_exponent(e_err - 1, 0);
   return from_exponent(e_err, rnd_global_direction_abs(type, i, true));
 }
@@ -213,9 +226,16 @@ interval float_rounding_class::absolute_error_from_approx_bnd(interval const &i,
 interval float_rounding_class::absolute_error_from_approx_abs(interval const &i, std::string &name) const
 {
   int e_err = exponent(upper(i), format);
-  name = "float_absolute_inv" + std::string(1, ',') + direction_names[type];
+  name = rname + "_absolute_inv," + direction_names[type];
   if (rnd_to_nearest(type)) return from_exponent(e_err - 1, 0);
   return from_exponent(e_err, 0);
+}
+
+interval float_rounding_class::relative_error(std::string &name) const
+{
+  name = "floatx_relative" + std::string(1, ',') + direction_names[type];
+  if (rnd_to_nearest(type)) return from_exponent(-format.prec, 0);
+  return from_exponent(1 - format.prec, rnd_global_direction_rel(type));
 }
 
 interval float_rounding_class::relative_error_from_exact_abs(interval const &i, std::string &name) const
@@ -241,7 +261,9 @@ interval float_rounding_class::relative_error_from_approx_abs(interval const &i,
 std::string float_rounding_class::pretty_name() const
 {
   std::ostringstream s;
-  s << "float<" << format.prec << ',' << format.min_exp << ',' << direction_names[type] << '>';
+  s << "float<" << format.prec << ',';
+  if (format.min_exp != INT_MIN) s << format.min_exp << ',';
+  s << direction_names[type] << '>';
   return s.str();
 }
 
@@ -263,7 +285,7 @@ proof_scheme *fix_of_float_scheme::factory(predicated_real const &real) {
   real_op const *r = boost::get< real_op const >(real.real());
   if (!r) return NULL;
   float_rounding_class const *f = dynamic_cast< float_rounding_class const * >(r->fun);
-  if (!f) return NULL;
+  if (!f || f->format.min_exp == INT_MIN) return NULL;
   return new fix_of_float_scheme(real, f->format.min_exp);
 }
 
@@ -271,11 +293,11 @@ proof_scheme *fix_of_float_scheme::factory(predicated_real const &real) {
 
 REGISTER_SCHEME_BEGIN(flt_of_float);
   long prec;
-  flt_of_float_scheme(predicated_real const &r, long p)
-    : proof_scheme(r, preal_vect(), "flt_of_float"), prec(p) {}
+  flt_of_float_scheme(predicated_real const &r, long p, char const *n)
+    : proof_scheme(r, preal_vect(), n), prec(p) {}
 REGISTER_SCHEME_END_PREDICATE(flt_of_float);
 
-void flt_of_float_scheme::compute(property const [], property &res, std::string &) const
+void flt_of_float_scheme::compute(property const [], property &res, std::string &name) const
 {
   res.cst() = prec;
 }
@@ -286,7 +308,8 @@ proof_scheme *flt_of_float_scheme::factory(predicated_real const &real) {
   if (!r) return NULL;
   float_rounding_class const *f = dynamic_cast< float_rounding_class const * >(r->fun);
   if (!f) return NULL;
-  return new flt_of_float_scheme(real, f->format.prec);
+  char const *name = f->format.min_exp == INT_MIN ? "flt_of_floatx" : "flt_of_float";
+  return new flt_of_float_scheme(real, f->format.prec, name);
 }
 
 // FLOAT_OF_FIX_FLT
@@ -310,11 +333,38 @@ proof_scheme *float_of_fix_flt_scheme::factory(predicated_real const &real, ast_
   if (!o || !o->fun || o->fun->type != UOP_ID || r != o->ops[0])
     return NULL;
   float_rounding_class const *f = dynamic_cast<float_rounding_class const *>(o->fun);
-  if (!f) return NULL;
+  if (!f || f->format.min_exp == INT_MIN) return NULL;
   preal_vect needed;
   needed.push_back(predicated_real(r, PRED_FIX));
   needed.push_back(predicated_real(r, PRED_FLT));
   return new float_of_fix_flt_scheme(real, needed, f->format.min_exp, f->format.prec);
+}
+
+// FLOATX_OF_FLT
+
+REGISTER_SCHEME_BEGIN(floatx_of_flt);
+  preal_vect needed;
+  long prec;
+  floatx_of_flt_scheme(predicated_real const &r, preal_vect const &v, long p)
+    : proof_scheme(r, v, "floatx_of_flt"), prec(p) {}
+REGISTER_SCHEME_END_PATTERN(floatx_of_flt, predicated_real(pattern(0), pattern(1), PRED_EQL));
+
+void floatx_of_flt_scheme::compute(property const hyps[], property &res, std::string &) const
+{
+  if (hyps[0].cst() > prec) res.clear();
+}
+
+proof_scheme *floatx_of_flt_scheme::factory(predicated_real const &real, ast_real_vect const &holders)
+{
+  ast_real const *r = holders[1];
+  real_op const *o = boost::get<real_op const>(holders[0]);
+  if (!o || !o->fun || o->fun->type != UOP_ID || r != o->ops[0])
+    return NULL;
+  float_rounding_class const *f = dynamic_cast<float_rounding_class const *>(o->fun);
+  if (!f || f->format.min_exp != INT_MIN) return NULL;
+  preal_vect needed;
+  needed.push_back(predicated_real(r, PRED_FLT));
+  return new floatx_of_flt_scheme(real, needed, f->format.prec);
 }
 
 // REL_OF_FIX_FLOAT
@@ -337,7 +387,7 @@ void rel_of_fix_float_scheme::compute(property const hyps[], property &res, std:
 proof_scheme *rel_of_fix_float_scheme::factory(predicated_real const &real)
 {
   float_rounding_class const *f = dynamic_cast< float_rounding_class const * >(relative_rounding_error(real));
-  if (!f) return NULL;
+  if (!f || f->format.min_exp == INT_MIN) return NULL;
   return new rel_of_fix_float_scheme(real, f->format.min_exp, f->format.prec, f->type,
     ("rel_of_fix_float" + std::string(1, ',') + direction_names[f->type]).c_str());
 }
@@ -345,8 +395,9 @@ proof_scheme *rel_of_fix_float_scheme::factory(predicated_real const &real)
 // FIX_FLOAT_OF_FIX
 
 REGISTER_SCHEME_BEGIN(fix_float_of_fix);
-  fix_float_of_fix_scheme(predicated_real const &r, predicated_real const &n)
-    : proof_scheme(r, preal_vect(1, n), "fix_float_of_fix") {}
+  fix_float_of_fix_scheme(predicated_real const &r, predicated_real const &n,
+                          char const *t)
+    : proof_scheme(r, preal_vect(1, n), t) {}
 REGISTER_SCHEME_END_PREDICATE(fix_float_of_fix);
 
 void fix_float_of_fix_scheme::compute(property const hyps[], property &res, std::string &) const
@@ -360,14 +411,16 @@ proof_scheme *fix_float_of_fix_scheme::factory(predicated_real const &real) {
   if (!r) return NULL;
   float_rounding_class const *f = dynamic_cast< float_rounding_class const * >(r->fun);
   if (!f) return NULL;
-  return new fix_float_of_fix_scheme(real, predicated_real(r->ops[0], PRED_FIX));
+  char const *t = f->format.min_exp == INT_MIN ? "fix_floatx_of_fix" : "fix_float_of_fix";
+  return new fix_float_of_fix_scheme(real, predicated_real(r->ops[0], PRED_FIX), t);
 }
 
 // FLT_FLOAT_OF_FLT
 
 REGISTER_SCHEME_BEGIN(flt_float_of_flt);
-  flt_float_of_flt_scheme(predicated_real const &r, predicated_real const &n)
-    : proof_scheme(r, preal_vect(1, n), "flt_float_of_flt") {}
+  flt_float_of_flt_scheme(predicated_real const &r, predicated_real const &n,
+                          char const *t)
+    : proof_scheme(r, preal_vect(1, n), t) {}
 REGISTER_SCHEME_END_PREDICATE(flt_float_of_flt);
 
 void flt_float_of_flt_scheme::compute(property const hyps[], property &res, std::string &) const
@@ -381,5 +434,6 @@ proof_scheme *flt_float_of_flt_scheme::factory(predicated_real const &real) {
   if (!r) return NULL;
   float_rounding_class const *f = dynamic_cast< float_rounding_class const * >(r->fun);
   if (!f) return NULL;
-  return new flt_float_of_flt_scheme(real, predicated_real(r->ops[0], PRED_FLT));
+  char const *t = f->format.min_exp == INT_MIN ? "flt_floatx_of_flt" : "flt_float_of_flt";
+  return new flt_float_of_flt_scheme(real, predicated_real(r->ops[0], PRED_FLT), t);
 }

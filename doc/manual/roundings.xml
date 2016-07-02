@@ -49,6 +49,11 @@ a particular format. The last parameter selects the rounding direction.</para>
 
 <programlisting><![CDATA[float< precision, minimum_exponent, rounding_direction >(...)]]></programlisting>
 
+<para>Formats with no minimal exponent (and thus no underflow) are also
+available:</para>
+
+<programlisting><![CDATA[float< precision, rounding_direction >(...)]]></programlisting>
+
 <para>Having to remember the precision and minimum exponent parameters may be
 a bit tedious, so an alternate syntax is provided: instead of these two
 parameters, a name can be given to the <code>float</code> class.</para>
