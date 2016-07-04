@@ -30,8 +30,8 @@ struct coq_backend: backend {
   void initialize(std::ostream &o) {
     out = &o;
     out_vars = &o;
-    o << "Require Import Fcore.\n"
-         "Require Import Gappa_library.\n"
+    o << "Require Import Flocq.Core.Fcore.\n"
+         "Require Import Gappa.Gappa_library.\n"
          "Section Generated_by_Gappa.\n";
   }
   void finalize() { *out << "End Generated_by_Gappa.\n"; }
