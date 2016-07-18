@@ -942,8 +942,7 @@ std::string display(node *n)
     assert(pcase.real.pred() == PRED_BND);
     pose_hypothesis(plouf, num_hyp, mcase, n);
     if (vernac) plouf << " revert h" << num_hyp << ".\n";
-    for (node_vect::const_iterator i = pred.begin() + 1,
-         i_end = pred.end(); i != i_end; ++i)
+    for (node_vect::const_iterator i = pred.begin() + 1, i_end = pred.end();;)
     {
       node *m = *i;
       property const &p = *m->graph->get_hypotheses().atom;
@@ -975,16 +974,33 @@ std::string display(node *n)
       plouf << display(m) << " h" << num_hyp;
       for (int j = 0; j != num_hyp; ++j) plouf << " h" << j;
       plouf << (vernac ? ").\n" : ") in\n");
-      if (i + 1 != i_end)
+      if (++i == i_end) break;
+      std::string rcase = display(pcase.real.real());
+      interval const &b = pcase.bnd();
+      if (lower(b) == number::neg_inf) {
+        if (vernac)
+          plouf << " next_interval' (union_hb) u.\n";
+        else
+          plouf << "  Gappa.Gappa_pred_bnd.union_hb " << rcase << ' '
+              << display(n_res) << " _ _ u (\n";
+      } else if (upper(b) == number::pos_inf) {
+        if (vernac)
+          plouf << " next_interval (union_bh) u.\n";
+        else
+          plouf << "  Gappa.Gappa_pred_bnd.union_bh " << rcase << ' '
+              << display(n_res) << " _ (" GAPPADEF "makepairF _ _) u _ (\n";
+      } else {
         if (vernac)
           plouf << " next_interval (union) u.\n";
         else
-          plouf << "  Gappa.Gappa_pred_bnd.union " << display(pcase.real.real())
-            << ' ' << display(n_res) << " (" GAPPADEF "makepairF _ _) _ u _ (\n";
-      else
-        plouf << (vernac ? " exact u.\n" : "  u");
+          plouf << "  Gappa.Gappa_pred_bnd.union " << rcase << ' '
+              << display(n_res) << " (" GAPPADEF "makepairF _ _) _ u _ (\n";
+      }
     }
-    if (!vernac) plouf << std::string(pred.size() - 2, ')') << " h" << num_hyp;
+    if (vernac)
+      plouf << " exact u.\n";
+    else
+      plouf << "  u" << std::string(pred.size() - 2, ')') << " h" << num_hyp;
     break; }
   }
   plouf << (vernac ? "Qed.\n" : " in\n");
