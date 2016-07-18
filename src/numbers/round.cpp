@@ -19,7 +19,9 @@
 #include "numbers/round.hpp"
 #include "parser/ast.hpp"
 
-void split_exact(mpfr_t const &f, mpz_t &frac, int &exp, int &sign) {
+void split_exact(mpfr_t const &f, mpz_t &frac, int &exp, int &sign)
+{
+  assert(mpfr_number_p(f));
   sign = mpfr_sgn(f);
   if (sign == 0) return;
   exp = mpfr_get_z_exp(frac, f);

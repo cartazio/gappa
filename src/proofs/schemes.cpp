@@ -511,11 +511,17 @@ proof_paths_cleaner::~proof_paths_cleaner() {
 static proof_paths_cleaner dummy;
 #endif // LEAK_CHECKER
 
+static bool is_usable(node const *n)
+{
+  property const &p = n->get_result();
+  return !p.real.pred_bnd() || is_bounded(p.bnd());
+}
+
 static bool fill_hypotheses(property *hyp, preal_vect const &v)
 {
   for(preal_vect::const_iterator i = v.begin(), end = v.end(); i != end; ++i) {
     node *n = find_proof(*i);
-    if (!n) return false;
+    if (!n || !is_usable(n)) return false;
     *(hyp++) = n->get_result();
   }
   return true;
@@ -557,7 +563,8 @@ static bool insert_atom(logic_node *n, property const &p, int i, std::list<logic
   if (!targets.empty() && targets.simplify(simpl_prop(m->get_result(), true, NULL)) < 0) return true;
   reduce_hypotheses(m, trees, n, NULL);
   if (top_graph->get_contradiction()) return true;
-  if (pending_schemes) insert_dependent(*pending_schemes, p.real);
+  if (pending_schemes && is_usable(m))
+    insert_dependent(*pending_schemes, p.real);
   return false;
 }
 
@@ -620,7 +627,7 @@ void graph_t::populate(property_tree const &targets,
     for (node_map::const_iterator i = known_reals.begin(),
          i_end = known_reals.end(); i != i_end; ++i)
     {
-      if (i->first.pred_bnd() && !is_bounded(i->second->get_result().bnd())) continue;
+      if (!is_usable(i->second)) continue;
       insert_dependent(missing_schemes, i->first);
       --iter;
     }
@@ -670,7 +677,7 @@ void graph_t::populate(property_tree const &targets,
     for (node_map::const_iterator i = known_reals.begin(),
          i_end = known_reals.end(); i != i_end; ++i)
     {
-      if (i->first.pred_bnd() && !is_bounded(i->second->get_result().bnd())) continue;
+      if (!is_usable(i->second)) continue;
       reduce_hypotheses(i->second, trees, NULL, NULL);
       if (contradiction) return;
     }
@@ -721,7 +728,7 @@ void graph_t::populate(property_tree const &targets,
   for (node_map::const_iterator i = known_reals.begin(),
        i_end = known_reals.end(); i != i_end; ++i)
   {
-    if (i->first.pred_bnd() && !is_bounded(i->second->get_result().bnd())) continue;
+    if (!is_usable(i->second)) continue;
     reduce_hypotheses(i->second, trees, NULL, umap);
     if (contradiction) return;
   }
