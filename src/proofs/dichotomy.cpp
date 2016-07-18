@@ -399,10 +399,17 @@ void dichotomy_helper::dichotomize()
     dicho_graph g = try_hypothesis(&exn, rleft, rright);
     if (g.first)
     {
-      try_graph(g, rright);
       bool old_rright = rright;
-      if (!gen->next(bnd, iter_max, rleft, rright))
+      bool has_next = gen->next(bnd, iter_max, rleft, rright);
+      if (has_next)
+        try_graph(g, old_rright);
+      else
       {
+        if (graphs->graphs.empty()) {
+          // if this is the second and last graph, do not try a merge
+          if (last_graph.first) graphs->graphs.push_back(last_graph.first);
+          last_graph = g;
+        } else try_graph(g, old_rright);
         graphs->graphs.push_back(last_graph.first);
         last_graph = dicho_graph(NULL, 0);
         (void)&old_rright;
