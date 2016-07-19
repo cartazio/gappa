@@ -699,7 +699,7 @@ void graph_t::populate(property_tree const &targets,
     if (i->second.size() <= max_pts || already.count(i->first))
       continue;
     node *n = find_proof(predicated_real(i->first, PRED_BND));
-    if (!n || is_singleton(n->get_result().bnd())) continue;
+    if (n && is_singleton(n->get_result().bnd())) continue;
     max_pts = i->second.size();
     sv = &*i;
   }

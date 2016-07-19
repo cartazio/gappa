@@ -34,20 +34,18 @@ extern backend *proof_generator;
 struct splitter
 {
   /**
-   * Splits the current interval and returns it in @a bnd.
-   * @param bnd output interval.
+   * Splits the current interval and returns the splitting point in @a sp.
    * @param iter_max amount of work to perform on the output interval.
    * @return false if the interval cannot be split anymore.
    */
-  virtual bool split(interval &bnd, int &iter_max, bool &remove_left, bool &remove_right)
-  { (void)&bnd; (void)&iter_max; (void)&remove_left; (void)&remove_right; return false; }
+  virtual bool split(number &sp, int &iter_max)
+  { return false; }
   /**
-   * Returns the next interval in @a bnd.
-   * @param bnd output interval.
+   * Returns the next splitting point.
    * @param iter_max amount of work to perform on the output interval.
    * @return false if all the intervals have been handled.
    */
-  virtual bool next(interval &bnd, int &iter_max, bool &remove_left, bool &remove_right) = 0;
+  virtual number next(int &iter_max) = 0;
   virtual ~splitter() {}
   /**
    * Indicates whether intervals should be merged afterwards.
@@ -63,34 +61,25 @@ struct splitter
 struct fixed_splitter: splitter
 {
   interval bnd;  /**< Whole interval. */
-  interval left; /**< Already handled part of the whole interval. */
   int pos;       /**< Number of sub-intervals already handled. */
   int nb;        /**< Total number of sub-intervals. */
   int iter_max;  /**< Amount of work to perform on each sub-interval. */
   fixed_splitter(interval const &i, int n, int max)
-    : bnd(i), left(i), pos(0), nb(n), iter_max(max / n) {}
-  virtual bool next(interval &, int &, bool &, bool &);
+    : bnd(i), pos(0), nb(n), iter_max(max / n)
+  { assert(is_bounded(bnd)); }
+  virtual number next(int &);
 };
 
 /**
  * Splits the whole interval into two parts at ratio #pos / #nb.
  * Returns the sub-interval that has yet to be handled in the #left part.
  */
-bool fixed_splitter::next(interval &i, int &max, bool &remove_left, bool &remove_right)
+number fixed_splitter::next(int &max)
 {
-  if (pos++ == nb) return false;
   max = iter_max;
-  if (pos == nb)
-  {
-    i = left;
-    return true;
-  }
+  if (++pos == nb) return number::pos_inf;
   std::pair< interval, interval > ii = ::split(bnd, (double)pos / nb);
-  i = intersect(left, ii.first);
-  left = ii.second;
-  remove_left = pos > 1;
-  remove_right = false;
-  return true;
+  return upper(ii.first);
 }
 
 typedef std::vector<split_point> number_vect;
@@ -106,26 +95,24 @@ struct point_splitter: splitter
   int iter_max;  /**< Amount of work to perform on each sub-interval. */
   point_splitter(interval const &i, number_vect const *b, int max)
     : bnd(i), bnds(*b), pos(-1), iter_max(max / bnds.size()) {}
-  virtual bool next(interval &, int &, bool &, bool &);
+  virtual number next(int &);
 };
 
 /**
  * Iteratively increments #pos until an intersection between #bnd and the user-specified intervals is found.
  * Returns this intersection.
  */
-bool point_splitter::next(interval &i, int &max, bool &remove_left, bool &remove_right)
+number point_splitter::next(int &max)
 {
   max = iter_max;
-  for(int sz = bnds.size(); pos++ < sz;)
+  for(int sz = bnds.size(); ++pos < sz;)
   {
-    i = intersect(bnd, interval(pos == 0  ? number::neg_inf : bnds[pos - 1].pt,
-                                pos == sz ? number::pos_inf : bnds[pos].pt));
-    if (is_empty(i) || is_singleton(i)) continue;
-    remove_left = pos > 0 && bnds[pos - 1].inleft && lower(i) > lower(bnd);
-    remove_right = pos < sz && !bnds[pos].inleft && upper(i) < upper(bnd);
-    return true;
+    number res = bnds[pos].pt;
+    if (res <= lower(bnd)) continue;
+    if (pos > 0 && res == bnds[pos - 1].pt) continue;
+    if (res < upper(bnd)) return res;
   }
-  return false;
+  return number::pos_inf;
 }
 
 /**
@@ -140,8 +127,8 @@ struct best_splitter: splitter
   std::stack< std::pair< interval, int > > stack;
   int iter_max; /**< Amount of work to perform on the whole interval. */
   best_splitter(interval const &i, int);
-  virtual bool split(interval &, int &, bool &, bool &);
-  virtual bool next(interval &, int &, bool &, bool &);
+  virtual bool split(number &, int &);
+  virtual number next(int &);
   virtual bool merge() { return true; }
   int get_iter_max() const;
 };
@@ -174,7 +161,7 @@ int best_splitter::get_iter_max() const
  * Splits the interval at the top of the stack. Replaces it by the right part.
  * Pushes the left part and returns it. Sets an increased depth to both parts.
  */
-bool best_splitter::split(interval &i, int &max, bool &remove_left, bool &remove_right)
+bool best_splitter::split(number &res, int &max)
 {
   std::pair< interval, int > &p = stack.top();
   if (p.second >= parameter_dichotomy_depth) return false;
@@ -182,26 +169,22 @@ bool best_splitter::split(interval &i, int &max, bool &remove_left, bool &remove
   if (!(ii.first < p.first && ii.second < p.first)) return false;
   p.first = ii.second;
   ++p.second;
-  i = ii.first;
-  stack.push(std::make_pair(i, p.second));
+  stack.push(std::make_pair(ii.first, p.second));
+  res = upper(ii.first);
   max = get_iter_max();
-  remove_left = false;
-  remove_right = true;
   return true;
 }
 
 /**
  * Pops the interval at the top of the stack and returns the next one.
  */
-bool best_splitter::next(interval &i, int &max, bool &remove_left, bool &remove_right)
+number best_splitter::next(int &max)
 {
   stack.pop();
-  if (stack.empty()) return false;
-  i = stack.top().first;
+  assert(!stack.empty());
   max = get_iter_max();
-  remove_left = false;
-  remove_right = stack.size() > 1;
-  return true;
+  if (stack.size() == 1) return number::pos_inf;
+  return upper(stack.top().first);
 }
 
 typedef std::pair< graph_t *, int > dicho_graph;
@@ -233,10 +216,10 @@ struct dichotomy_helper
   dichotomy_sequence const &hints;
   dicho_graph last_graph;
   splitter *gen;
-  dicho_graph try_hypothesis(dichotomy_failure *, bool, bool) const;
-  void try_graph(dicho_graph, bool);
+  dicho_graph try_hypothesis(dichotomy_failure *) const;
+  void try_graph(dicho_graph);
   void dichotomize();
-  dichotomy_node *generate_node(node *, property const &);
+  dichotomy_node *generate_node(property const &);
   dichotomy_helper(property &v, property_tree const &t,
     dichotomy_sequence const &h, splitter *s)
   : graphs(new dichotomy_graphs()), tmp_hyp(v), depth(0),
@@ -294,8 +277,7 @@ static bool find_negative(property &p, property_tree const &t)
   return true;
 }
 
-dicho_graph dichotomy_helper::try_hypothesis(dichotomy_failure *exn,
-  bool remove_left, bool remove_right) const
+dicho_graph dichotomy_helper::try_hypothesis(dichotomy_failure *exn) const
 {
   graph_t *g = new graph_t(top_graph, property_tree(tmp_hyp));
   g->populate(targets, hints, iter_max, NULL);
@@ -317,7 +299,7 @@ dicho_graph dichotomy_helper::try_hypothesis(dichotomy_failure *exn,
   return dicho_graph(NULL, 0);
 }
 
-void dichotomy_helper::try_graph(dicho_graph g2, bool rright)
+void dichotomy_helper::try_graph(dicho_graph g2)
 {
   dicho_graph g1 = last_graph;
   if (!g1.first)
@@ -332,7 +314,7 @@ void dichotomy_helper::try_graph(dicho_graph g2, bool rright)
     p.bnd() = interval(lower(p.bnd()), upper(g2.first->get_hypotheses().atom->bnd()));
     tmp_hyp = p;
     iter_max = g1.second + g2.second;
-    dicho_graph g = try_hypothesis(NULL, graphs->graphs.empty(), rright);
+    dicho_graph g = try_hypothesis(NULL);
     if (g.first)
     {
       if (gen->merge() || g.first->get_contradiction())
@@ -351,7 +333,7 @@ void dichotomy_helper::try_graph(dicho_graph g2, bool rright)
   last_graph = g2;
 }
 
-dichotomy_node *dichotomy_helper::generate_node(node *varn, property const &p)
+dichotomy_node *dichotomy_helper::generate_node(property const &p)
 {
   property q;
   bool found_one = false;
@@ -373,7 +355,6 @@ dichotomy_node *dichotomy_helper::generate_node(node *varn, property const &p)
   assert(found_one && q.implies(p));
   if (!q.strict_implies(p)) return NULL;
   dichotomy_node *n = new dichotomy_node(q, graphs);
-  n->insert_pred(varn);
   for (graph_vect::const_iterator i = graphs->graphs.begin(),
        i_end = graphs->graphs.end(); i != i_end; ++i)
   {
@@ -386,41 +367,35 @@ dichotomy_node *dichotomy_helper::generate_node(node *varn, property const &p)
 
 void dichotomy_helper::dichotomize()
 {
-  interval &h = tmp_hyp.bnd();
-  interval bnd;
-  bool rleft, rright;
-  bool b = gen->next(bnd, iter_max, rleft, rright);
-  assert(b && !rleft);
+  number prev = number::neg_inf;
+  number next = gen->next(iter_max);
   dichotomy_failure exn;
+  if (next == number::pos_inf) throw exn;
   for (;;)
   {
-    h = bnd;
+    tmp_hyp.bnd() = interval(prev, next);
+    //std::cerr << dump_property(tmp_hyp) << '\n';
     exn.hyp = tmp_hyp;
-    dicho_graph g = try_hypothesis(&exn, rleft, rright);
-    if (g.first)
-    {
-      bool old_rright = rright;
-      bool has_next = gen->next(bnd, iter_max, rleft, rright);
-      if (has_next)
-        try_graph(g, old_rright);
-      else
-      {
-        if (graphs->graphs.empty()) {
-          // if this is the second and last graph, do not try a merge
-          if (last_graph.first) graphs->graphs.push_back(last_graph.first);
-          last_graph = g;
-        } else try_graph(g, old_rright);
-        graphs->graphs.push_back(last_graph.first);
-        last_graph = dicho_graph(NULL, 0);
-        (void)&old_rright;
-        assert(!old_rright);
-        return;
-      }
-    }
-    else if (is_singleton(exn.hyp.bnd()) || !gen->split(bnd, iter_max, rleft, rright))
-    {
+    dicho_graph g = try_hypothesis(&exn);
+    if (!g.first) {
+      if (is_singleton(exn.hyp.bnd())) throw exn;
+      if (gen->split(next, iter_max)) continue;
       throw exn;
     }
+    if (next < number::pos_inf) {
+      try_graph(g);
+      prev = next;
+      next = gen->next(iter_max);
+      continue;
+    }
+    if (graphs->graphs.empty()) {
+      // if this is the second and last graph, do not try a merge
+      if (last_graph.first) graphs->graphs.push_back(last_graph.first);
+      last_graph = g;
+    } else try_graph(g);
+    graphs->graphs.push_back(last_graph.first);
+    last_graph = dicho_graph(NULL, 0);
+    return;
   }
 }
 
@@ -439,23 +414,27 @@ void graph_t::dichotomize(dichotomy_hint const &hint, int iter_max)
     h.src = dvar_vect(hint.src.begin() + 1, hint.src.end());
     hints.push_back(h);
   }
-  node *varn = find_proof(predicated_real(var.real, PRED_BND));
-  if (!varn) {
+  if (false) {
+    no_range:
     if (warning_dichotomy_failure)
       std::cerr << "Warning: case split on " << dump_real(var.real)
                 << " has no range to split.\n";
     return;
   }
-  property hyp = varn->get_result();
+  property hyp(var.real, interval(number::neg_inf, number::pos_inf));
+  if (node *varn = find_proof(predicated_real(var.real, PRED_BND)))
+    hyp = varn->get_result();
   splitter *gen;
   property_tree targets;
-  if (var.splitter & 1)
+  if (var.splitter & 1) {
+    if (!is_bounded(hyp.bnd())) goto no_range;
     gen = new fixed_splitter(hyp.bnd(), var.splitter / 2, iter_max);
-  else if (var.splitter)
+  } else if (var.splitter) {
     gen = new point_splitter(hyp.bnd(), (number_vect const *)var.splitter, iter_max);
-  else if (hint.dst.empty())
+  } else if (hint.dst.empty()) {
+    if (!is_bounded(hyp.bnd())) goto no_range;
     gen = new fixed_splitter(hyp.bnd(), 4, iter_max);
-  else {
+  } else {
     targets = hint.dst;
     graph_t *g = this;
     while (g->father) g = g->father;
@@ -476,6 +455,7 @@ void graph_t::dichotomize(dichotomy_hint const &hint, int iter_max)
   } catch (dichotomy_failure const &e) {
     if (warning_dichotomy_failure) {
       property const &h = e.hyp;
+      if (h.real.null()) goto no_range;
       change_io_format dummy(IO_FULL);
       std::cerr << "Warning: when " << dump_real_short(h.real) << " is in "
                 << h.bnd() << ", ";
@@ -516,7 +496,6 @@ void graph_t::dichotomize(dichotomy_hint const &hint, int iter_max)
   assert(!contradiction);
   if (only_contradictions) {
     dichotomy_node *n = new dichotomy_node(property(), h.graphs);
-    n->insert_pred(varn);
     for (graph_vect::const_iterator i = h.graphs->graphs.begin(),
          i_end = h.graphs->graphs.end(); i != i_end; ++i)
     {
@@ -529,7 +508,7 @@ void graph_t::dichotomize(dichotomy_hint const &hint, int iter_max)
   for(preal_set::const_iterator i = reals.begin(), end = reals.end(); i != end; ++i) {
     property p(*i);
     if (node *n = find_already_known(*i)) p = n->get_result();
-    if (node *n = h.generate_node(varn, p)) try_node(n);
+    if (node *n = h.generate_node(p)) try_node(n);
   }
   if (--h.graphs->nb_ref == 0) {
     delete h.graphs;

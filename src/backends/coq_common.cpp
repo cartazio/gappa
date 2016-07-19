@@ -937,19 +937,31 @@ std::string display(node *n)
     node_vect const &pred = n->get_subproofs();
     property const &n_res = n->get_result();
     assert(pred.size() >= 2);
-    node *mcase = pred[0];
-    property const &pcase = mcase->get_result();
-    assert(pcase.real.pred() == PRED_BND);
-    pose_hypothesis(plouf, num_hyp, mcase, n);
-    if (vernac) plouf << " revert h" << num_hyp << ".\n";
-    for (node_vect::const_iterator i = pred.begin() + 1, i_end = pred.end();;)
+    for (node_vect::const_iterator i = pred.begin(),
+         i_end = pred.end(); i != i_end; ++i)
     {
       node *m = *i;
       property const &p = *m->graph->get_hypotheses().atom;
-      plouf << (vernac ? " assert (u : " : "  let u : ")
-        << display(p) << " -> " << display(n_res)
-        << (vernac ? "). intro h" : " := fun h") << num_hyp
-        << (vernac ? ". (* " : " => (* ") << p.bnd() << " *)\n";
+      if (upper(p.bnd()) < number::pos_inf) {
+        std::string rcase = display(p.real.real());
+        if (lower(p.bnd()) > number::neg_inf) {
+          if (vernac)
+            plouf << " apply (union' " << rcase << ' '
+                  << display(p.bnd()) << ").\n";
+          else
+            plouf << " (Gappa.Gappa_pred_bnd.union' " << rcase << ' '
+                  << display(p.bnd()) << ' ' << display(n_res);
+        } else {
+          if (vernac)
+            plouf << " apply (union " << rcase << ' '
+                  << display(upper(p.bnd())) << ").\n";
+          else
+            plouf << "  Gappa.Gappa_pred_bnd.union " << rcase << ' '
+                  << display(upper(p.bnd())) << ' ' << display(n_res);
+        }
+      }
+      plouf << (vernac ? " intro h" : " (fun h") << num_hyp
+            << (vernac ? ". (* " : " => (* ") << p.bnd() << " *)\n";
       property const &res = m->get_result();
       if (res.null()) {
         if (n_res.null())
@@ -973,34 +985,10 @@ std::string display(node *n)
       }
       plouf << display(m) << " h" << num_hyp;
       for (int j = 0; j != num_hyp; ++j) plouf << " h" << j;
-      plouf << (vernac ? ").\n" : ") in\n");
-      if (++i == i_end) break;
-      std::string rcase = display(pcase.real.real());
-      interval const &b = pcase.bnd();
-      if (lower(b) == number::neg_inf) {
-        if (vernac)
-          plouf << " next_interval' (union_hb) u.\n";
-        else
-          plouf << "  Gappa.Gappa_pred_bnd.union_hb " << rcase << ' '
-              << display(n_res) << " _ _ u (\n";
-      } else if (upper(b) == number::pos_inf) {
-        if (vernac)
-          plouf << " next_interval (union_bh) u.\n";
-        else
-          plouf << "  Gappa.Gappa_pred_bnd.union_bh " << rcase << ' '
-              << display(n_res) << " _ (" GAPPADEF "makepairF _ _) u _ (\n";
-      } else {
-        if (vernac)
-          plouf << " next_interval (union) u.\n";
-        else
-          plouf << "  Gappa.Gappa_pred_bnd.union " << rcase << ' '
-              << display(n_res) << " (" GAPPADEF "makepairF _ _) _ u _ (\n";
-      }
+      plouf << (vernac ? ").\n" : "))\n");
     }
-    if (vernac)
-      plouf << " exact u.\n";
-    else
-      plouf << "  u" << std::string(pred.size() - 2, ')') << " h" << num_hyp;
+    if (!vernac)
+      plouf << ' ' << std::string(pred.size() - 2, ')');
     break; }
   }
   plouf << (vernac ? "Qed.\n" : " in\n");
