@@ -149,9 +149,27 @@ interval intersect(interval const &u, interval const &v) {
   return plop(intersect(plup, plvp));
 }
 
-std::pair< interval, interval > split(interval const &u) {
+std::pair<interval, interval> split(interval const &u)
+{
   assert(u.base);
-  number m = median(plup);
+  number m;
+  if (plup.lower() == number::neg_inf) {
+    if (plup.upper() > 0) m = 0;
+    else if (plup.upper() > -1) m = -1;
+    else {
+      number_base *n = new number_base;
+      mpfr_mul_ui(n->val, plup.upper().mpfr_data(), 2, GMP_RNDN);
+      m = number(n);
+    }
+  } else if (plup.upper() == number::pos_inf) {
+    if (plup.lower() < 0) m = 0;
+    else if (plup.lower() < 1) m = 1;
+    else {
+      number_base *n = new number_base;
+      mpfr_mul_ui(n->val, plup.lower().mpfr_data(), 2, GMP_RNDN);
+      m = number(n);
+    }
+  } else m = median(plup);
   return std::make_pair(plop(_interval_base(plup.lower(), m)),
                         plop(_interval_base(m, plup.upper())));
 }
