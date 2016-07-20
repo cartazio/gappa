@@ -30,6 +30,7 @@ typedef std::vector< dichotomy_var > dvar_vect;
 struct dichotomy_hint {
   dvar_vect src;
   property_tree dst;
+  bool user_def;
 };
 
 typedef std::vector< dichotomy_hint > dichotomy_sequence;

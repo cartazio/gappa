@@ -51,11 +51,10 @@ int main(int argc, char **argv)
     ast_real const *r;
     if (umap.empty() && (r = get_bottleneck_real())) {
       //std::cerr << "Splitting " << dump_real(r) << '\n';
-      dichotomy_hint h;
       dichotomy_var v = { r, 0 };
       predicated_real unsat(normalize(ast_real(token_zero)), PRED_NZR);
-      h.src = dvar_vect(1, v);
-      h.dst = property_tree(property(unsat));
+      dichotomy_hint h =
+        { dvar_vect(1, v), property_tree(property(unsat)), false };
       dichotomies.push_back(h);
     }
   }

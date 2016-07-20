@@ -347,8 +347,8 @@ HINTS:
   }
 | HINTS REALS '$' DVARS ';'
   {
-    dichotomy_hint h;
-    h.src = *$4; delete $4;
+    dichotomy_hint h = { *$4, property_tree(), true };
+    delete $4;
     ast_prop *p = NULL;
     for (ast_real_vect::const_iterator i = $2->begin(), i_end = $2->end();
          i != i_end; ++i)
@@ -363,15 +363,15 @@ HINTS:
   }
 | HINTS PROP '$' DVARS ';'
   {
-    dichotomy_hint h;
-    h.src = *$4; delete $4;
+    dichotomy_hint h = { *$4, property_tree(), true };
+    delete $4;
     parse_property_tree(h.dst, $2);
     dichotomies.push_back(h);
   }
 | HINTS '$' DVARS ';'
   {
-    dichotomy_hint h;
-    h.src = *$3; delete $3;
+    dichotomy_hint h = { *$3, property_tree(), true };
+    delete $3;
     for (dvar_vect::iterator i = h.src.begin(),
          i_end = h.src.end(); i != i_end; ++i)
     {

@@ -409,14 +409,14 @@ void graph_t::dichotomize(dichotomy_hint const &hint, int iter_max)
   assert(hint.src.size() >= 1);
   dichotomy_var const &var = hint.src[0];
   if (hint.src.size() > 1) {
-    dichotomy_hint h;
-    h.dst = hint.dst;
-    h.src = dvar_vect(hint.src.begin() + 1, hint.src.end());
+    dichotomy_hint h =
+      { dvar_vect(hint.src.begin() + 1, hint.src.end()),
+        hint.dst, hint.user_def };
     hints.push_back(h);
   }
   if (false) {
     no_range:
-    if (warning_dichotomy_failure)
+    if (warning_dichotomy_failure && hint.user_def)
       std::cerr << "Warning: case split on " << dump_real(var.real)
                 << " has no range to split.\n";
     return;
@@ -438,7 +438,7 @@ void graph_t::dichotomize(dichotomy_hint const &hint, int iter_max)
     targets.negate();
     targets.fill_undefined(g->hyps);
     if (targets.empty()) {
-      if (warning_dichotomy_failure)
+      if (warning_dichotomy_failure && hint.user_def)
         std::cerr << "Warning: case split on " << dump_real(var.real)
                   << " is not goal-driven anymore.\n";
       return;
@@ -450,7 +450,7 @@ void graph_t::dichotomize(dichotomy_hint const &hint, int iter_max)
   try {
     h.dichotomize();
   } catch (dichotomy_failure const &e) {
-    if (warning_dichotomy_failure) {
+    if (warning_dichotomy_failure && hint.user_def) {
       property const &h = e.hyp;
       if (h.real.null()) goto no_range;
       change_io_format dummy(IO_FULL);
@@ -509,7 +509,7 @@ void graph_t::dichotomize(dichotomy_hint const &hint, int iter_max)
   }
   if (--h.graphs->nb_ref == 0) {
     delete h.graphs;
-    if (warning_dichotomy_failure)
+    if (warning_dichotomy_failure && hint.user_def)
       std::cerr << "Warning: case split on " << dump_real(var.real)
                 << " has not produced any interesting new result.\n";
     return;
