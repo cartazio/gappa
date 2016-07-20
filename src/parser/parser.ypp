@@ -372,6 +372,12 @@ HINTS:
   {
     dichotomy_hint h;
     h.src = *$3; delete $3;
+    for (dvar_vect::iterator i = h.src.begin(),
+         i_end = h.src.end(); i != i_end; ++i)
+    {
+      // no target property and no splitter, make it four-part by default
+      if (!i->splitter) i->splitter = 9;
+    }
     dichotomies.push_back(h);
   }
 | HINTS REAL '~' REAL ';'

@@ -220,7 +220,7 @@ struct dichotomy_helper
   void try_graph(dicho_graph);
   void dichotomize();
   dichotomy_node *generate_node(property const &);
-  dichotomy_helper(property &v, property_tree const &t,
+  dichotomy_helper(ast_real const *v, property_tree const &t,
     dichotomy_sequence const &h, splitter *s)
   : graphs(new dichotomy_graphs()), tmp_hyp(v), depth(0),
     targets(t), hints(h), last_graph(dicho_graph(NULL, 0)), gen(s) {}
@@ -421,19 +421,16 @@ void graph_t::dichotomize(dichotomy_hint const &hint, int iter_max)
                 << " has no range to split.\n";
     return;
   }
-  property hyp(var.real, interval(number::neg_inf, number::pos_inf));
+  interval bnd(number::neg_inf, number::pos_inf);
   if (node *varn = find_proof(predicated_real(var.real, PRED_BND)))
-    hyp = varn->get_result();
+    bnd = varn->get_result().bnd();
   splitter *gen;
   property_tree targets;
   if (var.splitter & 1) {
-    if (!is_bounded(hyp.bnd())) goto no_range;
-    gen = new fixed_splitter(hyp.bnd(), var.splitter / 2, iter_max);
+    if (!is_bounded(bnd)) goto no_range;
+    gen = new fixed_splitter(bnd, var.splitter / 2, iter_max);
   } else if (var.splitter) {
-    gen = new point_splitter(hyp.bnd(), (number_vect const *)var.splitter, iter_max);
-  } else if (hint.dst.empty()) {
-    if (!is_bounded(hyp.bnd())) goto no_range;
-    gen = new fixed_splitter(hyp.bnd(), 4, iter_max);
+    gen = new point_splitter(bnd, (number_vect const *)var.splitter, iter_max);
   } else {
     targets = hint.dst;
     graph_t *g = this;
@@ -447,9 +444,9 @@ void graph_t::dichotomize(dichotomy_hint const &hint, int iter_max)
       return;
     }
     if (targets.simplify(simpl_graph(this))) return;
-    gen = new best_splitter(hyp.bnd(), iter_max);
+    gen = new best_splitter(bnd, iter_max);
   }
-  dichotomy_helper h(hyp, targets, hints, gen);
+  dichotomy_helper h(var.real, targets, hints, gen);
   try {
     h.dichotomize();
   } catch (dichotomy_failure const &e) {
