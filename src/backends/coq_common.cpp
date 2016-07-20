@@ -109,6 +109,8 @@ static char const *theorem_defs[][2] = {
   { "compose_swap", "$gpred_rel.$t $1x $y $2x $3x $1i $2i $i $" },
   { "bnd_div_of_rel_bnd_div", "$gpred_rel.$t $1x $1y $3x $1i $2i $i $" },
 
+  { "abs_fix", "$gpred_fixflt.$t $1x $1c $c $" },
+  { "neg_fix", "$gpred_fixflt.$t $1x $1c $c $" },
   { "add_fix", "$gpred_fixflt.$t $1x $2x $1c $2c $c $" },
   { "sub_fix", "$gpred_fixflt.$t $1x $2x $1c $2c $c $" },
   { "mul_fix", "$gpred_fixflt.$t $1x $2x $1c $2c $c $" },
