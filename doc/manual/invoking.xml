@@ -134,6 +134,15 @@ is 0.01, that is, interval bounds or widths have to improve by at least one
 percent.</para>
 </section>
 
+<section>
+<title>Automatic dichotomy</title>
+<para>Option: <code>-E[no-]auto-dichotomy</code></para>
+<para>Gappa can automatically select an expression on which to perform a
+<link linkend="hint-dichotomy">dichotomy</link>. This behavior is disabled
+if the logical formula contains some unspecified intervals. It can also be
+disabled using this option.</para>
+</section>
+
 </section>
 
 <section>
