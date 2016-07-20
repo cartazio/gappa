@@ -21,13 +21,16 @@
 #include "proofs/property.hpp"
 #include "proofs/rewriting.hpp"
 
-typedef std::set< ast_real const * > real_set;
+typedef std::set<ast_real const *> real_set;
+typedef std::set<predicated_real> preal_set;
+typedef std::map<ast_real const *, int> real_map;
+
 real_set free_variables;
-typedef std::set< predicated_real > preal_set;
 preal_set input_reals, output_reals;
 
-interval create_interval(ast_number const *, ast_number const *, bool);
-void find_unknown_reals(real_set &, ast_real const *);
+extern interval create_interval(ast_number const *, ast_number const *, bool);
+extern void find_unknown_reals(real_set &, ast_real const *);
+extern void count_occurrences(real_map &, ast_real const *);
 
 extern bool warning_unbound_variable;
 
@@ -221,4 +224,34 @@ int test_rewriting(ast_real const *src, ast_real const *dst, std::string &res)
   }
   res = info.str();
   return !res.empty();
+}
+
+static void count(real_map &counts, ast_real const *r)
+{
+  count_occurrences(counts, r);
+  // the occurrence in the predicate should not be counted
+  real_map::iterator j = counts.find(r);
+  if (j != counts.end()) j->second -= 1;
+}
+
+ast_real const *get_bottleneck_real()
+{
+  real_map counts;
+  for (preal_set::const_iterator i = input_reals.begin(),
+       i_end = input_reals.end(); i != i_end; ++i)
+  {
+    predicated_real const &r = *i;
+    count(counts, r.real());
+    if (r.real2()) count(counts, r.real2());
+  }
+  ast_real const *res = NULL;
+  int max = 1;
+  for (real_map::const_iterator i = counts.begin(),
+       i_end = counts.end(); i != i_end; ++i)
+  {
+    if (i->second <= max) continue;
+    max = i->second;
+    res = i->first;
+  }
+  return res;
 }

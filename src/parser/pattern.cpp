@@ -9,6 +9,7 @@
    See the COPYING and COPYING.GPL files for more details.
 */
 
+#include <map>
 #include <set>
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_same.hpp>
@@ -191,6 +192,48 @@ void unknown_visitor::visit(ast_real const *dst) const {
 
 void find_unknown_reals(real_set &s, ast_real const *r) {
   unknown_visitor(s).visit(r);
+}
+
+typedef std::map<ast_real const *, int> real_map;
+
+struct occurrence_visitor: boost::static_visitor< void >
+{
+  void visit(ast_real const *) const;
+  template<typename T> void operator()(T const &) const { return; }
+  void operator()(real_op const &) const;
+  real_map &counts;
+  occurrence_visitor(real_map &c): counts(c) {}
+};
+
+void occurrence_visitor::operator()(real_op const &r) const
+{
+  ast_real const *prev = NULL;
+  for (ast_real_vect::const_iterator i = r.ops.begin(),
+       i_end = r.ops.end(); i != i_end; ++i)
+  {
+    // "x op x" usually has dedicated rules, so avoid counting x twice
+    if (*i == prev) continue;
+    visit(*i);
+    prev = *i;
+  }
+}
+
+void occurrence_visitor::visit(ast_real const *dst) const
+{
+  if (dst->is_constant) return;
+  real_map::iterator i = counts.find(dst);
+  if (i != counts.end()) {
+    ++i->second;
+    // occurrence count takes sharing into account, so no recursive call
+    return;
+  }
+  counts[dst] = 1;
+  boost::apply_visitor(*this, *dst);
+}
+
+void count_occurrences(real_map &m, ast_real const *r)
+{
+  occurrence_visitor(m).visit(r);
 }
 
 #define PATTERN_OP(symb, op) \

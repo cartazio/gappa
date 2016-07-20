@@ -22,6 +22,7 @@ int parameter_dichotomy_depth = 100;
 bool parameter_rfma = false;
 bool parameter_constrained = true;
 bool parameter_statistics = false;
+bool parameter_auto_split = true;
 std::string parameter_schemes;
 bool warning_dichotomy_failure = true;
 bool warning_hint_difference = true;
@@ -43,6 +44,7 @@ static void help() {
     "  -Edichotomy=int                 dichotomy depth (default: " << parameter_dichotomy_depth << ")\n"
     "  -E[no-]reverted-fma             change fma(a,b,c) from a*b+c to c+a*b\n"
     "  -Echange-threshold=float        threshold for new results (default: " << 1 - parameter_slow_convergence << ")\n"
+    "  -Eno-auto-dichotomy             do not choose a term for automatic splitting\n"
     "\n"
     "Engine modes:\n"
     "  -Munconstrained                 do not check for theorem constraints\n"
@@ -88,6 +90,7 @@ bool parse_option(std::string const &s, bool embedded)
       bool yes = s.size() <= 6 || s.substr(2, 3) != "no-";
       std::string o = s.substr(yes ? 2 : 5);
       if (o == "reverted-fma") parameter_rfma = yes;
+      else if (o == "auto-dichotomy") parameter_auto_split = yes;
       else return false;
     } else {
       std::string o = s.substr(2, p - 2), v = s.substr(p + 1);

@@ -18,8 +18,9 @@
 #include "proofs/proof_graph.hpp"
 #include "proofs/schemes.hpp"
 
-extern bool parameter_constrained, parameter_statistics;
+extern bool parameter_constrained, parameter_statistics, parameter_auto_split;
 extern int yyparse(void);
+extern ast_real const *get_bottleneck_real();
 extern bool detailed_io;
 extern backend *proof_generator;
 dichotomy_sequence dichotomies;
@@ -44,6 +45,20 @@ int main(int argc, char **argv)
     proof_generator->initialize(std::cout);
   }
   if (yyparse()) return EXIT_FAILURE;
+  if (parameter_auto_split) {
+    undefined_map umap;
+    context.get_undefined(umap);
+    ast_real const *r;
+    if (umap.empty() && (r = get_bottleneck_real())) {
+      //std::cerr << "Splitting " << dump_real(r) << '\n';
+      dichotomy_hint h;
+      dichotomy_var v = { r, 0 };
+      predicated_real unsat(normalize(ast_real(token_zero)), PRED_NZR);
+      h.src = dvar_vect(1, v);
+      h.dst = property_tree(property(unsat));
+      dichotomies.push_back(h);
+    }
+  }
   preal_vect missing_paths = generate_proof_paths();
   for (preal_vect::const_iterator i = missing_paths.begin(),
        i_end = missing_paths.end(); i != i_end; ++i)
