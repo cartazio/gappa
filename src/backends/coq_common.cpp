@@ -793,8 +793,8 @@ static void reify(auto_flush &plouf, real_map &rm, property_tree const &t)
 static void simplification(auto_flush &plouf, property_tree const &before, property_tree const &after, property const &mod, int num_hyp)
 {
   real_map rm;
-  if (vernac) plouf << " refine ";
-  plouf << "(simplify ";
+  if (vernac) plouf << " refine (simplify ";
+  else plouf << "  simplify ";
   reify(plouf, rm, before);
   plouf << ' ';
   if (after.empty()) plouf << "Tfalse";
@@ -813,13 +813,13 @@ static void simplification(auto_flush &plouf, property_tree const &before, prope
     plouf << "(List.cons " << display(*i) << ' ';
   }
   plouf << "List.nil" << std::string(rm.size(), ')')
-     << " h" << num_hyp << " h" << (num_hyp - 1) << " _)";
-  if (vernac) plouf << " ; finalize.\n";
+     << " h" << num_hyp << " h" << (num_hyp - 1) << " _";
+  if (vernac) plouf << ") ; finalize.\n";
 }
 
 static void select(auto_flush &plouf, int idx, int num_hyp)
 {
-  if (vernac) plouf << " exact (";
+  plouf << (vernac ? " exact (" : "  ");
   if (idx) plouf << "proj" << idx << ' ';
   plouf << 'h' << num_hyp;
   if (vernac) plouf << ").\n";
