@@ -428,7 +428,7 @@ int stat_successful_app = 0, stat_discarded_pred = 0, stat_intersected_pred = 0;
  *
  * @return true if the property is worth it.
  */
-bool graph_t::try_property(property const &p) const
+bool graph_t::try_property(property const &p, bool check_slow) const
 {
   assert(top_graph == this && !contradiction);
   ++stat_successful_app;
@@ -441,20 +441,19 @@ bool graph_t::try_property(property const &p) const
       property r = res;
       r.intersect(p);
       interval const &bold = res.bnd(), &bnew = r.bnd();
-      if (!is_empty(bnew))
-      {
-        if (parameter_slow_convergence >= 1) return true;
-        double f = parameter_slow_convergence,
-          dlnew = lower(bnew).to_double(), dunew = upper(bnew).to_double(),
-          dlold = lower(bold).to_double(), duold = upper(bold).to_double();
-        if (dunew - dlnew < (duold - dlold) * f) return true;
-        if (dlold < 0 && dlnew > dlold * f) return true;
-        if (dlnew > 0 && dlnew * f > dlold) return true;
-        if (dunew < 0 && dunew * f < duold) return true;
-        if (duold > 0 && dunew < duold * f) return true;
+      if (is_empty(bnew)) {
+        if (p.real.pred() != PRED_REL) return true;
+        return try_property(property(p.real.real2(), interval(0, 0)), false);
       }
-      else if (p.real.pred() != PRED_REL) return true;
-      else return try_property(property(p.real.real2(), interval(0, 0)));
+      if (!check_slow || parameter_slow_convergence >= 1) return true;
+      double f = parameter_slow_convergence,
+        dlnew = lower(bnew).to_double(), dunew = upper(bnew).to_double(),
+        dlold = lower(bold).to_double(), duold = upper(bold).to_double();
+      if (dunew - dlnew < (duold - dlold) * f) return true;
+      if (dlold < 0 && dlnew > dlold * f) return true;
+      if (dlnew > 0 && dlnew * f > dlold) return true;
+      if (dunew < 0 && dunew * f < duold) return true;
+      if (duold > 0 && dunew < duold * f) return true;
     }
     ++stat_discarded_pred;
     return false;

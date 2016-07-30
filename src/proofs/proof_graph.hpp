@@ -167,7 +167,7 @@ class graph_t
   graph_t(graph_t *, property_tree const &);
   ~graph_t();
   node *find_already_known(predicated_real const &) const;
-  bool try_property(property const &) const;
+  bool try_property(property const &, bool check_slow = true) const;
   void insert_node(node *&);
   bool try_node(node *&);
   /** Returns the hypotheses #hyps of this graph. */

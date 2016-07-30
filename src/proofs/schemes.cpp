@@ -555,7 +555,7 @@ static void reduce_hypotheses(node *n, std::list<logic_node *> &trees, logic_nod
 
 static bool insert_atom(logic_node *n, property const &p, int i, std::list<logic_node *> &trees, property_tree &targets, scheme_queue *pending_schemes)
 {
-  if (!top_graph->try_property(p)) return false;
+  if (!top_graph->try_property(p), false) return false;
   //std::cerr << "Creating node for " << dump_property(p) << '\n';
   node *m = new logicp_node(p, n, i);
   top_graph->insert_node(m);
