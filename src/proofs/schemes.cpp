@@ -685,7 +685,6 @@ void graph_t::populate(property_tree const &targets,
   }
 
   // Look for an expression on which to perform a point-based dichotomy.
-  static ast_real_set already;
   splitting s;
   for (std::list<logic_node *>::const_iterator i = trees.begin(),
        i_end = trees.end(); i != i_end; ++i)
@@ -696,16 +695,25 @@ void graph_t::populate(property_tree const &targets,
   splitting::value_type const *sv = NULL;
   for (splitting::const_iterator i = s.begin(), i_end = s.end(); i != i_end; ++i)
   {
-    if (i->second.size() <= max_pts || already.count(i->first))
-      continue;
+    unsigned nb = i->second.size();
+    if (nb <= max_pts) continue;
     node *n = find_proof(predicated_real(i->first, PRED_BND));
-    if (n && is_singleton(n->get_result().bnd())) continue;
-    max_pts = i->second.size();
+    if (n) {
+      interval const &b = n->get_result().bnd();
+      if (is_singleton(b)) continue;
+      nb = 0;
+      for (split_point_mset::const_iterator j = i->second.begin(),
+           j_end = i->second.end(); j != j_end; ++j)
+      {
+        if (lower(b) < j->pt && j->pt < upper(b)) ++nb;
+      }
+      if (nb <= max_pts) continue;
+    }
+    max_pts = nb;
     sv = &*i;
   }
   if (max_pts)
   {
-    ast_real_set save = already;
     unsigned long ds = 0;
     number prev = number::neg_inf;
     for (split_point_mset::const_iterator i = sv->second.begin(),
@@ -715,12 +723,10 @@ void graph_t::populate(property_tree const &targets,
       ds = fill_splitter(ds, *i);
       prev = i->pt;
     }
-    already.insert(sv->first);
     dichotomy_var dv = { sv->first, ds };
     dichotomy_hint dh = { dvar_vect(1, dv), property_tree(), false };
     dichotomize(dh, iter_max);
     clear_splitter(ds);
-    already = save;
   }
 
   // Fill all the remaining holes in the formula.
