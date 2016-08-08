@@ -433,32 +433,31 @@ bool graph_t::try_property(property const &p, bool check_slow) const
   assert(top_graph == this && !contradiction);
   ++stat_successful_app;
   node_map::const_iterator i = known_reals.find(p.real);
-  if (i != known_reals.end())
-  {
-    property const &res = i->second->get_result();
-    if (!res.implies(p)) {
-      if (!p.real.pred_bnd()) return true;
-      property r = res;
-      r.intersect(p);
-      interval const &bold = res.bnd(), &bnew = r.bnd();
-      if (is_empty(bnew)) {
-        if (p.real.pred() != PRED_REL) return true;
-        return try_property(property(p.real.real2(), interval(0, 0)), false);
-      }
-      if (!check_slow || parameter_slow_convergence >= 1) return true;
-      double f = parameter_slow_convergence,
-        dlnew = lower(bnew).to_double(), dunew = upper(bnew).to_double(),
-        dlold = lower(bold).to_double(), duold = upper(bold).to_double();
-      if (dunew - dlnew < (duold - dlold) * f) return true;
-      if (dlold < 0 && dlnew > dlold * f) return true;
-      if (dlnew > 0 && dlnew * f > dlold) return true;
-      if (dunew < 0 && dunew * f < duold) return true;
-      if (duold > 0 && dunew < duold * f) return true;
-    }
+  if (i == known_reals.end()) return true;
+  property const &res = i->second->get_result();
+  if (res.implies(p)) {
     ++stat_discarded_pred;
     return false;
   }
-  return true;
+  if (!p.real.pred_bnd()) return true;
+  property r = res;
+  r.intersect(p);
+  interval const &bold = res.bnd(), &bnew = r.bnd();
+  if (is_empty(bnew)) {
+    if (p.real.pred() != PRED_REL) return true;
+    return try_property(property(p.real.real2(), interval(0, 0)), false);
+  }
+  if (!check_slow || parameter_slow_convergence >= 1) return true;
+  double f = parameter_slow_convergence,
+    dlnew = lower(bnew).to_double(), dunew = upper(bnew).to_double(),
+    dlold = lower(bold).to_double(), duold = upper(bold).to_double();
+  if (dunew - dlnew < (duold - dlold) * f) return true;
+  if (dlold < 0 && dlnew > dlold * f) return true;
+  if (dlnew > 0 && dlnew * f > dlold) return true;
+  if (dunew < 0 && dunew * f < duold) return true;
+  if (duold > 0 && dunew < duold * f) return true;
+  ++stat_discarded_pred;
+  return false;
 }
 
 /**
