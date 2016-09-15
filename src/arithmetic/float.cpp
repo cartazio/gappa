@@ -26,7 +26,9 @@ extern bool parameter_constrained;
 
 struct float_format: gs_rounding {
   int min_exp, prec;
-  virtual int shift_val(int exp, int sz) const { return std::max(min_exp - exp, sz - prec); }
+  virtual int shift_val(int exp, int sz) const
+  { if (min_exp == INT_MIN) return sz - prec;
+    return std::max(min_exp - exp, sz - prec); }
   float_format() {}
   float_format(int e, int p): min_exp(e), prec(p) {}
 };
