@@ -724,7 +724,7 @@ REGISTER_SCHEME_END_PATTERN(sub_flt, predicated_real(pattern(0) - pattern(1), PR
 void sub_flt_scheme::compute(property const hyps[], property &res, std::string &) const
 {
   static interval r(-0.5, 1);
-  if (!(hyps[2].bnd() <= r)) return;
+  if (!(hyps[2].bnd() <= r)) { res.clear(); return; }
   res.cst() = std::max(hyps[0].cst(), hyps[1].cst());
 }
 
