@@ -184,8 +184,8 @@ static char const *theorem_defs[][2] = {
   { "floatx_round_ne", "$gfloat.$t _ $1x $1i $i $" },
   { "floatx_round_na", "$gfloat.$t _ $1x $1i $i $" },
   { "floatx_enforce", "$gfloat.$t _ _ _ $1i $i $" },
-  { "floatx_relative_ne", "$gfloat.$t _ $1x $1i $i $" },
-  { "floatx_relative_na", "$gfloat.$t _ $1x $1i $i $" },
+  { "floatx_relative_ne", "$gfloat.$t _ $y $i $" },
+  { "floatx_relative_na", "$gfloat.$t _ $y $i $" },
 
   { "fix_of_fixed", "$gfixed.$t _ _ _ $c $" },
   { "fixed_of_fix", "$gfixed.$t _ $1x $1c _ $" },
