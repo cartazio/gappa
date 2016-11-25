@@ -1,3 +1,9 @@
+Version 1.3.1:
+ * fact database
+   - improved handling of division
+ * proof graph
+   - fixed loss of information for some case splits
+
 Version 1.3.0:
  * arithmetic
    - added support for floating-point formats without minimal exponent
@@ -27,7 +33,7 @@ Version 1.2.0:
    - fixed incorrect computation of the order-3 term of the relative error for division
    - added rewriting rules for emulating reverse propagation
  * proof graph
-   - improved proof simplication
+   - improved proof simplification
  * proof paths
    - improved performances by avoiding some absolute values
    - improved detection of approximate/exact pairs of expressions

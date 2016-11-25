@@ -34,7 +34,7 @@ while (<$in>) {
     close_version;
     my $version = $1;
     my $date = "";
-    $date = qx(git log -1 --pretty="%ai" gappa-$version) if ($has_git);
+    $date = qx(git log -1 --pretty="%ai" gappa-$version --) if ($has_git);
     print "  <listitem>\n";
     if ($date =~ /^([^ ]+).*$/) {
       print "    <para>Version $version ($1)</para>\n";
