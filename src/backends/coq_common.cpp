@@ -247,6 +247,7 @@ static char const *theorem_defs[][2] = {
   { "div_xals", "$grewriting.$t _ _ $1x $i $1p $2p" },
   { "div_fil", "$grewriting.$t $1x $2x $i $1p $2p" },
   { "div_fir", "$grewriting.$t $2x $1x $i $1p $2p" },
+  { "div_firs", "$grewriting.$t _ $1x _ $i $1p $2p" },
   { "div_xilu", "$grewriting.$t $x _ $i $1p $2p" },
   { "div_xiru", "$grewriting.$t _ $x $i $1p $2p $3p" },
   { "err_xabq", "$grewriting.$t _ $1x $i $1p $2p" },

@@ -507,6 +507,10 @@ matching expression appears in the input file.</para>
   <entry><code>(a * b) / a</code></entry>
   <entry><code>b</code></entry>
   <entry><code>NZR(a)</code></entry></row>
+<row><entry><code>div_firs</code></entry>
+  <entry><code>a / b - c / b</code></entry>
+  <entry><code>(a - c) [/] b</code></entry>
+  <entry><code>NZR(b)</code>, <code>a &ne; c</code></entry></row>
 <row><entry><code>div_xilu</code></entry>
   <entry><code>a</code></entry>
   <entry><code>(a / b) [*] b</code></entry>

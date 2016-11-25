@@ -492,6 +492,12 @@ REWRIT3(div_fil,
 	b,
 	~a);
 
+REWRIT9(div_firs,
+	a / b - c / b,
+	hide((a - c) / b),
+	~b,
+	a ^ c);
+
 R3WRIT3(div_xilu,
 	a,
 	hide((a / b) * b),
