@@ -336,6 +336,7 @@ int property_tree::try_simplify(ptree_simplifier const &simpl,
   if (!chg1) t1 = *left;
   if (!chg2) t2 = *right;
   tgt.clear();
+  tgt.conjunction = conjunction;
   tgt.left = new property_tree;
   tgt.right = new property_tree;
   tgt.left->swap(t1);
